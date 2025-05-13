@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Page
+    x:Class="App3.Section"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:App3"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d"
+    xmlns:tool="using:CommunityToolkit.WinUI.UI.Controls"
+    Background="{ThemeResource DesktopAcrylicTransparentBrush}">
+    <Page.Resources>
+        <DataTemplate x:Key="BoardCase" x:DataType="local:BoardInfo">
+            <Border BorderBrush="#aaaaaa"  Margin="10,0,10,10" CornerRadius="5">
+                <HyperlinkButton Content="{x:Bind BoardName}" Padding="8" Tag="{x:Bind BoardId}" Click="BoardButton_Click" x:Name="BoardButton" Background="{ThemeResource MarkdownBackgroudBrush}"></HyperlinkButton>
+            </Border>
+        </DataTemplate>
+        <DataTemplate x:Key="SectionCase" x:DataType="local:AllSection">
+            <StackPanel Orientation="Vertical" CornerRadius="5" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1" Margin="10,10,10,10" Padding="10">
+                <TextBlock Text="{x:Bind SectionName}" FontWeight="Bold" FontSize="16" Margin="12,0,12,12"></TextBlock>
+                <Border Height="1" BorderThickness="1" BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}" Margin="0,0,0,10"></Border>
+                <ItemsRepeater ItemTemplate="{StaticResource  BoardCase}" ItemsSource="{x:Bind Boards}">
+                    <ItemsRepeater.Layout>
+                        <tool:WrapLayout></tool:WrapLayout>
+                       
+                        
+                    </ItemsRepeater.Layout>
+
+                    
+                </ItemsRepeater>
+            </StackPanel>
+            
+    </DataTemplate>
+    </Page.Resources>
+    <Grid>
+        
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*" MinHeight="80"></RowDefinition>
+            <RowDefinition Height="6*"></RowDefinition>
+        </Grid.RowDefinitions>
+        <Border  BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1" Margin="0,0,0,10" >
+            <Border.Background>
+                <ImageBrush ImageSource="/Assets/mid_autumn.jpg" Stretch="UniformToFill" ></ImageBrush>
+            </Border.Background>
+            <TextBlock Text="版面"  FontSize="24" FontWeight="Bold" Foreground="{ThemeResource AccentAAFillColorDefaultBrush}" VerticalAlignment="Center" Margin="20,0,0,0"></TextBlock>
+        </Border>
+        <ScrollViewer Grid.Row="1">
+            <ItemsRepeater x:Name="SectionPresenter"  ItemTemplate="{StaticResource SectionCase}">
+                <ItemsRepeater.Layout>
+                    <tool:WrapLayout></tool:WrapLayout>
+                </ItemsRepeater.Layout>
+
+            </ItemsRepeater>
+        </ScrollViewer>
+    </Grid>
+</Page>

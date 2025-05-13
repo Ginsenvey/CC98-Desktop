@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Page
+    x:Class="App3.Profile"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:App3"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d"
+    xmlns:tool="using:CommunityToolkit.WinUI.UI.Controls"
+    
+    xmlns:ic="using:FluentIcons.WinUI"
+    Background="{ThemeResource DesktopAcrylicTransparentBrush}">
+
+    <Grid>
+        <ScrollViewer >
+            <StackPanel Orientation="Vertical" Padding="15" Spacing="10">
+                <Grid Height="230" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1" Padding="15" CornerRadius="5" x:Name="InfoContent">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="5*"></RowDefinition>
+                        <RowDefinition Height="3*"></RowDefinition>
+                        <RowDefinition Height="2*"></RowDefinition>
+                    </Grid.RowDefinitions>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="2*"></ColumnDefinition>
+                        <ColumnDefinition Width="3*"></ColumnDefinition>
+                    </Grid.ColumnDefinitions>
+                    <Border x:Name="Picture" Width="90" Height="90" Grid.Row="0" Grid.Column="0" HorizontalAlignment="Left" VerticalAlignment="Top" CornerRadius="6">
+                        <PersonPicture
+    Width="90"
+    Height="90"
+    ProfilePicture="{Binding Port}"
+    
+    IsGroup="False"/>
+                    </Border>
+                    <TextBlock Grid.Row="1" Grid.Column="0" FontSize="35" FontWeight="Bold" Text="{Binding Name}" Foreground="#4d9891" VerticalAlignment="Center" IsTextSelectionEnabled="True"></TextBlock>
+
+                    <StackPanel Orientation="Horizontal" Grid.Row="2" Grid.Column="0" Spacing="5" >
+                        <HyperlinkButton >
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="{Binding Follow}"  FontSize="16" Margin="0,0,5,0"></TextBlock>
+                                <TextBlock Text="关注"  FontSize="16" Foreground="{ThemeResource TextFillColorSecondaryBrush}"></TextBlock>
+                            </StackPanel>
+                        </HyperlinkButton>
+                        <HyperlinkButton >
+                            <StackPanel Orientation="Horizontal">
+                                <TextBlock Text="{Binding Fan}"  FontSize="16" Margin="0,0,5,0"></TextBlock>
+                                <TextBlock Text="粉丝"  FontSize="16" Foreground="{ThemeResource TextFillColorSecondaryBrush}"></TextBlock>
+                            </StackPanel>
+                        </HyperlinkButton>
+                        
+                    </StackPanel>
+                    <Grid Grid.Row="0" Grid.RowSpan="3" Grid.Column="1" VerticalAlignment="Stretch" RowSpacing="15">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="*"></RowDefinition>
+                            <RowDefinition Height="*"></RowDefinition>
+                            <RowDefinition Height="*"></RowDefinition>
+                            <RowDefinition Height="*"></RowDefinition>
+                            <RowDefinition Height="*"></RowDefinition>
+                        </Grid.RowDefinitions>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"></ColumnDefinition>
+                            <ColumnDefinition Width="3*"></ColumnDefinition>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="财富值"  Grid.Row="0" Grid.Column="0" Foreground="{ThemeResource TextFillColorSecondaryBrush}" x:Name="WealthInfo"></TextBlock>
+                        <TextBlock Text="风评" Grid.Row="1" Grid.Column="0" Foreground="{ThemeResource TextFillColorSecondaryBrush}"></TextBlock>
+                        <TextBlock Text="发帖数" Grid.Row="2" Grid.Column="0" Foreground="{ThemeResource TextFillColorSecondaryBrush}"></TextBlock>
+                        <TextBlock Text="CCID" Grid.Row="3" Grid.Column="0" Foreground="{ThemeResource TextFillColorSecondaryBrush}"></TextBlock>
+                        <TextBlock Text="最后登录" Grid.Row="4" Grid.Column="0" Foreground="{ThemeResource TextFillColorSecondaryBrush}"></TextBlock>
+                        <TextBlock Text="{Binding Wealth}" Grid.Row="0" Grid.Column="1" ></TextBlock>
+                        <TextBlock Text="{Binding Popularity}" Grid.Row="1" Grid.Column="1" ></TextBlock>
+                        <TextBlock Text="{Binding Posts}" Grid.Row="2" Grid.Column="1" ></TextBlock>
+                        <TextBlock Text="{Binding Id}" Grid.Row="3" Grid.Column="1" IsTextSelectionEnabled="True"></TextBlock>
+                        <TextBlock Text="{Binding Logtime}" Grid.Row="4" Grid.Column="1" ></TextBlock>
+                    </Grid>
+                </Grid>
+                <TextBlock Text="签名档" FontSize="23" FontWeight="Bold" Foreground="#A9A9A9" Margin="0,5,0,0"></TextBlock>
+                <Border Height="1" BorderBrush="{ThemeResource DividerBrush}" HorizontalAlignment="Stretch" BorderThickness="1"></Border>
+                <tool:MarkdownTextBlock Text="{Binding Signature}" x:Name="SignBoard" LinkClicked="SignBoard_LinkClicked" Background="Transparent" ImageStretch="UniformToFill" ImageMaxWidth="450" ImageMaxHeight="450"></tool:MarkdownTextBlock>
+                
+                <TextBlock Text="主题" FontSize="23" FontWeight="Bold" Foreground="#A9A9A9" x:Name="de"></TextBlock>
+                <Border Height="1" BorderBrush="{ThemeResource DividerBrush}" HorizontalAlignment="Stretch" BorderThickness="1"></Border>
+                <Border Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1" CornerRadius="5">
+                    <ItemsRepeater x:Name="SimpleTile" Loaded="SimpleTile_Loaded" >
+                        <ItemsRepeater.ItemTemplate>
+                            <DataTemplate>
+                                <HyperlinkButton HorizontalContentAlignment="Stretch" HorizontalAlignment="Stretch" CornerRadius="0" x:Name="TileContent" Click="STileButton_Click">
+                                    <Grid Padding="12">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="50"></ColumnDefinition>
+                                            <ColumnDefinition Width="4*"></ColumnDefinition>
+                                            <ColumnDefinition Width="3*"></ColumnDefinition>
+                                            <ColumnDefinition Width="2*"></ColumnDefinition>
+                                        </Grid.ColumnDefinitions>
+                                        <ic:SymbolIcon Symbol="Note" Grid.Column="0" Foreground="{ThemeResource AccentAAFillColorDefaultBrush}"></ic:SymbolIcon>
+                                        <TextBlock Text="{Binding text}" Grid.Column="1" VerticalAlignment="Center" Foreground="{ThemeResource TextFillColorSecondaryBrush}"></TextBlock>
+                                        <TextBlock Text="{Binding time}" Grid.Column="3" VerticalAlignment="Center" Foreground="{ThemeResource TextFillColorSecondaryBrush}"></TextBlock>
+
+                                    </Grid>
+                                </HyperlinkButton>
+                            </DataTemplate>
+                        </ItemsRepeater.ItemTemplate>
+                    </ItemsRepeater>
+                </Border>
+            </StackPanel>
+        </ScrollViewer>
+    </Grid>
+</Page>

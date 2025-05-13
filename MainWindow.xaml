@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Window
+    x:Class="App3.MainWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:App3"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d"
+    Title="CC98"
+    xmlns:ic="using:FluentIcons.WinUI"
+    SystemBackdrop="{ThemeResource AcrylicBackgroundFillColorDefaultBackdrop}">
+
+    <Grid x:Name="RootGrid">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="48"></RowDefinition>
+            <RowDefinition Height="*"></RowDefinition>
+            <RowDefinition Height="12*"></RowDefinition>
+            
+        </Grid.RowDefinitions>
+        <Grid Grid.Row="0" x:Name="GridTitleBar">
+            
+            <TextBlock Text="CC98 Desktop"  Margin="10,0,5,0" HorizontalAlignment="Left" VerticalAlignment="Center" FontSize="15"></TextBlock>
+            <TextBox x:Name="de" HorizontalAlignment="Center" Margin="0,5,0,5" Height="30" Width="Auto"></TextBox>
+            
+        </Grid>
+        
+        <NavigationView Grid.Row="1" Grid.RowSpan="2" HorizontalAlignment="Stretch" PaneDisplayMode="Auto" IsPaneToggleButtonVisible="True" IsPaneOpen="True" OpenPaneLength="280"  IsBackEnabled="True" IsSettingsVisible="False" SelectionChanged="Navi_SelectionChanged" x:Name="Navi"  BackRequested="Navi_BackRequested">
+
+            <NavigationView.MenuItems>
+                <NavigationViewItemHeader Content="首页"></NavigationViewItemHeader>
+                <NavigationViewItem Height="Auto" Tag="0">
+                    <StackPanel Orientation="Horizontal" >
+                        <ic:SymbolIcon Symbol="DesignIdeas" FontSize="20"  Margin="2,0,10,0"></ic:SymbolIcon>
+                        <TextBlock Text="今日话题" ></TextBlock>
+                    </StackPanel>
+                </NavigationViewItem>
+                
+                <NavigationViewItem Height="Auto" Tag="3">
+                    <StackPanel Orientation="Horizontal">
+                        <ic:SymbolIcon Symbol="Board" FontSize="20" Margin="2,0,10,0"></ic:SymbolIcon>
+                        <TextBlock Text="全部版面" ></TextBlock>
+                    </StackPanel>
+                </NavigationViewItem>
+                <NavigationViewItem Height="Auto" Tag="4">
+                    <StackPanel Orientation="Horizontal">
+                        <ic:SymbolIcon Symbol="ArrowSync" FontSize="20" Margin="2,0,10,0"></ic:SymbolIcon>
+                        <TextBlock Text="新帖" ></TextBlock>
+                    </StackPanel>
+                </NavigationViewItem>
+                <NavigationViewItemHeader Content="版面" FontWeight="Bold"></NavigationViewItemHeader>
+                <NavigationViewItem Height="Auto" Tag="5">
+                    <StackPanel Orientation="Horizontal">
+                        <ic:SymbolIcon Symbol="Library"  Margin="2,0,10,0"></ic:SymbolIcon>
+                        <TextBlock Text="学习天地" ></TextBlock>
+                    </StackPanel>
+                </NavigationViewItem>
+                <NavigationViewItem Height="Auto" Tag="6">
+                    <StackPanel Orientation="Horizontal">
+                        <ic:SymbolIcon Symbol="LeafOne"  Margin="2,0,10,0"></ic:SymbolIcon>
+                        <TextBlock Text="感性空间" ></TextBlock>
+                    </StackPanel>
+                </NavigationViewItem>
+                <NavigationViewItem Height="Auto" Tag="7">
+                    <StackPanel Orientation="Horizontal">
+                        <ic:SymbolIcon Symbol="FoodFish"  Margin="2,0,10,0"></ic:SymbolIcon>
+                        <TextBlock Text="跳蚤市场" ></TextBlock>
+
+                    </StackPanel>
+                </NavigationViewItem>
+                <NavigationViewItem Height="Auto" Tag="8">
+                    <StackPanel Orientation="Horizontal">
+                        <ic:SymbolIcon Symbol="Agents"  Margin="2,0,10,0"></ic:SymbolIcon>
+                        <TextBlock Text="求职广场" ></TextBlock>
+                    </StackPanel>
+                </NavigationViewItem>
+                
+                
+                <NavigationViewItemHeader Content="集锦">
+                    
+                </NavigationViewItemHeader>
+                <NavigationViewItem Height="Auto" Tag="10" HorizontalContentAlignment="Stretch" x:Name="likecollection" >
+                    <NavigationViewItem.ContextFlyout>
+                        <MenuFlyout>
+                            <MenuFlyoutItem Text="新收藏集" Icon="{ic:SymbolIcon Symbol=Add}"></MenuFlyoutItem>
+                        </MenuFlyout>
+                    </NavigationViewItem.ContextFlyout>
+                    <StackPanel Orientation="Horizontal">
+                        <ic:SymbolIcon Symbol="Star"  Margin="2,0,10,0"></ic:SymbolIcon>
+                        <TextBlock Text="收藏集" ></TextBlock>
+                        
+                    </StackPanel>
+                </NavigationViewItem>
+                <NavigationViewItem Height="Auto" Tag="11">
+                    
+                    <StackPanel Orientation="Horizontal">
+                        <ic:SymbolIcon Symbol="Bookmark"  Margin="2,0,10,0"></ic:SymbolIcon>
+                        <TextBlock Text="关注版面" ></TextBlock>
+                    </StackPanel>
+                </NavigationViewItem>
+            </NavigationView.MenuItems>
+            <NavigationView.FooterMenuItems>
+                <NavigationViewItem Height="Auto" Tag="1">
+                    <NavigationViewItem.InfoBadge>
+                        <InfoBadge x:Name="MsgCount" Value="{Binding UnreadCount}" />
+                    </NavigationViewItem.InfoBadge>
+
+                    <StackPanel Orientation="Horizontal">
+                        <ic:SymbolIcon Symbol="MailRead" FontSize="20"  Margin="2,0,10,0"></ic:SymbolIcon>
+                        <TextBlock Text="我" ></TextBlock>
+                    </StackPanel>
+                </NavigationViewItem>
+                <NavigationViewItem Height="Auto" Tag="9">
+                    <StackPanel Orientation="Horizontal">
+                        <ic:SymbolIcon Symbol="StarSettings" FontSize="20"  Margin="2,0,10,0"></ic:SymbolIcon>
+                        <TextBlock Text="设定" ></TextBlock>
+                    </StackPanel>
+                </NavigationViewItem>
+            </NavigationView.FooterMenuItems>
+        <Frame x:Name="contentframe"></Frame>
+            
+        </NavigationView>
+    </Grid>
+</Window>

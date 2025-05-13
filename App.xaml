@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Application
+    x:Class="App3.App"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:App3">
+    <Application.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <XamlControlsResources xmlns="using:Microsoft.UI.Xaml.Controls" />
+                <!-- Other merged dictionaries here -->
+            </ResourceDictionary.MergedDictionaries>
+            <!-- Other app resources here -->
+            <ResourceDictionary.ThemeDictionaries>
+
+                <ResourceDictionary x:Key="Light">
+                    <Color x:Key="CustomBackgroundColor">#FBFBFB</Color>
+                    <Color x:Key="borderlinecolor">#E5E5E5</Color>
+                    <Color x:Key="DividerColor">#CACACA</Color>
+                    <Color x:Key="MarkdownBackgroudColor">#88eeeeee</Color>
+                    <Color x:Key="pink-green" >#60d2b3ae</Color>
+                    <Color x:Key="trans-plain">#00000000</Color>
+                    <Color x:Key="sky-blue">#d4eefd</Color>
+                    <Color x:Key="yel-low">#fdffce</Color>
+                    <Color x:Key="PlayControl">#FFFFFF</Color>
+                    <Color x:Key="Contrast">#000000</Color>
+                    <Color x:Key="AcrylicTintColor">#FFFFFF</Color>
+                </ResourceDictionary>
+                <ResourceDictionary x:Key="Dark">
+                    <Color x:Key="CustomBackgroundColor">#2f2f2f</Color>
+                    <Color x:Key="borderlinecolor">#202020</Color>
+                    <Color x:Key="DividerColor">#525252</Color>
+                    <Color x:Key="MarkdownBackgroudColor">#3f3d3d</Color>
+                    
+                    <Color x:Key="pink-green">#aaADD8E6</Color>
+                    <Color x:Key="trans-plain">#002b2b2b</Color>
+                    <Color x:Key="sky-blue">#202020</Color>
+                    <Color x:Key="yel-low">#2b2b2b</Color>
+                    <Color x:Key="PlayControl">#545354</Color>
+                    <Color x:Key="Contrast">#FFFFFF</Color>
+                    <Color x:Key="AcrylicTintColor">#000000</Color>
+                </ResourceDictionary>
+                <ResourceDictionary x:Key="Tint"></ResourceDictionary>
+
+            </ResourceDictionary.ThemeDictionaries>
+            <SolidColorBrush x:Key="MarkdownBackgroudBrush" Color="{ThemeResource MarkdownBackgroudColor}"></SolidColorBrush>
+            <SolidColorBrush x:Key="DividerBrush" Color="{ThemeResource DividerColor}"></SolidColorBrush>
+            <AcrylicBrush x:Key="AcrylicCardBrush" TintOpacity="0.8" TintColor="{ThemeResource AcrylicTintColor}" FallbackColor="#FF008000"/>
+            
+        </ResourceDictionary>
+    </Application.Resources>
+</Application>

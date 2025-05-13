@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Page
+    x:Class="App3.Index"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:App3"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d"
+    xmlns:ic="using:FluentIcons.WinUI"
+    xmlns:lab="using:CommunityToolkit.Labs.WinUI"
+    xmlns:tool="using:CommunityToolkit.WinUI.Controls"
+    Background="{ThemeResource DesktopAcrylicTransparentBrush}">
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*" MinHeight="100" ></RowDefinition>
+            <RowDefinition Height="6*"></RowDefinition>
+        </Grid.RowDefinitions>
+        <ContentDialog SecondaryButtonText="登录" CloseButtonText="以离线模式浏览" Title="登录 CC98" x:Name="LoginDialog" >
+            <StackPanel>
+                <TextBox x:Name="idbox" Header="用户名"></TextBox>
+                <PasswordBox x:Name="passbox" Header="密码"></PasswordBox>
+            </StackPanel>
+        </ContentDialog>
+        <Border Grid.Row="0" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Visibility="Collapsed" >
+            <Border.Background>
+                <ImageBrush ImageSource="/Assets/mid_autumn.jpg" Stretch="UniformToFill"></ImageBrush>
+            </Border.Background>
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="20,10,20,10" Padding="10">
+                
+                <ic:SymbolIcon Symbol="DesignIdeas" FontSize="22" Foreground="{ThemeResource AccentAAFillColorDefaultBrush}" Margin="0,0,10,0"></ic:SymbolIcon>
+                <TextBlock Text="今日话题" FontWeight="Bold" FontSize="24" Foreground="{ThemeResource AccentAAFillColorDefaultBrush}" ></TextBlock>
+                <TextBlock x:Name="de" ></TextBlock>
+            </StackPanel>
+        </Border>
+        <FlipView  Width="Auto" Grid.Row="0"  x:Name="RecomList" VerticalAlignment="Top">
+            <FlipView.ItemTemplate>
+                <DataTemplate>
+                    <Grid Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1" Padding="20">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="*"></RowDefinition>
+                            <RowDefinition Height="*"></RowDefinition>
+                        </Grid.RowDefinitions>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="80"></ColumnDefinition>
+                            <ColumnDefinition Width="*"></ColumnDefinition>
+                        </Grid.ColumnDefinitions>
+                        <ic:SymbolIcon Symbol="DesignIdeas" FontSize="26" Foreground="{ThemeResource AccentAAFillColorDefaultBrush}" Grid.Column="0" Grid.Row="0" Grid.RowSpan="2"></ic:SymbolIcon>
+                        <TextBlock Text="{Binding content}" Grid.Row="1" Grid.Column="1" Foreground="{ThemeResource TextFillColorSecondaryBrush}" ></TextBlock>
+                        <TextBlock  Grid.Row="0" Grid.Column="1"  FontWeight="Bold" TextDecorations="Underline">
+                            <Hyperlink NavigateUri="{Binding uid}" Click="RecomHyperlink_Click" x:Name="RecomHyperlink">
+                                <Run Text="{Binding title}" ></Run>
+                            </Hyperlink>
+                        </TextBlock>
+                        
+                    </Grid>
+                </DataTemplate>
+            </FlipView.ItemTemplate>
+        </FlipView>
+        <PipsPager x:Name="Pips" Grid.Row="0" VerticalAlignment="Bottom" HorizontalAlignment="Center"  SelectedPageIndex="{x:Bind Path=RecomList.SelectedIndex,Mode=TwoWay}"></PipsPager>
+        <ScrollViewer Grid.Row="1" Margin="10,0,10,10" >
+            <StackPanel Orientation="Vertical" Padding="10">
+                
+                <StackPanel Orientation="Horizontal" Margin="12,0,0,0">
+                    <Border Width="4"  Height="20" BorderBrush="{ThemeResource AccentAAFillColorDefaultBrush}" BorderThickness="4"></Border>
+                    <TextBlock Text="十大话题" Margin="10" FontSize="16" Foreground="{ThemeResource TextFillColorSecondaryBrush}"></TextBlock>
+                </StackPanel>
+                
+                <ItemsRepeater x:Name="TileList" >
+                    <ItemsRepeater.Layout>
+                        <tool:StaggeredLayout ItemsStretch="Fill" ></tool:StaggeredLayout>
+                    </ItemsRepeater.Layout>
+                    <ItemsRepeater.ItemTemplate>
+                        <DataTemplate>
+                            <Border Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" BorderBrush="{ThemeResource CardStrokeColorDefaultSolidBrush}" BorderThickness="1" Margin="10" CornerRadius="5" x:Name="ContentCard" PointerEntered="ContentCard_PointerEntered" PointerExited="ContentCard_PointerExited">
+                                <Border.RenderTransform>
+                                    <TranslateTransform x:Name="CardTranslate" X="0" Y="0"/>
+                                </Border.RenderTransform>
+                                <HyperlinkButton HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch" x:Name="TopicItem" Click="TopicItem_Click">
+                                    <Grid Padding="5">
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="*"></RowDefinition>
+                                            <RowDefinition Height="3*"></RowDefinition>
+                                            <RowDefinition Height="*"></RowDefinition>
+                                        </Grid.RowDefinitions>
+                                        <HyperlinkButton Content="{Binding author}" Grid.Row="0" Margin="0,0,0,5" x:Name="AuthurName" Click="AuthurName_Click"></HyperlinkButton>
+                                        <Border Background="{ThemeResource MarkdownBackgroudBrush}" Grid.Row="1" Padding="10" CornerRadius="4" MinHeight="60" Height="Auto">
+                                            <TextBlock Text="{Binding title}" FontWeight="Bold" Grid.Row="1"  HorizontalTextAlignment="Left" TextWrapping="Wrap" VerticalAlignment="Center"></TextBlock>
+                                        </Border>
+
+                                        <TextBlock Text="{Binding  section}" Grid.Row="0" Margin="5,5,10,0" HorizontalAlignment="Right"  Foreground="{ThemeResource TextFillColorSecondaryBrush}"></TextBlock>
+                                        <StackPanel Orientation="Horizontal" Grid.Row="2" Spacing="10">
+                                            <Button Background="Transparent"  HorizontalAlignment="Left" Margin="0,10,0,0">
+                                                <StackPanel Orientation="Horizontal" Spacing="5" >
+                                                    <ic:SymbolIcon Symbol="Chat" FontSize="11"></ic:SymbolIcon>
+                                                    <TextBlock Text="{Binding reply}" Grid.Row="2"  HorizontalAlignment="Right" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}"></TextBlock>
+                                                </StackPanel>
+                                            </Button>
+
+                                            <Button Background="Transparent"  HorizontalAlignment="Left" Margin="0,10,0,0" >
+                                                <StackPanel Orientation="Horizontal" Spacing="5" >
+                                                    <ic:SymbolIcon Symbol="Fire" FontSize="11"></ic:SymbolIcon>
+                                                    <TextBlock Text="{Binding hit}"   HorizontalAlignment="Right" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}"></TextBlock>
+                                                </StackPanel>
+                                            </Button>
+                                        </StackPanel>
+
+
+                                    </Grid>
+                                </HyperlinkButton>
+
+                            </Border>
+                        </DataTemplate>
+                    </ItemsRepeater.ItemTemplate>
+                </ItemsRepeater>
+            </StackPanel>
+            
+        </ScrollViewer>
+        
+    </Grid>
+</Page>
