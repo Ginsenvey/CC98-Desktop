@@ -18,6 +18,7 @@
                     <Color x:Key="borderlinecolor">#E5E5E5</Color>
                     <Color x:Key="DividerColor">#CACACA</Color>
                     <Color x:Key="MarkdownBackgroudColor">#88eeeeee</Color>
+                    
                     <Color x:Key="pink-green" >#60d2b3ae</Color>
                     <Color x:Key="trans-plain">#00000000</Color>
                     <Color x:Key="sky-blue">#d4eefd</Color>
@@ -30,7 +31,7 @@
                     <Color x:Key="CustomBackgroundColor">#2f2f2f</Color>
                     <Color x:Key="borderlinecolor">#202020</Color>
                     <Color x:Key="DividerColor">#525252</Color>
-                    <Color x:Key="MarkdownBackgroudColor">#3f3d3d</Color>
+                    <Color x:Key="MarkdownBackgroudColor">#663f3d3d</Color>
                     
                     <Color x:Key="pink-green">#aaADD8E6</Color>
                     <Color x:Key="trans-plain">#002b2b2b</Color>

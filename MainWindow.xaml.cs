@@ -94,29 +94,8 @@ namespace App3
                                     UnreadCount = Convert.ToInt16(js["messageCount"]);
                                     MsgCount.Value= Convert.ToInt16(js["messageCount"]);
                                     loginservice.client.DefaultRequestHeaders.Authorization=new AuthenticationHeaderValue("Bearer",AccessCode as string);
-                                    string LikeUrl = "https://api.cc98.org/me/favorite-topic-group";
-                                    try
-                                    {
-                                        var LikeRes=await client.GetAsync(LikeUrl);
-                                        if (LikeRes.StatusCode == HttpStatusCode.OK)
-                                        {
-                                            string LikeText=await LikeRes.Content.ReadAsStringAsync();
-                                            var likes = JsonConvert.DeserializeObject<Dictionary<string,object>>(LikeText);
-                                            var LikeList = JsonConvert.DeserializeObject<JArray>(likes["data"].ToString());
-                                            foreach(var like in LikeList)
-                                            {
-                                                var likeinfo = JsonConvert.DeserializeObject<Dictionary<string, object>>(like.ToString());
-                                                string collection = likeinfo["name"].ToString();
-                                                string sortid =( Convert.ToInt16(like["id"])+100).ToString();
-                                                likecollection.MenuItems.Add(new NavigationViewItem { Content = collection, Tag = sortid, Icon = new FluentIcons.WinUI.SymbolIcon { Symbol = FluentIcons.Common.Symbol.Add } });
-                                                collections.Add(collection);
-                                            }
-                                        }
-                                    }
-                                    catch (Exception ex)
-                                    {
-
-                                    }
+                                    
+                                    
                                 }
 
                             }
@@ -175,7 +154,32 @@ namespace App3
                 Set.Values["IsActive"] = "0";
             }
         }
-        
+        private async void GetLikeCollection()
+        {
+            string LikeUrl = "https://api.cc98.org/me/favorite-topic-group";
+            try
+            {
+                var LikeRes = await loginservice.client.GetAsync(LikeUrl);
+                if (LikeRes.StatusCode == HttpStatusCode.OK)
+                {
+                    string LikeText = await LikeRes.Content.ReadAsStringAsync();
+                    var likes = JsonConvert.DeserializeObject<Dictionary<string, object>>(LikeText);
+                    var LikeList = JsonConvert.DeserializeObject<JArray>(likes["data"].ToString());
+                    foreach (var like in LikeList)
+                    {
+                        var likeinfo = JsonConvert.DeserializeObject<Dictionary<string, object>>(like.ToString());
+                        string collection = likeinfo["name"].ToString();
+                        string sortid = (Convert.ToInt16(like["id"]) + 100).ToString();
+                        likecollection.MenuItems.Add(new NavigationViewItem { Content = collection, Tag = sortid, Icon = new FluentIcons.WinUI.SymbolIcon { Symbol = FluentIcons.Common.Symbol.Add } });
+                        collections.Add(collection);
+                    }
+                }
+            }
+            catch(Exception ex)
+            {
+
+            }
+        }
         public int UnreadCount { get; set; }
         private void Navi_SelectionChanged(NavigationView sender, NavigationViewSelectionChangedEventArgs args)
         {
@@ -214,6 +218,9 @@ namespace App3
                         break;
                     case "9":
                         contentframe.Navigate(typeof(Setting));
+                        break;
+                    case "10":
+                        GetLikeCollection();
                         break;
                     default:
                         if(((args.SelectedItem as NavigationViewItem).Tag as string).Length > 2)

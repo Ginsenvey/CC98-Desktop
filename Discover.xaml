@@ -9,7 +9,7 @@
     mc:Ignorable="d"
     xmlns:ic="using:FluentIcons.WinUI"
     xmlns:tool="using:CommunityToolkit.WinUI.UI.Controls"
-    Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+    Background="{ThemeResource DesktopAcrylicTransparentBrush}">
 
     <Grid>
         <Grid.ColumnDefinitions>
@@ -32,7 +32,7 @@
                 <ItemsRepeater.ItemTemplate>
                     <DataTemplate>
                         <Grid Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1">
-                            <HyperlinkButton HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch" x:Name="NewTileArea"  Click="NewTileArea_Click">
+                            <HyperlinkButton HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch" x:Name="NewTileArea"  Click="NewTileArea_Click" CornerRadius="0">
                                 <Grid Padding="5">
                                     <Grid.RowDefinitions>
                                         <RowDefinition Height="2*"></RowDefinition>
@@ -86,7 +86,7 @@
                 </ItemsRepeater.ItemTemplate>
             </ItemsRepeater>
         </ScrollViewer>
-        <Border Grid.Column="1" Grid.Row="0" Grid.RowSpan="2" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" BorderBrush="{ThemeResource CardStrokeColorDefaultSolidBrush}" BorderThickness="1" Margin="10,0,10,0" CornerRadius="5" >
+        <Border Grid.Column="1" Grid.Row="0" Grid.RowSpan="2" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" BorderBrush="{ThemeResource CardStrokeColorDefaultSolidBrush}" BorderThickness="1" Margin="0,0,10,0" CornerRadius="0" >
             <StackPanel Orientation="Vertical" Padding="10">
                 <Grid Padding="10">
                     <TextBlock Text="随机" VerticalAlignment="Center" FontSize="18" FontWeight="Bold" Foreground="{ThemeResource AccentAAFillColorDefaultBrush}" HorizontalAlignment="Left"></TextBlock>

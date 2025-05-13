@@ -18,7 +18,7 @@
             <RowDefinition Height="5*"></RowDefinition>
             <RowDefinition Height="*" MinHeight="100" ></RowDefinition>
         </Grid.RowDefinitions>
-        <Expander Grid.Row="0" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch"  x:Name="BoardBanner" VerticalContentAlignment="Stretch">
+        <Expander Grid.Row="0" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch"  x:Name="BoardBanner" VerticalContentAlignment="Stretch" CornerRadius="0">
             <Expander.Header>
                 <Grid>
                     <Grid.RowDefinitions>
@@ -54,7 +54,7 @@
             </Expander.Content>
         </Expander>
         <ScrollViewer Grid.Row="1" Grid.RowSpan="1" Margin="0,10,0,10">
-            <ItemsRepeater x:Name="STileList">
+            <ItemsRepeater x:Name="STileList" Loaded="STileList_Loaded">
                 <ItemsRepeater.ItemTemplate>
                     <DataTemplate>
                         <HyperlinkButton HorizontalContentAlignment="Stretch" HorizontalAlignment="Stretch" CornerRadius="0" x:Name="TileContent" Click="TileContent_Click">
@@ -90,7 +90,7 @@
                 </ItemsRepeater.ItemTemplate>
             </ItemsRepeater>
         </ScrollViewer>
-        <Grid Grid.Row="2" Background="{ThemeResource AcrylicBackgroundFillColorDefaultBrush}" Padding="10">
+        <Grid Grid.Row="2" Background="{ThemeResource ControlAltFillColorTransparentBrush}" Padding="10">
             <Button Height="45" HorizontalAlignment="Center" Width="200" Margin="10" x:Name="writepost" Click="writepost_Click">
                 <StackPanel Orientation="Horizontal" Spacing="25">
                     <ic:SymbolIcon Symbol="Add" FontSize="16" Foreground="{ThemeResource AccentAAFillColorDefaultBrush}" ></ic:SymbolIcon>

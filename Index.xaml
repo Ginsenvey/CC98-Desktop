@@ -34,10 +34,10 @@
                 <TextBlock x:Name="de" ></TextBlock>
             </StackPanel>
         </Border>
-        <FlipView  Width="Auto" Grid.Row="0"  x:Name="RecomList" VerticalAlignment="Top">
+        <FlipView Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" Width="Auto" Grid.Row="0"  x:Name="RecomList" VerticalAlignment="Top">
             <FlipView.ItemTemplate>
                 <DataTemplate>
-                    <Grid Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1" Padding="20">
+                    <Grid Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1" Padding="20" >
                         <Grid.RowDefinitions>
                             <RowDefinition Height="*"></RowDefinition>
                             <RowDefinition Height="*"></RowDefinition>

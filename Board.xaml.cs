@@ -22,6 +22,9 @@ using Windows.UI.Core.Preview;
 using static App3.Topic;
 using System.Threading.Tasks;
 using System.Net.Http;
+using Microsoft.VisualBasic;
+using System.Text.RegularExpressions;
+using System.Runtime.CompilerServices;
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
 
@@ -64,14 +67,16 @@ namespace App3
 
             if (parameter != null)
             {
+                pid = parameter;
                 GetData(parameter);
-                LoadSTiles(parameter);
+                LoadSTiles(parameter,"0");
             }
             else
             {
 
             }
         }
+        public string pid= "0";
         private async void GetData(string bid)
         {
             string BoardUrl = "https://api.cc98.org/board/"+bid;
@@ -124,9 +129,9 @@ namespace App3
 
             }
         }
-        private async void LoadSTiles(string bid)
+        private async void LoadSTiles(string bid,string start)
         {
-            string TileUrl = "https://api.cc98.org/board/"+bid+"/topic?from=0&size=20";
+            string TileUrl = "https://api.cc98.org/board/"+bid+"/topic?from="+start+"&size=20";
             try
             {
                 var TileRes = await MainWindow.loginservice.client.GetAsync(TileUrl);
@@ -237,6 +242,23 @@ namespace App3
         private async void writepost_Click(object sender, RoutedEventArgs e)
         {
             Frame.Navigate(typeof (Post), null);
+        }
+        public int history;
+        private void STileList_Loaded(object sender, RoutedEventArgs e)
+        {
+            STileList.ElementPrepared += (s, e) =>
+            {
+                if (STileList.ItemsSource != null)
+                {
+                    int current = e.Index;
+
+                    if (current > 0 && (current + 1) % 20 == 0 && current > history)
+                    {
+                        history = current;
+                        LoadSTiles(pid, (current + 1).ToString());
+                    }
+                }
+            };
         }
     }
 }

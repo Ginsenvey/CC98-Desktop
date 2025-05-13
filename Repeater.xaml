@@ -8,35 +8,37 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d"
     xmlns:ic="using:FluentIcons.WinUI"
+    xmlns:lab="using:CommunityToolkit.Labs.WinUI"
+    xmlns:tool="using:CommunityToolkit.WinUI.Controls"
     Background="{ThemeResource DesktopAcrylicTransparentBrush}">
 
-    <Grid>
+    <Grid Padding="20">
         <Grid.RowDefinitions>
-            <RowDefinition Height="*" MinHeight="90"></RowDefinition>
+            <RowDefinition Height="*" MinHeight="75"></RowDefinition>
             <RowDefinition Height="12*"></RowDefinition>
         </Grid.RowDefinitions>
-        <StackPanel Orientation="Horizontal" Grid.Row="0" Padding="20" Spacing="15">
-            
-            <TextBlock Text="默认分组" FontSize="18" FontWeight="Bold"  Foreground="{ThemeResource AccentAAFillColorSecondaryBrush}" VerticalAlignment="Center"></TextBlock>
-            <HyperlinkButton Background="Transparent" Width="45" Height="45">
-                <ic:SymbolIcon Symbol="Add"></ic:SymbolIcon>
-            </HyperlinkButton>
-            <HyperlinkButton Background="Transparent" Width="45" Height="45">
-                <ic:SymbolIcon Symbol="ArrowSort"></ic:SymbolIcon>
-            </HyperlinkButton>
-        </StackPanel>
-        
-        <ScrollViewer Grid.Row="1">
-            <ItemsRepeater ItemsSource="{x:Bind tiles}" >
+        <Grid  Grid.Row="0" Padding="10" >
+
+            <TextBlock Text="默认分组" FontSize="20" FontWeight="Bold" x:Name="de"  Foreground="{ThemeResource AccentAAFillColorSecondaryBrush}" VerticalAlignment="Center" HorizontalAlignment="Left"></TextBlock>
+            <Button Background="{ThemeResource ToggleButtonBackgroundThemeBrush}" Foreground="White" HorizontalAlignment="Right" Padding="10">
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                    <ic:SymbolIcon Symbol="ArrowSort" FontSize="16"></ic:SymbolIcon>
+                    <TextBlock Text="排序" ></TextBlock>
+                </StackPanel>
+            </Button>
+        </Grid>
+
+        <ScrollViewer Grid.Row="1" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" CornerRadius="8" Margin="0,0,0,15">
+            <ItemsRepeater ItemsSource="{x:Bind tiles}" x:Name="Collection" Loaded="Collection_Loaded">
                 <ItemsRepeater.ItemTemplate>
                     <DataTemplate>
                         <HyperlinkButton HorizontalContentAlignment="Stretch" HorizontalAlignment="Stretch" CornerRadius="0" x:Name="TileContent" >
-                            <Grid Padding="10" RowSpacing="3">
+                            <Grid Padding="3" RowSpacing="8">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="60"></ColumnDefinition>
-                                    <ColumnDefinition Width="4*"></ColumnDefinition>
-                                    <ColumnDefinition Width="2*"></ColumnDefinition>
-                                    <ColumnDefinition Width="2*"></ColumnDefinition>
+                                    <ColumnDefinition Width="*"></ColumnDefinition>
+                                    <ColumnDefinition Width="50"></ColumnDefinition>
+                                    <ColumnDefinition Width="200"></ColumnDefinition>
                                 </Grid.ColumnDefinitions>
                                 <Grid.RowDefinitions>
                                     <RowDefinition Height="*"></RowDefinition>

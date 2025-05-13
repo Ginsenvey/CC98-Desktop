@@ -34,7 +34,9 @@ namespace App3
             this.InitializeComponent();
             tiles = new ObservableCollection<Tile>();
         }
-
+        public string mode = "0";
+        public string groupid = "0";
+        public string sortmrthod = "0";
         protected override void OnNavigatedTo(Microsoft.UI.Xaml.Navigation.NavigationEventArgs e)
         {
             base.OnNavigatedTo(e);
@@ -44,8 +46,8 @@ namespace App3
 
             if (parameter != null)
             {
-                string mode= parameter["mode"];
-                string groupid=parameter["gid"];
+                mode= parameter["mode"];
+                groupid=parameter["gid"];
                 if (mode =="favorite")
                 {
                     Request(mode, "0", "0", groupid);
@@ -95,6 +97,23 @@ namespace App3
                 }
             }
                 
+        }
+        public int history = 0;
+        private void Collection_Loaded(object sender, RoutedEventArgs e)
+        {
+            Collection.ElementPrepared += (s, e) =>
+            {
+                if (Collection.ItemsSource != null)
+                {
+                    int current = e.Index;
+                    
+                    if (current > 0 && (current + 1) % 11 == 0&&current>history)
+                    {
+                        history = current;
+                        Request(mode, (current + 1).ToString(), sortmrthod, groupid);
+                    }
+                }
+            };
         }
     }
 }

@@ -10,7 +10,7 @@
     xmlns:tool="using:CommunityToolkit.WinUI.Controls"
     xmlns:lab="using:CommunityToolkit.WinUI.UI.Controls"
     xmlns:ic="using:FluentIcons.WinUI"
-    Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+    Background="{ThemeResource DesktopAcrylicTransparentBrush}">
 
     <Grid>
         <Grid.RowDefinitions>

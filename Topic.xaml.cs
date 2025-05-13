@@ -789,5 +789,15 @@ namespace App3
             };
             Frame.Navigate(typeof(Post), param);
         }
+
+        private void TileFlyout_Click(object sender, RoutedEventArgs e)
+        {
+            var tag = (sender as MenuFlyoutItem).Tag as string;
+            if (tag == "0")
+            {
+                LoadMetaData(Set.Values["CurrentTopicId"] as string);
+                
+            }
+        }
     }
 }
