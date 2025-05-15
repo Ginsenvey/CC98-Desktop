@@ -48,6 +48,7 @@ namespace App3
             {
                 mode= parameter["mode"];
                 groupid=parameter["gid"];
+                de.Text = parameter["name"];
                 if (mode =="favorite")
                 {
                     Request(mode, "0", "0", groupid);

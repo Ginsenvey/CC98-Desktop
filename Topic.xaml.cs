@@ -32,6 +32,7 @@ using System.Net.Http.Headers;
 using Windows.Media.Protection.PlayReady;
 using Windows.Devices.Geolocation;
 using System.Threading.Tasks;
+using System.Text;
 
 
 // To learn more about WinUI, the WinUI project structure,
@@ -80,7 +81,7 @@ namespace App3
             {
                 Set.Values["CurrentTopicId"]=parameter;
                 LoadMetaData(parameter);
-                LoadReply(parameter,"0");
+                //LoadReply(parameter,"0");
             }
             else
             {
@@ -115,28 +116,29 @@ namespace App3
                 }
             }
         }
-        private async void LoadReply(string pid,string start)
+        private async void LoadReply(string pid, string start)
         {
+
             if (Set.Values["IsAcTive"] as string == "1")
             {
-                
+
                 string access = Set.Values["Access"] as string;
                 if (!string.IsNullOrEmpty(access))
                 {
                     string TileSequence = await loginservice.GetTopic(pid, access, start);
                     replies.Clear();
-                    JArray TileArray=new JArray();
-                    try 
+                    JArray TileArray = new JArray();
+                    try
                     {
                         TileArray = JsonConvert.DeserializeObject<JArray>(TileSequence);
                     }
                     catch
                     {
-                        if(Set.Values.TryGetValue("Refresh",out var token))
+                        if (Set.Values.TryGetValue("Refresh", out var token))
                         {
-                            if(token != null)
+                            if (token != null)
                             {
-                                string newaccess=await loginservice.RefreshToken(token.ToString());
+                                string newaccess = await loginservice.RefreshToken(token.ToString());
                                 if (newaccess != "0")
                                 {
                                     loginservice.client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", newaccess);
@@ -170,19 +172,133 @@ namespace App3
                         }
                         string like = TilePair["likeCount"].ToString();
                         string dislike = TilePair["dislikeCount"].ToString();
-                        replies.Add(new Reply { author = author, text = UBBToMarkdownConverter.Convert(content,false), like = like, dislike = dislike, rid = rid, time = time, uid = id });
-
+                        string url = "/Assets/hide.gif";
+                        if (author != "null" && author != null)
+                        {
+                            string urlres = await NameToImageUrl(author);
+                            if (urlres != "0")
+                            {
+                                url = urlres;
+                            }
+                        }
+                        replies.Add(new Reply { author = author, text = UBBToMarkdownConverter.Convert(content, false), like = like, dislike = dislike, rid = rid, time = time, uid = id, url = url });
                     }
+                    
                     RootViewer.ScrollToVerticalOffset(0);//滚动到一页的最上方。这个方法必须在帖子load结束之后调用，否则ui切换逻辑错误。
+                }
+                else
+                {
 
                 }
             }
+        }
+        private async Task<string> NameToImageUrl(string name)
+        {
+            //此函数用于获取头像url
+            string url = "https://api.cc98.org/user/name/" + name;
+            using var client = new HttpClient();
+            var PortRes = await client.GetAsync(url);
+            if (PortRes.StatusCode == System.Net.HttpStatusCode.OK)
+            {
+                string content = await PortRes.Content.ReadAsStringAsync();
+                if (!string.IsNullOrEmpty(content))
+                {
+                    try
+                    {
+                        var Info = JsonConvert.DeserializeObject<Dictionary<string, object>>(content);
+                        string ImageUrl = Info["portraitUrl"].ToString();
+                        return ImageUrl;
+                    }
+                    catch
+                    {
+                        return "0";
+                    }
+
+                }
+                else
+                {
+                    return "0";
+                }
+
+            }
             else
             {
+                return "0";
+            }
+
+
+
+
+
+
+
+
+        }
+
+        private void Person_Click(object sender, RoutedEventArgs e)
+        {
+
+            var h = sender as HyperlinkButton;
+            var t = h?.DataContext as Reply;
+            if (t != null)
+            {
+                Set.Values["ProfileNaviMode"] = "Others";
+                Set.Values["CurrentPerson"] = t.uid;
+                if (t.uid != "0")
+                {
+                    Frame.Navigate(typeof(Profile), t.uid);
+                }
 
             }
         }
+        public static class LinkAnalyzer
+        {
+            public static KeyValuePair<string, string> LinkDefinite(string link)
+            {
+                if (!string.IsNullOrEmpty(link))
+                {
+                    if (link.Contains("user/name"))
+                    {
 
+                        string pattern = @"https:\/\/api\.cc98\.org\/user\/name\/([^\/\s]+)";
+                        MatchCollection matches = Regex.Matches(link, pattern);
+                        if (matches.Count == 1)
+                        {
+                            string username = matches[0].Groups[1].Value;
+                            return new KeyValuePair<string, string>("user", username);
+                        }
+                        else
+                        {
+                            return new KeyValuePair<string, string>("null", link);
+                        }
+
+                    }
+                    else if (link.Contains("/topic/") && (!link.Contains("#")))
+                    {
+                        string pattern = @"\/topic\/([^\/\s]+)";
+                        MatchCollection matches = Regex.Matches(link, pattern);
+                        if (matches.Count == 1)
+                        {
+                            string pid = matches[0].Groups[1].Value;
+                            return new KeyValuePair<string, string>("topic", pid);
+                        }
+                        else
+                        {
+                            return new KeyValuePair<string, string>("null", link);
+                        }
+                    }
+                    else
+                    {
+                        return new KeyValuePair<string, string>("other", link);
+                    }
+                }
+                else
+                {
+                    return new KeyValuePair<string, string>("null", link);
+                }
+
+            }
+        }
         public class Reply : INotifyPropertyChanged
         {
             private string _text;
@@ -192,6 +308,7 @@ namespace App3
             private string _dislike;
             private string _time;
             private string _uid;
+            private string _url;
             public string text
             {
                 get => _text;
@@ -283,8 +400,19 @@ namespace App3
                     }
                 }
             }
+            public string url
+            {
+                get => _url;
+                set
+                {
+                    if (_url != value)
+                    {
+                        _url = value;
+                        OnPropertyChanged(nameof(url));
+                    }
+                }
+            }
 
-            
             public event PropertyChangedEventHandler PropertyChanged;
 
             protected virtual void OnPropertyChanged(string propertyName)
@@ -454,104 +582,7 @@ namespace App3
                 PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
             }
         }
-        private async void portrait_Loaded(object sender, RoutedEventArgs e)
-        {
-            var port = sender as Image;
-            if (port != null)
-            {
-                var tag = port.Tag as string;
-                string url = "https://api.cc98.org/user/name/" + tag;
-                using var client = new HttpClient();
-                var PortRes = await client.GetAsync(url);
-                if (PortRes.StatusCode == System.Net.HttpStatusCode.OK)
-                {
-                    string content = await PortRes.Content.ReadAsStringAsync();
-                    if (!string.IsNullOrEmpty(content))
-                    {
-                        try
-                        {
-                            var Info = JsonConvert.DeserializeObject<Dictionary<string, object>>(content);
-                            string ImageUrl = Info["portraitUrl"].ToString();
-                            var bitmap = new BitmapImage(new Uri(ImageUrl));
-                            port.Source = bitmap;
-                        }
-                        catch
-                        {
-                            
-                        }
-                        
-                    }
-                }
-
-            }
-
-
-        }
-
-        private void Person_Click(object sender, RoutedEventArgs e)
-        {
-            
-            var h = sender as HyperlinkButton;
-            var t = h?.DataContext as Reply;
-            if (t != null)
-            {
-                Set.Values["ProfileNaviMode"] = "Others";
-                Set.Values["CurrentPerson"] = t.uid;
-                if (t.uid != "0")
-                {
-                    Frame.Navigate(typeof(Profile),t.uid);
-                }
-
-            }
-        }
-        public static class LinkAnalyzer
-        {
-            public static KeyValuePair<string,string> LinkDefinite(string link)
-            {
-                if (!string.IsNullOrEmpty(link))
-                {
-                    if (link.Contains("user/name"))
-                    {
-                               
-                        string pattern = @"https:\/\/api\.cc98\.org\/user\/name\/([^\/\s]+)";
-                        MatchCollection matches = Regex.Matches(link, pattern);
-                        if (matches.Count == 1)
-                        {
-                            string username = matches[0].Groups[1].Value;
-                            return new KeyValuePair<string, string>("user", username);
-                        }
-                        else
-                        {
-                            return new KeyValuePair<string, string>("null", link);
-                        }
-                        
-                    }
-                    else if (link.Contains("/topic/")&&(!link.Contains("#")))
-                    {
-                        string pattern = @"\/topic\/([^\/\s]+)";
-                        MatchCollection matches = Regex.Matches(link, pattern);
-                        if (matches.Count == 1)
-                        {
-                            string pid = matches[0].Groups[1].Value;
-                            return new KeyValuePair<string, string>("topic", pid);
-                        }
-                        else
-                        {
-                            return new KeyValuePair<string, string>("null", link);
-                        }
-                    }
-                    else
-                    {
-                        return new KeyValuePair<string, string>("other",link);
-                    }
-                }
-                else
-                {
-                    return new KeyValuePair<string,string>("null",link);
-                }
-
-            }
-        }
+        
         public static class UBBToMarkdownConverter
         {
             public static string Convert(string ubbText, bool IsImageVisible, bool escapeMarkdown = false)
@@ -745,6 +776,8 @@ namespace App3
 
         private  void Pager_SelectedIndexChanged(PagerControl sender, PagerControlSelectedIndexChangedEventArgs args)
         {
+            //此方法在页面加载完成后会被调用一次，Pager的SelectedIndex会被设置为0。
+            //所以页面构造函数处不需要单独调用LoadReply方法。
             int index = Pager.SelectedPageIndex;
             if (index >= 0)
             {

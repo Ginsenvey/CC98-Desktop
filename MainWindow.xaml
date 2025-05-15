@@ -8,6 +8,7 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d"
     Title="CC98"
+    xmlns:dev="using:DevWinUI"
     xmlns:ic="using:FluentIcons.WinUI"
     SystemBackdrop="{ThemeResource AcrylicBackgroundFillColorDefaultBackdrop}">
 
@@ -25,8 +26,10 @@
             
         </Grid>
         
+            
+       
         <NavigationView Grid.Row="1" Grid.RowSpan="2" HorizontalAlignment="Stretch" PaneDisplayMode="Auto" IsPaneToggleButtonVisible="True" IsPaneOpen="True" OpenPaneLength="280"  IsBackEnabled="True" IsSettingsVisible="False" SelectionChanged="Navi_SelectionChanged" x:Name="Navi"  BackRequested="Navi_BackRequested">
-
+            
             <NavigationView.MenuItems>
                 <NavigationViewItemHeader Content="首页"></NavigationViewItemHeader>
                 <NavigationViewItem Height="Auto" Tag="0">
@@ -101,6 +104,11 @@
             </NavigationView.MenuItems>
             <NavigationView.FooterMenuItems>
                 <NavigationViewItem Height="Auto" Tag="1">
+                    <NavigationViewItem.ContextFlyout>
+                        <MenuFlyout>
+                            <MenuFlyoutItem  Text="私信" Icon="{ic:SymbolIcon Symbol=MailAlert}" x:Name="msgflyout" Click="msgflyout_Click"></MenuFlyoutItem>
+                        </MenuFlyout>
+                    </NavigationViewItem.ContextFlyout>
                     <NavigationViewItem.InfoBadge>
                         <InfoBadge x:Name="MsgCount" Value="{Binding UnreadCount}" />
                     </NavigationViewItem.InfoBadge>
@@ -117,7 +125,9 @@
                     </StackPanel>
                 </NavigationViewItem>
             </NavigationView.FooterMenuItems>
-        <Frame x:Name="contentframe"></Frame>
+        <Frame x:Name="contentframe">
+                
+        </Frame>
             
         </NavigationView>
     </Grid>

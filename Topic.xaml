@@ -7,6 +7,7 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d"
+    
     xmlns:ic="using:FluentIcons.WinUI"
     xmlns:dev="using:DevWinUI"
     xmlns:tool="using:CommunityToolkit.WinUI.UI.Controls"
@@ -54,7 +55,7 @@
                     <TextBlock Text="{Binding favorite}" FontSize="14" VerticalAlignment="Center"></TextBlock>
                     
                 </StackPanel>
-                <Button Grid.Row="0" Grid.RowSpan="2" VerticalAlignment="Center" Height="45" HorizontalAlignment="Right"  Margin="10,15,10,10" x:Name="writereply" Click="writereply_Click">
+                <Button Grid.Row="0" Grid.RowSpan="2" VerticalAlignment="Center" Height="45" HorizontalAlignment="Right"  Margin="10,15,10,10" x:Name="writereply" Click="writereply_Click" >
                     <StackPanel Orientation="Horizontal" Spacing="15">
                         <ic:SymbolIcon Symbol="Add" FontSize="16" Foreground="{ThemeResource AccentAAFillColorDefaultBrush}" ></ic:SymbolIcon>
                         <TextBlock Text="回复" ></TextBlock>
@@ -91,7 +92,7 @@
                                         </HyperlinkButton.ContextFlyout>
                                         <StackPanel Grid.Row="0"  Orientation="Horizontal" Spacing="10">
                                             <Border Width="30" Height="30" CornerRadius="5" >
-                                                <Image Tag="{Binding author}" x:Name="portrait" Loaded="portrait_Loaded" Source="/Assets/hide.gif"></Image>
+                                                <Image  x:Name="portrait" Source="{Binding url}"></Image>
                                             </Border>
                                             <TextBlock Text="{Binding author}" VerticalAlignment="Center" ></TextBlock>
 
@@ -100,7 +101,7 @@
                                     
                                     
                                     <Border Background="{ThemeResource MarkdownBackgroudBrush}" Grid.Row="1" Padding="10" CornerRadius="4" MinHeight="60" Height="Auto">
-                                        <tool:MarkdownTextBlock Text="{Binding text}" Background="Transparent" Foreground="{ThemeResource TextFillColorSecondaryBrush}" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" LinkClicked="MarkdownTextBlock_LinkClicked" QuoteBorderBrush="{ThemeResource AccentAAFillColorDefaultBrush}" ImageMaxHeight="50" ImageMaxWidth="50" ImageStretch="Fill"></tool:MarkdownTextBlock>
+                                        <tool:MarkdownTextBlock Text="{Binding text}" Background="Transparent" Foreground="{ThemeResource TextFillColorSecondaryBrush}" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" LinkClicked="MarkdownTextBlock_LinkClicked"  ImageMaxHeight="50" ImageMaxWidth="50" ImageStretch="Fill"></tool:MarkdownTextBlock>
                                         
                                     </Border>
                                     <StackPanel Orientation="Vertical" Grid.Row="0" Margin="5,5,10,0" HorizontalAlignment="Right">
@@ -144,7 +145,7 @@
             </ItemsRepeater>
             
         </ScrollViewer>
-        
-        <PagerControl Grid.Row="2" DisplayMode="ButtonPanel" NumberOfPages="1" HorizontalAlignment="Center" x:Name="Pager" Margin="0,5,0,10" SelectedPageIndex="1" SelectedIndexChanged="Pager_SelectedIndexChanged"></PagerControl>
+       
+        <PagerControl Grid.Row="2" DisplayMode="ButtonPanel" NumberOfPages="1" HorizontalAlignment="Center" x:Name="Pager" Margin="0,5,0,10"  SelectedIndexChanged="Pager_SelectedIndexChanged"></PagerControl>
     </Grid>
 </Page>

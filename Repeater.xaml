@@ -19,8 +19,8 @@
         </Grid.RowDefinitions>
         <Grid  Grid.Row="0" Padding="10" >
 
-            <TextBlock Text="默认分组" FontSize="20" FontWeight="Bold" x:Name="de"  Foreground="{ThemeResource AccentAAFillColorSecondaryBrush}" VerticalAlignment="Center" HorizontalAlignment="Left"></TextBlock>
-            <Button Background="{ThemeResource ToggleButtonBackgroundThemeBrush}" Foreground="White" HorizontalAlignment="Right" Padding="10">
+            <TextBlock Text="收藏集" FontSize="20" FontWeight="Bold" x:Name="de"  Foreground="{ThemeResource AccentAAFillColorSecondaryBrush}" VerticalAlignment="Center" HorizontalAlignment="Left"></TextBlock>
+            <Button Style="{ThemeResource AccentButtonStyle}" HorizontalAlignment="Right" Padding="8">
                 <StackPanel Orientation="Horizontal" Spacing="8">
                     <ic:SymbolIcon Symbol="ArrowSort" FontSize="16"></ic:SymbolIcon>
                     <TextBlock Text="排序" ></TextBlock>

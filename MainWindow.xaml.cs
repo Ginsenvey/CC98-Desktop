@@ -28,6 +28,7 @@ using System.Collections.ObjectModel;
 using Newtonsoft.Json.Linq;
 using Windows.UI.WebUI;
 using FluentIcons.WinUI;
+using Microsoft.UI.Composition.SystemBackdrops;
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
 
@@ -45,7 +46,7 @@ namespace App3
             this.ExtendsContentIntoTitleBar = true;
             this.SetTitleBar(GridTitleBar);
             AppWindow.TitleBar.PreferredHeightOption = Microsoft.UI.Windowing.TitleBarHeightOption.Tall;
-            this.SystemBackdrop = new MicaBackdrop();
+            this.SystemBackdrop = new AcrylicSystemBackdrop(DesktopAcrylicKind.Base);
             Vault = new();
             collections = new ObservableCollection<string>()
             {
@@ -126,33 +127,34 @@ namespace App3
         private  async void Auth()
         {
             var loginservice=new CCkernel.CCloginservice();
-            string ResText = await loginservice.LoginAsync("安希礼", "byqzkyy.");
-            if (ResText.Contains("access_token"))
+            if (Set.Values.ContainsKey("Refresh"))
             {
-                try
+                if (Set.Values["Refresh"] != null)
                 {
-                    var js = JsonConvert.DeserializeObject<Dictionary<string, object>>(ResText);
-                    string access = js["access_token"] as string;
-                    string token_type = js["token_type"] as string;
-                    int expire = Convert.ToInt16(js["expires_in"]);
-                    string refresh = js["refresh_token"] as string;
-                    Set.Values["Access"] = access;
-                    Set.Values["Refresh"]=refresh;
-                    Set.Values["IsActive"]="1";
-                    loginservice.client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", access);
-                    de.Text = "在线模式";
-
+                    string refresh = Set.Values["Refresh"] as string;
+                    if (!string.IsNullOrEmpty(refresh)&&refresh!="0")
+                    {
+                        string token = await loginservice.RefreshToken(refresh);
+                        Set.Values["Access"] = token;
+                        Set.Values["IsActive"] = "1";
+                        loginservice.client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+                        de.Text = "鉴权状态正常";
+                    }
+                    else
+                    {
+                        Set.Values["IsActive"] = "0";
+                    }
                 }
-                catch(Exception e)
+                else
                 {
                     Set.Values["IsActive"] = "0";
-                    de.Text = e.Message;
                 }
             }
             else
             {
                 Set.Values["IsActive"] = "0";
             }
+            
         }
         private async void GetLikeCollection()
         {
@@ -162,14 +164,17 @@ namespace App3
                 var LikeRes = await loginservice.client.GetAsync(LikeUrl);
                 if (LikeRes.StatusCode == HttpStatusCode.OK)
                 {
+                    collections.Clear();
                     string LikeText = await LikeRes.Content.ReadAsStringAsync();
                     var likes = JsonConvert.DeserializeObject<Dictionary<string, object>>(LikeText);
                     var LikeList = JsonConvert.DeserializeObject<JArray>(likes["data"].ToString());
+                    likecollection.MenuItems.Clear();
                     foreach (var like in LikeList)
                     {
                         var likeinfo = JsonConvert.DeserializeObject<Dictionary<string, object>>(like.ToString());
                         string collection = likeinfo["name"].ToString();
                         string sortid = (Convert.ToInt16(like["id"]) + 100).ToString();
+
                         likecollection.MenuItems.Add(new NavigationViewItem { Content = collection, Tag = sortid, Icon = new FluentIcons.WinUI.SymbolIcon { Symbol = FluentIcons.Common.Symbol.Add } });
                         collections.Add(collection);
                     }
@@ -223,13 +228,16 @@ namespace App3
                         GetLikeCollection();
                         break;
                     default:
-                        if(((args.SelectedItem as NavigationViewItem).Tag as string).Length > 2)
+                        var selection = args.SelectedItem as NavigationViewItem;
+                        if ((selection.Tag as string).Length > 2)
                         {
                             string GroupId = (Convert.ToInt16((args.SelectedItem as NavigationViewItem).Tag as string) - 100).ToString();
+                            string GroupName=selection.Content as string;
                             var param = new Dictionary<string, string>()
                             {
                                 {"mode","favorite" },
-                                {"gid", GroupId}
+                                {"gid", GroupId},
+                                {"name",GroupName}
                             };
                             contentframe.Navigate(typeof(Repeater), param);
                         }
@@ -245,8 +253,12 @@ namespace App3
             if (contentframe.CanGoBack)
             {
                 contentframe.GoBack();
-                
             }
+        }
+
+        private void msgflyout_Click(object sender, RoutedEventArgs e)
+        {
+            contentframe.Navigate(typeof(Message),"0");
         }
     }
 }

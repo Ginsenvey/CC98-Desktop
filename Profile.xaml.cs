@@ -69,6 +69,7 @@ namespace App3
                 LoadProfile(parameter);
                 LoadMyTopic("0", parameter);
                 SignIn();
+                
             }
         }
         private void InitializeClient()
@@ -85,23 +86,26 @@ namespace App3
             string access = Set.Values["Access"] as string;
             if (!string.IsNullOrEmpty(access))
             {
-                using var client = new HttpClient();
-                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", access);
-                var res = await client.GetAsync(SignInUrl) ;
-                if (res.StatusCode == System.Net.HttpStatusCode.OK)
+                MainWindow.loginservice.client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", access);
+                var request = new HttpRequestMessage(HttpMethod.Post, "https://api.cc98.org/me/signin");
+                var content = new StringContent("", Encoding.UTF8, "application/json");
+                request.Content = content;//按照此格式发送空的post请求并设置请求头
+                var res = await MainWindow.loginservice.client.SendAsync(request);
+                if (res.StatusCode == System.Net.HttpStatusCode.BadRequest)
                 {
-                    string signinfo = await res.Content.ReadAsStringAsync();
-                    var js = JsonConvert.DeserializeObject<Dictionary<string, object>>(signinfo);
-                    if (js["hasSignedInToday"].ToString() == "True")
+                    string restext= await res.Content.ReadAsStringAsync();
+                    
+                    if (restext == "has_signed_in_today")
                     {
                         WealthInfo.Text = "财富值(已签到)";
                     }
-                }
-                else
-                {
-                    WealthInfo.Text = "财富值(签到失败)";
-                }
+                    else
+                    {
 
+                        WealthInfo.Text = "财富值(签到中)";
+                    }
+                }
+                
             }
         }
         private async void LoadProfile(string userid)
@@ -120,8 +124,8 @@ namespace App3
                 {
                     string ProfileText = await ProfileRes.Content.ReadAsStringAsync();
                     var js = JsonConvert.DeserializeObject<Dictionary<string, object>>(ProfileText);
-                    
-                    
+
+                    Set.Values["Uid"] = js["id"].ToString();
                     var profile = new Info()
                     {
                         Name = js["name"].ToString(),

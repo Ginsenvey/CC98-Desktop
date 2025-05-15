@@ -78,7 +78,7 @@
                 <Border Height="1" BorderBrush="{ThemeResource DividerBrush}" HorizontalAlignment="Stretch" BorderThickness="1"></Border>
                 <tool:MarkdownTextBlock Text="{Binding Signature}" x:Name="SignBoard" LinkClicked="SignBoard_LinkClicked" Background="Transparent" ImageStretch="UniformToFill" ImageMaxWidth="450" ImageMaxHeight="450"></tool:MarkdownTextBlock>
                 
-                <TextBlock Text="主题" FontSize="23" FontWeight="Bold" Foreground="#A9A9A9" x:Name="de"></TextBlock>
+                <TextBlock Text="主题" FontSize="23" FontWeight="Bold" Foreground="#A9A9A9" x:Name="de" IsTextSelectionEnabled="True"></TextBlock>
                 <Border Height="1" BorderBrush="{ThemeResource DividerBrush}" HorizontalAlignment="Stretch" BorderThickness="1"></Border>
                 <Border Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1" CornerRadius="5">
                     <ItemsRepeater x:Name="SimpleTile" Loaded="SimpleTile_Loaded" >
