@@ -39,6 +39,7 @@ namespace App3
     /// </summary>
     public sealed partial class MainWindow : Window
     {
+        
         public MainWindow()
         {
             this.InitializeComponent();
@@ -46,21 +47,89 @@ namespace App3
             this.ExtendsContentIntoTitleBar = true;
             this.SetTitleBar(GridTitleBar);
             AppWindow.TitleBar.PreferredHeightOption = Microsoft.UI.Windowing.TitleBarHeightOption.Tall;
-            this.SystemBackdrop = new AcrylicSystemBackdrop(DesktopAcrylicKind.Base);
+            LoadSettings();
+            App.ThemeChanged += OnAppThemeChanged;
             Vault = new();
             collections = new ObservableCollection<string>()
             {
                 
             };
             //likecollection.MenuItemsSource = collections;
-            Set = ApplicationData.Current.LocalSettings;
+             
             CheckLoginStatus();
             UnreadCount = 0;
             
             contentframe.Navigate(typeof(Index),"hotTopic");
-        }   
+        }
+        private void LoadSettings()
+        {
+            if (Set.Values.ContainsKey("Effect"))
+            {
+                string effect = (string)Set.Values["Effect"];
+                switch (effect)
+                {
+                    case "0":
+                        
+                        this.SystemBackdrop = new MicaSystemBackdrop();
+                        break;
+                    case "1":
+                        
+                        this.SystemBackdrop = new MicaSystemBackdrop(MicaKind.BaseAlt);
+                        break;
+                    case "2":
+                        
+                        this.SystemBackdrop = new AcrylicSystemBackdrop();
+                        break;
+                    case "3":
+                        
+                        this.SystemBackdrop = new AcrylicSystemBackdrop(DesktopAcrylicKind.Thin);
+                        break;
+                    case "4":
+                        
+                        this.SystemBackdrop = null;
+                        break;
+                    default:
+                        
+                        this.SystemBackdrop = new MicaSystemBackdrop();
+                        break;
+                }
+            }
+            else
+            {
+                Set.Values["Effect"] = "0";
+                this.SystemBackdrop = new MicaSystemBackdrop();
+
+            }
+            if (Set.Values.ContainsKey("Theme"))
+            {
+                string theme = (string)Set.Values["Theme"];
+                if (theme == "0")
+                {
+                    RootGrid.RequestedTheme = ElementTheme.Light;
+                }
+                else if (theme == "1")
+                {
+                   RootGrid.RequestedTheme = ElementTheme.Dark;
+                }
+                else
+                {
+                   RootGrid.RequestedTheme = ElementTheme.Default;
+                }
+            }
+            else
+            {
+                Set.Values["Theme"] = "2";
+                RootGrid.RequestedTheme = ElementTheme.Default;
+            }
+        }
+        private void OnAppThemeChanged(ElementTheme theme)
+        {
+            // 更新 RootGrid 的主题
+            RootGrid.RequestedTheme = theme;
+        }
         private PasswordVault Vault;
-        public ApplicationDataContainer Set;
+        
+        public ApplicationDataContainer Set= ApplicationData.Current.LocalSettings;
         public ObservableCollection<string> collections;
         public static CCloginservice loginservice =new CCloginservice();
         private async void CheckLoginStatus()

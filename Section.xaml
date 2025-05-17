@@ -11,8 +11,8 @@
     Background="{ThemeResource DesktopAcrylicTransparentBrush}">
     <Page.Resources>
         <DataTemplate x:Key="BoardCase" x:DataType="local:BoardInfo">
-            <Border BorderBrush="#aaaaaa"  Margin="10,0,10,10" CornerRadius="5">
-                <HyperlinkButton Content="{x:Bind BoardName}" Padding="8" Tag="{x:Bind BoardId}" Click="BoardButton_Click" x:Name="BoardButton" Background="{ThemeResource MarkdownBackgroudBrush}"></HyperlinkButton>
+            <Border BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}" BorderThickness="1" Margin="10,0,10,10" CornerRadius="5">
+                <HyperlinkButton Content="{x:Bind BoardName}" Padding="8" Tag="{x:Bind BoardId}" Click="BoardButton_Click" x:Name="BoardButton" ></HyperlinkButton>
             </Border>
         </DataTemplate>
         <DataTemplate x:Key="SectionCase" x:DataType="local:AllSection">
@@ -38,9 +38,9 @@
             <RowDefinition Height="*" MinHeight="80"></RowDefinition>
             <RowDefinition Height="6*"></RowDefinition>
         </Grid.RowDefinitions>
-        <Border  BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1" Margin="0,0,0,10" >
+        <Border    Margin="0,0,0,10" >
             <Border.Background>
-                <ImageBrush ImageSource="/Assets/mid_autumn.jpg" Stretch="UniformToFill" ></ImageBrush>
+                <ImageBrush ImageSource="/Assets/autumn_2022.jpg" Stretch="UniformToFill" x:Name="ThemePresenter"></ImageBrush>
             </Border.Background>
             <TextBlock Text="版面"  FontSize="24" FontWeight="Bold" Foreground="{ThemeResource AccentAAFillColorDefaultBrush}" VerticalAlignment="Center" Margin="20,0,0,0"></TextBlock>
         </Border>

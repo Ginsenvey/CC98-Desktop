@@ -22,7 +22,7 @@
         </Grid.RowDefinitions>
         <Border Grid.Row="0" Grid.Column="0" Canvas.ZIndex="1" >
             <Border.Background>
-                <ImageBrush ImageSource="Assets/mid_autumn.jpg" Stretch="UniformToFill"></ImageBrush>
+                <ImageBrush ImageSource="Assets/mid_autumn.jpg" Stretch="UniformToFill" x:Name="ThemePresnter"></ImageBrush>
             </Border.Background>
             <TextBlock Text="酒吧" x:Name="de" FontSize="24" FontWeight="Bold" VerticalAlignment="Center" Margin="20,0,0,0" Foreground="{ThemeResource AccentAAFillColorDefaultBrush}" Opacity="0.8"></TextBlock>
         </Border>

@@ -5,6 +5,7 @@ using Microsoft.UI.Xaml.Controls.Primitives;
 using Microsoft.UI.Xaml.Data;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
+using Microsoft.UI.Xaml.Media.Imaging;
 using Microsoft.UI.Xaml.Navigation;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -32,19 +33,36 @@ namespace App3
     /// </summary>
     public sealed partial class Discover : Page
     {
-        public ApplicationDataContainer Set;
+        public ApplicationDataContainer Set=ApplicationData.Current.LocalSettings;
         public ObservableCollection<Tile> tiles;
         public ObservableCollection<RandomTile> randomtiles;//必须是可观测集合，否则UI不显示。
         public Discover()
         {
             this.InitializeComponent();
             tiles = new ObservableCollection<Tile>() { };
+            LoadSettings();
             randomtiles = new ObservableCollection<RandomTile>();
             Set = ApplicationData.Current.LocalSettings;
             DiscoverList.ItemsSource = tiles;
             RandomTiles.ItemsSource = randomtiles;
             GetNewTopic();
             GetRandomTile();
+        }
+        private void LoadSettings()
+        {
+            if (Set.Values.ContainsKey("ThemePic"))
+            {
+                if (Set.Values["ThemePic"] as string != "0")
+                {
+                    string pic = (string)Set.Values["ThemePic"];
+                    var bitmap = new BitmapImage(new Uri(pic));
+                    ThemePresnter.ImageSource = bitmap;
+                }
+            }
+            else
+            {
+                Set.Values["ThemePic"] = "0";
+            }
         }
         private async void GetNewTopic()
         {

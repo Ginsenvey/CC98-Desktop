@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices.WindowsRuntime;
+using DevWinUI;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Controls.Primitives;
@@ -28,11 +29,22 @@ namespace App3
     public partial class App : Application
     {
         public ApplicationDataContainer Set;
+        public static event Action<ElementTheme> ThemeChanged;
+
+        // 触发事件的方法
+        public static void RaiseThemeChanged(ElementTheme theme)
+        {
+            ThemeChanged?.Invoke(theme);
+        }
         public App()
         {
             this.InitializeComponent();
             Set = ApplicationData.Current.LocalSettings;
+            
         }
+        
+        
+
 
         /// <summary>
         /// Invoked when the application is launched.
@@ -67,8 +79,8 @@ namespace App3
             
         }
 
-        private Window? m_window;
-        
+        public Window m_window { get; private set; }
+
         private Window loginpage;
     }
 }

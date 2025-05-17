@@ -17,7 +17,9 @@
             <RowDefinition Height="*" MinHeight="60"></RowDefinition>
             <RowDefinition Height="12*"></RowDefinition>
         </Grid.RowDefinitions>
-        <TextBlock FontSize="24" Text="设定" FontWeight="Bold" Foreground="#4d9891" Grid.Row="0" HorizontalAlignment="Left" Margin="15,10,10,10"></TextBlock>
+        
+        
+        <TextBlock FontSize="24" Text="设定" FontWeight="Bold" Foreground="#4d9891" Grid.Row="0" HorizontalAlignment="Left" Margin="15,10,10,10" x:Name="de"></TextBlock>
         <Border BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}" BorderThickness="1" Height="1" Grid.Row="0" VerticalAlignment="Bottom"></Border>
         <ScrollViewer Grid.Row="1" Padding="20" Margin="0,0,0,15">
             <StackPanel Orientation="Vertical" Spacing="10">
@@ -34,8 +36,8 @@
                     <tool:SettingsCard.HeaderIcon>
                         <ic:SymbolIcon Symbol="Apps"></ic:SymbolIcon>
                     </tool:SettingsCard.HeaderIcon>
-                    <ComboBox Background="Transparent" Width="Auto" SelectedIndex="0">
-                        <ComboBoxItem Content="十大话题" ></ComboBoxItem>
+                    <ComboBox Background="Transparent" Width="Auto" SelectedIndex="3">
+                        <ComboBoxItem Content="全部版面"></ComboBoxItem>
                         <ComboBoxItem Content="个人主页" ></ComboBoxItem>
                         <ComboBoxItem Content="新帖" ></ComboBoxItem>
                         <ComboBoxItem Content="首页" ></ComboBoxItem>
@@ -49,9 +51,12 @@
                     <tool:SettingsExpander.Items>
                         <tool:SettingsCard ContentAlignment="Left">
                             <StackPanel HorizontalAlignment="Left" Margin="10,10,10,10">
-                                <RadioButton Content="浅色"  x:Name="lightchoice"/>
-                                <RadioButton Content="深色"  x:Name="darkchoice"/>
-                                <RadioButton Content="跟随系统设置"  x:Name="followchoice"/>
+                                <RadioButtons SelectionChanged="RadioButtons_SelectionChanged">
+                                    <RadioButton Content="浅色"  x:Name="Light" Checked="Light_Checked" Tag="0" />
+                                    <RadioButton Content="深色"  x:Name="Dark"  Checked="Light_Checked" Tag="1"/>
+                                    <RadioButton Content="跟随系统"  x:Name="Follow" Checked="Light_Checked" Tag="2"/>
+                                </RadioButtons>
+                                
                             </StackPanel>
                         </tool:SettingsCard>
                     </tool:SettingsExpander.Items>
@@ -63,9 +68,11 @@
                     <tool:SettingsExpander.Items>
                         <tool:SettingsCard ContentAlignment="Left">
                             <StackPanel HorizontalAlignment="Left" Margin="10,10,10,10">
-                                <RadioButton Content="Mica(云母)"  />
-                                <RadioButton Content="Acrylic(亚克力)"  />
-                                <RadioButton Content="无效果"  />
+                                <RadioButton Content="Mica(云母)" Tag="0" x:Name="Mica" Checked="Effect_Checked"/>
+                                <RadioButton Content="Mica Alt" Tag="1" x:Name="MicaAlt" Checked="Effect_Checked"></RadioButton>
+                                <RadioButton Content="Acrylic(亚克力)" Tag="2" x:Name="AcrylicBase" Checked="Effect_Checked"/>
+                                <RadioButton Content="薄亚克力" Tag="3" x:Name="AcrylicThin" Checked="Effect_Checked"></RadioButton>
+                                
                             </StackPanel>
                         </tool:SettingsCard>
                     </tool:SettingsExpander.Items>
@@ -75,8 +82,32 @@
                         <ic:SymbolIcon Symbol="PaintBrush"></ic:SymbolIcon>
                     </tool:SettingsExpander.HeaderIcon>
                     <tool:SettingsExpander.Items>
-                        <tool:SettingsCard Header="主题配色"></tool:SettingsCard>
-                        <tool:SettingsCard Header="背景图片"></tool:SettingsCard>
+                        
+                        <tool:SettingsCard Header="背景图片">
+                            <SplitButton  x:Name="PicSelector"  Padding="0">
+                                <Border Height="35" Width="60">
+                                    <Border.Background>
+                                        <ImageBrush ImageSource="/Assets/Themes/mid_autumn.jpg"  Stretch="UniformToFill" x:Name="PicPreview"></ImageBrush>
+                                    </Border.Background>
+                                </Border>
+                                <SplitButton.Flyout>
+                                    <Flyout Placement="Bottom" x:Name="PicFlyout">
+                                        <GridView x:Name="ThemesGrid"  SelectionChanged="ThemesGrid_SelectionChanged">
+                                            <GridView.ItemsPanel>
+                                                <ItemsPanelTemplate>
+                                                    <ItemsWrapGrid Orientation="Horizontal" MaximumRowsOrColumns="3"></ItemsWrapGrid>
+                                                </ItemsPanelTemplate>
+                                            </GridView.ItemsPanel>
+                                            <GridView.ItemTemplate>
+                                                <DataTemplate x:DataType="local:Pic">
+                                                    <Image  Source="{x:Bind FilePath}" Width="60" Height="35" Stretch="UniformToFill"  ToolTipService.ToolTip="{x:Bind FileName}"></Image>
+                                                </DataTemplate>
+                                            </GridView.ItemTemplate>
+                                         </GridView>
+                                    </Flyout>
+                                </SplitButton.Flyout>
+                            </SplitButton>
+                        </tool:SettingsCard>
                     </tool:SettingsExpander.Items>
                 </tool:SettingsExpander>
                 <TextBlock  Text="关于" FontSize="16" Margin="5,2,0,5"></TextBlock>

@@ -43,8 +43,14 @@ namespace CCkernel
             };
             var PostData = new FormUrlEncodedContent(data);
             var response = await client.PostAsync(LoginUrl, PostData);
-            response.EnsureSuccessStatusCode();
-            return await response.Content.ReadAsStringAsync();
+            if (response.StatusCode == HttpStatusCode.OK)
+            {
+                return await response.Content.ReadAsStringAsync();
+            }
+            else
+            {
+                return "0";
+            }
         }
         public async Task<string> RefreshToken(string rft)
         {

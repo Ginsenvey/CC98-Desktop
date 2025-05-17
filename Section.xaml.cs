@@ -15,6 +15,9 @@ using Microsoft.UI.Xaml.Navigation;
 using System.Collections.ObjectModel;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using Microsoft.UI.Xaml.Media.Imaging;
+using Windows.Storage;
+using System.Runtime.CompilerServices;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -26,6 +29,7 @@ namespace App3
     /// </summary>
     public sealed partial class Section : Page
     {
+        public ApplicationDataContainer Set=ApplicationData.Current.LocalSettings;
         public ObservableCollection<AllSection> allSections;
         public Section()
         {
@@ -35,8 +39,25 @@ namespace App3
                 
             };
             SectionPresenter.ItemsSource = allSections;
-
+            LoadSettings();
             GetAllSection();
+        }
+        private void LoadSettings()
+        {
+            if (Set.Values.ContainsKey("ThemePic"))
+            {
+                if (Set.Values["ThemePic"] as string != "0")
+                {
+                    string pic = (string)Set.Values["ThemePic"];
+                    var bitmap = new BitmapImage(new Uri(pic));
+                    ThemePresenter.ImageSource = bitmap;
+                }
+
+            }
+            else
+            {
+                Set.Values["ThemePic"] = "0";
+            }
         }
         private async void GetAllSection()
         {
