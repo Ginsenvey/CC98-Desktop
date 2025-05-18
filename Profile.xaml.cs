@@ -9,7 +9,6 @@ using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Runtime.InteropServices.WindowsRuntime;
 using System.Text;
-using ABI.System;
 using FluentIcons.Common;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -369,9 +368,43 @@ namespace App3
             };
         }
 
-        private void SignBoard_LinkClicked(object sender, CommunityToolkit.WinUI.UI.Controls.LinkClickedEventArgs e)
+        private async void SignBoard_LinkClicked(object sender, CommunityToolkit.WinUI.UI.Controls.LinkClickedEventArgs e)
         {
-
+            string link = e.Link;
+            var result = LinkAnalyzer.LinkDefinite(link);
+            if (result.Key == "topic")
+            {
+                Frame.Navigate(typeof(Topic), result.Value);
+            }
+            else if(result.Key == "user")
+            {
+                string url = "https://api.cc98.org/user/name/" + result.Value;
+                using var client = new HttpClient();
+                var PortRes = await client.GetAsync(url);
+                if (PortRes.StatusCode == System.Net.HttpStatusCode.OK)
+                {
+                    string content = await PortRes.Content.ReadAsStringAsync();
+                    if (!string.IsNullOrEmpty(content))
+                    {
+                        try
+                        {
+                            var Info = JsonConvert.DeserializeObject<Dictionary<string, object>>(content);
+                            string uid = Info["id"].ToString();
+                            //de.Text = uid;
+                            Set.Values["ProfileNaviMode"] = "Others";
+                            Frame.Navigate(typeof(Profile), uid);
+                        }
+                        catch (Exception ex)
+                        {
+                            //de.Text = ex.Message;
+                        }
+                    }
+                    else
+                    {
+                        //de.Text = "¿Õ·µ»Ø";
+                    }
+                }
+            }
         }
         
     }

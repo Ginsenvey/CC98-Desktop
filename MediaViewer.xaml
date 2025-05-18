@@ -19,7 +19,7 @@
 
         </Grid.RowDefinitions>
         <Grid Grid.Row="0" x:Name="GridTitleBar">
-            <TextBlock Text="CC98 预览"  Margin="10,0,5,0" HorizontalAlignment="Left" VerticalAlignment="Center" FontSize="15"></TextBlock>
+            <TextBlock Text="CC98 预览"  Margin="10,0,5,0" HorizontalAlignment="Left" VerticalAlignment="Center" FontSize="15" x:Name="de"></TextBlock>
         </Grid>
         <Border Grid.Row="1" HorizontalAlignment="Center" CornerRadius="8" Background="{ThemeResource LayerOnMicaBaseAltFillColorDefaultBrush}" BorderThickness="1" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}">
             <StackPanel Orientation="Horizontal" Spacing="5" Padding="10">
@@ -31,14 +31,15 @@
                     <ic:SymbolIcon Symbol="ZoomOut"></ic:SymbolIcon>
                 </Button>
                 <AppBarSeparator></AppBarSeparator>
-                <dev:CopyButton Width="45" Height="45" BorderThickness="0"></dev:CopyButton>
-                <Button Height="45" Width="45" BorderThickness="0">
+                <dev:CopyButton Width="45" Height="45" BorderThickness="0" x:Name="CopyPic" Click="SavePic_Click"></dev:CopyButton>
+                <Button Height="45" Width="45" BorderThickness="0" x:Name="SavePic" Click="SavePic_Click_1">
                     <ic:SymbolIcon Symbol="Save"></ic:SymbolIcon>
                 </Button>
+                <TeachingTip x:Name="msg" Target="{x:Bind SavePic}"></TeachingTip>
             </StackPanel>
             
         </Border>
-        <ScrollViewer Grid.Row="2" ZoomMode="Enabled"  Padding="20" x:Name="zoomer" ViewChanged="zoomer_ViewChanged" HorizontalContentAlignment="Center" VerticalAlignment="Center" HorizontalScrollMode="Enabled" HorizontalScrollBarVisibility="Visible" HorizontalAlignment="Stretch">
+        <ScrollViewer Grid.Row="2" ZoomMode="Enabled"  Padding="20" x:Name="zoomer" ViewChanged="zoomer_ViewChanged" HorizontalContentAlignment="Center" VerticalAlignment="Stretch" HorizontalScrollMode="Enabled" HorizontalScrollBarVisibility="Visible" HorizontalAlignment="Stretch">
             <Image Stretch="UniformToFill" x:Name="PicViewer" HorizontalAlignment="Center"></Image>
         </ScrollViewer>
     </Grid>

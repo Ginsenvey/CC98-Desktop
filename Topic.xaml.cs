@@ -289,16 +289,74 @@ namespace App3
             // 监听关键事件
             
         }
-        private void MarkdownTextBlock_LinkClicked(object sender, CommunityToolkit.WinUI.UI.Controls.LinkClickedEventArgs e)
+        private async void MarkdownTextBlock_LinkClicked(object sender, CommunityToolkit.WinUI.UI.Controls.LinkClickedEventArgs e)
         {
             var url = e.Link.ToString();
-            if (url.Contains("webp"))
+            string flag= "0";
+            string[] picformats=new string[]
             {
-                var picviewer = new MediaViewer(url);
-                picviewer.Activate();
+                "jpg",
+                "jpeg",
+                "png",
+                "gif",
+                "webp",
+                
+            };
+            string[] audioformats= new string[]
+            {
+                "mp3",
+                "wav",
+                "m4a",
+                "ogg",
+                "flac",
+            };
+            string[] videofromats = new string[]
+            {
+                "mp4",
+                "avi",
+                "mkv",
+                "mov",
+                "wmv",
+            };
+            foreach (var format in picformats)
+            {
+                if (url.Contains(format))
+                {
+                    flag = "1";
+                    break;
+                }
+            }
+            foreach (var format in audioformats)
+            {
+                if (url.Contains(format))
+                {
+                    flag = "2";
+                    break;
+                }
+            }
+            foreach (var format in videofromats)
+            {
+                if (url.Contains(format))
+                {
+                    flag = "3";
+                    break;
+                }
+            }
+            if (flag=="1")
+            {
+                try
+                {
+                    var picviewer = new MediaViewer(url);
+                    picviewer.Activate();
+                }
+                catch
+                {
+
+                }
+                
                 
             }
-            else if (url.Contains("m4a"))
+            else if (flag=="2")
             {
                 //AudioPlayer.PlacementTarget = sender as MarkdownTextBlock;
                 AudioPlayer.Visibility = Visibility.Visible;
@@ -327,6 +385,35 @@ namespace App3
                 {
                     LoadMetaData(result.Value);
                     LoadReply(result.Value, "0");
+                }
+                else if (result.Key == "user")
+                {
+                    string _url = "https://api.cc98.org/user/name/" + result.Value;
+                    using var client = new HttpClient();
+                    var PortRes = await client.GetAsync(_url);
+                    if (PortRes.StatusCode == System.Net.HttpStatusCode.OK)
+                    {
+                        string content = await PortRes.Content.ReadAsStringAsync();
+                        if (!string.IsNullOrEmpty(content))
+                        {
+                            try
+                            {
+                                var Info = JsonConvert.DeserializeObject<Dictionary<string, object>>(content);
+                                string uid = Info["id"].ToString();
+                                //de.Text = uid;
+                                Set.Values["ProfileNaviMode"] = "Others";
+                                Frame.Navigate(typeof(Profile), uid);
+                            }
+                            catch (Exception ex)
+                            {
+                                //de.Text = ex.Message;
+                            }
+                        }
+                        else
+                        {
+                            //de.Text = "空返回";
+                        }
+                    }
                 }
             }
 
@@ -844,23 +931,20 @@ namespace App3
             }
             private static string ConvertEmoji(string input)
             {
-
-                string pattern = @"\[ac(\d{2})\]";
-                string output1 = Regex.Replace(input, pattern, match =>
+                var replacements = new[]
                 {
-                    string digits = match.Groups[1].Value;
-                    return $"![#表情#](https://www.cc98.org/static/images/ac/{digits}.png)";
-                });
+                    (@"\[ac(\d{2})\]","![#ac$1#](https://www.cc98.org/static/images/ac/$1.png)"),//ac娘
+                    (@"\[em(\d{2})\]","![#em$1#](https://www.cc98.org/static/images/em/em$1.gif)"),//经典
+                    (@"\[([a-zA-Z]{2})(\d{2})\]","![#$1$2#](https://www.cc98.org/static/images/$1/$1$2.png)"),//贴吧，雀魂
+                    (@"\[cc98(\d{2})\]","![#cc98$1#](https://www.cc98.org/static/images/CC98/CC98$1.gif)")//cc98
 
-                string pattern1 = @"\[([a-zA-Z]{2})(\d{2})\]";
-                string output2 = Regex.Replace(output1, pattern1, match =>
+                };
+                foreach (var (pattern, replacement) in replacements)
                 {
-                    // 提取字母和数字部分
-                    string letters = match.Groups[1].Value;
-                    string digits = match.Groups[2].Value;
-                    return $"![#表情#](https://www.cc98.org/static/images/{letters}/{letters}{digits}.png)";
-                });
-                return output2;
+                    input = Regex.Replace(input, pattern, replacement,
+                        RegexOptions.Singleline | RegexOptions.IgnoreCase);
+                }
+                return input;
             }
             private static string ConvertTextStyles(string input)
             {
