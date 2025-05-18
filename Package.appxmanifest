@@ -10,13 +10,13 @@
   <Identity
     Name="2a9e9d26-8aca-44b1-a864-82f8e404ac23"
     Publisher="CN=Ansherly"
-    Version="1.0.5.0" />
+    Version="1.0.6.0" />
 
   <mp:PhoneIdentity PhoneProductId="2a9e9d26-8aca-44b1-a864-82f8e404ac23" PhonePublisherId="00000000-0000-0000-0000-000000000000"/>
 
   <Properties>
-    <DisplayName>App3</DisplayName>
-    <PublisherDisplayName>21010</PublisherDisplayName>
+    <DisplayName>CC98 Release</DisplayName>
+    <PublisherDisplayName>Ansherly</PublisherDisplayName>
     <Logo>Assets\StoreLogo.png</Logo>
   </Properties>
 
@@ -49,7 +49,7 @@
       </uap:VisualElements>
       <Extensions>
         <uap:Extension Category="windows.protocol">
-          <uap:Protocol Name="ubb">
+          <uap:Protocol  Name="cc98">
             <uap:Logo>Assets\App.jpg</uap:Logo>
             <uap:DisplayName>CC98 Desktop</uap:DisplayName>
           </uap:Protocol>

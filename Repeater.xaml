@@ -32,7 +32,7 @@
             <ItemsRepeater ItemsSource="{x:Bind tiles}" x:Name="Collection" Loaded="Collection_Loaded">
                 <ItemsRepeater.ItemTemplate>
                     <DataTemplate>
-                        <HyperlinkButton HorizontalContentAlignment="Stretch" HorizontalAlignment="Stretch" CornerRadius="0" x:Name="TileContent" >
+                        <HyperlinkButton HorizontalContentAlignment="Stretch" HorizontalAlignment="Stretch" CornerRadius="0" x:Name="TileContent" Click="TileContent_Click">
                             <Grid Padding="3" RowSpacing="8">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="60"></ColumnDefinition>

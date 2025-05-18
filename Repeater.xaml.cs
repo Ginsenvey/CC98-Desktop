@@ -116,5 +116,18 @@ namespace App3
                 }
             };
         }
+
+        private void TileContent_Click(object sender, RoutedEventArgs e)
+        {
+            var h = sender as HyperlinkButton;
+            if (h != null)
+            {
+                var t = h?.DataContext as Tile;
+                if (t != null)
+                {
+                    Frame.Navigate(typeof(Topic), t.uid);
+                }
+            }
+        }
     }
 }

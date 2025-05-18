@@ -8,11 +8,11 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d"
     xmlns:tool="using:CommunityToolkit.WinUI.UI.Controls"
-    
+    xmlns:dev="using:DevWinUI"
     xmlns:ic="using:FluentIcons.WinUI"
     Background="{ThemeResource DesktopAcrylicTransparentBrush}">
 
-    <Grid>
+    <Grid dev:Growl.GrowlParent="True">
         <ScrollViewer >
             <StackPanel Orientation="Vertical" Padding="15" Spacing="10">
                 <Grid Height="230" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1" Padding="15" CornerRadius="5" x:Name="InfoContent">
@@ -75,6 +75,7 @@
                     </Grid>
                 </Grid>
                 <TextBlock Text="签名档" FontSize="23" FontWeight="Bold" Foreground="#A9A9A9" Margin="0,5,0,0"></TextBlock>
+                
                 <Border Height="1" BorderBrush="{ThemeResource DividerBrush}" HorizontalAlignment="Stretch" BorderThickness="1"></Border>
                 <tool:MarkdownTextBlock Text="{Binding Signature}" x:Name="SignBoard" LinkClicked="SignBoard_LinkClicked" Background="Transparent" ImageStretch="UniformToFill" ImageMaxWidth="450" ImageMaxHeight="450"></tool:MarkdownTextBlock>
                 

@@ -33,6 +33,9 @@ using Windows.Media.Protection.PlayReady;
 using Windows.Devices.Geolocation;
 using System.Threading.Tasks;
 using System.Text;
+using CommunityToolkit.WinUI.UI.Controls;
+using Windows.Media.Playback;
+using Windows.Media.Core;
 
 
 // To learn more about WinUI, the WinUI project structure,
@@ -54,10 +57,6 @@ namespace App3
         {
             this.InitializeComponent();
             replies = new ObservableCollection<Reply>() { };
-
-
-            
-            TileList.ItemsSource = replies;
             metadata = new MetaData()
             {
                 reply = "0",
@@ -121,12 +120,10 @@ namespace App3
 
             if (Set.Values["IsAcTive"] as string == "1")
             {
-
                 string access = Set.Values["Access"] as string;
                 if (!string.IsNullOrEmpty(access))
                 {
                     string TileSequence = await loginservice.GetTopic(pid, access, start);
-                    replies.Clear();
                     JArray TileArray = new JArray();
                     try
                     {
@@ -144,8 +141,19 @@ namespace App3
                                     loginservice.client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", newaccess);
                                     Set.Values["Access"] = newaccess;
                                     access = newaccess;
-                                    TileSequence = await loginservice.GetTopic(pid, access, start);
-                                    TileArray = JsonConvert.DeserializeObject<JArray>(TileSequence);
+                                    try
+                                    {
+                                        TileSequence = await loginservice.GetTopic(pid, access, start);
+                                        TileArray = JsonConvert.DeserializeObject<JArray>(TileSequence);
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        return;//无法鉴权的情况，或者链接有误/网络问题。
+                                        //已知问题：markdowntextblock错误解析链接，导致传入参数错误。
+                                        //方案：对导航参数进行正则匹配，确保是合法的链接。同时，改进链接分析器的功能。
+
+                                    }
+
                                 }
                             }
                             else
@@ -155,8 +163,9 @@ namespace App3
                         }
 
                     }
-
-                    
+                    //_preparedCount = 0;
+                    //RootViewer.IsEnabled = false;
+                    replies.Clear();
                     foreach (var ATile in TileArray)
                     {
                         string TileText = ATile.ToString();
@@ -183,8 +192,11 @@ namespace App3
                         }
                         replies.Add(new Reply { author = author, text = UBBToMarkdownConverter.Convert(content, false), like = like, dislike = dislike, rid = rid, time = time, uid = id, url = url });
                     }
-                    
+                    TileList.ItemsSource = replies;
+                    TileList.UpdateLayout();
                     RootViewer.ScrollToVerticalOffset(0);//滚动到一页的最上方。这个方法必须在帖子load结束之后调用，否则ui切换逻辑错误。
+                    await Task.Delay(100);
+
                 }
                 else
                 {
@@ -249,6 +261,142 @@ namespace App3
                     Frame.Navigate(typeof(Profile), t.uid);
                 }
 
+            }
+        }
+        private void Pager_SelectedIndexChanged(PagerControl sender, PagerControlSelectedIndexChangedEventArgs args)
+        {
+            //此方法在页面加载完成后会被调用一次，Pager的SelectedIndex会被设置为0。
+            //所以页面构造函数处不需要单独调用LoadReply方法。
+            int index = Pager.SelectedPageIndex;
+            if (index >= 0)
+            {
+                int startindex = 10 * (index);
+                LoadReply(Set.Values["CurrentTopicId"] as string, startindex.ToString());
+
+            }
+
+        }
+
+        private MediaPlayer _mediaPlayer;
+        private void InitializeMediaPlayer()
+        {
+            _mediaPlayer = new MediaPlayer
+            {
+                AutoPlay = true,
+                Volume = 0.8 // 默认音量 (0.0 ~ 1.0)
+            };
+
+            // 监听关键事件
+            
+        }
+        private void MarkdownTextBlock_LinkClicked(object sender, CommunityToolkit.WinUI.UI.Controls.LinkClickedEventArgs e)
+        {
+            var url = e.Link.ToString();
+            if (url.Contains("webp"))
+            {
+                var picviewer = new MediaViewer(url);
+                picviewer.Activate();
+                
+            }
+            else if (url.Contains("m4a"))
+            {
+                //AudioPlayer.PlacementTarget = sender as MarkdownTextBlock;
+                AudioPlayer.Visibility = Visibility.Visible;
+                InitializeMediaPlayer();
+                AudioName.Text = url;
+                try
+                {
+                    var mediaSource = MediaSource.CreateFromUri(new Uri(url));
+                    // 设置媒体源
+                    _mediaPlayer.Source = mediaSource;
+                    // 开始播放
+                    _mediaPlayer.Play();
+                    Play.Visibility = Visibility.Collapsed;
+                    Pause.Visibility = Visibility.Visible;
+                }
+                catch(Exception ex)
+                {
+                    AudioName.Text = ex.Message;
+                }
+                
+            }
+            else
+            {
+                var result = LinkAnalyzer.LinkDefinite(url);
+                if (result.Key == "topic")
+                {
+                    LoadMetaData(result.Value);
+                    LoadReply(result.Value, "0");
+                }
+            }
+
+        }
+
+
+        private void writereply_Click(object sender, RoutedEventArgs e)
+        {
+            var param = new Dictionary<string, string>()
+            {
+                {"Mode","0"},//回复主题为0，回帖为1，发主题、投票为2
+                {"Pid",Set.Values["CurrentTopicId"] as string },
+
+            };
+            Frame.Navigate(typeof(Post), param);
+        }
+
+        private void TileFlyout_Click(object sender, RoutedEventArgs e)
+        {
+            var tag = (sender as MenuFlyoutItem).Tag as string;
+            if (tag == "0")
+            {
+                LoadMetaData(Set.Values["CurrentTopicId"] as string);
+
+            }
+        }
+        private void Pause_Click(object sender, RoutedEventArgs e)
+        {
+            if (_mediaPlayer != null)
+            {
+                if (_mediaPlayer.PlaybackSession.PlaybackState == MediaPlaybackState.Playing)
+                {
+                    _mediaPlayer.Pause();
+                    Play.Visibility = Visibility.Visible;
+                    Pause.Visibility = Visibility.Collapsed;
+                }
+            }
+        }
+
+        private void Play_Click(object sender, RoutedEventArgs e)
+        {
+            if (_mediaPlayer != null)
+            {
+                if (_mediaPlayer.PlaybackSession.PlaybackState == MediaPlaybackState.Paused)
+                {
+                    _mediaPlayer.Play();
+                    Play.Visibility = Visibility.Collapsed;
+                    Pause.Visibility = Visibility.Visible;
+                }
+
+            }
+        }
+
+        private void RePlay_Click(object sender, RoutedEventArgs e)
+        {
+            if (_mediaPlayer != null)
+            {
+                _mediaPlayer.Pause();
+                _mediaPlayer.PlaybackSession.Position = TimeSpan.Zero;
+                _mediaPlayer.Play();
+            }
+        }
+
+        private void close_Click(object sender, RoutedEventArgs e)
+        {
+            AudioPlayer.Visibility = Visibility.Collapsed;
+            if (_mediaPlayer != null)
+            {
+                _mediaPlayer.Pause();
+                _mediaPlayer.Dispose();
             }
         }
         public static class LinkAnalyzer
@@ -679,7 +827,7 @@ namespace App3
                 
 
             }
-
+            
             private static string ConvertLinks(string input)
             {
                 // 带标题的链接 [url=...]...[/url]
@@ -728,7 +876,9 @@ namespace App3
             (@"\[size=.*?\](.*?)\[/size\]", "$1"),
             (@"\[center\](.*?)\[/center\]","$1  "),
             (@"\[align=[^\]]+\](.*?)\[/align\]","$1  "),
-            (@"@(\S+)\s","[@ $1 ](https://api.cc98.org/user/name/$1)")
+            (@"@(\S+)\s","[@ $1 ](https://api.cc98.org/user/name/$1)"),
+            (@"\[audio\](.*?)\[/audio\]","[#**音频**#]($1)"),
+            (@"\[video\](.*?)\[/video\]","[#**视频**#]($1)")
         };
 
                 foreach (var (pattern, replacement) in replacements)
@@ -774,63 +924,6 @@ namespace App3
             }
         }
 
-        private  void Pager_SelectedIndexChanged(PagerControl sender, PagerControlSelectedIndexChangedEventArgs args)
-        {
-            //此方法在页面加载完成后会被调用一次，Pager的SelectedIndex会被设置为0。
-            //所以页面构造函数处不需要单独调用LoadReply方法。
-            int index = Pager.SelectedPageIndex;
-            if (index >= 0)
-            {
-                int startindex = 10 * (index);
-                LoadReply(Set.Values["CurrentTopicId"] as string, startindex.ToString());
-                
-            }
-            
-        }
-
         
-
-        private void MarkdownTextBlock_LinkClicked(object sender, CommunityToolkit.WinUI.UI.Controls.LinkClickedEventArgs e)
-        {
-            var url = e.Link.ToString();
-            if (url.Contains("webp"))
-            {
-                
-                var bitmap = new BitmapImage(new Uri(url));
-                BuiltInViewer.Source = bitmap;
-                viewer.IsOpen = true;
-            }
-            else
-            {
-                var result = LinkAnalyzer.LinkDefinite(url);
-                if (result.Key == "topic")
-                {
-                    LoadMetaData(result.Value);
-                    LoadReply(result.Value, "0");
-                }
-            }
-        }
-        
-
-        private void writereply_Click(object sender, RoutedEventArgs e)
-        {
-            var param = new Dictionary<string, string>()
-            {
-                {"Mode","0"},//回复主题为0，回帖为1，发主题、投票为2
-                {"Pid",Set.Values["CurrentTopicId"] as string },
-                
-            };
-            Frame.Navigate(typeof(Post), param);
-        }
-
-        private void TileFlyout_Click(object sender, RoutedEventArgs e)
-        {
-            var tag = (sender as MenuFlyoutItem).Tag as string;
-            if (tag == "0")
-            {
-                LoadMetaData(Set.Values["CurrentTopicId"] as string);
-                
-            }
-        }
     }
 }

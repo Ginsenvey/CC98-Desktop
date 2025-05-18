@@ -27,6 +27,7 @@ using Windows.Media.Capture;
 using Windows.Storage;
 using static System.Net.WebRequestMethods;
 using static App3.Topic;
+using DevWinUI;
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
 
@@ -45,7 +46,7 @@ namespace App3
             this.InitializeComponent();
             
             SimpleTile.ItemsSource = stiles;
-
+            Growl.Info("hello");
             InitializeClient();
             
         }
