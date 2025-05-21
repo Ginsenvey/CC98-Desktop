@@ -19,6 +19,7 @@ using System.Threading.Tasks;
 using Windows.ApplicationModel.Contacts;
 using Windows.Foundation;
 using Windows.Foundation.Collections;
+using Windows.Media.Devices;
 using Windows.Storage;
 
 // To learn more about WinUI, the WinUI project structure,
@@ -37,10 +38,9 @@ namespace App3
         {
             this.InitializeComponent();
             contacts = new()
-            {
-                
+            {   
             };
-            ContactRepeater.ItemsSource = contacts;
+            
             InitializeClient();
             
             
@@ -95,7 +95,7 @@ namespace App3
                     {
                         string porturl = "https://api.cc98.org/user/basic?";
                         List<string> users = new();
-                        
+                        List<SMsg> msgs = new();
                         foreach (var c in list)
                         {
                             var js = JsonConvert.DeserializeObject<Dictionary<string, object>>(c.ToString());
@@ -103,7 +103,7 @@ namespace App3
                             string time = js["time"].ToString();
                             string text = js["lastContent"].ToString();
                             users.Add("id=" + mid);
-                            contacts.Add(new Contact { mid = mid, time = time, text = text });
+                            msgs.Add(new SMsg { Mid=mid,Time=time,Text=text} );
                         }
                         porturl += string.Join("&",users);
                         if (users.Count > 0)
@@ -115,18 +115,26 @@ namespace App3
                                 if (!string.IsNullOrEmpty(port))
                                 {
                                     var portlist = JsonConvert.DeserializeObject<JArray>(port);
-                                    List<string> ports = new();
-                                    int index = 0;
-                                    foreach(var p in portlist)
+                                    Dictionary<string,SInfo> personinfo = new();
+
+                                    foreach (var p in portlist)
                                     {
                                         var info = JsonConvert.DeserializeObject <Dictionary<string, object>>(p.ToString());
                                         string name = info["name"].ToString();
                                         string purl = info["portraitUrl"].ToString();
-                                        contacts[index].name = name;
-                                        contacts[index].url = purl;
-                                        index++;
+                                        string id = info["id"].ToString();
+                                        personinfo.Add(id, new SInfo { Name = name, PortraitUrl = purl });
                                     }
-                                    //简单按照顺序匹配id和name是有问题的，后期可能用LINQ重写逻辑。
+                                    foreach (SMsg m in msgs)
+                                    {
+                                        if (personinfo.ContainsKey(m.Mid))
+                                        {
+                                            contacts.Add(new Contact { mid = m.Mid, name = personinfo[m.Mid].Name, url = personinfo[m.Mid].PortraitUrl, text = m.Text, time = m.Time });
+                                        }
+                                        
+                                    }
+                                    ContactRepeater.ItemsSource = contacts;
+                                    
                                     //事实上如果删改web端的sessionStorage，web端也会出现错位。说明98的代码也有一定问题。
                                 }
                             }
@@ -140,6 +148,18 @@ namespace App3
                 ContactRepeater.SelectedIndex = 0;
             }
         }
+        public class SInfo
+        {
+            public string Name { get; set; }
+            public string PortraitUrl { get; set; }
+        }
+        public class SMsg
+        {
+            public string Text { get; set; }
+            public string Time { get; set; }
+            public string Mid { get; set; }
+        }
+        
         public class Contact : INotifyPropertyChanged
         {
             private string _text;

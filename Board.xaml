@@ -10,6 +10,7 @@
     xmlns:lab="using:CommunityToolkit.Labs.WinUI"
     xmlns:ic="using:FluentIcons.WinUI"
     xmlns:tool="using:CommunityToolkit.WinUI.UI.Controls"
+    xmlns:dev="using:DevWinUI"
     Background="{ThemeResource DesktopAcrylicTransparentBrush}">
     
     <Grid x:Name="RootGrid">
@@ -97,6 +98,7 @@
                     <TextBlock Text="发帖" ></TextBlock>
                 </StackPanel> 
             </Button>
+            
             
         </Grid>
         <ContentDialog Title="发表主题" x:Name="PostPanel" HorizontalAlignment="Center" VerticalAlignment="Center">

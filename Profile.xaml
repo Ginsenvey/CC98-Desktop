@@ -36,13 +36,13 @@
                     <TextBlock Grid.Row="1" Grid.Column="0" FontSize="35" FontWeight="Bold" Text="{Binding Name}" Foreground="#4d9891" VerticalAlignment="Center" IsTextSelectionEnabled="True"></TextBlock>
 
                     <StackPanel Orientation="Horizontal" Grid.Row="2" Grid.Column="0" Spacing="5" >
-                        <HyperlinkButton >
+                        <HyperlinkButton x:Name="Follow" Click="Follow_Click" Tag="followee">
                             <StackPanel Orientation="Horizontal">
                                 <TextBlock Text="{Binding Follow}"  FontSize="16" Margin="0,0,5,0"></TextBlock>
                                 <TextBlock Text="关注"  FontSize="16" Foreground="{ThemeResource TextFillColorSecondaryBrush}"></TextBlock>
                             </StackPanel>
                         </HyperlinkButton>
-                        <HyperlinkButton >
+                        <HyperlinkButton Click="Follow_Click" Tag="follower"> 
                             <StackPanel Orientation="Horizontal">
                                 <TextBlock Text="{Binding Fan}"  FontSize="16" Margin="0,0,5,0"></TextBlock>
                                 <TextBlock Text="粉丝"  FontSize="16" Foreground="{ThemeResource TextFillColorSecondaryBrush}"></TextBlock>

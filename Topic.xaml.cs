@@ -36,6 +36,8 @@ using System.Text;
 using CommunityToolkit.WinUI.UI.Controls;
 using Windows.Media.Playback;
 using Windows.Media.Core;
+using Windows.ApplicationModel.DataTransfer;
+using FluentIcons.Common;
 
 
 // To learn more about WinUI, the WinUI project structure,
@@ -66,9 +68,19 @@ namespace App3
             };
             MetaDataArea.DataContext = metadata;
             loginservice = new CCloginservice();
-            
+            Unloaded += Topic_Unloaded;
 
         }
+
+        private void Topic_Unloaded(object sender, RoutedEventArgs e)
+        {
+            if(_mediaPlayer!= null)
+            {
+                _mediaPlayer.Dispose();
+                TileList.ItemsSource = null;
+            }
+        }
+
         protected override void OnNavigatedTo(Microsoft.UI.Xaml.Navigation.NavigationEventArgs e)
         {
             base.OnNavigatedTo(e);
@@ -80,10 +92,45 @@ namespace App3
             {
                 Set.Values["CurrentTopicId"]=parameter;
                 LoadMetaData(parameter);
-                //LoadReply(parameter,"0");
+               
             }
             else
             {
+                
+            }
+        }
+        private void Stats(string board)
+        {
+            if (!Set.Values.ContainsKey("Stats"))
+            {
+                Dictionary<string, int> stats = new Dictionary<string, int>();
+                stats[board] = 1;
+                string statsjson = JsonConvert.SerializeObject(stats);
+                Set.Values["Stats"] = statsjson;
+            }
+            else
+            {
+                string _statsjson = Set.Values["Stats"].ToString();
+                if (_statsjson != null)
+                {
+                    var stats = JsonConvert.DeserializeObject<Dictionary<string, int>>(_statsjson);
+                    if(stats != null)
+                    {
+                        if (stats.ContainsKey(board))
+                        {
+                            stats[board]++;
+                        }
+                        else
+                        {
+                            stats[board] = 1;
+                        }
+                        string statsjson = JsonConvert.SerializeObject(stats);
+                        Set.Values["Stats"] = statsjson;
+                    }
+                    
+                }
+                
+                    
                 
             }
         }
@@ -104,6 +151,32 @@ namespace App3
                     metadata.time = js["time"].ToString();
                     metadata.hit = js["hitCount"].ToString();
                     metadata.reply = js["replyCount"].ToString();
+                    string favourl = "https://api.cc98.org/topic/"+pid+"/isfavorite";
+                    var favourres = await loginservice.client.GetAsync(favourl);
+                    
+                    if (favourres.StatusCode == System.Net.HttpStatusCode.OK)
+                    {
+                        string content = await favourres.Content.ReadAsStringAsync();
+                        if (content == "true")
+                        {
+                            metadata.variant = IconVariant.Color;
+                        }
+                        else
+                        {
+                            metadata.variant = IconVariant.Regular;
+                        }
+                    }
+                    else
+                    {
+                        metadata.variant = IconVariant.Regular;
+                    }
+                    
+                    string boardid = js["boardId"].ToString();
+                    if (boardid != null)
+                    {
+                        Stats(boardid);
+                    }
+                    
                     if (metadata.reply != null)
                     {
                         Pager.NumberOfPages = (Convert.ToInt32(metadata.reply)/10)+1;
@@ -115,7 +188,8 @@ namespace App3
                 }
             }
         }
-        private async void LoadReply(string pid, string start)
+        public bool IsImageVisible = false;
+        private async void LoadReply(string pid, string start,bool mode)
         {
 
             if (Set.Values["IsAcTive"] as string == "1")
@@ -171,14 +245,16 @@ namespace App3
                         string TileText = ATile.ToString();
                         var TilePair = JsonConvert.DeserializeObject<Dictionary<string, object>>(TileText);
                         string content = TilePair["content"].ToString();
-                        string author = TilePair["userName"].ToString();
+                        string author = "匿名";
                         string time = TilePair["time"].ToString();
                         string rid = TilePair["id"].ToString();
                         string id = "0";
                         if (TilePair["userId"] != null)
                         {
                             id = TilePair["userId"].ToString();
+                            author = TilePair["userName"].ToString();
                         }
+                        string floor = TilePair["floor"].ToString();
                         string like = TilePair["likeCount"].ToString();
                         string dislike = TilePair["dislikeCount"].ToString();
                         string url = "/Assets/hide.gif";
@@ -190,7 +266,7 @@ namespace App3
                                 url = urlres;
                             }
                         }
-                        replies.Add(new Reply { author = author, text = UBBToMarkdownConverter.Convert(content, false), like = like, dislike = dislike, rid = rid, time = time, uid = id, url = url });
+                        replies.Add(new Reply { author = author, text = UBBToMarkdownConverter.Convert(content, mode), like = like, dislike = dislike, rid = rid, time = time, uid = id, url = url,floor=floor+"L" });
                     }
                     TileList.ItemsSource = replies;
                     TileList.UpdateLayout();
@@ -263,15 +339,19 @@ namespace App3
 
             }
         }
+        public int CurrentPage = 0;
+        
         private void Pager_SelectedIndexChanged(PagerControl sender, PagerControlSelectedIndexChangedEventArgs args)
         {
             //此方法在页面加载完成后会被调用一次，Pager的SelectedIndex会被设置为0。
             //所以页面构造函数处不需要单独调用LoadReply方法。
             int index = Pager.SelectedPageIndex;
+            CurrentPage = index;
+            
             if (index >= 0)
             {
                 int startindex = 10 * (index);
-                LoadReply(Set.Values["CurrentTopicId"] as string, startindex.ToString());
+                LoadReply(Set.Values["CurrentTopicId"] as string, startindex.ToString(),IsImageVisible);
 
             }
 
@@ -384,7 +464,7 @@ namespace App3
                 if (result.Key == "topic")
                 {
                     LoadMetaData(result.Value);
-                    LoadReply(result.Value, "0");
+                    LoadReply(result.Value, "0",IsImageVisible);
                 }
                 else if (result.Key == "user")
                 {
@@ -431,14 +511,43 @@ namespace App3
             Frame.Navigate(typeof(Post), param);
         }
 
-        private void TileFlyout_Click(object sender, RoutedEventArgs e)
+        private async void TileFlyout_Click(object sender, RoutedEventArgs e)
         {
-            var tag = (sender as MenuFlyoutItem).Tag as string;
-            if (tag == "0")
+            var m= sender as MenuFlyoutItem;
+            if (m != null)
             {
-                LoadMetaData(Set.Values["CurrentTopicId"] as string);
-
+                var tag = m.Tag as string;
+                if (tag == "0")
+                {
+                    LoadMetaData(Set.Values["CurrentTopicId"] as string);
+                }
+                else if (tag == "1")
+                {
+                    string shareurl = "https://www.cc98.org/topic/" + Set.Values["CurrentTopicId"] as string;
+                    var datapackage=new DataPackage();
+                    datapackage.SetText(shareurl);
+                    Clipboard.SetContent(datapackage); 
+                }
+                else if (tag == "2")
+                {
+                    string favoriteurl = "https://api.cc98.org/me/favorite/"+ (Set.Values["CurrentTopicId"] as string) + "?groupid=0";
+                    var request = new HttpRequestMessage(HttpMethod.Put, favoriteurl);
+                    var content = new StringContent("", Encoding.UTF8, "application/json");
+                    request.Content = content;//按照此格式发送空的post请求并设置请求头
+                    var res = await loginservice.client.SendAsync(request);
+                    de.Text = res.StatusCode.ToString();
+                    if (res.StatusCode == System.Net.HttpStatusCode.OK)
+                    {
+                        metadata.variant = IconVariant.Color;
+                    }
+                }
+                else
+                {
+                    LoadReply(Set.Values["CurrentTopicId"] as string, (CurrentPage*10).ToString(), !IsImageVisible);
+                    
+                }
             }
+            
         }
         private void Pause_Click(object sender, RoutedEventArgs e)
         {
@@ -544,6 +653,7 @@ namespace App3
             private string _time;
             private string _uid;
             private string _url;
+            private string _floor;//楼层数
             public string text
             {
                 get => _text;
@@ -647,7 +757,18 @@ namespace App3
                     }
                 }
             }
-
+            public string floor
+            {
+                get => _floor;
+                set
+                {
+                    if (_floor != value)
+                    {
+                        _floor = value;
+                        OnPropertyChanged(nameof(floor));
+                    }
+                }
+            }
             public event PropertyChangedEventHandler PropertyChanged;
 
             protected virtual void OnPropertyChanged(string propertyName)
@@ -668,6 +789,7 @@ namespace App3
             private string _dislike;//踩
             private string _isrealidvisible;//匿名与否
             private string _hit;//热度，点击量
+            private IconVariant _variant;
             public string text
             {
                 get => _text;
@@ -810,6 +932,18 @@ namespace App3
                     }
                 }
             }
+            public IconVariant variant
+            {
+                get => _variant;
+                set
+                {
+                    if (_variant != value)
+                    {
+                        _variant = value;
+                        OnPropertyChanged(nameof(variant));
+                    }
+                }
+            }
             public event PropertyChangedEventHandler PropertyChanged;
 
             protected virtual void OnPropertyChanged(string propertyName)
@@ -820,7 +954,7 @@ namespace App3
         
         public static class UBBToMarkdownConverter
         {
-            public static string Convert(string ubbText, bool IsImageVisible, bool escapeMarkdown = false)
+            public static string Convert(string ubbText, bool IsImageVisible, bool escapeMarkdown =false)
             {
                 var text = Preprocess(ubbText);
 
@@ -833,9 +967,10 @@ namespace App3
                 text = ConvertImages(text,IsImageVisible);
                 text = ConvertLinks(text);
                 text=ConvertEmoji(text);
-                
+                text=ConvertColor(text);
+                //text=ConvertBold(text);
                 text = ConvertTextStyles(text);
-                text=RemoveSizeTags(text);
+                
                 
                 // 清理格式
                 //text = Cleanup(text);
@@ -846,8 +981,9 @@ namespace App3
             private static string Preprocess(string input)
             {
                 return input.Replace("\r\n", "  \n")
-                            .Replace("\r", " \n")
+                            .Replace("\r", "  \n")
                             .Replace("\n", "  \n")
+                            .Replace("<br>","  \n")
                             .Trim();
             }
             //两个空格加\n是markdown控件的换行格式。\n和\r是操作系统回车键的格式。字符串"\n"是cc98传输文本的换行格式。
@@ -861,23 +997,56 @@ namespace App3
             
             private static string ConvertQuotes(string input)
             {
-                string _output = Regex.Replace(input,
-        @"\[quote\](.*?)\[/quote\]",
-        m => {
-            // 分割每行并在每行前添加 > 
-            var lines = m.Groups[1].Value.Split('\n');
-            List<string> _lines = new();
-            foreach (var line in lines)
-            {
-                string _line = line + "  ";
-                _lines.Add(_line);
-            }
-            string output = "> " + string.Join("\n> ", _lines) + "<引文>";
-            return ConvertQuotes(output);
-        },
-        RegexOptions.Singleline | RegexOptions.IgnoreCase);
+                
+                string pattern = @"(\[quote\])|(\[/quote\])";
 
-                return _output;
+                // 使用栈来处理嵌套层级。实际上栈不起作用，只是为了借用栈的思想。
+                
+                StringBuilder output = new StringBuilder();
+                int currentLevel = 0;
+
+                // 当前处理的文本
+                int lastIndex = 0;
+
+                // 正则匹配标签并进行替换
+                foreach (Match match in Regex.Matches(input, pattern))
+                {
+                    // 获取标签的开始位置
+                    int matchStart = match.Index;
+                    // 获取标签的结束位置
+                    int matchEnd = match.Index + match.Length;
+
+                    // 先处理标签之前的文本
+
+
+                    if (match.Value == "[quote]")
+                    {
+                        output.Append(input.Substring(lastIndex, matchStart - lastIndex));
+                        // 处理 [quote] 标签：增加层级并推入栈
+                        
+                        currentLevel++;
+                        // 添加 Markdown 格式的引用
+                        output.Append(new string('>', currentLevel) + " ");
+                    }
+                    else if (match.Value == "[/quote]")
+                    {
+                        output.Append(new string(input.Substring(lastIndex, matchStart - lastIndex).Replace("\n", "  \n" + new string('>', currentLevel)).Replace("\r", "  \n" + new string('>', currentLevel)) + "  \n" + new string('>', currentLevel - 1) + "  \n" + new string('>', currentLevel - 1)));
+                        // 处理 [/quote] 标签：减少层级并弹出栈.
+                        //将系统换行符替换为引用符号非常关键，构造正确的换行结构和引用的续引用。
+                        currentLevel--;
+                        
+                        // 不添加文本，只需要关闭当前层级的引用
+                    }
+
+                    // 更新 lastIndex
+                    lastIndex = matchEnd;
+                }
+
+                // 处理最后一个标签之后的文本
+                output.Append("  \n"+input.Substring(lastIndex));
+
+
+                return output.ToString();
             }
 
             private static string ConvertLists(string input)
@@ -914,7 +1083,19 @@ namespace App3
                 
 
             }
-            
+            private static string ConvertColor(string input)
+            {
+                string pattern = @"\[color=[^\]]*\](.*?)\[/color\]";
+
+                // 循环处理，逐层去除嵌套的 color 标签
+                string result = input;
+                while (Regex.IsMatch(result, pattern))
+                {
+                    result = Regex.Replace(result, pattern, "$1");
+                }
+                return result;
+            }
+           
             private static string ConvertLinks(string input)
             {
                 // 带标题的链接 [url=...]...[/url]
@@ -936,7 +1117,7 @@ namespace App3
                     (@"\[ac(\d{2})\]","![#ac$1#](https://www.cc98.org/static/images/ac/$1.png)"),//ac娘
                     (@"\[em(\d{2})\]","![#em$1#](https://www.cc98.org/static/images/em/em$1.gif)"),//经典
                     (@"\[([a-zA-Z]{2})(\d{2})\]","![#$1$2#](https://www.cc98.org/static/images/$1/$1$2.png)"),//贴吧，雀魂
-                    (@"\[cc98(\d{2})\]","![#cc98$1#](https://www.cc98.org/static/images/CC98/CC98$1.gif)")//cc98
+                    (@"\[cc98(\d{2})\]","![#cc98$1#](https://www.cc98.org/static/images/CC98/CC98$1.png)")//cc98
 
                 };
                 foreach (var (pattern, replacement) in replacements)
@@ -955,11 +1136,15 @@ namespace App3
             (@"\[del\](.*?)\[/del\]", "~~$1~~"),
             (@"\[i\](.*?)\[/i\]", "*$1*"),
             (@"\[u\](.*?)\[/u\]", "$1"),
-            (@"\[color=.*?\](.*?)\[/color\]", "$1"),
+            (@"\[color=[^\]]*\](.*?)\[/color\]", "$1"),
             (@"\[font=.*?\](.*?)\[/font\]", "$1"),
-            (@"\[size=.*?\](.*?)\[/size\]", "$1"),
+            (@"\[size=\d{1,2}\]",""),
+            (@"\[/size\]",""),
             (@"\[center\](.*?)\[/center\]","$1  "),
+            (@"\<center\>(.*?)\</center\>","$1  "),
+            (@"<p[^>]*>(.*?)</p>","$1  "),
             (@"\[align=[^\]]+\](.*?)\[/align\]","$1  "),
+            (@"<img\s+[^>]*src=""([^""]+)""[^>]*>","[#**图片**#]($1)"),
             (@"@(\S+)\s","[@ $1 ](https://api.cc98.org/user/name/$1)"),
             (@"\[audio\](.*?)\[/audio\]","[#**音频**#]($1)"),
             (@"\[video\](.*?)\[/video\]","[#**视频**#]($1)")
@@ -973,27 +1158,7 @@ namespace App3
 
                 return input;
             }
-            static string RemoveSizeTags(string input)
-            {
-                // 正则表达式：匹配 [size=xx] 标签及其内容
-                string pattern = @"\[size=\d{1,2}\](.*?)\[/size\]";
-
-                // 使用正则替换，递归地去除最内层的 [size] 标签
-                string output = Regex.Replace(input, pattern, match =>
-                {
-                    // 仅保留标签内的内容
-                    return match.Groups[1].Value;
-                });
-
-                // 如果替换后仍然存在 [size] 标签，递归调用此方法继续替换
-                if (output != input)
-                {
-                    return RemoveSizeTags(output);
-                    // 继续处理外层的标签
-                }
-
-                return output;  // 返回最终结果
-            }
+            
             private static string Cleanup(string input)
             {
                 // 合并多余空行

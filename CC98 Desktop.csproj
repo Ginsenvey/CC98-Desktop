@@ -40,7 +40,12 @@
   </ItemGroup>
   <ItemGroup>
     <None Remove="Board.xaml" />
+    <None Remove="CC98 Desktop_1.0.5.0_x64_Debug.cer" />
+    <None Remove="CC98 Desktop_1.0.5预览体验（x64）.zip" />
+    <None Remove="CC98 Desktop_1.0.6.0_x64_Debug.cer" />
+    <None Remove="CC98 Desktop_TemporaryKey.pfx" />
     <None Remove="Discover.xaml" />
+    <None Remove="Friend.xaml" />
     <None Remove="Index.xaml" />
     <None Remove="login.xaml" />
     <None Remove="MediaViewer.xaml" />
@@ -62,6 +67,8 @@
     <Content Include="Assets\Square44x44Logo.scale-200.png" />
     <Content Include="Assets\Square44x44Logo.targetsize-24_altform-unplated.png" />
     <Content Include="Assets\Wide310x150Logo.scale-200.png" />
+    <Content Include="CC98 Desktop_1.0.6.0_x64_Debug.cer" />
+    <Content Include="CC98 Desktop_TemporaryKey.pfx" />
   </ItemGroup>
 
   <ItemGroup>
@@ -118,6 +125,11 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Themes\" />
+  </ItemGroup>
+  <ItemGroup>
+    <Page Update="Friend.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
   </ItemGroup>
   <ItemGroup>
     <Page Update="MediaViewer.xaml">

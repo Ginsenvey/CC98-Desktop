@@ -45,7 +45,7 @@ namespace App3
             this.InitializeComponent();
             
             SimpleTile.ItemsSource = stiles;
-            Growl.Info("hello");
+            
             InitializeClient();
             
         }
@@ -406,7 +406,20 @@ namespace App3
                 }
             }
         }
-        
+
+        private void Follow_Click(object sender, RoutedEventArgs e)
+        {
+            var h = sender as HyperlinkButton;
+            if(h!= null)
+            {
+                string tag = h.Tag as string;
+                if(!string.IsNullOrEmpty(tag))
+                {
+                    Frame.Navigate(typeof(Friend), tag);
+                }
+                
+            }
+        }
     }
 
 }
