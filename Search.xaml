@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Page
+    x:Class="App3.Search"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:App3"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d"
+    xmlns:ic="using:FluentIcons.WinUI"
+    Background="{ThemeResource DesktopAcrylicTransparentBrush}">
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*" MinHeight="80"></RowDefinition>
+            <RowDefinition Height="12*"></RowDefinition>
+        </Grid.RowDefinitions>
+        <Border Grid.Row="0"  >
+            <Border.Background>
+                <ImageBrush ImageSource="Assets/mid_autumn.jpg" Stretch="UniformToFill" x:Name="ThemePresnter"></ImageBrush>
+            </Border.Background>
+            <TextBlock Text="搜索结果" x:Name="de" FontSize="22" FontWeight="Bold" VerticalAlignment="Center" Margin="20,0,0,0" Foreground="{ThemeResource AccentAAFillColorDefaultBrush}" Opacity="0.8"></TextBlock>
+        </Border>
+        <ScrollViewer  CornerRadius="5" Grid.Row="1">
+            <ItemsRepeater x:Name="SearchList" VerticalCacheLength="4">
+
+                <ItemsRepeater.ItemTemplate>
+                    <DataTemplate>
+                        <Grid Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1">
+                            <HyperlinkButton HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch" x:Name="SearchContent"   CornerRadius="0" Click="SearchContent_Click">
+                                <Grid Padding="5">
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="2*"></RowDefinition>
+                                        <RowDefinition Height="3*"></RowDefinition>
+                                        <RowDefinition Height="*"></RowDefinition>
+                                    </Grid.RowDefinitions>
+
+                                    <HyperlinkButton Grid.Row="0" Margin="0,0,0,5"  x:Name="Person" >
+                                        <TextBlock Text="{Binding author}" VerticalAlignment="Center" ></TextBlock>
+
+                                    </HyperlinkButton>
+
+
+                                    <Border Background="{ThemeResource MarkdownBackgroudBrush}" Grid.Row="1" Padding="10" CornerRadius="4" MinHeight="60" Height="Auto">
+                                        <TextBlock Text="{Binding title}"  TextWrapping="Wrap" Foreground="{ThemeResource TextFillColorSecondaryBrush}"></TextBlock>
+
+                                    </Border>
+                                    <TextBlock Grid.Row="0" HorizontalAlignment="Right" Text="{Binding  time}"  FontSize="10"   Foreground="{ThemeResource TextFillColorSecondaryBrush}"></TextBlock>
+
+                                    <StackPanel Orientation="Horizontal" Grid.Row="2" Spacing="10">
+                                        <Button Background="Transparent"  HorizontalAlignment="Left" Margin="0,10,0,0">
+                                            <StackPanel Orientation="Horizontal" Spacing="5" >
+                                                <ic:SymbolIcon Symbol="Chat" FontSize="11"></ic:SymbolIcon>
+                                                <TextBlock Text="{Binding reply}" Grid.Row="2"  HorizontalAlignment="Right" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}"></TextBlock>
+                                            </StackPanel>
+                                        </Button>
+
+                                        <Button Background="Transparent"  HorizontalAlignment="Left" Margin="0,10,0,0" >
+                                            <StackPanel Orientation="Horizontal" Spacing="5" >
+                                                <ic:SymbolIcon Symbol="Fire" FontSize="11"></ic:SymbolIcon>
+                                                <TextBlock Text="{Binding hit}"   HorizontalAlignment="Right" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}"></TextBlock>
+                                            </StackPanel>
+                                        </Button>
+
+                                    </StackPanel>
+                                    <Button Grid.Row="2" HorizontalAlignment="Right" Background="Transparent" Margin="0,10,0,0">
+                                        <ic:SymbolIcon Symbol="MoreHorizontal" FontSize="11"></ic:SymbolIcon>
+                                        <Button.Flyout>
+                                            <MenuFlyout>
+                                                <MenuFlyoutItem Text="收藏" Icon="{ic:SymbolIcon Symbol=Star}"></MenuFlyoutItem>
+                                                <MenuFlyoutItem Text="复制帖子ID" Icon="{ic:SymbolIcon Symbol=Link}"></MenuFlyoutItem>
+
+                                            </MenuFlyout>
+                                        </Button.Flyout>
+                                    </Button>
+
+                                </Grid>
+                            </HyperlinkButton>
+                        </Grid>
+                    </DataTemplate>
+                </ItemsRepeater.ItemTemplate>
+            </ItemsRepeater>
+        </ScrollViewer>
+    </Grid>
+</Page>

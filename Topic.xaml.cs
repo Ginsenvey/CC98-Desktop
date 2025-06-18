@@ -38,6 +38,16 @@ using Windows.Media.Playback;
 using Windows.Media.Core;
 using Windows.ApplicationModel.DataTransfer;
 using FluentIcons.Common;
+using System.Net;
+using Windows.ApplicationModel.Contacts;
+using static App3.Message;
+using DevWinUI;
+using ABI.Microsoft.UI.Xaml.Media.Animation;
+using CommunityToolkit.Labs.WinUI.MarkdownTextBlock;
+using Microsoft.Windows.AppNotifications.Builder;
+using Microsoft.Windows.AppNotifications;
+
+
 
 
 // To learn more about WinUI, the WinUI project structure,
@@ -55,9 +65,11 @@ namespace App3
         public ApplicationDataContainer Set = ApplicationData.Current.LocalSettings;
         public CCloginservice loginservice;
         
+        
         public Topic()
         {
             this.InitializeComponent();
+            
             replies = new ObservableCollection<Reply>() { };
             metadata = new MetaData()
             {
@@ -92,7 +104,7 @@ namespace App3
             {
                 Set.Values["CurrentTopicId"]=parameter;
                 LoadMetaData(parameter);
-               
+                LoadReply(Set.Values["CurrentTopicId"] as string, "0", IsImageVisible);
             }
             else
             {
@@ -100,6 +112,7 @@ namespace App3
             }
         }
         private void Stats(string board)
+        //统计板块访问次数，作为用户体验模型的一部分。
         {
             if (!Set.Values.ContainsKey("Stats"))
             {
@@ -129,9 +142,6 @@ namespace App3
                     }
                     
                 }
-                
-                    
-                
             }
         }
         private async void LoadMetaData(string pid)
@@ -237,9 +247,12 @@ namespace App3
                         }
 
                     }
-                    //_preparedCount = 0;
-                    //RootViewer.IsEnabled = false;
+
                     replies.Clear();
+                    TileList.ItemsSource = null;//清除绑定，防止重复数据。此处必须在TileList.ItemsSource赋值之前调用，否则会导致数据重复绑定。
+                    List<string> users = new();
+                    List<Reply> ReplyList = new List<Reply>();
+                    string hideurl = "/Assets/hide.gif";
                     foreach (var ATile in TileArray)
                     {
                         string TileText = ATile.ToString();
@@ -257,71 +270,75 @@ namespace App3
                         string floor = TilePair["floor"].ToString();
                         string like = TilePair["likeCount"].ToString();
                         string dislike = TilePair["dislikeCount"].ToString();
-                        string url = "/Assets/hide.gif";
-                        if (author != "null" && author != null)
+                        
+                        if (author != "null" && author != null&&id!="0")
                         {
-                            string urlres = await NameToImageUrl(author);
-                            if (urlres != "0")
+                            users.Add("id="+id);
+                        }
+                        
+                        ReplyList.Add(new Reply { author = author, text = UBBToMarkdownConverter.Convert(content, mode), like = like, dislike = dislike, rid = rid, time = time, uid = id, floor=floor+"L" ,url=hideurl});
+                    }
+                    
+                    if (users.Count > 0)
+                    {
+                        
+                        string param = string.Join("&", users);
+                        string url = "https://api.cc98.org/user/basic?" + param;
+                        using var client = new HttpClient();
+                        var PortRes = await client.GetAsync(url);
+                        if (PortRes.StatusCode == System.Net.HttpStatusCode.OK)
+                        {
+                            string content = await PortRes.Content.ReadAsStringAsync();
+                            if (!string.IsNullOrEmpty(content))
                             {
-                                url = urlres;
+                                try
+                                {
+                                    var portlist = JsonConvert.DeserializeObject<JArray>(content);
+                                    Dictionary<string,string> PortDict = new Dictionary<string, string>();
+                                    foreach (var p in portlist)
+                                    {
+                                        var info = JsonConvert.DeserializeObject<Dictionary<string, object>>(p.ToString());
+                                        string purl = info["portraitUrl"].ToString();
+                                        string id = info["id"].ToString();
+                                        //此处创建一个以id为key的字典，存储头像信息。
+                                        PortDict[id] = purl;
+                                    }
+                                    //此处有一个玄学问题，上方已经运行过一次Clear方法，为什么还会有重复数据？原因是TileList.ItemsSource的绑定没有被清除掉，导致TileList.ItemsSource在下一次加载时仍然保留了上一次的引用。解决方法是每次加载前先清空replies集合，然后重新绑定。
+                                    foreach (Reply r in ReplyList)
+                                    {
+                                        if (PortDict.ContainsKey(r.uid))
+                                        {
+                                            r.url = PortDict[r.uid];
+                                        }
+                                       
+                                        replies.Add(r);
+                                    }
+                                }
+                                catch(Exception ex)
+                                {
+                                    replies.Add(new Reply { text="处理帖子出错:"+ex.Message});
+                                }
                             }
                         }
-                        replies.Add(new Reply { author = author, text = UBBToMarkdownConverter.Convert(content, mode), like = like, dislike = dislike, rid = rid, time = time, uid = id, url = url,floor=floor+"L" });
+                    }
+                    else
+                    {
+                        
+                        foreach (Reply r in ReplyList)
+                        {
+                            replies.Add(r);
+                        }
                     }
                     TileList.ItemsSource = replies;
-                    TileList.UpdateLayout();
+                    
                     RootViewer.ScrollToVerticalOffset(0);//滚动到一页的最上方。这个方法必须在帖子load结束之后调用，否则ui切换逻辑错误。
-                    await Task.Delay(100);
-
                 }
                 else
                 {
-
                 }
             }
         }
-        private async Task<string> NameToImageUrl(string name)
-        {
-            //此函数用于获取头像url
-            string url = "https://api.cc98.org/user/name/" + name;
-            using var client = new HttpClient();
-            var PortRes = await client.GetAsync(url);
-            if (PortRes.StatusCode == System.Net.HttpStatusCode.OK)
-            {
-                string content = await PortRes.Content.ReadAsStringAsync();
-                if (!string.IsNullOrEmpty(content))
-                {
-                    try
-                    {
-                        var Info = JsonConvert.DeserializeObject<Dictionary<string, object>>(content);
-                        string ImageUrl = Info["portraitUrl"].ToString();
-                        return ImageUrl;
-                    }
-                    catch
-                    {
-                        return "0";
-                    }
-
-                }
-                else
-                {
-                    return "0";
-                }
-
-            }
-            else
-            {
-                return "0";
-            }
-
-
-
-
-
-
-
-
-        }
+        
 
         private void Person_Click(object sender, RoutedEventArgs e)
         {
@@ -341,19 +358,24 @@ namespace App3
         }
         public int CurrentPage = 0;
         
-        private void Pager_SelectedIndexChanged(PagerControl sender, PagerControlSelectedIndexChangedEventArgs args)
+        private void Pager_SelectedIndexChanged(DevWinUI.PagerControl sender, DevWinUI.PagerControlSelectedIndexChangedEventArgs args)
         {
             //此方法在页面加载完成后会被调用一次，Pager的SelectedIndex会被设置为0。
             //所以页面构造函数处不需要单独调用LoadReply方法。
-            int index = Pager.SelectedPageIndex;
-            CurrentPage = index;
-            
-            if (index >= 0)
+            //限定了只有页面主动加载和用户点击翻页，index从-1到0不触发数据加载。这似乎是pager的bug.
+            if (args.PreviousPageIndex != -1)
             {
-                int startindex = 10 * (index);
-                LoadReply(Set.Values["CurrentTopicId"] as string, startindex.ToString(),IsImageVisible);
+                int index = Pager.SelectedPageIndex;
+                CurrentPage = index;
 
+                if (index >= 0)
+                {
+                    int startindex = 10 * (index);
+                    LoadReply(Set.Values["CurrentTopicId"] as string, startindex.ToString(), IsImageVisible);
+
+                }
             }
+            
 
         }
 
@@ -372,134 +394,197 @@ namespace App3
         private async void MarkdownTextBlock_LinkClicked(object sender, CommunityToolkit.WinUI.UI.Controls.LinkClickedEventArgs e)
         {
             var url = e.Link.ToString();
-            string flag= "0";
-            string[] picformats=new string[]
+            var result = LinkAnalyzer.LinkDefinite(url);
+            switch (result.Key)
             {
-                "jpg",
-                "jpeg",
-                "png",
-                "gif",
-                "webp",
-                
-            };
-            string[] audioformats= new string[]
-            {
-                "mp3",
-                "wav",
-                "m4a",
-                "ogg",
-                "flac",
-            };
-            string[] videofromats = new string[]
-            {
-                "mp4",
-                "avi",
-                "mkv",
-                "mov",
-                "wmv",
-            };
-            foreach (var format in picformats)
-            {
-                if (url.Contains(format))
-                {
-                    flag = "1";
-                    break;
-                }
-            }
-            foreach (var format in audioformats)
-            {
-                if (url.Contains(format))
-                {
-                    flag = "2";
-                    break;
-                }
-            }
-            foreach (var format in videofromats)
-            {
-                if (url.Contains(format))
-                {
-                    flag = "3";
-                    break;
-                }
-            }
-            if (flag=="1")
-            {
-                try
-                {
-                    var picviewer = new MediaViewer(url);
-                    picviewer.Activate();
-                }
-                catch
-                {
-
-                }
-                
-                
-            }
-            else if (flag=="2")
-            {
-                //AudioPlayer.PlacementTarget = sender as MarkdownTextBlock;
-                AudioPlayer.Visibility = Visibility.Visible;
-                InitializeMediaPlayer();
-                AudioName.Text = url;
-                try
-                {
-                    var mediaSource = MediaSource.CreateFromUri(new Uri(url));
-                    // 设置媒体源
-                    _mediaPlayer.Source = mediaSource;
-                    // 开始播放
-                    _mediaPlayer.Play();
-                    Play.Visibility = Visibility.Collapsed;
-                    Pause.Visibility = Visibility.Visible;
-                }
-                catch(Exception ex)
-                {
-                    AudioName.Text = ex.Message;
-                }
-                
-            }
-            else
-            {
-                var result = LinkAnalyzer.LinkDefinite(url);
-                if (result.Key == "topic")
-                {
+                case "topic":
                     LoadMetaData(result.Value);
-                    LoadReply(result.Value, "0",IsImageVisible);
-                }
-                else if (result.Key == "user")
-                {
-                    string _url = "https://api.cc98.org/user/name/" + result.Value;
-                    using var client = new HttpClient();
-                    var PortRes = await client.GetAsync(_url);
-                    if (PortRes.StatusCode == System.Net.HttpStatusCode.OK)
+                    LoadReply(result.Value, "0", IsImageVisible);
+                    break;
+                case "user":
                     {
-                        string content = await PortRes.Content.ReadAsStringAsync();
-                        if (!string.IsNullOrEmpty(content))
+                        string _url = "https://api.cc98.org/user/name/" + url;
+                        using var client = new HttpClient();
+                        var PortRes = await client.GetAsync(_url);
+                        if (PortRes.StatusCode == System.Net.HttpStatusCode.OK)
                         {
-                            try
+                            string content = await PortRes.Content.ReadAsStringAsync();
+                            if (!string.IsNullOrEmpty(content))
                             {
-                                var Info = JsonConvert.DeserializeObject<Dictionary<string, object>>(content);
-                                string uid = Info["id"].ToString();
-                                //de.Text = uid;
-                                Set.Values["ProfileNaviMode"] = "Others";
-                                Frame.Navigate(typeof(Profile), uid);
+                                try
+                                {
+                                    var Info = JsonConvert.DeserializeObject<Dictionary<string, object>>(content);
+                                    string uid = Info["id"].ToString();
+                                    //de.Text = uid;
+                                    Set.Values["ProfileNaviMode"] = "Others";
+                                    Frame.Navigate(typeof(Profile), uid);
+                                }
+                                catch (Exception ex)
+                                {
+                                    //de.Text = ex.Message;
+                                }
                             }
-                            catch (Exception ex)
+                            else
                             {
-                                //de.Text = ex.Message;
+                                //de.Text = "空返回";
                             }
                         }
-                        else
+                        break;
+                    }
+                    //using语句不能在switch语句中直接出现。因此，使用大括号包围这个case.
+                case "anchor":
+                    string pattern = @"/topic/(\d{7})/(\d+)#(\d+)";
+                    Regex regex = new Regex(pattern);
+
+                    // 使用正则表达式进行匹配
+                    Match match = regex.Match(url);
+
+                    if (match.Success)
+                    {
+                        // 输出匹配的内容
+                        string beforeHash = match.Groups[2].Value;  // #前面的数字
+                        string afterHash = match.Groups[3].Value;   // #后面的数字
+                        int page = Convert.ToInt32(beforeHash);
+                        int floor = Convert.ToInt32(afterHash);
+                        try
                         {
-                            //de.Text = "空返回";
+                            if (Pager.SelectedPageIndex + 1 == page && floor > 0)
+                            {
+                                GoTo(floor - 1);
+                            }
+                            else
+                            {
+
+                                Pager.SelectedPageIndex = page - 1;
+                                GoTo(floor - 1);
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+
                         }
                     }
-                }
-            }
+                    break;
+                case "file":
+                    if (result.Value == "image")
+                    {
+                        try
+                        {
+                            var param = new Dictionary<string, string>()
+                            {
+                                {"url",url },
+                                {"type","image" }
+                             };
+                            var picviewer = new MediaViewer(param);
+                            picviewer.Activate();
+                        }
+                        catch
+                        {
 
+                        }
+                    }
+                    else if (result.Value == "audio")
+                    {
+                        AudioPlayer.Visibility = Visibility.Visible;
+                        InitializeMediaPlayer();
+                        AudioName.Text = url;
+                        try
+                        {
+                            var mediaSource = MediaSource.CreateFromUri(new Uri(url));
+                            // 设置媒体源
+                            _mediaPlayer.Source = mediaSource;
+                            // 开始播放
+                            _mediaPlayer.Play();
+                            Play.Visibility = Visibility.Collapsed;
+                            Pause.Visibility = Visibility.Visible;
+                        }
+                        catch (Exception ex)
+                        {
+                            AudioName.Text = ex.Message;
+                        }
+                    }
+                    else if (result.Value == "video")
+                    {
+                        var param = new Dictionary<string, string>()
+                            {
+                                {"url",url },
+                                {"type","video" }
+                             };
+                        var picviewer = new MediaViewer(param);
+                        picviewer.Activate();
+                    }
+                    else if (result.Value == "doc")//无法预览的媒体文件类
+                    {
+                        var Operation=await DownLoadDialog.ShowAsync();
+                        if (Operation == ContentDialogResult.Primary)
+                        {
+                            
+                            string UserProfile = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+                            string DownloadsFolder = System.IO.Path.Combine(UserProfile, "Downloads");
+                            string DownloadLocation = "";
+                            string filepattern = @"(?<=https://file\.cc98\.org/v4-upload/d/\d{4}/\d{4}/)[^/]+";
+
+                            // 创建正则表达式对象
+                            Regex fileregex = new Regex(filepattern);
+
+                            // 执行匹配
+                            Match filematch = fileregex.Match(url);
+                            if(filematch.Success)
+                            {
+                                DownloadLocation = DownloadsFolder+"\\"+filematch.Value;
+                            }
+                            else
+                            {
+                                DownloadLocation = System.IO.Path.Combine(DownloadsFolder, "CC98_Download_" + DateTime.Now.ToString("yyyyMMdd_HHmmss") + ".pdf");
+                            }
+                            ShowTips("开始下载附件到:", DownloadLocation);
+                            if (!System.IO.File.Exists(DownloadsFolder))
+                            {
+
+                                try
+                                {
+                                    var client = new HttpClient();
+                                    var fileres = await client.GetAsync(url, HttpCompletionOption.ResponseHeadersRead);
+                                    if (fileres.StatusCode == HttpStatusCode.OK)
+                                    {
+                                        using (Stream contentStream = await fileres.Content.ReadAsStreamAsync(),
+                                        fileStream = new FileStream(DownloadLocation, FileMode.Create, FileAccess.Write, FileShare.None))
+                                        {
+                                            await contentStream.CopyToAsync(fileStream);
+                                            ShowTips("下载完成:", DownloadLocation);
+                                        }
+                                    }
+                                }
+                                catch(Exception ex)
+                                {
+                                    ShowTips("下载出错:", ex.Message);
+                                }
+
+
+                            }
+                        }
+                        
+                    }
+                    break;
+                default://自动复制到用户剪切板
+                    var datapackage = new DataPackage();
+                    datapackage.SetText(url);
+                    Clipboard.SetContent(datapackage);
+                    break;
+            }
+  
         }
 
-
+        private void ShowTips(string title,string content)
+        {
+            if (msg.IsOpen == true)
+            {
+                msg.IsOpen = false;
+            }
+            msg.Title = title;
+            msg.Content = content;
+            msg.IsOpen = true;
+        }
         private void writereply_Click(object sender, RoutedEventArgs e)
         {
             var param = new Dictionary<string, string>()
@@ -528,9 +613,59 @@ namespace App3
                     datapackage.SetText(shareurl);
                     Clipboard.SetContent(datapackage); 
                 }
-                else if (tag == "2")
+                
+            }
+            else
+            {
+            }
+            
+        }
+        private async void CollectionMenu_Tapped(object sender, TappedRoutedEventArgs e)
+        {
+            var m = sender as MenuFlyoutSubItem;
+            if (m != null)
+            {
+                m.Items.Clear();
+                string LikeUrl = "https://api.cc98.org/me/favorite-topic-group";
+                try
                 {
-                    string favoriteurl = "https://api.cc98.org/me/favorite/"+ (Set.Values["CurrentTopicId"] as string) + "?groupid=0";
+                    var LikeRes = await loginservice.client.GetAsync(LikeUrl);
+                    if (LikeRes.StatusCode == HttpStatusCode.OK)
+                    {
+
+                        string LikeText = await LikeRes.Content.ReadAsStringAsync();
+                        var likes = JsonConvert.DeserializeObject<Dictionary<string, object>>(LikeText);
+                        var LikeList = JsonConvert.DeserializeObject<JArray>(likes["data"].ToString());
+
+                        foreach (var like in LikeList)
+                        {
+                            var likeinfo = JsonConvert.DeserializeObject<Dictionary<string, object>>(like.ToString());
+                            string collection = likeinfo["name"].ToString();
+                            string sortid = like["id"].ToString();
+                            var s = new MenuFlyoutItem { Text = collection, Tag = sortid, Icon = new FluentIcons.WinUI.SymbolIcon { Symbol = FluentIcons.Common.Symbol.List } };
+                            s.Click += CollectionItem_Click;
+                            m.Items.Add(s);
+                            
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    m.Items.Add(new MenuFlyoutItem { Text = "获取收藏夹失败:" + ex.Message, Icon = new FluentIcons.WinUI.SymbolIcon { Symbol = FluentIcons.Common.Symbol.CloudError } });
+                }
+
+            }
+        }
+
+        private async void CollectionItem_Click(object sender, RoutedEventArgs e)
+        {
+            var m = sender as MenuFlyoutItem;
+            if (m != null)
+            {
+                var t = m.Tag as string;
+                if (!string.IsNullOrEmpty(t))
+                {
+                    string favoriteurl = "https://api.cc98.org/me/favorite/" + (Set.Values["CurrentTopicId"] as string) + "?groupid=" + t;
                     var request = new HttpRequestMessage(HttpMethod.Put, favoriteurl);
                     var content = new StringContent("", Encoding.UTF8, "application/json");
                     request.Content = content;//按照此格式发送空的post请求并设置请求头
@@ -539,15 +674,46 @@ namespace App3
                     if (res.StatusCode == System.Net.HttpStatusCode.OK)
                     {
                         metadata.variant = IconVariant.Color;
+                        LoadMetaData(Set.Values["CurrentTopicId"] as string);
                     }
                 }
-                else
-                {
-                    LoadReply(Set.Values["CurrentTopicId"] as string, (CurrentPage*10).ToString(), !IsImageVisible);
-                    
-                }
             }
-            
+        }
+        private async void CollectionMenu_PointerEntered(object sender, PointerRoutedEventArgs e)
+        {
+            var m = sender as MenuFlyoutSubItem;
+            if (m != null)
+            {
+                m.Items.Clear();
+                string LikeUrl = "https://api.cc98.org/me/favorite-topic-group";
+                try
+                {
+                    var LikeRes = await loginservice.client.GetAsync(LikeUrl);
+                    if (LikeRes.StatusCode == HttpStatusCode.OK)
+                    {
+
+                        string LikeText = await LikeRes.Content.ReadAsStringAsync();
+                        var likes = JsonConvert.DeserializeObject<Dictionary<string, object>>(LikeText);
+                        var LikeList = JsonConvert.DeserializeObject<JArray>(likes["data"].ToString());
+
+                        foreach (var like in LikeList)
+                        {
+                            var likeinfo = JsonConvert.DeserializeObject<Dictionary<string, object>>(like.ToString());
+                            string collection = likeinfo["name"].ToString();
+                            string sortid = (Convert.ToInt16(like["id"]) + 100).ToString();
+                            var s = new MenuFlyoutItem { Text = collection, Tag = sortid, Icon = new FluentIcons.WinUI.SymbolIcon { Symbol = FluentIcons.Common.Symbol.List } };
+                            s.Click += CollectionItem_Click;
+                            m.Items.Add(s);
+
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    m.Items.Add(new MenuFlyoutItem { Text = "获取收藏夹失败:" + ex.Message, Icon = new FluentIcons.WinUI.SymbolIcon { Symbol = FluentIcons.Common.Symbol.CloudError } });
+                }
+                //【issue】收藏集不应在每次进入topic页面时都获取。从节省资源的角度，只在应用启动时获取一次即可。
+            }
         }
         private void Pause_Click(object sender, RoutedEventArgs e)
         {
@@ -595,12 +761,39 @@ namespace App3
                 _mediaPlayer.Dispose();
             }
         }
+
+        private void GoTo(int index)
+        {
+            
+            var element = TileList.GetOrCreateElement(index);
+            var options = new BringIntoViewOptions
+            {
+                VerticalAlignmentRatio = 0.5, // 0=顶部对齐，0.5=居中，1=底部
+                AnimationDesired = true       // 启用平滑滚动动画
+            };
+            element.StartBringIntoView(options);
+            //对于没有页码的跳转链接暂时没有处理
+        }
+        private void Drawer_ImageClicked(object sender, CommunityToolkit.WinUI.UI.Controls.LinkClickedEventArgs e)
+        {
+            string ImageUrl = e.Link.ToString();
+            var param = new Dictionary<string, string>()
+{
+    {"url",ImageUrl },
+    {"type","image" }
+};
+            var picviewer = new MediaViewer(param);
+            picviewer.Activate();
+
+        }
+        
         public static class LinkAnalyzer
         {
             public static KeyValuePair<string, string> LinkDefinite(string link)
             {
                 if (!string.IsNullOrEmpty(link))
                 {
+                    
                     if (link.Contains("user/name"))
                     {
 
@@ -631,9 +824,52 @@ namespace App3
                             return new KeyValuePair<string, string>("null", link);
                         }
                     }
+                    else if (link.Contains("#"))
+                    {
+                        Match match = Regex.Match(link, @"/topic/(\d{7})/(\d+)#(\d+)");
+                        if (match.Success)
+                        {
+                            string numberAfterHash = match.Groups[1].Value; 
+                            return new KeyValuePair<string, string>("anchor",link );//返回索引楼层
+                        }
+                        return new KeyValuePair<string, string>("null", link);
+                    }
+                    else if(link.Contains("file"))
+                    {
+                        string ext = Path.GetExtension(link)?.TrimStart('.').ToLowerInvariant();
+
+                        HashSet<string> picformats = new() { "jpg", "jpeg", "png", "gif", "webp" };
+                        HashSet<string> audioformats = new() { "mp3", "wav", "m4a", "ogg", "flac" };
+                        HashSet<string> videofromats = new() { "mp4", "avi", "mkv", "mov", "wmv" };
+
+                        if (!string.IsNullOrEmpty(ext))
+                        {
+                            if (picformats.Contains(ext))
+                            {
+                                return new KeyValuePair<string, string>("file", "image");
+                            }
+                            else if (audioformats.Contains(ext))
+                            {
+                                return new KeyValuePair<string, string> ( "file", "audio" );
+                            }
+                            else if (videofromats.Contains(ext))
+                            {
+                                return new KeyValuePair<string, string> ("file","video" );
+                            }
+                            else
+                            {
+                                return new KeyValuePair<string, string> ("file", "doc");
+                            }
+                        }
+                        else
+                        {
+                            return new KeyValuePair<string, string>("null", link);
+                        }
+                        
+                    }
                     else
                     {
-                        return new KeyValuePair<string, string>("other", link);
+                        return new KeyValuePair<string, string>("null", link);
                     }
                 }
                 else
@@ -654,6 +890,7 @@ namespace App3
             private string _uid;
             private string _url;
             private string _floor;//楼层数
+            
             public string text
             {
                 get => _text;
@@ -769,6 +1006,7 @@ namespace App3
                     }
                 }
             }
+            
             public event PropertyChangedEventHandler PropertyChanged;
 
             protected virtual void OnPropertyChanged(string propertyName)
@@ -1107,7 +1345,7 @@ namespace App3
                 // 无标题链接 [url]...[/url]
                 return Regex.Replace(input,
                     @"\[url\](.*?)\[/url\]",
-                    "<$1>",
+                    "[$1]($1)",
                     RegexOptions.IgnoreCase);
             }
             private static string ConvertEmoji(string input)
@@ -1140,14 +1378,15 @@ namespace App3
             (@"\[font=.*?\](.*?)\[/font\]", "$1"),
             (@"\[size=\d{1,2}\]",""),
             (@"\[/size\]",""),
-            (@"\[center\](.*?)\[/center\]","$1  "),
-            (@"\<center\>(.*?)\</center\>","$1  "),
-            (@"<p[^>]*>(.*?)</p>","$1  "),
-            (@"\[align=[^\]]+\](.*?)\[/align\]","$1  "),
+            (@"\[center\](.*?)\[/center\]","$1"),
+            (@"\<center\>(.*?)\</center\>","$1"),
+            (@"<p[^>]*>(.*?)</p>","$1"),
+            (@"\[align=[^\]]+\](.*?)\[/align\]","$1"),
             (@"<img\s+[^>]*src=""([^""]+)""[^>]*>","[#**图片**#]($1)"),
             (@"@(\S+)\s","[@ $1 ](https://api.cc98.org/user/name/$1)"),
             (@"\[audio\](.*?)\[/audio\]","[#**音频**#]($1)"),
-            (@"\[video\](.*?)\[/video\]","[#**视频**#]($1)")
+            (@"\[video\](.*?)\[/video\]","[#**视频**#]($1)"),
+            (@"\[upload\](.*?)\[/upload\]","[#**文件**#]($1)")
         };
 
                 foreach (var (pattern, replacement) in replacements)

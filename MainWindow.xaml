@@ -22,7 +22,9 @@
         <Grid Grid.Row="0" x:Name="GridTitleBar">
             
             <TextBlock Text="CC98 Desktop"  Margin="10,0,5,0" HorizontalAlignment="Left" VerticalAlignment="Center" FontSize="15"></TextBlock>
-            <TextBox x:Name="de" HorizontalAlignment="Center" Margin="0,5,0,5" Height="30" Width="Auto"></TextBox>
+            <AutoSuggestBox x:Name="search" HorizontalAlignment="Center" Margin="5" MinWidth="360" Width="Auto" QueryIcon="{ic:FluentIcon Icon=Search}" TextChanged="search_TextChanged" UpdateTextOnSelect="False" SuggestionChosen="search_SuggestionChosen"  >
+                
+            </AutoSuggestBox>
             
         </Grid>
         
@@ -51,7 +53,30 @@
                         <TextBlock Text="新帖" ></TextBlock>
                     </StackPanel>
                 </NavigationViewItem>
-                <NavigationViewItemHeader Content="版面" FontWeight="Bold"></NavigationViewItemHeader>
+                <NavigationViewItemHeader Content="集锦">
+
+                </NavigationViewItemHeader>
+                
+                <NavigationViewItem Height="Auto" Tag="11">
+
+                    <StackPanel Orientation="Horizontal">
+                        <ic:SymbolIcon Symbol="Bookmark"  Margin="2,0,10,0"></ic:SymbolIcon>
+                        <TextBlock Text="关注版面" ></TextBlock>
+                    </StackPanel>
+                </NavigationViewItem>
+                <NavigationViewItem Height="Auto" Tag="10" HorizontalContentAlignment="Stretch" x:Name="likecollection" >
+                    <NavigationViewItem.ContextFlyout>
+                        <MenuFlyout>
+                            <MenuFlyoutItem Text="新收藏集" Icon="{ic:SymbolIcon Symbol=Add}"></MenuFlyoutItem>
+                        </MenuFlyout>
+                    </NavigationViewItem.ContextFlyout>
+                    <StackPanel Orientation="Horizontal">
+                        <ic:SymbolIcon Symbol="Star"  Margin="2,0,10,0"></ic:SymbolIcon>
+                        <TextBlock Text="收藏集" ></TextBlock>
+
+                    </StackPanel>
+                </NavigationViewItem>
+                <NavigationViewItemHeader Content="推荐" FontWeight="Bold"></NavigationViewItemHeader>
                 <NavigationViewItem Height="Auto" Tag="5">
                     <StackPanel Orientation="Horizontal">
                         <ic:SymbolIcon Symbol="Library"  Margin="2,0,10,0"></ic:SymbolIcon>
@@ -79,28 +104,7 @@
                 </NavigationViewItem>
                 
                 
-                <NavigationViewItemHeader Content="集锦">
-                    
-                </NavigationViewItemHeader>
-                <NavigationViewItem Height="Auto" Tag="10" HorizontalContentAlignment="Stretch" x:Name="likecollection" >
-                    <NavigationViewItem.ContextFlyout>
-                        <MenuFlyout>
-                            <MenuFlyoutItem Text="新收藏集" Icon="{ic:SymbolIcon Symbol=Add}"></MenuFlyoutItem>
-                        </MenuFlyout>
-                    </NavigationViewItem.ContextFlyout>
-                    <StackPanel Orientation="Horizontal">
-                        <ic:SymbolIcon Symbol="Star"  Margin="2,0,10,0"></ic:SymbolIcon>
-                        <TextBlock Text="收藏集" ></TextBlock>
-                        
-                    </StackPanel>
-                </NavigationViewItem>
-                <NavigationViewItem Height="Auto" Tag="11">
-                    
-                    <StackPanel Orientation="Horizontal">
-                        <ic:SymbolIcon Symbol="Bookmark"  Margin="2,0,10,0"></ic:SymbolIcon>
-                        <TextBlock Text="关注版面" ></TextBlock>
-                    </StackPanel>
-                </NavigationViewItem>
+                
             </NavigationView.MenuItems>
             <NavigationView.FooterMenuItems>
                 <NavigationViewItem Height="Auto" Tag="1">

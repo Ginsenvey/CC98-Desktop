@@ -29,6 +29,10 @@ using Newtonsoft.Json.Linq;
 using Windows.UI.WebUI;
 using FluentIcons.WinUI;
 using Microsoft.UI.Composition.SystemBackdrops;
+using Windows.ApplicationModel.DataTransfer;
+using System.Text.RegularExpressions;
+using System.Reflection;
+using Windows.Security.Cryptography.Certificates;
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
 
@@ -47,6 +51,7 @@ namespace App3
             this.ExtendsContentIntoTitleBar = true;
             this.SetTitleBar(GridTitleBar);
             AppWindow.TitleBar.PreferredHeightOption = Microsoft.UI.Windowing.TitleBarHeightOption.Tall;
+            
             LoadSettings();
             App.ThemeChanged += OnAppThemeChanged;
             Vault = new();
@@ -158,11 +163,11 @@ namespace App3
                                 }
                                 else if(response.StatusCode == HttpStatusCode.OK)
                                 {
-                                    de.Text = "在线模式";
+                                    //de.Text = "在线模式";
                                     string CheckResponse = await response.Content.ReadAsStringAsync();
                                     var js = JsonConvert.DeserializeObject<Dictionary<string, object>>(CheckResponse);
-                                    UnreadCount = Convert.ToInt16(js["messageCount"]);
-                                    MsgCount.Value= Convert.ToInt16(js["messageCount"]);
+                                    UnreadCount = Convert.ToInt16(js["messageCount"])+ Convert.ToInt16(js["replyCount"]);
+                                    MsgCount.Value = UnreadCount;
                                     loginservice.client.DefaultRequestHeaders.Authorization=new AuthenticationHeaderValue("Bearer",AccessCode as string);
                                     
                                     
@@ -171,7 +176,7 @@ namespace App3
                             }
                             catch (HttpRequestException ex)
                             {
-                                de.Text=ex.Message;
+                                //de.Text=ex.Message;
                             }
                         }
                     }
@@ -187,7 +192,7 @@ namespace App3
             }
             else//没有初始化，首次登录
             {
-                de.Text = "未初始化";
+                //de.Text = "未初始化";
                 Auth();
             }
 
@@ -207,7 +212,7 @@ namespace App3
                         Set.Values["Access"] = token;
                         Set.Values["IsActive"] = "1";
                         loginservice.client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-                        de.Text = "鉴权状态正常";
+                        //de.Text = "鉴权状态正常";
                     }
                     else
                     {
@@ -233,7 +238,7 @@ namespace App3
                 var LikeRes = await loginservice.client.GetAsync(LikeUrl);
                 if (LikeRes.StatusCode == HttpStatusCode.OK)
                 {
-                    collections.Clear();
+                    
                     string LikeText = await LikeRes.Content.ReadAsStringAsync();
                     var likes = JsonConvert.DeserializeObject<Dictionary<string, object>>(LikeText);
                     var LikeList = JsonConvert.DeserializeObject<JArray>(likes["data"].ToString());
@@ -242,10 +247,16 @@ namespace App3
                     {
                         var likeinfo = JsonConvert.DeserializeObject<Dictionary<string, object>>(like.ToString());
                         string collection = likeinfo["name"].ToString();
-                        string sortid = (Convert.ToInt16(like["id"]) + 100).ToString();
-
-                        likecollection.MenuItems.Add(new NavigationViewItem { Content = collection, Tag = sortid, Icon = new FluentIcons.WinUI.SymbolIcon { Symbol = FluentIcons.Common.Symbol.Add } });
-                        collections.Add(collection);
+                        string sortid = "f"+like["id"].ToString();
+                        likecollection.MenuItems.Add(new NavigationViewItem { Content = collection, Tag = sortid, Icon = new FluentIcons.WinUI.SymbolIcon { Symbol = FluentIcons.Common.Symbol.List } });
+                        if (likecollection.MenuItems.Count > 0)
+                        {
+                            likecollection.IsExpanded = !likecollection.IsExpanded;//自动展开，减少鼠标操作
+                        }
+                        else
+                        {
+                            likecollection.MenuItems.Add(new NavigationViewItem { Content = "点击创建新收藏夹", Tag = "200", Icon = new FluentIcons.WinUI.SymbolIcon { Symbol = FluentIcons.Common.Symbol.List } });
+                        }
                     }
                 }
             }
@@ -291,25 +302,34 @@ namespace App3
                         contentframe.Navigate(typeof(Board), "235");
                         break;
                     case "9":
-                        contentframe.Navigate(typeof(Setting));
+                        
+                        contentframe.Navigate(typeof(Setting), "0");
                         break;
                     case "10":
                         GetLikeCollection();
                         break;
+                    case "11":
+                        contentframe.Navigate(typeof(Focus));
+                        break;
                     default:
                         var selection = args.SelectedItem as NavigationViewItem;
-                        if ((selection.Tag as string).Length > 2)
+                        if ((selection.Tag as string).Contains("f"))
                         {
-                            string GroupId = (Convert.ToInt16((args.SelectedItem as NavigationViewItem).Tag as string) - 100).ToString();
-                            string GroupName=selection.Content as string;
+                            string GroupId = (selection.Tag as string).Replace("f", "");
+                            string GroupName = selection.Content as string;
                             var param = new Dictionary<string, string>()
-                            {
+                            { 
                                 {"mode","favorite" },
-                                {"gid", GroupId},
-                                {"name",GroupName}
-                            };
-                            contentframe.Navigate(typeof(Repeater), param);
-                        }
+                                { "gid", GroupId},
+                                { "name",GroupName}
+                            }
+                        ;
+                        contentframe.Navigate(typeof(Repeater), param);
+
+
+
+
+                }
                         break;
                 }
                 
@@ -329,5 +349,92 @@ namespace App3
         {
             contentframe.Navigate(typeof(Message),"0");
         }
+
+        
+
+        private void search_TextChanged(AutoSuggestBox sender, AutoSuggestBoxTextChangedEventArgs args)
+        {
+            var a = sender as AutoSuggestBox;
+            if (args.Reason == AutoSuggestionBoxTextChangeReason.UserInput)
+            {
+                string input=a.Text;
+                if (input != "")
+                {
+                    List<string> suggestions = new List<string>() { "搜索主题 #" + input + "#", "搜索用户 #" + input + "#" };
+                    sender.ItemsSource = suggestions;
+                    string pattern = @"^CC\d{7}$";
+                    bool isTopic = Regex.IsMatch(input, pattern);
+                    if (isTopic)
+                    {
+                        suggestions.Add("浏览主题:" + input);
+                    }
+                }
+                
+            }
+
+        }
+        public int SearchMode = -1;
+        private async void search_SuggestionChosen(AutoSuggestBox sender, AutoSuggestBoxSuggestionChosenEventArgs args)
+        {
+            if (args.SelectedItem != null)
+            {
+                string temp = args.SelectedItem.ToString();
+                List<string> type = new List<string>()
+                {
+                    "搜索主题 #" + sender.Text + "#",
+                    "搜索用户 #" + sender.Text + "#",
+                    "浏览主题:" + sender.Text
+                };
+                
+                for (int i=0;i<type.Count;i++)
+                {
+                    if (temp.Equals(type[i]))
+                    {
+                        SearchMode = i;
+                        break;
+                    }
+                }
+                if (temp!=null)
+                {
+                    SemanticSearch(sender.Text);
+
+                }
+            }
+            
+        }
+
+        
+        //后期，搜索历史将会被记录到本地缓存。只保留前100条记录，先进先出。
+        //当用户输入文本时，自动模糊关联历史记录。
+        private void SemanticSearch(string key)
+        {
+            var p = new Dictionary<string, string>();
+            switch (SearchMode)
+            {
+                case 0:
+                    p = new Dictionary<string, string>()
+                            {
+                                {"type","topic" },
+                                {"key",key }
+                            };
+                    contentframe.Navigate(typeof(Search), p);
+                    break;
+                case 1:
+                    p = new Dictionary<string, string>()
+                            {
+                                {"type","user" },
+                                {"key",key}
+                            };
+                    contentframe.Navigate(typeof(Search), p);
+                    break;
+                case 2:
+                    contentframe.Navigate(typeof(Topic), key.Replace("CC",""));
+                    break;
+                default:
+                    break;
+            }
+        }
+
+        
     }
 }

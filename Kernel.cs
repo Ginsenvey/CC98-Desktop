@@ -9,6 +9,7 @@ using System.Net.Http.Json;
 using System.Threading.Tasks;
 namespace CCkernel
 {
+    //管理登录状态
     public class CCloginservice
     {
         public HttpClient client;
@@ -99,22 +100,78 @@ namespace CCkernel
                 return "0";
             }
         }
+        public async Task<string> DeepAuthService(string id, string pass)
+        {
+            string url = "https://openid.cc98.org/Account/LogOn?returnUrl=%2F";
+            var res = await client.GetAsync(url);
+            if (res.StatusCode == HttpStatusCode.OK)
+            {
+                HtmlAgilityPack.HtmlDocument doc = new HtmlAgilityPack.HtmlDocument();
+                var content = await res.Content.ReadAsStringAsync();
+                doc.LoadHtml(content);
+                var input = doc.DocumentNode.SelectSingleNode("//input[@name='__RequestVerificationToken']");
+                if (input != null)
+                {
+                    string token = input.GetAttributeValue("value", "");
+                    var data = new Dictionary<string, string>()
+                    {
+                        {"__RequestVerificationToken",token},
+                        {"UserName",id },
+                        {"Password",pass},
+                        {"ValidTime",""}
+                    };
+                    var PostData = new FormUrlEncodedContent(data);
+                    var response = await client.PostAsync(url, PostData);
+                    if (response.StatusCode == HttpStatusCode.Redirect)
+                    {
+                        List<string> keys = new();
+                        foreach (Cookie c in Jar.GetAllCookies())
+                        {
+                            keys.Add(c.Name);
+                        }
+                        if (keys.Contains("idsrv"))
+                        {
+                            return "1";
+                        }
+                        else
+                        {
+                            return "0";
+                        }
+                    }
+                    else
+                    {
+                        return "0";
+                    }
+                }
+                else
+                {
+                    return "0";
+                }
+            }
+            else
+            {
+                return "0";
+            }
+        }
         public async Task<string> GetTopic(string uid, string access,string start)
         {
             using (HttpClient client = new HttpClient() { })
             {
                 try
                 {
-                    client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", access);
-                    // 发送 GET 请求
+                    client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", access); 
                     HttpResponseMessage response = await client.GetAsync("https://api.cc98.org/Topic/"+uid+"/post?from="+start+"&size=10");
+                    if (response.StatusCode == HttpStatusCode.OK)
+                    {
+                        string responseBody = await response.Content.ReadAsStringAsync();
+                        return responseBody;
+                    }
+                    else
+                    {
+                        return "404:请求失败";
+                    }
 
-                    // 确保响应成功
-                    response.EnsureSuccessStatusCode();
 
-                    // 读取响应内容
-                    string responseBody = await response.Content.ReadAsStringAsync();
-                    return responseBody;
                 }
                 catch (HttpRequestException ex)
                 {
@@ -125,6 +182,35 @@ namespace CCkernel
         }
 
     }
+    //约定：请求总是返回json字符串,或者错误代码。
+    //帖子、版面、个人信息核心操作
+    public class RequestSender
+    {
+
+    }
+    //将json字符串解析为目标对象,总是返回对象或者null。
+    public class Deserializer
+    {
+        private void StandardPostConverter(string js)
+        {
+            if (js.StartsWith("4"))
+            {
+                return;
+            }
+            else
+            {
+                try
+                {
+                    return;
+                }
+                catch (Exception ex)
+                {
+                    return;
+                }
+            }
+        }
+    }
+    //调试类
     class Program
     {
         static async Task Main(string[] args)

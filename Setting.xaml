@@ -12,26 +12,56 @@
     xmlns:ic="using:FluentIcons.WinUI"
     Background="{ThemeResource DesktopAcrylicTransparentBrush}">
 
-    <Grid>
+    
+    <Grid x:Name="RootGrid">
         <Grid.RowDefinitions>
             <RowDefinition Height="*" MinHeight="60"></RowDefinition>
             <RowDefinition Height="12*"></RowDefinition>
         </Grid.RowDefinitions>
-        
+
+        <ContentDialog Title="授权" x:Name="AuthDialog" PrimaryButtonText="确认" CloseButtonText="取消" >
+            <ContentDialog.PrimaryButtonStyle>
+                <Style  TargetType="Button">
+                    <Setter Property="Background" Value="{ThemeResource AccentAAFillColorDefaultBrush}" />
+                    <Setter Property="CornerRadius" Value="3"></Setter>
+                    <Setter Property="Foreground" Value="{ThemeResource StandardBrush}"></Setter>
+                </Style>
+            </ContentDialog.PrimaryButtonStyle>
+            <ContentDialog.Content>
+                <StackPanel Orientation="Vertical" Spacing="10">
+                    <TextBox x:Name="IdBox" Header="昵称"></TextBox>
+                    <PasswordBox x:Name="PassBox" Header="密码"></PasswordBox>
+                </StackPanel>
+            </ContentDialog.Content>
+           
+        </ContentDialog>
         
         <TextBlock FontSize="24" Text="设定" FontWeight="Bold" Foreground="#4d9891" Grid.Row="0" HorizontalAlignment="Left" Margin="15,10,10,10" x:Name="de"></TextBlock>
         <Border BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}" BorderThickness="1" Height="1" Grid.Row="0" VerticalAlignment="Bottom"></Border>
         <ScrollViewer Grid.Row="1" Padding="20" Margin="0,0,0,15">
             <StackPanel Orientation="Vertical" Spacing="10">
                 <TextBlock  Text="登录行为" FontSize="16" Margin="5,2,0,5"></TextBlock>
-                <tool:SettingsCard Header="登录凭据" Description="切换用户或退出登录">
-                    <tool:SettingsCard.HeaderIcon>
+                <tool:SettingsExpander Header="登录凭据" Description="管理登录状态">
+                    <tool:SettingsExpander.HeaderIcon>
                         <ic:SymbolIcon Symbol="Key"></ic:SymbolIcon>
-                    </tool:SettingsCard.HeaderIcon>
-                    <tool:SettingsCard.Content>
-                        <HyperlinkButton Content="修改凭据"></HyperlinkButton>
-                    </tool:SettingsCard.Content>
-                </tool:SettingsCard>
+                    </tool:SettingsExpander.HeaderIcon>
+                    <tool:SettingsExpander.Items>
+                        <tool:SettingsCard Header="深度授权" Description="登录CC98应用中心">
+                            <HyperlinkButton  x:Name="DeepAuth" Content="授权" Click="DeepAuth_Click"></HyperlinkButton>
+                        </tool:SettingsCard>
+                        <tool:SettingsCard Header="切换用户或登出">
+                            <HyperlinkButton  x:Name="SwitchUser" Click="SwitchUser_Click">
+                                <StackPanel Orientation="Horizontal" Spacing="10">
+                                    <ic:SymbolIcon Symbol="SignOut"></ic:SymbolIcon>
+                                    <TextBlock Text="退出登录"></TextBlock>
+                                </StackPanel>
+                                
+                            </HyperlinkButton>
+                        </tool:SettingsCard>
+                       
+
+                    </tool:SettingsExpander.Items>
+                </tool:SettingsExpander>
                 <tool:SettingsCard Header="启动页面" >
                     <tool:SettingsCard.HeaderIcon>
                         <ic:SymbolIcon Symbol="Apps"></ic:SymbolIcon>
@@ -51,7 +81,7 @@
                     <tool:SettingsExpander.Items>
                         <tool:SettingsCard ContentAlignment="Left">
                             <StackPanel HorizontalAlignment="Left" Margin="10,10,10,10">
-                                <RadioButtons SelectionChanged="RadioButtons_SelectionChanged">
+                                <RadioButtons >
                                     <RadioButton Content="浅色"  x:Name="Light" Checked="Light_Checked" Tag="0" />
                                     <RadioButton Content="深色"  x:Name="Dark"  Checked="Light_Checked" Tag="1"/>
                                     <RadioButton Content="跟随系统"  x:Name="Follow" Checked="Light_Checked" Tag="2"/>
@@ -140,7 +170,32 @@
                     </tool:SettingsCard.HeaderIcon>
                     <HyperlinkButton Content="查看" Click="ToFeedBack_Click" x:Name="ToFeedBack"></HyperlinkButton>
                 </tool:SettingsCard>
-                
+                <TextBlock  Text="实验性功能" FontSize="16" Margin="5,2,0,5"></TextBlock>
+                <tool:SettingsCard Header="内存优化">
+                    <tool:SettingsCard.HeaderIcon>
+                        <ic:SymbolIcon Symbol="Recycle"></ic:SymbolIcon>
+                    </tool:SettingsCard.HeaderIcon>
+                    <HyperlinkButton Content="开始" Click="ForceGC_Click" x:Name="ForceGC"></HyperlinkButton>
+                </tool:SettingsCard>
+                <tool:SettingsExpander Header="管理本地设置" Description="仅作调试用途" HeaderIcon="{ic:SymbolIcon Symbol=Toolbox}" x:Name="LocalSetManager" Expanded="LocalSetManager_Expanded">
+                    <tool:SettingsExpander.Content>
+                        <Button Content="查看本地配置" x:Name="ViewLocalSet" Click="ViewLocalSet_Click"></Button>
+                    </tool:SettingsExpander.Content>
+                    <tool:SettingsExpander.Items>
+                        <tool:SettingsCard Padding="20">
+                            <ScrollViewer HorizontalScrollMode="Enabled" HorizontalScrollBarVisibility="Visible">
+                                <TextBlock TextWrapping="WrapWholeWords" IsTextSelectionEnabled="True" x:Name="LocalSet"></TextBlock>
+                            </ScrollViewer>
+                            
+                        </tool:SettingsCard>
+                    </tool:SettingsExpander.Items>
+                </tool:SettingsExpander>
+                <tool:SettingsCard Header="抽卡">
+                    <tool:SettingsCard.HeaderIcon>
+                        <ic:SymbolIcon Symbol="Lottery"></ic:SymbolIcon>
+                    </tool:SettingsCard.HeaderIcon>
+                    <HyperlinkButton Content="开始" Click="DrawACard_Click" x:Name="DrawACard"></HyperlinkButton>
+                </tool:SettingsCard>
             </StackPanel>
         </ScrollViewer>
     </Grid>

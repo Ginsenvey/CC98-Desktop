@@ -56,7 +56,7 @@ namespace App3
         }
         private CookieContainer Jar;
         private HttpClient client;
-
+        
         protected override void OnNavigatedTo(Microsoft.UI.Xaml.Navigation.NavigationEventArgs e)
         {
             base.OnNavigatedTo(e);
@@ -133,146 +133,13 @@ namespace App3
                             string time = js["time"].ToString();
                             ftiles.Add(new FTile { content = content, time = time, uid ="cc98:/"+uid, title = title });
                         }
-                        Pips.NumberOfPages = ftiles.Count;
+                        Pips.NumberOfPages = recomlist.Count;
                     }
                 }
             }
             
         }
-        public class Tile : INotifyPropertyChanged
-        {
-            private string _title;//标题
-            private string _section;//版面
-            private string _author;//楼主
-            private string _uid;//话题id
-            private string _reply;//回复数
-
-            private string _time;//时间
-            private string _hit;//热度
-            private string _rid;//楼主id
-            private string _sort;//序号
-            public string title
-            {
-                get => _title;
-                set
-                {
-                    if (_title != value)
-                    {
-                        _title = value;
-                        OnPropertyChanged(nameof(title));
-                    }
-                }
-            }
-
-            public string section
-            {
-                get => _section;
-                set
-                {
-                    if (_section != value)
-                    {
-                        _section = value;
-                        OnPropertyChanged(nameof(section));
-                    }
-                }
-            }
-
-            public string author
-
-            {
-                get => _author;
-                set
-                {
-                    if (_author != value)
-                    {
-                        _author = value;
-                        OnPropertyChanged(nameof(author));
-                    }
-                }
-            }
-
-            public string uid
-            {
-                get => _uid;
-                set
-                {
-                    if (_uid != value)
-                    {
-                        _uid = value;
-                        OnPropertyChanged(nameof(uid));
-                    }
-                }
-            }
-
-            public string reply
-            {
-                get => _reply;
-                set
-                {
-                    if (_reply != value)
-                    {
-                        _reply = value;
-                        OnPropertyChanged(nameof(reply));
-                    }
-                }
-            }
-
-            public string time
-            {
-                get => _time;
-                set
-                {
-                    if (_time != value)
-                    {
-                        _time = value;
-                        OnPropertyChanged(nameof(time));
-                    }
-                }
-            }
-
-            public string hit
-            {
-                get => _hit;
-                set
-                {
-                    if (_hit != value)
-                    {
-                        _hit = value;
-                        OnPropertyChanged(nameof(hit));
-                    }
-                }
-            }
-            public string rid
-            {
-                get => _rid;
-                set
-                {
-                    if (_rid != value)
-                    {
-                        _rid = value;
-                        OnPropertyChanged(nameof(rid));
-                    }
-                }
-            }
-            public string sort
-            {
-                get => _sort;
-                set
-                {
-                    if (_sort != value)
-                    {
-                        _sort = value;
-                        OnPropertyChanged(nameof(sort));
-                    }
-                }
-            }
-            public event PropertyChangedEventHandler PropertyChanged;
-
-            protected virtual void OnPropertyChanged(string propertyName)
-            {
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-            }
-        }
+        
 
         private void ContentCard_PointerEntered(object sender, PointerRoutedEventArgs e)
         {
@@ -319,15 +186,10 @@ namespace App3
         private async void TopicItem_Click(object sender, RoutedEventArgs e)
         {
             var button = sender as HyperlinkButton;
-            var SelectedTile = button?.DataContext as Tile;
-            if(SelectedTile != null)
+            var tag = button.Tag as string;//当前绑定状态下，h没有DataContext.只能使用tag.
+            if (!string.IsNullOrEmpty(tag))
             {
-                string uid = SelectedTile.uid;
-                if (uid != null)
-                {
-                    Frame.Navigate(typeof(Topic),uid);
-                }
-                
+                Frame.Navigate(typeof(Topic), tag);
             }
             
             
@@ -338,14 +200,14 @@ namespace App3
         private void AuthurName_Click(object sender, RoutedEventArgs e)
         {
             var h=sender as HyperlinkButton;
-            var tile=h?.DataContext as Tile;
-            if(tile != null)
+            var tag = h.Tag as string;
+            if(!string.IsNullOrEmpty(tag))
             {
                 Set.Values["ProfileNaviMode"] = "Others";
-                Set.Values["CurrentPerson"] = tile.rid; ;
-                if (tile.rid != "-1")
+                Set.Values["CurrentPerson"] = tag; ;
+                if (tag != "-1")
                 {
-                    Frame.Navigate(typeof(Profile),tile.rid);
+                    Frame.Navigate(typeof(Profile),tag);
                 }
             }
         }
@@ -436,6 +298,140 @@ namespace App3
             }
             
             
+        }
+    }
+    public class Tile : INotifyPropertyChanged
+    {
+        private string _title;//标题
+        private string _section;//版面
+        private string _author;//楼主
+        private string _uid;//话题id
+        private string _reply;//回复数
+
+        private string _time;//时间
+        private string _hit;//热度
+        private string _rid;//楼主id
+        private string _sort;//序号
+        public string title
+        {
+            get => _title;
+            set
+            {
+                if (_title != value)
+                {
+                    _title = value;
+                    OnPropertyChanged(nameof(title));
+                }
+            }
+        }
+
+        public string section
+        {
+            get => _section;
+            set
+            {
+                if (_section != value)
+                {
+                    _section = value;
+                    OnPropertyChanged(nameof(section));
+                }
+            }
+        }
+
+        public string author
+
+        {
+            get => _author;
+            set
+            {
+                if (_author != value)
+                {
+                    _author = value;
+                    OnPropertyChanged(nameof(author));
+                }
+            }
+        }
+
+        public string uid
+        {
+            get => _uid;
+            set
+            {
+                if (_uid != value)
+                {
+                    _uid = value;
+                    OnPropertyChanged(nameof(uid));
+                }
+            }
+        }
+
+        public string reply
+        {
+            get => _reply;
+            set
+            {
+                if (_reply != value)
+                {
+                    _reply = value;
+                    OnPropertyChanged(nameof(reply));
+                }
+            }
+        }
+
+        public string time
+        {
+            get => _time;
+            set
+            {
+                if (_time != value)
+                {
+                    _time = value;
+                    OnPropertyChanged(nameof(time));
+                }
+            }
+        }
+
+        public string hit
+        {
+            get => _hit;
+            set
+            {
+                if (_hit != value)
+                {
+                    _hit = value;
+                    OnPropertyChanged(nameof(hit));
+                }
+            }
+        }
+        public string rid
+        {
+            get => _rid;
+            set
+            {
+                if (_rid != value)
+                {
+                    _rid = value;
+                    OnPropertyChanged(nameof(rid));
+                }
+            }
+        }
+        public string sort
+        {
+            get => _sort;
+            set
+            {
+                if (_sort != value)
+                {
+                    _sort = value;
+                    OnPropertyChanged(nameof(sort));
+                }
+            }
+        }
+        public event PropertyChangedEventHandler PropertyChanged;
+
+        protected virtual void OnPropertyChanged(string propertyName)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
     }
 }

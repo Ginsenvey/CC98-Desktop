@@ -105,6 +105,10 @@ namespace App3
                         WealthInfo.Text = "财富值(签到中)";
                     }
                 }
+                else
+                {
+                    WealthInfo.Text = "财富值(签到失败)";
+                }
                 
             }
         }
@@ -116,7 +120,6 @@ namespace App3
                 if (Set.Values["ProfileNaviMode"] as string != "Me")
                 {
                     ProfileUrl = "https://api.cc98.org/user/" + userid;
-                    
                 }
 
                 var ProfileRes = await MainWindow.loginservice.client.GetAsync(ProfileUrl);
@@ -126,6 +129,11 @@ namespace App3
                     var js = JsonConvert.DeserializeObject<Dictionary<string, object>>(ProfileText);
 
                     Set.Values["Uid"] = js["id"].ToString();
+                    if (Set.Values["ProfileNaviMode"] as string == "Me")
+                    {
+                        Set.Values["Me"] = js["name"].ToString();
+                        Set.Values["Portrait"] = js["portraitUrl"].ToString();
+                    }
                     var profile = new Info()
                     {
                         Name = js["name"].ToString(),
@@ -410,7 +418,7 @@ namespace App3
         private void Follow_Click(object sender, RoutedEventArgs e)
         {
             var h = sender as HyperlinkButton;
-            if(h!= null)
+            if(h!= null && Set.Values["ProfileNaviMode"] as string=="Me")
             {
                 string tag = h.Tag as string;
                 if(!string.IsNullOrEmpty(tag))

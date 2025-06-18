@@ -11,13 +11,22 @@ using Microsoft.UI.Xaml.Navigation;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices.WindowsRuntime;
+using System.Threading.Tasks;
 using Windows.Foundation;
 using Windows.Foundation.Collections;
 using Windows.Storage;
-
+using CCkernel;
+using Windows.Security.Credentials;
+using Microsoft.Windows.AppNotifications.Builder;
+using Microsoft.Windows.AppNotifications;
+using Microsoft.Security.Authentication.OAuth;
+using HtmlAgilityPack;
+using System.Net.Http;
+using Windows.Media.Protection.PlayReady;
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
 
@@ -186,10 +195,7 @@ namespace App3
             ;
         }
 
-        private void RadioButtons_SelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-            de.Text = "tr";
-        }
+        
 
         private  void LoadPics()
         {
@@ -219,10 +225,143 @@ namespace App3
             
 
         }
+
+        private void ForceGC_Click(object sender, RoutedEventArgs e)
+        {
+            GC.Collect();
+            
+        }
+
+        private void ViewLocalSet_Click(object sender, RoutedEventArgs e)
+        {
+            string settings = "配置项:\n";
+            foreach (var item in Set.Values)
+            {
+                settings += $"{item.Key}: {item.Value}\n";
+            }
+            LocalSet.Text = settings;
+            LocalSetManager.IsExpanded = true;
+        }
+
+        private void LocalSetManager_Expanded(object sender, EventArgs e)
+        {
+            string settings = "配置项:\n";
+            foreach (var item in Set.Values)
+            {
+                settings += $"{item.Key}: {item.Value}\n";
+            }
+            LocalSet.Text = settings;
+            LocalSetManager.IsExpanded = true;
+        }
+
+        private async void SwitchUser_Click(object sender, RoutedEventArgs e)
+        {
+            Set.Values.Clear();
+            await RestartApplicationAsync();
+        }
+        private async Task RestartApplicationAsync()
+        {
+            try
+            {
+                // 获取当前应用的可执行文件路径
+                string exePath = Process.GetCurrentProcess().MainModule.FileName;
+
+                // 退出当前应用
+                Application.Current.Exit();
+
+                // 重新启动应用
+                Process.Start(exePath);
+            }
+            catch (Exception ex)
+            {
+                // 捕获异常，处理错误
+                ContentDialog dialog = new ContentDialog
+                {
+                    Title = "Error",
+                    Content = $"重新启动应用失败: {ex.Message}",
+                    CloseButtonText = "OK"
+                };
+                dialog.XamlRoot = this.XamlRoot;
+                await dialog.ShowAsync();
+            }
+        }
+        private static PasswordVault vault = new PasswordVault();
+        private async void DeepAuth_Click(object sender, RoutedEventArgs e)
+        {
+            AuthDialog.XamlRoot = this.XamlRoot;
+            bool isDeepAuthEnabled = false;
+            if (Set.Values.ContainsKey("DeepAuth"))
+            {
+                if (Set.Values["DeepAuth"] as string=="1")
+                {
+                    isDeepAuthEnabled = true;
+                }
+            }
+            if (isDeepAuthEnabled == false)
+            {
+                var r = await AuthDialog.ShowAsync();
+                if (r == ContentDialogResult.Primary)
+                {
+                    if (IdBox.Text != "" && PassBox.Password != "")
+                    {
+                        var loginservice = new CCloginservice();
+                        string DeepAuthRes = await loginservice.DeepAuthService(IdBox.Text, PassBox.Password);
+                        if (DeepAuthRes == "0")
+                        {
+                            ContentDialog dialog = new ContentDialog
+                            {
+                                Title = "登录失败",
+                                Content = "发生错误。检查凭据或者报告此问题",
+                                CloseButtonText = "退出"
+                            };
+                            dialog.XamlRoot = this.XamlRoot;
+                            await dialog.ShowAsync();
+                        }
+                        else
+                        {
+
+                            PasswordCredential credential = new PasswordCredential("CC98", "User", PassBox.Password);
+                            vault.Add(credential);
+                            Set.Values["DeepAuth"] = "1";//深度认证已启用
+                            AppNotification notification = new AppNotificationBuilder()
+        .AddText("登录成功！")
+        .AddText("现在，可以使用抽卡等实验性功能。")
+        .BuildNotification();
+
+                            AppNotificationManager.Default.Show(notification);
+                        }
+                    }
+                }
+                else
+                {
+                    
+                }
+            }
+            else
+            {
+                AuthDialog.Content= "深度认证已启用，无需进行其他操作。";
+                await AuthDialog.ShowAsync();
+            }
+            
+
+            
+        }
+        
+        private async void DrawACard_Click(object sender, RoutedEventArgs e)
+        {
+            Frame.Navigate(typeof(Game));
+            
+        }
     }
     public class Pic
     {
         public string FileName { get; set; }
         public string FilePath { get; set; }
+    }
+    public class User
+    {
+        public string Name { get; set; }
+        public string Portrait { get; set; }
+        
     }
 }

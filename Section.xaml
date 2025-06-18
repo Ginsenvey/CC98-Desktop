@@ -22,15 +22,10 @@
                 <ItemsRepeater ItemTemplate="{StaticResource  BoardCase}" ItemsSource="{x:Bind Boards}">
                     <ItemsRepeater.Layout>
                         <tool:WrapLayout></tool:WrapLayout>
-                       
-                        
                     </ItemsRepeater.Layout>
-
-                    
                 </ItemsRepeater>
             </StackPanel>
-            
-    </DataTemplate>
+        </DataTemplate>
     </Page.Resources>
     <Grid>
         

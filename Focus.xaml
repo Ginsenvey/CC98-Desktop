@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Page
+    x:Class="App3.Focus"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:App3"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d"
+    xmlns:lab="using:CommunityToolkit.Labs.WinUI"
+    Background="{ThemeResource DesktopAcrylicTransparentBrush}">
+
+    <Grid Padding="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"></RowDefinition>
+            <RowDefinition Height="*"></RowDefinition>
+        </Grid.RowDefinitions>
+        <StackPanel Grid.Row="0" Spacing="20">
+            <TextBlock Text="关注的版面" FontSize="24" FontWeight="Bold" Foreground="{ThemeResource AccentAAFillColorDefaultBrush}"></TextBlock>
+            <lab:TokenView x:Name="Focuses" >
+                
+            </lab:TokenView>
+            <Border Height="1" BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}" HorizontalAlignment="Stretch" BorderThickness="1"></Border>
+        </StackPanel>
+        
+    </Grid>
+</Page>

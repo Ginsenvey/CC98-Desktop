@@ -16,7 +16,7 @@
             <RowDefinition Height="12*"></RowDefinition>
         </Grid.RowDefinitions>
         <Grid  Grid.Row="0" Padding="10" >
-            <TextBlock Text="关注" x:Name="FriendType" FontSize="20" FontWeight="Bold"   Foreground="{ThemeResource AccentAAFillColorSecondaryBrush}" VerticalAlignment="Center" HorizontalAlignment="Left"></TextBlock>
+            <TextBlock Text="关注" x:Name="FriendType" FontSize="24" FontWeight="Bold"   Foreground="#4d9891" VerticalAlignment="Center" HorizontalAlignment="Left"></TextBlock>
         </Grid>
 
         <ScrollViewer Grid.Row="1" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" CornerRadius="8" Margin="0,0,0,15">

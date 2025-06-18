@@ -7,37 +7,45 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d"
-    
+    xmlns:lab="using:CommunityToolkit.Labs.WinUI"
     xmlns:ic="using:FluentIcons.WinUI"
     xmlns:dev="using:DevWinUI"
     xmlns:tool="using:CommunityToolkit.WinUI.UI.Controls"
-   
+    xmlns:md="using:CommunityToolkit.Labs.WinUI.MarkdownTextBlock"
     Background="{ThemeResource DesktopAcrylicTransparentBrush}">
-
-    <Grid x:Name="RootGrid">
+    
+    <Grid x:Name="RootGrid" >
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" MinHeight="80" ></RowDefinition>
             <RowDefinition Height="6*"></RowDefinition>
             <RowDefinition Height="70"></RowDefinition>
         </Grid.RowDefinitions>
-        
-        <Border Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"  Grid.Row="0" MinHeight="90" Height="Auto" CornerRadius="5" x:Name="MetaDataArea">
+        <ContentDialog x:Name="DownLoadDialog" Title="下载提示" Content="点击开始以下载此附件。" PrimaryButtonText="开始" CloseButtonText="取消">
+            
+        </ContentDialog>
+        <TeachingTip Target="{Binding ElementName=MetaDataArea}" x:Name="msg"></TeachingTip>
+        <Border Background="Transparent" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"  Grid.Row="0" MinHeight="90" Height="Auto" CornerRadius="5" x:Name="MetaDataArea">
             <Border.ContextFlyout>
                 <MenuFlyout>
                     <MenuFlyoutItem Text="刷新" Icon="{ic:SymbolIcon Symbol=ArrowSync}" x:Name="TileFlyout" Tag="0" Click="TileFlyout_Click"></MenuFlyoutItem>
                     <MenuFlyoutItem Text="分享链接" Icon="{ic:SymbolIcon Symbol=Share}" Tag="1" Click="TileFlyout_Click"></MenuFlyoutItem>
-                    <MenuFlyoutItem Text="收藏" Icon="{ic:SymbolIcon Symbol=StarAdd}" Tag="2" Click="TileFlyout_Click"></MenuFlyoutItem>
+                    <MenuFlyoutSubItem Text="收藏" Icon="{ic:SymbolIcon Symbol=StarAdd}" Tag="2" x:Name="CollectionMenu"  Tapped="CollectionMenu_Tapped" PointerEntered="CollectionMenu_PointerEntered" ></MenuFlyoutSubItem>
                     <MenuFlyoutItem Text="显示图片" Icon="{ic:SymbolIcon Symbol=Image}" Tag="3" Click="TileFlyout_Click" IsEnabled="False"></MenuFlyoutItem>
                 </MenuFlyout>
             </Border.ContextFlyout>
+            
             <Grid Padding="10" Height="Auto">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"></RowDefinition>
                     <RowDefinition Height="Auto"></RowDefinition>
                 </Grid.RowDefinitions>
-                <TextBlock x:Name="TopicTitle" Text="{Binding text}" Grid.Row="0" VerticalAlignment="Center" FontWeight="Bold" Foreground="{ThemeResource AccentAAFillColorDefaultBrush}" FontSize="18" Margin="10,0,0,0" TextWrapping="Wrap"></TextBlock>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"></ColumnDefinition>
+                    <ColumnDefinition Width="Auto"></ColumnDefinition>
+                </Grid.ColumnDefinitions>
+                <TextBlock x:Name="TopicTitle" Text="{Binding text}" Grid.Row="0" Grid.Column="0" VerticalAlignment="Center" FontWeight="Bold" Foreground="{ThemeResource AccentAAFillColorDefaultBrush}" FontSize="18" Margin="10,0,0,0" TextWrapping="Wrap" ></TextBlock>
                 
-                <StackPanel Orientation="Horizontal" Grid.Row="1" Margin="10,10,0,0" Spacing="8">
+                <StackPanel Orientation="Horizontal" Grid.Row="1" Grid.Column="0" Margin="10,10,0,0" Spacing="8">
                     <ic:SymbolIcon Symbol="Clock" FontSize="12" VerticalAlignment="Center"></ic:SymbolIcon>
                     <TextBlock Text="{Binding time}" FontSize="14" VerticalAlignment="Center"></TextBlock>
                     <ic:SymbolIcon Symbol="Eye" FontSize="12" Margin="20,0,0,0"></ic:SymbolIcon>
@@ -46,31 +54,32 @@
                     <TextBlock Text="{Binding favorite}" FontSize="14" VerticalAlignment="Center"></TextBlock>
                     
                 </StackPanel>
-                <Button Grid.Row="0" Grid.RowSpan="2" VerticalAlignment="Center" Height="45" HorizontalAlignment="Right"  Margin="10,15,10,10" x:Name="writereply" Click="writereply_Click" >
+                <dev:BubbleButton Grid.Row="0" Grid.Column="1" Grid.RowSpan="2" VerticalAlignment="Center" Height="45" HorizontalAlignment="Right"  Margin="10,15,10,10" x:Name="writereply" Click="writereply_Click"  BubbleForeground="{ThemeResource AccentAAFillColorDefaultBrush}">
                     <StackPanel Orientation="Horizontal" Spacing="15">
                         <ic:SymbolIcon Symbol="Add" FontSize="16" Foreground="{ThemeResource AccentAAFillColorDefaultBrush}" ></ic:SymbolIcon>
                         <TextBlock Text="回复" ></TextBlock>
                     </StackPanel>
-                </Button>
+                </dev:BubbleButton>
 
             </Grid>
         </Border>
         
-        <ScrollViewer Grid.Row="1"  Margin="0,10,0,0" CornerRadius="5" HorizontalScrollMode="Enabled" x:Name="RootViewer"  >
+        <ScrollViewer Grid.Row="1"   CornerRadius="5" HorizontalScrollMode="Enabled" x:Name="RootViewer"  >
             
-            <ItemsRepeater x:Name="TileList"  VerticalCacheLength="8" >
+            <ItemsRepeater x:Name="TileList"  VerticalCacheLength="48" >
                 <ItemsRepeater.Layout>
                     <StackLayout Orientation="Vertical"></StackLayout>
                 </ItemsRepeater.Layout>
                 <ItemsRepeater.ItemTemplate>
                     <DataTemplate>
-                        <Border Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1" Margin="0,0,0,0" CornerRadius="0" >
-                            
-                            <HyperlinkButton HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch"  CornerRadius="0">
-                                <Grid Padding="5">
+                        
+
+
+                            <Grid Padding="8" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1" Margin="0,0,0,0" CornerRadius="0">
                                     <Grid.RowDefinitions>
                                         <RowDefinition Height="2*"></RowDefinition>
                                         <RowDefinition Height="3*"></RowDefinition>
+                                        <RowDefinition Height="Auto"></RowDefinition>
                                         <RowDefinition Height="*"></RowDefinition>
                                     </Grid.RowDefinitions>
 
@@ -79,8 +88,8 @@
                                             <MenuFlyout>
                                                 <MenuFlyoutItem Text="帖数 "></MenuFlyoutItem>
                                                 <MenuFlyoutItem Text="风评 "></MenuFlyoutItem>
-                                                <MenuFlyoutItem Text="微信 "></MenuFlyoutItem>
-                                                <MenuFlyoutItem Text="最后登录 "></MenuFlyoutItem>
+                                                <MenuFlyoutItem Text="威望"></MenuFlyoutItem>
+                                                <MenuFlyoutItem Text="最后登录"></MenuFlyoutItem>
                                             </MenuFlyout>
                                         </HyperlinkButton.ContextFlyout>
                                         <StackPanel Grid.Row="0"  Orientation="Horizontal" Spacing="10">
@@ -91,21 +100,17 @@
 
                                         </StackPanel>
                                     </HyperlinkButton>
-                                    
-                                    
-                                    <Border Background="{ThemeResource MarkdownBackgroudBrush}" Grid.Row="1" Padding="10" CornerRadius="4" MinHeight="60" Height="Auto" >
 
-                                        <tool:MarkdownTextBlock x:Name="Drawer" Text="{Binding text}" Background="Transparent" Foreground="{ThemeResource TextFillColorSecondaryBrush}" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" LinkClicked="MarkdownTextBlock_LinkClicked" ImageMaxHeight="50" ImageMaxWidth="50"  ImageStretch="UniformToFill" QuoteBorderBrush="{ThemeResource QuoteBorderBrush}"></tool:MarkdownTextBlock>
-                                        
-                                        
-                                        
+
+                                    <Border Background="{ThemeResource MarkdownBackgroudBrush}" Grid.Row="1" Padding="10" CornerRadius="4" >
+                                        <tool:MarkdownTextBlock x:Name="Drawer" Text="{Binding text}" Background="Transparent" Foreground="{ThemeResource TextFillColorSecondaryBrush}" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" LinkClicked="MarkdownTextBlock_LinkClicked" ImageMaxHeight="50" ImageMaxWidth="50"  ImageStretch="UniformToFill" QuoteBorderBrush="{ThemeResource QuoteBorderBrush}" ImageClicked="Drawer_ImageClicked"></tool:MarkdownTextBlock>
                                     </Border>
                                     <StackPanel Orientation="Vertical" Grid.Row="0" Margin="5,5,10,0" HorizontalAlignment="Right">
                                         <TextBlock Text="{Binding  time}"  FontSize="10"   Foreground="{ThemeResource TextFillColorSecondaryBrush}"></TextBlock>
                                         <TextBlock Text="{Binding floor}" FontSize="10" TextAlignment="Right" Foreground="{ThemeResource TextFillColorSecondaryBrush}"></TextBlock>
                                     </StackPanel>
                                     
-                                    <StackPanel Orientation="Horizontal" Grid.Row="2" Spacing="10">
+                                    <StackPanel Orientation="Horizontal" Grid.Row="3" Spacing="10">
                                         <Button Background="Transparent"  HorizontalAlignment="Left" Margin="0,10,0,0">
                                             <StackPanel Orientation="Horizontal" Spacing="5" >
                                                 <ic:SymbolIcon Symbol="ThumbLike" FontSize="11"></ic:SymbolIcon>
@@ -121,7 +126,7 @@
                                         </Button>
                                         
                                     </StackPanel>
-                                    <Button Grid.Row="2" HorizontalAlignment="Right" Background="Transparent" Margin="0,10,0,0">
+                                    <Button Grid.Row="3" HorizontalAlignment="Right" Background="Transparent" Margin="0,10,0,0">
                                         <ic:SymbolIcon Symbol="MoreHorizontal" FontSize="11"></ic:SymbolIcon>
                                         <Button.Flyout>
                                             <MenuFlyout>
@@ -133,14 +138,15 @@
                                     </Button>
 
                                 </Grid>
-                            </HyperlinkButton>
+                            
 
-                        </Border>
+                        
                     </DataTemplate>
                 </ItemsRepeater.ItemTemplate>
             </ItemsRepeater>
             
         </ScrollViewer>
+        <dev:GotoTop Grid.Row="2" Animated="True" AutoHiding="True" Target="{x:Bind RootViewer}" ToolTipService.ToolTip="回到顶部" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,20,0" BorderBrush="Transparent" Background="Transparent"></dev:GotoTop>
         <Grid Grid.Row="2">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="2*" MinWidth="200"></ColumnDefinition>
@@ -189,8 +195,9 @@
 
 
             </Grid>
-            <PagerControl Grid.Column="1" DisplayMode="ButtonPanel" NumberOfPages="1" HorizontalAlignment="Center" x:Name="Pager"  VerticalAlignment="Center"  SelectedIndexChanged="Pager_SelectedIndexChanged"></PagerControl>
-            <TextBox Grid.Column="2" x:Name="de"></TextBox>
+            
+            <dev:PagerControl Grid.Column="1" DisplayMode="ButtonPanel" NumberOfPages="1"  HorizontalAlignment="Center" x:Name="Pager" SelectedPageIndex="0"  VerticalAlignment="Center"  SelectedIndexChanged="Pager_SelectedIndexChanged"></dev:PagerControl>
+            <TextBox Grid.Column="2" x:Name="de" Visibility="Collapsed"></TextBox>
         </Grid>
         
         

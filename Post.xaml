@@ -18,7 +18,18 @@
             <RowDefinition Height="12*"></RowDefinition>
            
         </Grid.RowDefinitions>
-       
+        <ContentDialog Title="颜色标签" PrimaryButtonText="选中" CloseButtonText="取消" x:Name="ColorPanel" >
+            <ContentDialog.PrimaryButtonStyle>
+                <Style  TargetType="Button">
+                    <Setter Property="Background" Value="{ThemeResource AccentAAFillColorDefaultBrush}" />
+                    <Setter Property="CornerRadius" Value="3"></Setter>
+                    <Setter Property="Foreground" Value="{ThemeResource StandardBrush}"></Setter>
+                </Style>
+            </ContentDialog.PrimaryButtonStyle>
+            <StackPanel>
+                <controls:ColorPicker x:Name="Colors" IsAlphaEnabled="False" IsAlphaSliderVisible="False" IsColorSpectrumVisible="False" ShowAccentColors="True" IsColorChannelTextInputVisible="True" IsColorSliderVisible="False"></controls:ColorPicker>
+            </StackPanel>
+        </ContentDialog>
         <Grid Grid.Row="0" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"  >
             <Grid.RowDefinitions>
                 
@@ -62,16 +73,16 @@
                                   Icon="{ic:SymbolIcon Symbol=TextAlignRight}" Label="右对齐" Click="AppBarButton_Click"/>
                         <AppBarButton Grid.Row="1"
           Grid.Column="2"
-          Icon="{ic:SymbolIcon Symbol=Backspace}" Label="换行" Click="AppBarButton_Click"/>
+          Icon="{ic:SymbolIcon Symbol=Link}" Label="链接" Click="AppBarButton_Click"/>
                     </Grid>
                 </controls:RibbonCollapsibleGroup>
 
                 
 
                 <controls:RibbonGroup Label="颜色">
-                    <AppBarButton Icon="{ic:SymbolIcon Symbol=Color}" Background="Transparent" Label="取色器"/>
+                    <AppBarButton Icon="{ic:SymbolIcon Symbol=Color}" Background="Transparent" Label="调色盘" Click="AppBarButton_Click"/>
                 </controls:RibbonGroup>
-
+                
                 <controls:RibbonCollapsibleGroup CollapsedAccessKey="C"
                                              Label="字体">
                     <controls:RibbonCollapsibleGroup.IconSource>
@@ -90,10 +101,7 @@
                             <RowDefinition Height="*" />
                         </Grid.RowDefinitions>
 
-                        <AppBarButton Grid.RowSpan="2"
-                                  VerticalAlignment="Center"
-                                  Icon="Font"
-                                      Label="样式"/>
+                        
                         <AppBarButton Grid.Column="1"
                                   Icon="Bold" Label="粗体" Click="AppBarButton_Click"/>
                         <AppBarButton Grid.Column="2"
@@ -114,42 +122,51 @@
                 </controls:RibbonCollapsibleGroup>
 
                 <controls:RibbonCollapsibleGroup CollapsedAccessKey="G"
-                                             Label="列表"
+                                             Label="表情"
                                              Priority="5"
-                                             RequestedWidths="400,200,300">
+                                             RequestedWidths="400,200,300"
+                                                 >
                     <controls:RibbonCollapsibleGroup.IconSource>
                         <ic:SymbolIconSource Symbol="List" />
                     </controls:RibbonCollapsibleGroup.IconSource>
-                    <GridView Height="96"
-                          MaxWidth="400"
-                          HorizontalAlignment="Stretch"
-                          VerticalAlignment="Center"
-                          BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-                          BorderThickness="1"
-                          ScrollViewer.HorizontalScrollBarVisibility="Disabled"
-                          ScrollViewer.HorizontalScrollMode="Disabled"
-                          ScrollViewer.VerticalScrollBarVisibility="Auto">
-                        <GridView.ItemTemplate>
-                            <DataTemplate>
-                                <TextBlock Width="24"
-                                       Height="24"
-                                       HorizontalTextAlignment="Center"
-                                       Text="{Binding}" />
-                            </DataTemplate>
-                        </GridView.ItemTemplate>
-                        <GridView.Items>
-                            <x:Double>1</x:Double>
-                            <x:Double>2</x:Double>
-                            <x:Double>3</x:Double>
-                            <x:Double>4</x:Double>
-                            <x:Double>5</x:Double>
-                            <x:Double>6</x:Double>
-                            <x:Double>7</x:Double>
-                            <x:Double>8</x:Double>
-                            <x:Double>9</x:Double>
-                            
-                        </GridView.Items>
-                    </GridView>
+                    <StackPanel Orientation="Vertical" Spacing="8">
+                        <GridView Height="96"
+      MaxWidth="400"
+      HorizontalAlignment="Stretch"
+      VerticalAlignment="Center"
+      BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+      BorderThickness="1"
+      ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+      ScrollViewer.HorizontalScrollMode="Disabled"
+      ScrollViewer.VerticalScrollBarVisibility="Auto">
+                            <GridView.ItemTemplate>
+                                <DataTemplate>
+                                    <TextBlock Width="24"
+                   Height="24"
+                   HorizontalTextAlignment="Center"
+                   Text="{Binding}" />
+                                </DataTemplate>
+                            </GridView.ItemTemplate>
+                            <GridView.Items>
+                                <x:Double>1</x:Double>
+                                <x:Double>2</x:Double>
+                                <x:Double>3</x:Double>
+                                <x:Double>4</x:Double>
+                                <x:Double>5</x:Double>
+                                <x:Double>6</x:Double>
+                                <x:Double>7</x:Double>
+                                <x:Double>8</x:Double>
+                                <x:Double>9</x:Double>
+
+                            </GridView.Items>
+                        </GridView>
+                        <controls:Segmented HorizontalAlignment="Center" >
+                            <controls:SegmentedItem Content="CC98" PointerEntered="EmojiType_PointerEntered" IsSelected="True" x:Name="EmojiType" Tag="1"></controls:SegmentedItem>
+                            <controls:SegmentedItem Content="AC娘" PointerEntered="EmojiType_PointerEntered"   Tag="2"></controls:SegmentedItem>
+                            <controls:SegmentedItem Content="贴吧" PointerEntered="EmojiType_PointerEntered"   Tag="3"></controls:SegmentedItem>
+                            <controls:SegmentedItem Content="雀魂" PointerEntered="EmojiType_PointerEntered"   Tag="4"></controls:SegmentedItem>
+                        </controls:Segmented>
+                    </StackPanel>
                 </controls:RibbonCollapsibleGroup>
 
                 <controls:RibbonCollapsibleGroup CollapsedAccessKey="E"
@@ -172,7 +189,7 @@
                             <RowDefinition Height="*" />
                         </Grid.RowDefinitions>
 
-                        <AppBarButton Icon="{ic:SymbolIcon Symbol=SoundSource}" Label="音频"/>
+                        <AppBarButton Icon="{ic:SymbolIcon Symbol=Image}" Label="图片" Click="AppBarButton_Click"/>
                         <AppBarButton Grid.Column="1"
                                   Icon="{ic:SymbolIcon Symbol=Camera}" Label="捕获"/>
                         <AppBarButton Grid.Column="2"
@@ -183,10 +200,10 @@
                                   Icon="{ic:SymbolIcon Symbol=Document}" Label="文档"/>
                         <AppBarButton Grid.Row="1"
                                   Grid.Column="1"
-                                  Icon="{ic:SymbolIcon Symbol=Link}" Label="链接"/>
+                                  Icon="{ic:SymbolIcon Symbol=Stream}" Label="Bili"/>
                         <AppBarButton Grid.Row="1"
-                                  Grid.Column="2"
-                                  Icon="{ic:SymbolIcon Symbol=Image}" Label="图片"/>
+                                  Grid.Column="2" Icon="{ic:SymbolIcon Symbol=SoundSource}" Label="音频"
+                                  />
 
                     </Grid>
                 </controls:RibbonCollapsibleGroup>

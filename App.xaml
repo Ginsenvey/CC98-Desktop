@@ -5,10 +5,14 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:local="using:App3">
     <Application.Resources>
+        
+
         <ResourceDictionary>
+            
             <ResourceDictionary.MergedDictionaries>
                 <XamlControlsResources xmlns="using:Microsoft.UI.Xaml.Controls" />
                 <!-- Other merged dictionaries here -->
+                <ResourceDictionary Source="ms-appx:///DevWinUI.Controls/Themes/Generic.xaml"/>
             </ResourceDictionary.MergedDictionaries>
             <!-- Other app resources here -->
             
@@ -26,7 +30,9 @@
                     <Color x:Key="yel-low">#fdffce</Color>
                     <Color x:Key="PlayControl">#FFFFFF</Color>
                     <Color x:Key="Contrast">#000000</Color>
+                    <Color x:Key="Standard">#FFFFFF</Color>
                     <Color x:Key="AcrylicTintColor">#FFFFFF</Color>
+                    
                 </ResourceDictionary>
                 <ResourceDictionary x:Key="Dark">
                     <Color x:Key="CustomBackgroundColor">#2f2f2f</Color>
@@ -40,6 +46,7 @@
                     <Color x:Key="yel-low">#2b2b2b</Color>
                     <Color x:Key="PlayControl">#545354</Color>
                     <Color x:Key="Contrast">#FFFFFF</Color>
+                    <Color x:Key="Standard">#000000</Color>
                     <Color x:Key="AcrylicTintColor">#000000</Color>
                 </ResourceDictionary>
                 <ResourceDictionary x:Key="Tint"></ResourceDictionary>
@@ -48,8 +55,10 @@
             <SolidColorBrush x:Key="MarkdownBackgroudBrush" Color="{ThemeResource MarkdownBackgroudColor}"></SolidColorBrush>
             <SolidColorBrush x:Key="DividerBrush" Color="{ThemeResource DividerColor}"></SolidColorBrush>
             <SolidColorBrush x:Key="QuoteBorderBrush" Color="{ThemeResource QuoteBorderColor}"></SolidColorBrush>
+            <SolidColorBrush x:Key="StandardBrush" Color="{ThemeResource Standard}"></SolidColorBrush>
             <AcrylicBrush x:Key="AcrylicCardBrush" TintOpacity="0.8" TintColor="{ThemeResource AcrylicTintColor}" FallbackColor="#FF008000"/>
             
         </ResourceDictionary>
+        
     </Application.Resources>
 </Application>

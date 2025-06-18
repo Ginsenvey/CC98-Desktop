@@ -7,11 +7,15 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d"
+    xmlns:lab="using:CommunityToolkit.WinUI"
     xmlns:tool="using:CommunityToolkit.WinUI.UI.Controls"
     xmlns:dev="using:DevWinUI"
     xmlns:ic="using:FluentIcons.WinUI"
+    xmlns:sh="using:CommunityToolkit.WinUI.Media"
     Background="{ThemeResource DesktopAcrylicTransparentBrush}">
-
+    <Page.Resources>
+        <sh:AttachedCardShadow x:Key="shadow" Offset="4"></sh:AttachedCardShadow>
+    </Page.Resources>
     <Grid dev:Growl.GrowlParent="True">
         <ScrollViewer >
             <StackPanel Orientation="Vertical" Padding="15" Spacing="10">
@@ -25,12 +29,12 @@
                         <ColumnDefinition Width="2*"></ColumnDefinition>
                         <ColumnDefinition Width="3*"></ColumnDefinition>
                     </Grid.ColumnDefinitions>
-                    <Border x:Name="Picture" Width="90" Height="90" Grid.Row="0" Grid.Column="0" HorizontalAlignment="Left" VerticalAlignment="Top" CornerRadius="6">
-                        <PersonPicture
+                    <Border x:Name="Picture" Width="90" Height="90" Grid.Row="0" Grid.Column="0" HorizontalAlignment="Left" VerticalAlignment="Top" CornerRadius="6" >
+                        <PersonPicture 
     Width="90"
     Height="90"
     ProfilePicture="{Binding Port}"
-    
+    lab:Effects.Shadow="{StaticResource shadow}"
     IsGroup="False"/>
                     </Border>
                     <TextBlock Grid.Row="1" Grid.Column="0" FontSize="35" FontWeight="Bold" Text="{Binding Name}" Foreground="#4d9891" VerticalAlignment="Center" IsTextSelectionEnabled="True"></TextBlock>

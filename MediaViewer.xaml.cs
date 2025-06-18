@@ -22,6 +22,7 @@ using Windows.Graphics.Imaging;
 using Windows.Storage.Streams;
 using static System.Net.Mime.MediaTypeNames;
 using Windows.Storage;
+using Windows.Media.Core;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -35,10 +36,12 @@ namespace App3
     public sealed partial class MediaViewer : Window
     {
         private string _url;
-        public MediaViewer(string url)
+        private string _type;
+        public MediaViewer(Dictionary<string,string> param)
         {
             this.InitializeComponent();
-            _url = url;
+            _url = param["url"];
+            _type=param["type"];
             this.Title = "◊ ‘¥‘§¿¿";
             this.ExtendsContentIntoTitleBar = true;
             this.SetTitleBar(GridTitleBar);
@@ -51,9 +54,24 @@ namespace App3
 
         private void MediaViewer_Activated(object sender, WindowActivatedEventArgs args)
         {
-            var bitmap=new BitmapImage(new Uri(_url));
-            PicViewer.Source = bitmap;
-            zoomer.ZoomToFactor(0.6f);
+            if (_type == "video")
+            {
+                ImageControl.Visibility = Visibility.Collapsed;
+                zoomer.Visibility = Visibility.Collapsed;
+                VideoPlayer.Visibility = Visibility.Visible;
+                VideoPlayer.Source = MediaSource.CreateFromUri(new Uri(_url));
+            }
+            else if (_type == "image")
+            {
+                ImageControl.Visibility = Visibility.Visible;
+                zoomer.Visibility = Visibility.Visible;
+                VideoPlayer.Visibility = Visibility.Collapsed;
+                var bitmap = new BitmapImage(new Uri(_url));
+                PicViewer.Source = bitmap;
+                zoomer.ZoomToFactor(0.6f);
+            }
+                
+            
         }
 
         private void zoomer_ViewChanged(object sender, ScrollViewerViewChangedEventArgs e)
@@ -189,6 +207,24 @@ namespace App3
                 msg.Content = "œ¬‘ÿ ß∞‹£¨«Î÷ÿ ‘";
                 msg.IsOpen = true;
             }
+        }
+        public double angle = 0;
+        private void Rotate_Click(object sender, RoutedEventArgs e)
+        {
+            
+            if (angle<270)
+            {
+                angle += 90;
+                ImageRotationTransform.Angle = angle;
+            }
+            else
+            {
+                angle = 0;
+                ImageRotationTransform.Angle = angle;
+            }
+            
+            
+
         }
     }
 }

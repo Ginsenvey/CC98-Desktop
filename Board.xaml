@@ -92,12 +92,12 @@
             </ItemsRepeater>
         </ScrollViewer>
         <Grid Grid.Row="2" Background="{ThemeResource ControlAltFillColorTransparentBrush}" Padding="10">
-            <Button Height="45" HorizontalAlignment="Center" Width="200" Margin="10" x:Name="writepost" Click="writepost_Click">
+            <dev:BubbleButton Height="45" HorizontalAlignment="Center" Width="200" Margin="10" x:Name="writepost" Click="writepost_Click" BubbleForeground="{ThemeResource AccentAAFillColorDefaultBrush}">
                 <StackPanel Orientation="Horizontal" Spacing="25">
                     <ic:SymbolIcon Symbol="Add" FontSize="16" Foreground="{ThemeResource AccentAAFillColorDefaultBrush}" ></ic:SymbolIcon>
                     <TextBlock Text="发帖" ></TextBlock>
                 </StackPanel> 
-            </Button>
+            </dev:BubbleButton>
             
             
         </Grid>

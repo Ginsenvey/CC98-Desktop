@@ -19,6 +19,13 @@ using System.Net.Http;
 using System.Threading.Tasks;
 using Windows.Storage;
 using System.Text;
+using CommunityToolkit.WinUI.Controls;
+using DevWinUI;
+using WinRT.Interop;
+using static System.Net.Mime.MediaTypeNames;
+using ColorCode.Compilation.Languages;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
 
@@ -29,11 +36,11 @@ namespace App3
     /// </summary>
     public sealed partial class Post : Page
     {
-        public ApplicationDataContainer Set = ApplicationData.Current.LocalSettings;
+        public ApplicationDataContainer Set;
         public Post()
         {
             this.InitializeComponent();
-            
+            Set= ApplicationData.Current.LocalSettings;
         }
         
         public string Mode = "0";
@@ -42,7 +49,6 @@ namespace App3
         {
             base.OnNavigatedTo(e);
 
-            // »ñÈ¡´«µİµÄ²ÎÊı
             var parameter = e.Parameter as Dictionary<string,string>;
 
             if (parameter != null)
@@ -51,7 +57,7 @@ namespace App3
                 if (mode == "0")
                 {
                     
-                    status.Text = "»Ø¸´Ö÷Ìâ:" + parameter["Pid"];
+                    status.Text = "å›å¤ä¸»é¢˜:" + parameter["Pid"];
                     Id= parameter["Pid"];
                     topicselector.IsSelected = true;
                     SetTitle.IsEnabled = false;
@@ -72,42 +78,75 @@ namespace App3
             EditArea.IsPaneOpen = false;
         }
 
-        private void AppBarButton_Click(object sender, RoutedEventArgs e)
+        private async void AppBarButton_Click(object sender, RoutedEventArgs e)
         {
             var b = sender as AppBarButton;
             if (b != null)
             {
                 switch (b.Label)
                 {
-                    case "Ô¤ÀÀ":
+                    case "é¢„è§ˆ":
                         EditArea.IsPaneOpen = true;
                         break;
-                    case "´ÖÌå":
+                    case "ç²—ä½“":
                         InsertTag("b","b" ,"");
                         break;
-                    case "Ğ±Ìå":
+                    case "æ–œä½“":
                         InsertTag("i","i", "");
                         break;
-                    case "É¾³ıÏß":
+                    case "åˆ é™¤çº¿":
                         InsertTag("del","del", "");
                         break;
-                    case "ÏÂ»®Ïß":
+                    case "ä¸‹åˆ’çº¿":
                         InsertTag("u","u" ,"");
                         break;
-                    case "×ó¶ÔÆë":
+                    case "å·¦å¯¹é½":
                         InsertTag("align=left", "align", "");
                         break;
-                    case "¾ÓÖĞ":
+                    case "å±…ä¸­":
                         InsertTag("align=center", "align", "");
                         break;
-                    case "ÓÒ¶ÔÆë":
+                    case "å³å¯¹é½":
                         InsertTag("align=right", "align", "");
                         break;
-                    case "ÒıÓÃ":
+                    case "å¼•ç”¨":
                         InsertTag("quote", "quote", "");
                         break;
-                    case "´úÂë":
+                    case "ä»£ç ":
                         InsertCodeBlock();
+                        break;
+                    case "é“¾æ¥":
+                        InsertTag("url", "url", "");
+                        break;
+                    case "è°ƒè‰²ç›˜":
+                        var r=await ColorPanel.ShowAsync();
+                        if(r == ContentDialogResult.Primary)
+                        {
+                            string colorwithalpha = Colors.Color.ToString().ToLower();
+                            string color = colorwithalpha.Substring(0, 1) + colorwithalpha.Substring(3, 6);
+                            InsertTag("color=" + color, "color", "");
+                        }
+                        break;
+                    case "å›¾ç‰‡":
+                        var picker = new FilePicker(WindowNative.GetWindowHandle((App.Current as App).m_window));
+                        picker.FileTypeChoices = new Dictionary<string, IList<string>>
+{
+    { "Images", new List<string> { "*.png", "*.jpg", "*.jpeg", "*.bmp", "*.gif" ,"*.webp"} },
+};                      picker.SuggestedStartLocation = Windows.Storage.Pickers.PickerLocationId.PicturesLibrary;
+                        picker.CommitButtonText = "ä¸Šä¼ ";
+                        picker.Title = "é€‰æ‹©ä¸€å¼ å›¾ç‰‡";
+                        //98çš„æ–‡ä»¶ä¸Šä¼ æ–¹æ³•å’Œè¿™ä¸ªå®Œå…¨ä¸€è‡´ï¼Œå¯å¤ç”¨ã€‚
+                        var file = await picker.PickSingleFileAsync();
+                        if (file != null)
+                        {
+                            status.Text = "æ­£åœ¨ä¸Šä¼ æ–‡ä»¶ã€‚è¯·ç¨ä½œç­‰å¾…";
+                            string url = await UploadImageAsync("https://api.cc98.org/file", file.Path);
+                            if (url != "0" &&url.Contains("file"))
+                            {
+                                status.Text = "ä¸Šä¼ æˆåŠŸ:" + file.Path;
+                                InsertTag("img", "img", url);
+                            }
+                        }
                         break;
                     default:
                         break;
@@ -117,19 +156,19 @@ namespace App3
         }
         private void InsertTag(string ltag,string rtag, string input)
         {
-            string openTag = $"  \n[{ltag}]";
+            string openTag = $"[{ltag}]";
             string closeTag = $"[/{rtag}]";
             string fullTag = $"{openTag}{input}{closeTag}";
 
-            // »ñÈ¡µ±Ç°¹â±êÎ»ÖÃ
+            
             int selectionStart = Editor.SelectionStart;
 
-            // ²åÈë±êÇ©²¢ÒÆ¶¯¹â±êµ½Õ¼Î»·ûÎ»ÖÃ
+           
             Editor.Text = Editor.Text.Insert(selectionStart, fullTag);
             Editor.SelectionStart = selectionStart + openTag.Length;
             Editor.SelectionLength = input.Length;
 
-            // ¾Û½¹µ½ÊäÈë¿ò
+            
             Editor.Focus(FocusState.Programmatic);
         }
         private void Editor_TextChanged(object sender, TextChangedEventArgs e)
@@ -141,16 +180,16 @@ namespace App3
             int cursorPos = Editor.SelectionStart;
             int selectionLen = Editor.SelectionLength;
 
-            // É¾³ıÑ¡ÖĞÎÄ±¾
+            
             string originalText = Editor.Text;
             string textWithoutSelection = originalText.Remove(cursorPos, selectionLen);
 
-            // ²åÈë´úÂë¿é·ûºÅ
+            
             string codeBlock = "`" +  "`";
             string newText = textWithoutSelection.Insert(cursorPos, codeBlock);
             Editor.Text = newText;
 
-            // ¼ÆËãĞÂ¹â±êÎ»ÖÃ
+            
             int newCursorPos = cursorPos + 1;
             Editor.SelectionStart = newCursorPos;
             Editor.Focus(FocusState.Programmatic);
@@ -167,11 +206,11 @@ namespace App3
                     
                     if(MyReplyId == "101")
                     {
-                        status.Text = "·¢ËÍÊ§°Ü£¬¼ì²éÍøÂç»òÕß·´À¡´ËÎÊÌâ";
+                        status.Text = "ç½‘ç»œé—®é¢˜ï¼šå‘é€å¤±è´¥";
                     }
                     else if(MyReplyId == "400")
                     {
-                        status.Text = "Î´µÇÂ¼»òÕß¹ıÆÚ¡£ÇëÖØÆôÓ¦ÓÃ";
+                        status.Text = "å‡ºé”™äº†ã€‚å‘å¼€å‘è€…æŠ¥å‘Šæ­¤é—®é¢˜ã€‚";
                     }
                     else
                     {
@@ -188,7 +227,55 @@ namespace App3
                 }
             }
         }
+        private async Task<string> UploadImageAsync(string Url, string filePath)
+        {
+            using (var client = new HttpClient())
+            using (var formData = new MultipartFormDataContent())
+            {
+                // è¯»å–æœ¬åœ°å›¾ç‰‡æ–‡ä»¶
+                var fileContent = new ByteArrayContent(File.ReadAllBytes(filePath));
 
+                // è®¾ç½®è¯·æ±‚çš„åª’ä½“ç±»å‹ä¸ºå›¾ç‰‡çš„ç±»å‹
+                fileContent.Headers.ContentType = new MediaTypeHeaderValue("multipart/form-data"); // è¿™é‡Œå‡è®¾æ˜¯JPEGæ ¼å¼
+
+                // ç»™è¡¨å•é¡¹å‘½å
+                formData.Add(fileContent, "files", Path.GetFileName(filePath));
+                if (Set.Values.ContainsKey("Access"))
+                {
+                    client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", Set.Values["Access"] as string);
+                    HttpResponseMessage response = await client.PostAsync(Url, formData);
+                    if (response.StatusCode == System.Net.HttpStatusCode.OK)
+                    {
+                        string ImageUrlRes = await response.Content.ReadAsStringAsync();
+                        if (!string.IsNullOrEmpty(ImageUrlRes))
+                        {
+                            var array = JsonConvert.DeserializeObject<JArray>(ImageUrlRes);
+                            if (array.Count == 1)
+                            {
+                                return array[0].ToString();
+                            }
+                            else
+                            {
+                                return "0";
+                            }
+                        }
+                        else
+                        {
+                            return "0";
+                        }
+                    }
+                    else
+                    {
+                        return "0";
+                    }
+                }
+                else
+                {
+                    return "0";
+                }
+                
+            }
+        }
         private void PostType_SelectionChanged(SelectorBar sender, SelectorBarSelectionChangedEventArgs args)
         {
 
@@ -209,9 +296,9 @@ namespace App3
                 
                 
                 var requestbody = new StringContent("{\"content\":\""+content+"\",\"contentType\":0,\"title\":\"\",\"isAnonymous\":"+displaymode+",\"notifyAllReplier\":"+replymode+",\"clientType\":1}", Encoding.UTF8, "application/json");
-                //ÇëÇó±ØĞëÊÇ¸Ã±àÂë¸ñÊ½£¬¶ø²»ÄÜ·¢ËÍ±íµ¥.
-                //ÖµµÄ¸ñÊ½²»ÊÇstring£¬±ÈÈç£¬false²»Ó¦Îª"false"£¬0²»Ó¦Îª"0".
-                //contentType¼´UBBÄ£Ê½/MD¸ñÊ½¡£²»Í¬µÄ¸ñÊ½webäÖÈ¾ÊµÏÖ²»Í¬.
+                //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ç¸Ã±ï¿½ï¿½ï¿½ï¿½Ê½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ü·ï¿½ï¿½Í±ï¿½ï¿½ï¿½.
+                //Öµï¿½Ä¸ï¿½Ê½ï¿½ï¿½ï¿½ï¿½stringï¿½ï¿½ï¿½ï¿½ï¿½ç£¬falseï¿½ï¿½Ó¦Îª"false"ï¿½ï¿½0ï¿½ï¿½Ó¦Îª"0".
+                //contentTypeï¿½ï¿½UBBÄ£Ê½/MDï¿½ï¿½Ê½ï¿½ï¿½ï¿½ï¿½Í¬ï¿½Ä¸ï¿½Ê½webï¿½ï¿½È¾Êµï¿½Ö²ï¿½Í¬.
                 string url = "https://api.cc98.org/topic/" + replyid + "/post";
                 var r = await client.PostAsync(url, requestbody);
                 if (r.StatusCode == System.Net.HttpStatusCode.OK)
@@ -220,15 +307,26 @@ namespace App3
                 }
                 else
                 {
-                    return "101";//Ê§°Ü
+                    return "101";
                 }
             }
             else
             {
-                return "400";//Î´¼øÈ¨
+                return "400";
             }
 
 
         }
+
+        private void EmojiType_PointerEntered(object sender, PointerRoutedEventArgs e)
+        {
+            var type = sender as SegmentedItem;
+            if (type != null)
+            {
+                type.IsSelected = true;
+            }
+        }
+
+        
     }
 }

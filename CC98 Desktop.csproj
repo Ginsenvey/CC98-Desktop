@@ -26,7 +26,6 @@
     <Content Remove="Assets\Square44x44Logo.scale-100.png" />
     <Content Remove="Assets\Square44x44Logo.scale-125.png" />
     <Content Remove="Assets\Square44x44Logo.scale-150.png" />
-    <Content Remove="Assets\Square44x44Logo.scale-400.png" />
     <Content Remove="Assets\Square44x44Logo.targetsize-16.png" />
     <Content Remove="Assets\Square44x44Logo.targetsize-24.png" />
     <Content Remove="Assets\Square44x44Logo.targetsize-256.png" />
@@ -39,13 +38,16 @@
     <Content Remove="Assets\StoreLogo.scale-400.png" />
   </ItemGroup>
   <ItemGroup>
+    <None Remove="Assets\Square44x44Logo.scale-400.png" />
     <None Remove="Board.xaml" />
     <None Remove="CC98 Desktop_1.0.5.0_x64_Debug.cer" />
     <None Remove="CC98 Desktop_1.0.5预览体验（x64）.zip" />
     <None Remove="CC98 Desktop_1.0.6.0_x64_Debug.cer" />
     <None Remove="CC98 Desktop_TemporaryKey.pfx" />
     <None Remove="Discover.xaml" />
+    <None Remove="Focus.xaml" />
     <None Remove="Friend.xaml" />
+    <None Remove="Game.xaml" />
     <None Remove="Index.xaml" />
     <None Remove="login.xaml" />
     <None Remove="MediaViewer.xaml" />
@@ -54,6 +56,7 @@
     <None Remove="Post.xaml" />
     <None Remove="Profile.xaml" />
     <None Remove="Repeater.xaml" />
+    <None Remove="Search.xaml" />
     <None Remove="Section.xaml" />
     <None Remove="Setting.xaml" />
     <None Remove="Topic.xaml" />
@@ -84,18 +87,22 @@
     <ProjectCapability Include="Msix" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="CommunityToolkit.Labs.WinUI.Ribbon" Version="0.1.250319-build.2093" />
-    <PackageReference Include="CommunityToolkit.Labs.WinUI.TokenView" Version="0.1.250319-build.2093" />
+    <PackageReference Include="CommunityToolkit.Labs.WinUI.Controls.MarkdownTextBlock" Version="0.1.250610-build.2151" />
+    <PackageReference Include="CommunityToolkit.Labs.WinUI.Ribbon" Version="0.1.250610-build.2151" />
+    <PackageReference Include="CommunityToolkit.Labs.WinUI.TokenView" Version="0.1.250610-build.2151" />
+    <PackageReference Include="CommunityToolkit.WinUI.Controls.ColorPicker" Version="8.2.250402" />
     <PackageReference Include="CommunityToolkit.WinUI.Controls.SettingsControls" Version="8.2.250402" />
+    <PackageReference Include="CommunityToolkit.WinUI.Media" Version="8.2.250402" />
     <PackageReference Include="CommunityToolkit.WinUI.UI.Controls" Version="7.1.2" />
     <PackageReference Include="CommunityToolkit.WinUI.UI.Controls.Layout" Version="7.1.2" />
     <PackageReference Include="CommunityToolkit.WinUI.UI.Controls.Markdown" Version="7.1.2" />
-    <PackageReference Include="DevWinUI" Version="8.2.0" />
-    <PackageReference Include="DevWinUI.Controls" Version="8.2.0" />
-    <PackageReference Include="FluentIcons.WinUI" Version="1.1.293" />
+    <PackageReference Include="DevWinUI" Version="8.3.0" />
+    <PackageReference Include="DevWinUI.Controls" Version="8.3.0" />
+    <PackageReference Include="FluentIcons.WinUI" Version="1.1.303-ci" />
+    <PackageReference Include="HtmlAgilityPack" Version="1.12.1" />
     <PackageReference Include="Microsoft.Windows.CsWinRT" Version="2.2.0" />
-    <PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.26100.1742" />
-    <PackageReference Include="Microsoft.WindowsAppSDK" Version="1.8.250410001-experimental1" />
+    <PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.26100.4188" />
+    <PackageReference Include="Microsoft.WindowsAppSDK" Version="1.8.250610002-experimental3" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
   </ItemGroup>
   <ItemGroup>
@@ -125,6 +132,21 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Themes\" />
+  </ItemGroup>
+  <ItemGroup>
+    <Page Update="Game.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+  </ItemGroup>
+  <ItemGroup>
+    <Page Update="Focus.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+  </ItemGroup>
+  <ItemGroup>
+    <Page Update="Search.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
   </ItemGroup>
   <ItemGroup>
     <Page Update="Friend.xaml">
