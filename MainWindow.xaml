@@ -22,16 +22,15 @@
         <Grid Grid.Row="0" x:Name="GridTitleBar">
             
             <TextBlock Text="CC98 Desktop"  Margin="10,0,5,0" HorizontalAlignment="Left" VerticalAlignment="Center" FontSize="15"></TextBlock>
-            <AutoSuggestBox x:Name="search" HorizontalAlignment="Center" Margin="5" MinWidth="360" Width="Auto" QueryIcon="{ic:FluentIcon Icon=Search}" TextChanged="search_TextChanged" UpdateTextOnSelect="False" SuggestionChosen="search_SuggestionChosen"  >
+            <AutoSuggestBox x:Name="search" HorizontalAlignment="Center" Margin="5" MinWidth="160" Width="Auto" QueryIcon="{ic:FluentIcon Icon=Search}" TextChanged="search_TextChanged" UpdateTextOnSelect="False" SuggestionChosen="search_SuggestionChosen"  >
                 
             </AutoSuggestBox>
             
         </Grid>
-        
-            
-       
-        <NavigationView Grid.Row="1" Grid.RowSpan="2" HorizontalAlignment="Stretch" PaneDisplayMode="Auto" IsPaneToggleButtonVisible="True" IsPaneOpen="True" OpenPaneLength="280"  IsBackEnabled="True" IsSettingsVisible="False" SelectionChanged="Navi_SelectionChanged" x:Name="Navi"  BackRequested="Navi_BackRequested">
-            
+        <local:InfoFlower Grid.Row="0" Grid.RowSpan="3" x:Name="Flower"></local:InfoFlower>
+
+
+        <NavigationView Grid.Row="1" Grid.RowSpan="2" HorizontalAlignment="Stretch" PaneDisplayMode="Auto" IsPaneToggleButtonVisible="True" IsPaneOpen="True" OpenPaneLength="240"   IsBackEnabled="True" IsSettingsVisible="False" SelectionChanged="Navi_SelectionChanged" x:Name="Navi"  BackRequested="Navi_BackRequested" >
             <NavigationView.MenuItems>
                 <NavigationViewItemHeader Content="首页"></NavigationViewItemHeader>
                 <NavigationViewItem Height="Auto" Tag="0">
@@ -71,7 +70,7 @@
                         </MenuFlyout>
                     </NavigationViewItem.ContextFlyout>
                     <StackPanel Orientation="Horizontal">
-                        <ic:SymbolIcon Symbol="Star"  Margin="2,0,10,0"></ic:SymbolIcon>
+                        <ic:SymbolIcon Symbol="Collections"  Margin="2,0,10,0"></ic:SymbolIcon>
                         <TextBlock Text="收藏集" ></TextBlock>
 
                     </StackPanel>

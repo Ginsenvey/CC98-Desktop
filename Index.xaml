@@ -10,45 +10,44 @@
     xmlns:ic="using:FluentIcons.WinUI"
     xmlns:lab="using:CommunityToolkit.Labs.WinUI"
     xmlns:tool="using:CommunityToolkit.WinUI.Controls"
+    
     Background="{ThemeResource DesktopAcrylicTransparentBrush}">
     <Page.Resources>
         <DataTemplate x:Key="Presenter" x:DataType="local:Tile">
-            <Border Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" BorderBrush="{ThemeResource CardStrokeColorDefaultSolidBrush}" BorderThickness="1" Margin="10" CornerRadius="5" x:Name="ContentCard" PointerEntered="ContentCard_PointerEntered" PointerExited="ContentCard_PointerExited">
-                <Border.RenderTransform>
-                    <TranslateTransform x:Name="CardTranslate" X="0" Y="0"/>
-                </Border.RenderTransform>
-                <HyperlinkButton HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch" x:Name="TopicItem" Click="TopicItem_Click" Tag="{x:Bind uid}">
-                    <Grid Padding="5">
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="*"></RowDefinition>
-                            <RowDefinition Height="3*"></RowDefinition>
-                            <RowDefinition Height="*"></RowDefinition>
-                        </Grid.RowDefinitions>
-                        <HyperlinkButton Content="{x:Bind author}" Grid.Row="0" Margin="0,0,0,5" x:Name="AuthurName" Click="AuthurName_Click" Tag="{x:Bind rid}"></HyperlinkButton>
-                        <Border Background="{ThemeResource MarkdownBackgroudBrush}" Grid.Row="1" Padding="10" CornerRadius="4"  Height="Auto">
-                            <TextBlock Text="{x:Bind title}" FontWeight="Bold" Grid.Row="1"  HorizontalTextAlignment="Left" TextWrapping="Wrap" VerticalAlignment="Center"></TextBlock>
+          
+
+                <HyperlinkButton  PointerEntered="ContentCard_PointerEntered" PointerExited="ContentCard_PointerExited" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch" x:Name="TopicItem" Click="TopicItem_Click" Tag="{x:Bind uid}" CornerRadius="0" Height="53">
+                    <HyperlinkButton.RenderTransform>
+                        <TranslateTransform x:Name="CardTranslate" X="0" Y="0"/>
+                    </HyperlinkButton.RenderTransform> 
+                    <Grid Padding="5" ColumnSpacing="5">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"></ColumnDefinition>
+                            <ColumnDefinition Width="*"></ColumnDefinition>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="{x:Bind title}" Grid.Column="1" FontSize="12"    VerticalAlignment="Center" Foreground="{ThemeResource TextFillColorSecondaryBrush}" HorizontalAlignment="Left"></TextBlock>
+                        <Border Grid.Column="0" Background="{ThemeResource MarkdownBackgroudBrush}" CornerRadius="3" VerticalAlignment="Center" Padding="5" Visibility="{x:Bind hasboardname}">
+                            <TextBlock Text="{x:Bind  section}"  FontSize="12" Grid.Row="0"   Foreground="{ThemeResource AccentAAFillColorSecondaryBrush}"></TextBlock>
                         </Border>
-
-                        <TextBlock Text="{x:Bind  section}" Grid.Row="0" Margin="5,5,10,0" HorizontalAlignment="Right"  Foreground="{ThemeResource TextFillColorSecondaryBrush}"></TextBlock>
-                        <StackPanel Orientation="Horizontal" Grid.Row="2" Spacing="10">
-                            <Button Background="Transparent"  HorizontalAlignment="Left" Margin="0,10,0,0">
-                                <StackPanel Orientation="Horizontal" Spacing="5" >
-                                    <ic:SymbolIcon Symbol="Chat" FontSize="11"></ic:SymbolIcon>
-                                    <TextBlock Text="{x:Bind reply}" Grid.Row="2"  HorizontalAlignment="Right" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}"></TextBlock>
-                                </StackPanel>
-                            </Button>
-
-                            <Button Background="Transparent"  HorizontalAlignment="Left" Margin="0,10,0,0" >
-                                <StackPanel Orientation="Horizontal" Spacing="5" >
-                                    <ic:SymbolIcon Symbol="Fire" FontSize="11"></ic:SymbolIcon>
-                                    <TextBlock Text="{x:Bind hit}"   HorizontalAlignment="Right" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}"></TextBlock>
-                                </StackPanel>
-                            </Button>
-                        </StackPanel>
                     </Grid>
                 </HyperlinkButton>
 
-            </Border>
+          
+        </DataTemplate>
+        <DataTemplate x:Key="SectionCardStyle" x:DataType="local:SectionCard">
+            <Grid RowSpacing="5" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" CornerRadius="5" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1" MinWidth="450" HorizontalAlignment="Stretch">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"></RowDefinition>
+                    <RowDefinition Height="2"></RowDefinition>
+                    <RowDefinition Height="Auto"></RowDefinition>
+                </Grid.RowDefinitions>
+                <StackPanel Orientation="Horizontal" Margin="2,0,0,0" Grid.Row="0">
+                    <Border Width="4" Margin="10,20,0,15" Height="20" BorderBrush="{ThemeResource AccentAAFillColorDefaultBrush}" BorderThickness="4"></Border>
+                    <TextBlock Text="{x:Bind SectionName}" Margin="10,20,10,15" FontSize="16" Foreground="{ThemeResource TextFillColorSecondaryBrush}"></TextBlock>
+                </StackPanel>
+                <Border Grid.Row="1" Height="2" BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}" HorizontalAlignment="Stretch" BorderThickness="2"></Border>
+                <ItemsRepeater Grid.Row="2" x:Name="TileList" ItemTemplate="{StaticResource Presenter}" ItemsSource="{x:Bind Tiles}" ></ItemsRepeater>
+            </Grid>
         </DataTemplate>
     </Page.Resources>
     <Grid>
@@ -68,10 +67,13 @@
                 <TextBlock x:Name="de" ></TextBlock>
             </StackPanel>
         </Border>
-        <FlipView Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" Width="Auto" Grid.Row="0"  x:Name="RecomList" VerticalAlignment="Top">
+        <FlipView  Grid.Row="0"  x:Name="RecomList" VerticalAlignment="Top">
+            <FlipView.Background>
+                <ImageBrush ImageSource="/Assets/Themes/autumn_2022.jpg" Opacity="0.4"></ImageBrush>
+            </FlipView.Background>
             <FlipView.ItemTemplate>
                 <DataTemplate>
-                    <Grid Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1" Padding="20" >
+                    <Grid   Padding="20" >
                         <Grid.RowDefinitions>
                             <RowDefinition Height="*"></RowDefinition>
                             <RowDefinition Height="*"></RowDefinition>
@@ -93,22 +95,12 @@
             </FlipView.ItemTemplate>
         </FlipView>
         <PipsPager x:Name="Pips" Grid.Row="0" VerticalAlignment="Bottom" HorizontalAlignment="Center"  SelectedPageIndex="{x:Bind Path=RecomList.SelectedIndex,Mode=TwoWay}"></PipsPager>
-        <ScrollViewer Grid.Row="1" Margin="10,0,10,10" >
-            <StackPanel Orientation="Vertical" Padding="10">
-                
-                <StackPanel Orientation="Horizontal" Margin="12,0,0,0">
-                    <Border Width="4"  Height="20" BorderBrush="{ThemeResource AccentAAFillColorDefaultBrush}" BorderThickness="4"></Border>
-                    <TextBlock Text="十大话题" Margin="10" FontSize="16" Foreground="{ThemeResource TextFillColorSecondaryBrush}"></TextBlock>
-                </StackPanel>
-                
-                <ItemsRepeater x:Name="TileList" ItemTemplate="{StaticResource Presenter}" >
-                    <ItemsRepeater.Layout>
-                        <tool:StaggeredLayout ItemsStretch="Fill"></tool:StaggeredLayout>
-                    </ItemsRepeater.Layout>
-                    
-                </ItemsRepeater>
-            </StackPanel>
-            
+        <ScrollViewer Grid.Row="1" Margin="10,0,10,10" Padding="10">
+            <ItemsRepeater x:Name="SectionRepeater" ItemTemplate="{StaticResource SectionCardStyle}" ItemsSource="{x:Bind cards}" HorizontalAlignment="Stretch" VerticalCacheLength="32">
+                <ItemsRepeater.Layout>
+                    <tool:StaggeredLayout ItemsStretch="Fill" ColumnSpacing="30" RowSpacing="45" DesiredColumnWidth="450"></tool:StaggeredLayout>
+                </ItemsRepeater.Layout>
+            </ItemsRepeater>
         </ScrollViewer>
         
     </Grid>

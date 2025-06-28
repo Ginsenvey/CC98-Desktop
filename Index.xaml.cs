@@ -36,19 +36,19 @@ namespace App3
     /// </summary>
     public sealed partial class Index : Page
     {
-        public ObservableCollection<Tile> tiles;
+        public ObservableCollection<SectionCard> cards;
         public ObservableCollection<FTile> ftiles;
         public ApplicationDataContainer Set;
-        public CCloginservice loginservice;
+        
         public Index()
         {
             this.InitializeComponent();
-            tiles = new ObservableCollection<Tile>(){};
-            TileList.ItemsSource = tiles;
+            cards = new ObservableCollection<SectionCard>(){};
+            
             ftiles= new ObservableCollection<FTile>();
             RecomList.ItemsSource = ftiles;
             Set = ApplicationData.Current.LocalSettings;
-            loginservice=new CCloginservice();
+            
             Jar = new();
             client=new HttpClient();
 
@@ -75,49 +75,62 @@ namespace App3
         }
         private async void GetHotTopic()
         {
-            string IndexUrl = "https://api.cc98.org/config/index";
-            HttpClientHandler handler= new HttpClientHandler()
-            {
-                CookieContainer=Jar,
-                UseCookies = true
-            };
-
-            var response = await client.GetStringAsync(IndexUrl);
-            var AllTopics=JsonConvert.DeserializeObject<Dictionary<string,object>>(response);
+            //只从缓存中读取。
+            StorageFolder cacheFolder = ApplicationData.Current.LocalCacheFolder;
+            string path = cacheFolder.Path+"/"+"IndexCache.json";
+            string IndexText = ValidationHelper.JsonReader(path);
+            var AllTopics = Deserializer.ToDictionary(IndexText);
+            
+            List<string> SectionNames = new List<string>() {"hotTopic","schoolEvent", "academics", "study", "emotion", "fleaMarket", "fullTimeJob", "partTimeJob" };
+            List<string> _SectionNames = new List<string>() { "十大话题", "校园活动","学术通知", "学习天地","感性·情感", "跳蚤市场" ,"求职广场","实习兼职"};
             if(AllTopics != null)
             {
-                if (AllTopics.TryGetValue("hotTopic", out object HotTopics))
+                for(int i = 0; i < 8; i++)
                 {
-                    if (HotTopics != null)
+                    string key = SectionNames[i];
+                    if (AllTopics.TryGetValue(key, out object Topics))
                     {
-                        var TopicList = JsonConvert.DeserializeObject<JArray>(HotTopics.ToString());
-                        if(TopicList != null && TopicList.Count > 0)
+                        if (Topics != null)
                         {
-                            tiles.Clear();
-                            foreach(var Topic in TopicList)
+                            var TopicList = JsonConvert.DeserializeObject<JArray>(Topics.ToString());
+                            if (TopicList != null && TopicList.Count > 0)
                             {
-                                var TopicInfo = JsonConvert.DeserializeObject<Dictionary<string,object>>(Topic.ToString());
-                                string Author = "匿名";
-                                if (TopicInfo["authorName"] != null)
+                                var tiles = new List<Tile>();
+                                foreach (var Topic in TopicList)
                                 {
-                                    Author = TopicInfo["authorName"].ToString();
+                                    var TopicInfo = JsonConvert.DeserializeObject<Dictionary<string, object>>(Topic.ToString());
+                                    
+                                    string Section = "";
+                                    if (TopicInfo.ContainsKey("boardName"))
+                                    {
+                                        Section = TopicInfo["boardName"].ToString();
+                                    }
+
+                                   
+                                    string Title = string.Empty;
+                                    if (TopicInfo["title"].ToString().Length > 21)
+                                    {
+                                        Title = TopicInfo["title"].ToString().Substring(0, 21) + "…";
+                                    }
+                                    else
+                                    {
+                                        Title = TopicInfo["title"].ToString();
+                                    }
+
+                                    string Pid = TopicInfo["id"].ToString();
+                                    bool hasboardname = false;
+                                    if (key == "hotTopic")
+                                    {
+                                        hasboardname = true;
+                                    }
+                                    tiles.Add(new Tile {  section = Section, title = Title, uid = Pid,hasboardname=hasboardname });
                                 }
-                                string AuthorId = "-1";
-                                if (TopicInfo["authorUserId"] as string != "-1")
-                                {
-                                    AuthorId= TopicInfo["authorUserId"].ToString() ;
-                                }
-                                string Section = TopicInfo["boardName"].ToString();
-                                string Time = TopicInfo["createTime"].ToString();
-                                string Title=TopicInfo["title"].ToString();
-                                string Uid = TopicInfo["id"].ToString();
-                                string Hit = TopicInfo["hitCount"].ToString();
-                                string Reply = TopicInfo["replyCount"].ToString();
-                                tiles.Add(new Tile {author="@ "+Author,section=Section,title=Title,uid=Uid,hit=Hit,reply=Reply ,rid=AuthorId});
+                                cards.Add(new SectionCard { SectionName = _SectionNames[i], Tiles = tiles });
                             }
                         }
                     }
                 }
+                
                 if(AllTopics.TryGetValue("recommendationReading",out var recom))
                 {
                     if (recom != null)
@@ -138,20 +151,21 @@ namespace App3
                 }
             }
             
+            
         }
         
 
         private void ContentCard_PointerEntered(object sender, PointerRoutedEventArgs e)
         {
-            var border = sender as Border;
-            var translate = border.RenderTransform as TranslateTransform;
+            var h = sender as HyperlinkButton;
+            var translate = h.RenderTransform as TranslateTransform;
             AnimateCard(translate, 0, -5); // 向上方移动
         }
 
         private void ContentCard_PointerExited(object sender, PointerRoutedEventArgs e)
         {
-            var border = sender as Border;
-            var translate = border.RenderTransform as TranslateTransform;
+            var h = sender as HyperlinkButton;
+            var translate = h.RenderTransform as TranslateTransform;
             AnimateCard(translate, 0, 0); // 恢复原位
         }
         private void AnimateCard(TranslateTransform transform, double targetX, double targetY)
@@ -211,6 +225,7 @@ namespace App3
                 }
             }
         }
+        
         public class FTile : INotifyPropertyChanged
         {
             private string _title;//标题
@@ -300,6 +315,12 @@ namespace App3
             
         }
     }
+    public class SectionCard
+    {
+        public string SectionName { get; set; }
+        public FluentIcons.Common.Symbol SectionIcon { get; set; }
+        public List<Tile> Tiles { get; set; }
+    }
     public class Tile : INotifyPropertyChanged
     {
         private string _title;//标题
@@ -312,6 +333,7 @@ namespace App3
         private string _hit;//热度
         private string _rid;//楼主id
         private string _sort;//序号
+        private bool _hasboardname;
         public string title
         {
             get => _title;
@@ -424,6 +446,18 @@ namespace App3
                 {
                     _sort = value;
                     OnPropertyChanged(nameof(sort));
+                }
+            }
+        }
+        public bool hasboardname
+        {
+            get => _hasboardname;
+            set
+            {
+                if (_hasboardname != value)
+                {
+                    _hasboardname = value;
+                    OnPropertyChanged(nameof(hasboardname));
                 }
             }
         }

@@ -27,7 +27,7 @@
                 </StackPanel>
             </Button>
         </Grid>
-
+        
         <ScrollViewer Grid.Row="1" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" CornerRadius="8" Margin="0,0,0,15">
             <ItemsRepeater ItemsSource="{x:Bind tiles}" x:Name="Collection" Loaded="Collection_Loaded">
                 <ItemsRepeater.ItemTemplate>

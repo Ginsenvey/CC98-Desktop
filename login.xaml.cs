@@ -1,3 +1,4 @@
+using CCkernel;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Controls.Primitives;
@@ -49,8 +50,8 @@ namespace App3
         }
         private async void Auth()
         {
-            var loginservice = new CCkernel.CCloginservice();
-            string ResText = await loginservice.LoginAsync(idbox.Text,passbox.Password);
+            
+            string ResText = await CCloginservice.LoginAsync(idbox.Text,passbox.Password);
             if (ResText.Contains("access_token"))
             {
                 try

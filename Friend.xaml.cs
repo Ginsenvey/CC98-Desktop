@@ -21,6 +21,7 @@ using Newtonsoft.Json.Linq;
 using static App3.Message;
 using System.ComponentModel;
 using System.Collections.ObjectModel;
+using CCkernel;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -38,18 +39,11 @@ namespace App3
         {
             this.InitializeComponent();
             friends = new ObservableCollection<Friends>();
-            InitializeClient();
+            
             
         }
 
-        private void InitializeClient()
-        {
-            if (Set.Values.ContainsKey("Access"))
-            {
-                MainWindow.loginservice.client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", Set.Values["Access"] as string);
-            }
-            
-        }
+        
         protected override void OnNavigatedTo(Microsoft.UI.Xaml.Navigation.NavigationEventArgs e)
         {
             base.OnNavigatedTo(e);
@@ -82,7 +76,7 @@ namespace App3
         private async void LoadFriend(string type,string start)
         {
             string url = "https://api.cc98.org/me/"+type+"?from="+start+"&size=10";
-            var response =await MainWindow.loginservice.client.GetAsync(url);
+            var response =await CCloginservice.client.GetAsync(url);
             if (response.StatusCode == HttpStatusCode.OK)
             {
                 string json = await response.Content.ReadAsStringAsync();
@@ -99,7 +93,7 @@ namespace App3
                     if (Uids.Count > 0)
                     {
                         string MInfoUrl = "https://api.cc98.org/user?" + string.Join("&", Params);
-                        var portres = await MainWindow.loginservice.client.GetAsync(MInfoUrl);
+                        var portres = await CCloginservice.client.GetAsync(MInfoUrl);
                         if (portres.StatusCode == System.Net.HttpStatusCode.OK)
                         {
                             string port = await portres.Content.ReadAsStringAsync();
@@ -146,9 +140,13 @@ namespace App3
                 var f = h?.DataContext as Friends;
                 if (f != null)
                 {
-                    Set.Values["ProfileNaviMode"] = "Others";
-                    Set.Values["CurrentPerson"] = f.uid;
-                    Frame.Navigate(typeof(Profile), f.uid);
+                    var param = new Dictionary<string, string>()
+                    {
+                        {"Mode","Others" },
+                        {"UserId", f.uid}
+                    };
+                    
+                    Frame.Navigate(typeof(Profile), param);
                 }
             }
         }

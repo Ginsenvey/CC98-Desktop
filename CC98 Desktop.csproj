@@ -49,6 +49,7 @@
     <None Remove="Friend.xaml" />
     <None Remove="Game.xaml" />
     <None Remove="Index.xaml" />
+    <None Remove="InfoFlower.xaml" />
     <None Remove="login.xaml" />
     <None Remove="MediaViewer.xaml" />
     <None Remove="Message.xaml" />
@@ -131,7 +132,9 @@
     </Page>
   </ItemGroup>
   <ItemGroup>
-    <Folder Include="Themes\" />
+    <Page Update="InfoFlower.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
   </ItemGroup>
   <ItemGroup>
     <Page Update="Game.xaml">
@@ -202,6 +205,9 @@
     <Page Update="Section.xaml">
       <Generator>MSBuild:Compile</Generator>
     </Page>
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Themes\" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <WebView2DispatchAdapterNamespace>CC98</WebView2DispatchAdapterNamespace>

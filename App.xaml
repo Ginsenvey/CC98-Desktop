@@ -5,24 +5,24 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:local="using:App3">
     <Application.Resources>
-        
 
+        
         <ResourceDictionary>
             
             <ResourceDictionary.MergedDictionaries>
                 <XamlControlsResources xmlns="using:Microsoft.UI.Xaml.Controls" />
-                <!-- Other merged dictionaries here -->
+                
                 <ResourceDictionary Source="ms-appx:///DevWinUI.Controls/Themes/Generic.xaml"/>
             </ResourceDictionary.MergedDictionaries>
             <!-- Other app resources here -->
             
             <ResourceDictionary.ThemeDictionaries>
-
+                
                 <ResourceDictionary x:Key="Light">
                     <Color x:Key="CustomBackgroundColor">#FBFBFB</Color>
                     <Color x:Key="borderlinecolor">#E5E5E5</Color>
                     <Color x:Key="DividerColor">#CACACA</Color>
-                    <Color x:Key="MarkdownBackgroudColor">#88eeeeee</Color>
+                    <Color x:Key="MarkdownBackgroudColor">#77eeeeee</Color>
                     <Color x:Key="QuoteBorderColor">#ffc4ae</Color>
                     <Color x:Key="pink-green" >#60d2b3ae</Color>
                     <Color x:Key="trans-plain">#00000000</Color>
@@ -31,8 +31,8 @@
                     <Color x:Key="PlayControl">#FFFFFF</Color>
                     <Color x:Key="Contrast">#000000</Color>
                     <Color x:Key="Standard">#FFFFFF</Color>
-                    <Color x:Key="AcrylicTintColor">#FFFFFF</Color>
-                    
+                    <Color x:Key="AcrylicTintColor">#66FFC4AE</Color>
+                    <Color x:Key="PortaitBackgroundColor">#4d9891</Color>
                 </ResourceDictionary>
                 <ResourceDictionary x:Key="Dark">
                     <Color x:Key="CustomBackgroundColor">#2f2f2f</Color>
@@ -48,6 +48,7 @@
                     <Color x:Key="Contrast">#FFFFFF</Color>
                     <Color x:Key="Standard">#000000</Color>
                     <Color x:Key="AcrylicTintColor">#000000</Color>
+                    <Color x:Key="PortaitBackgroundColor">#004d9891</Color>
                 </ResourceDictionary>
                 <ResourceDictionary x:Key="Tint"></ResourceDictionary>
 
@@ -56,7 +57,7 @@
             <SolidColorBrush x:Key="DividerBrush" Color="{ThemeResource DividerColor}"></SolidColorBrush>
             <SolidColorBrush x:Key="QuoteBorderBrush" Color="{ThemeResource QuoteBorderColor}"></SolidColorBrush>
             <SolidColorBrush x:Key="StandardBrush" Color="{ThemeResource Standard}"></SolidColorBrush>
-            <AcrylicBrush x:Key="AcrylicCardBrush" TintOpacity="0.8" TintColor="{ThemeResource AcrylicTintColor}" FallbackColor="#FF008000"/>
+            <AcrylicBrush x:Key="AcrylicCardBrush" TintOpacity="0.4" TintColor="{ThemeResource AcrylicTintColor}" AlwaysUseFallback="False"/>
             
         </ResourceDictionary>
         

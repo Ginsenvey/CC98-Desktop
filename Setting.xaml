@@ -18,7 +18,10 @@
             <RowDefinition Height="*" MinHeight="60"></RowDefinition>
             <RowDefinition Height="12*"></RowDefinition>
         </Grid.RowDefinitions>
-
+        
+        <local:InfoFlower HorizontalAlignment="Center" x:Name="Flow"  Grid.Row="0" Grid.RowSpan="2" Canvas.ZIndex="9999">
+            
+        </local:InfoFlower>
         <ContentDialog Title="授权" x:Name="AuthDialog" PrimaryButtonText="确认" CloseButtonText="取消" >
             <ContentDialog.PrimaryButtonStyle>
                 <Style  TargetType="Button">

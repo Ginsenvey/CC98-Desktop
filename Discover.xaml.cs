@@ -40,7 +40,7 @@ namespace App3
         {
             this.InitializeComponent();
             tiles = new ObservableCollection<Tile>() { };
-            LoadSettings();
+            
             randomtiles = new ObservableCollection<RandomTile>();
             Set = ApplicationData.Current.LocalSettings;
             DiscoverList.ItemsSource = tiles;
@@ -48,22 +48,7 @@ namespace App3
             GetNewTopic();
             GetRandomTile();
         }
-        private void LoadSettings()
-        {
-            if (Set.Values.ContainsKey("ThemePic"))
-            {
-                if (Set.Values["ThemePic"] as string != "0")
-                {
-                    string pic = (string)Set.Values["ThemePic"];
-                    var bitmap = new BitmapImage(new Uri(pic));
-                    ThemePresnter.ImageSource = bitmap;
-                }
-            }
-            else
-            {
-                Set.Values["ThemePic"] = "0";
-            }
-        }
+        
         private async void GetNewTopic()
         {
             string NewTopicUrl = "https://api.cc98.org/topic/new?from=0&size=20";
@@ -72,8 +57,8 @@ namespace App3
                 string access = Set.Values["Access"] as string;
                 if (!string.IsNullOrEmpty(access))
                 {
-                    MainWindow.loginservice.client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", access);
-                    var NewRes = await MainWindow.loginservice.client.GetAsync(NewTopicUrl);
+                    CCloginservice.client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", access);
+                    var NewRes = await CCloginservice.client.GetAsync(NewTopicUrl);
                     if (NewRes.StatusCode == System.Net.HttpStatusCode.OK)
                     {
                         string NewText = await NewRes.Content.ReadAsStringAsync();
@@ -142,8 +127,8 @@ namespace App3
                 string access = Set.Values["Access"] as string;
                 if (!string.IsNullOrEmpty(access))
                 {
-                    MainWindow.loginservice.client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", access);
-                    var RandomRes = await MainWindow.loginservice.client.GetAsync(NewTopicUrl);
+                    
+                    var RandomRes = await CCloginservice.client.GetAsync(NewTopicUrl);
                     if (RandomRes.StatusCode == System.Net.HttpStatusCode.OK)
                     {
                         string RandomText = await RandomRes.Content.ReadAsStringAsync();

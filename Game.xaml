@@ -27,7 +27,7 @@
 
 你可以使用 CC98 账号登录这个游戏，然后选择一种抽卡规则进行抽卡。抽卡得到的卡片可用于收藏展示，通过卡片带来的附加奖励值，还可以兑换其它更有价值的东西哦！"></tool:MarkdownTextBlock>
         </StackPanel>
-        <ScrollViewer Grid.Row="1" Grid.Column="1" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" CornerRadius="5" Padding="10" VerticalScrollBarVisibility="Hidden">
+        <ScrollViewer  Grid.Row="1" Grid.Column="1" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" CornerRadius="5" Padding="10" VerticalScrollBarVisibility="Hidden">
             <StackPanel  Orientation="Vertical"  Spacing="10">
                 <Grid>
                     <TextBlock Text="操作" Foreground="{ThemeResource AccentAAFillColorDefaultBrush}" FontWeight="Bold" VerticalAlignment="Center"></TextBlock>
@@ -78,8 +78,11 @@
 
             </StackPanel>
         </ScrollViewer>
-        
-        <ScrollViewer Grid.Row="1" Grid.Column="0" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" CornerRadius="5" Padding="10">
+        <StackPanel x:Name="BusyIndicator" Visibility="Collapsed" Grid.Row="1" Grid.Column="0" Background="Transparent" HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="10" CornerRadius="5">
+            <dev:LoadingIndicator Mode="FlipPlane"></dev:LoadingIndicator>
+            <TextBlock Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="少女祈祷中···"></TextBlock>
+        </StackPanel>
+        <ScrollViewer x:Name="ResultViewer" Grid.Row="1" Grid.Column="0" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" CornerRadius="5" Padding="10">
             <ItemsRepeater x:Name="CardList" Margin="0,10,0,0">
                 <ItemsRepeater.Layout>
                     <FlowLayout MinRowSpacing="20" MinColumnSpacing="25" LineAlignment="SpaceEvenly"></FlowLayout>

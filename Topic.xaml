@@ -13,7 +13,10 @@
     xmlns:tool="using:CommunityToolkit.WinUI.UI.Controls"
     xmlns:md="using:CommunityToolkit.Labs.WinUI.MarkdownTextBlock"
     Background="{ThemeResource DesktopAcrylicTransparentBrush}">
-    
+    <Page.Resources>
+        <local:UBBTextConverter x:Key="UBBTextConverter"></local:UBBTextConverter>
+        
+    </Page.Resources>
     <Grid x:Name="RootGrid" >
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" MinHeight="80" ></RowDefinition>
@@ -29,7 +32,7 @@
                 <MenuFlyout>
                     <MenuFlyoutItem Text="刷新" Icon="{ic:SymbolIcon Symbol=ArrowSync}" x:Name="TileFlyout" Tag="0" Click="TileFlyout_Click"></MenuFlyoutItem>
                     <MenuFlyoutItem Text="分享链接" Icon="{ic:SymbolIcon Symbol=Share}" Tag="1" Click="TileFlyout_Click"></MenuFlyoutItem>
-                    <MenuFlyoutSubItem Text="收藏" Icon="{ic:SymbolIcon Symbol=StarAdd}" Tag="2" x:Name="CollectionMenu"  Tapped="CollectionMenu_Tapped" PointerEntered="CollectionMenu_PointerEntered" ></MenuFlyoutSubItem>
+                    <MenuFlyoutSubItem Text="收藏" Icon="{ic:SymbolIcon Symbol=StarAdd}" Tag="2" x:Name="CollectionMenu"  ></MenuFlyoutSubItem>
                     <MenuFlyoutItem Text="显示图片" Icon="{ic:SymbolIcon Symbol=Image}" Tag="3" Click="TileFlyout_Click" IsEnabled="False"></MenuFlyoutItem>
                 </MenuFlyout>
             </Border.ContextFlyout>
@@ -64,18 +67,13 @@
             </Grid>
         </Border>
         
-        <ScrollViewer Grid.Row="1"   CornerRadius="5" HorizontalScrollMode="Enabled" x:Name="RootViewer"  >
+        <ScrollViewer Grid.Row="1"   CornerRadius="5" HorizontalScrollMode="Enabled" x:Name="RootViewer" >
             
-            <ItemsRepeater x:Name="TileList"  VerticalCacheLength="48" >
-                <ItemsRepeater.Layout>
-                    <StackLayout Orientation="Vertical"></StackLayout>
-                </ItemsRepeater.Layout>
+            <ItemsRepeater x:Name="TileList"   VerticalCacheLength="48">
+                
                 <ItemsRepeater.ItemTemplate>
                     <DataTemplate>
-                        
-
-
-                            <Grid Padding="8" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1" Margin="0,0,0,0" CornerRadius="0">
+                        <Grid Padding="8" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"  BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1" Margin="0,0,0,0" CornerRadius="0" >
                                     <Grid.RowDefinitions>
                                         <RowDefinition Height="2*"></RowDefinition>
                                         <RowDefinition Height="3*"></RowDefinition>
@@ -93,17 +91,16 @@
                                             </MenuFlyout>
                                         </HyperlinkButton.ContextFlyout>
                                         <StackPanel Grid.Row="0"  Orientation="Horizontal" Spacing="10">
-                                            <Border Width="30" Height="30" CornerRadius="5" >
-                                                <Image  x:Name="portrait" Source="{Binding url}"></Image>
+                                            <Border Width="30" Height="30" CornerRadius="5" Background="{ThemeResource PortaitBackgroundColor}">
+                                                <Image  x:Name="portrait" Source="{Binding url}" ></Image>
                                             </Border>
                                             <TextBlock Text="{Binding author}" VerticalAlignment="Center" ></TextBlock>
-
                                         </StackPanel>
                                     </HyperlinkButton>
 
 
-                                    <Border Background="{ThemeResource MarkdownBackgroudBrush}" Grid.Row="1" Padding="10" CornerRadius="4" >
-                                        <tool:MarkdownTextBlock x:Name="Drawer" Text="{Binding text}" Background="Transparent" Foreground="{ThemeResource TextFillColorSecondaryBrush}" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" LinkClicked="MarkdownTextBlock_LinkClicked" ImageMaxHeight="50" ImageMaxWidth="50"  ImageStretch="UniformToFill" QuoteBorderBrush="{ThemeResource QuoteBorderBrush}" ImageClicked="Drawer_ImageClicked"></tool:MarkdownTextBlock>
+                            <Border  Grid.Row="1" Padding="10" CornerRadius="4" Background="{ThemeResource MarkdownBackgroudBrush}" >
+                                        <tool:MarkdownTextBlock x:Name="Drawer"  Text="{Binding text,Converter={StaticResource UBBTextConverter}}" Background="Transparent" Foreground="{ThemeResource TextFillColorSecondaryBrush}" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" LinkClicked="MarkdownTextBlock_LinkClicked" ImageMaxHeight="50" ImageMaxWidth="50"  ImageStretch="UniformToFill" QuoteBorderBrush="{ThemeResource QuoteBorderBrush}" ImageClicked="Drawer_ImageClicked" ></tool:MarkdownTextBlock>
                                     </Border>
                                     <StackPanel Orientation="Vertical" Grid.Row="0" Margin="5,5,10,0" HorizontalAlignment="Right">
                                         <TextBlock Text="{Binding  time}"  FontSize="10"   Foreground="{ThemeResource TextFillColorSecondaryBrush}"></TextBlock>
@@ -111,27 +108,31 @@
                                     </StackPanel>
                                     
                                     <StackPanel Orientation="Horizontal" Grid.Row="3" Spacing="10">
-                                        <Button Background="Transparent"  HorizontalAlignment="Left" Margin="0,10,0,0">
-                                            <StackPanel Orientation="Horizontal" Spacing="5" >
-                                                <ic:SymbolIcon Symbol="ThumbLike" FontSize="11"></ic:SymbolIcon>
-                                                <TextBlock Text="{Binding like}" Grid.Row="2"  HorizontalAlignment="Right" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}"></TextBlock>
-                                            </StackPanel>
-                                        </Button>
-
-                                        <Button Background="Transparent"  HorizontalAlignment="Left" Margin="0,10,0,0" >
-                                            <StackPanel Orientation="Horizontal" Spacing="5" >
-                                                <ic:SymbolIcon Symbol="ThumbDislike" FontSize="11"></ic:SymbolIcon>
-                                                <TextBlock Text="{Binding dislike}"   HorizontalAlignment="Right" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}"></TextBlock>
-                                            </StackPanel>
-                                        </Button>
-                                        
+                                <Button Background="Transparent"  Tag="1"  HorizontalAlignment="Left" Margin="0,10,0,0" x:Name="Like" Click="Like_Click">
+                                    <StackPanel Orientation="Horizontal" Spacing="5" >
+                                        <ic:SymbolIcon Symbol="ThumbLike" FontSize="11" Foreground="{ThemeResource AccentAAFillColorDefaultBrush}"  IconVariant="{Binding likestate}"></ic:SymbolIcon>
+                                        <TextBlock Text="{Binding like}" Grid.Row="2"  HorizontalAlignment="Right" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}"></TextBlock>
                                     </StackPanel>
+                                </Button>
+
+                                <Button Background="Transparent" Tag="2" HorizontalAlignment="Left" Margin="0,10,0,0" Click="Like_Click">
+                                    <StackPanel Orientation="Horizontal" Spacing="5" >
+                                        <ic:SymbolIcon Symbol="ThumbDislike" FontSize="11" Foreground="{ThemeResource TextFillColorSecondaryBrush}" IconVariant="{Binding dislikestate}"></ic:SymbolIcon>
+                                        <TextBlock Text="{Binding dislike}"  HorizontalAlignment="Right" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}"></TextBlock>
+                                    </StackPanel>
+                                </Button>
+
+                            </StackPanel>
                                     <Button Grid.Row="3" HorizontalAlignment="Right" Background="Transparent" Margin="0,10,0,0">
                                         <ic:SymbolIcon Symbol="MoreHorizontal" FontSize="11"></ic:SymbolIcon>
                                         <Button.Flyout>
                                             <MenuFlyout>
-                                                <MenuFlyoutItem Text="引用" Icon="{ic:SymbolIcon Symbol=ChatAdd}"></MenuFlyoutItem>
-                                                <MenuFlyoutItem Text="追踪" Icon="{ic:SymbolIcon Symbol=ArrowDownRight}"></MenuFlyoutItem>
+                                        <MenuFlyoutSubItem Text="高级复制" Icon="{ic:SymbolIcon Symbol=Copy}" x:Name="PostOperation" >
+                                            <MenuFlyoutItem Icon="{ic:SymbolIcon Symbol=Code}" Text="复制为UBB" Click="PostOperation_Click" Tag="0"></MenuFlyoutItem>
+                                            <MenuFlyoutItem Icon="{ic:SymbolIcon Symbol=Markdown}" Text="复制为Markdown" Tag="1"></MenuFlyoutItem>
+                                            
+                                        </MenuFlyoutSubItem>
+                                            <MenuFlyoutItem Text="追踪" Icon="{ic:SymbolIcon Symbol=ChatArrowBack}" Tag="2" Click="PostOperation_Click"></MenuFlyoutItem>
                                                 
                                             </MenuFlyout>
                                         </Button.Flyout>
@@ -198,8 +199,9 @@
             
             <dev:PagerControl Grid.Column="1" DisplayMode="ButtonPanel" NumberOfPages="1"  HorizontalAlignment="Center" x:Name="Pager" SelectedPageIndex="0"  VerticalAlignment="Center"  SelectedIndexChanged="Pager_SelectedIndexChanged"></dev:PagerControl>
             <TextBox Grid.Column="2" x:Name="de" Visibility="Collapsed"></TextBox>
+            
         </Grid>
-        
-        
+
+        <local:InfoFlower x:Name="Flower" Grid.Row="0" Grid.RowSpan="3" HorizontalAlignment="Center" VerticalAlignment="Bottom"></local:InfoFlower>
     </Grid>
 </Page>

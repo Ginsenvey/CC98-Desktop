@@ -14,13 +14,13 @@
             <RowDefinition Height="*" MinHeight="60"></RowDefinition>
             <RowDefinition Height="12*"></RowDefinition>
         </Grid.RowDefinitions>
-        <SelectorBar Grid.Row="0" HorizontalAlignment="Left" >
-            <SelectorBarItem Text="私信" x:Name="PrivateMsg"></SelectorBarItem>
-            <SelectorBarItem Text="系统通知"></SelectorBarItem>
-            <SelectorBarItem Text="@ 我的"></SelectorBarItem>
+        <SelectorBar Grid.Row="0" HorizontalAlignment="Left" SelectionChanged="NaviBar_SelectionChanged" x:Name="NaviBar">
+            <SelectorBarItem Text="私信" x:Name="PrivateMsg" Tag="0"></SelectorBarItem>
+            <SelectorBarItem Text="系统通知" x:Name="SystemNotice" Tag="1"></SelectorBarItem>
+            <SelectorBarItem Text="@ 我的" Tag="2"></SelectorBarItem>
         </SelectorBar>
         <Grid  Grid.Row="1" CornerRadius="6" BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}" BorderThickness="1">
-            <SplitView IsPaneOpen="True" DisplayMode="Inline" PaneBackground="{ThemeResource DesktopAcrylicTransparentBrush}" >
+            <SplitView IsPaneOpen="True" DisplayMode="Inline" PaneBackground="{ThemeResource DesktopAcrylicTransparentBrush}" x:Name="MessageViewer">
                 <SplitView.Pane>
                     <Border Background="Transparent" >
                         <ListView x:Name="ContactRepeater" SelectionChanged="ContactRepeater_SelectionChanged" >
@@ -58,6 +58,33 @@
                     </Frame>
                 </SplitView.Content>
             </SplitView>
+           
+                <ScrollViewer x:Name="NoticeViewer">
+                    <ItemsRepeater x:Name="NoticeRepeater">
+                        <ItemsRepeater.ItemTemplate>
+                            <DataTemplate>
+                                <HyperlinkButton HorizontalContentAlignment="Stretch" HorizontalAlignment="Stretch" CornerRadius="0" >
+                                    <Grid Padding="3" RowSpacing="8">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto"></ColumnDefinition>
+                                            <ColumnDefinition Width="*"></ColumnDefinition>
+                                        </Grid.ColumnDefinitions>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="*"></RowDefinition>
+                                            <RowDefinition Height="*"></RowDefinition>
+                                        </Grid.RowDefinitions>
+                                        <TextBlock Text="{Binding Title}" Grid.Column="0" Grid.Row="0" Grid.RowSpan="2" FontWeight="Bold"></TextBlock>
+                                        <TextBlock Text="{Binding Time}" FontSize="12" Grid.Column="1" Grid.Row="0"  HorizontalAlignment="Right" Foreground="{ThemeResource TextFillColorSecondaryBrush}"></TextBlock>
+                                        <TextBlock Text="{Binding Content}" FontSize="12" Grid.Column="0" Grid.ColumnSpan="2" Grid.Row="1" Foreground="{ThemeResource TextFillColorSecondaryBrush}"></TextBlock>
+                                    </Grid>
+                                </HyperlinkButton>
+                            </DataTemplate>
+                        </ItemsRepeater.ItemTemplate>
+                    </ItemsRepeater>
+
+                </ScrollViewer>
+            
+            
         </Grid>
     </Grid>
 </Page>

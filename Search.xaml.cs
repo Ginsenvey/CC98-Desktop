@@ -38,16 +38,9 @@ namespace App3
         public Search()
         {
             this.InitializeComponent();
-            InitializeClient();
+            
         }
-        private void InitializeClient()
-        {
-            if (Set.Values.ContainsKey("Access"))
-            {
-                MainWindow.loginservice.client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", Set.Values["Access"] as string);
-            }
-
-        }
+        
         protected override void OnNavigatedTo(Microsoft.UI.Xaml.Navigation.NavigationEventArgs e)
         {
             base.OnNavigatedTo(e);
@@ -82,7 +75,7 @@ namespace App3
         private async void SearchTopic(string key)
         {
             string searchurl = "https://api.cc98.org/topic/search?keyword="+key+"&size=20&from=0";
-            var r = await MainWindow.loginservice.client.GetAsync(searchurl);
+            var r = await CCloginservice.client.GetAsync(searchurl);
             if (r.StatusCode == HttpStatusCode.OK)
             {
                 string SText = await r.Content.ReadAsStringAsync();

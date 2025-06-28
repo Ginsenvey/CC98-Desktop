@@ -24,6 +24,7 @@ using DevWinUI;
 using System.ComponentModel;
 using static System.Net.Mime.MediaTypeNames;
 using System.Collections.ObjectModel;
+using System.Threading.Tasks;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -48,7 +49,7 @@ namespace App3
             
             CardList.ItemsSource = cards;
         }
-        public CCloginservice service = new CCloginservice();//使用私有实例
+        
         private void DisplayOdd()
         {
             odds1.Add(new Odd { Rank = "Mystery", Probability = "0.03%" });
@@ -71,16 +72,16 @@ namespace App3
             string name = Set.Values["Me"] as string;
             string password = credential.Password;
             
-            string r = await service.DeepAuthService(name, password);
+            string r = await CCloginservice.DeepAuthService(name, password);
             if (r == "1")
             {
                 string cardurl = "https://card.cc98.org/Account/LogOn?returnUrl=https%3A%2F%2Fcard.cc98.org%2F";
-                var res = await service.client.GetAsync(cardurl);
+                var res = await CCloginservice.client.GetAsync(cardurl);
                 var callback = res.Headers.Location;
 
-                var connect = await service.client.GetAsync(callback);
+                var connect = await CCloginservice.client.GetAsync(callback);
                 var callback1 = connect.Headers.Location;
-                var res1 = await service.client.GetAsync(callback1);
+                var res1 = await CCloginservice.client.GetAsync(callback1);
 
                 string content = await res1.Content.ReadAsStringAsync();
                 HtmlDocument doc = new HtmlDocument();
@@ -102,9 +103,9 @@ namespace App3
                     parameters.Add(new KeyValuePair<string, string>("RememberConsent", "false"));
                     //发送含有重复键值表单的方法
                     var postdata = new FormUrlEncodedContent(parameters);
-                    var res2 = await service.client.PostAsync(callback1, postdata);
+                    var res2 = await CCloginservice.client.PostAsync(callback1, postdata);
                     string openurl = "https://openid.cc98.org" + res2.Headers.Location.ToString();
-                    var res3 = await service.client.GetAsync(openurl);
+                    var res3 = await CCloginservice.client.GetAsync(openurl);
                     string info = await res3.Content.ReadAsStringAsync();
                     HtmlDocument infodoc = new HtmlDocument();
                     infodoc.LoadHtml(info);
@@ -123,9 +124,9 @@ namespace App3
                         {"session_state",session_state }
                     };
                     var packdata = new FormUrlEncodedContent(pack);
-                    var signres = await service.client.PostAsync(drawurl, packdata);
+                    var signres = await CCloginservice.client.PostAsync(drawurl, packdata);
                     string recall = "https://card.cc98.org/Account/LogOnCallback?returnUrl=https%3A%2F%2Fcard.cc98.org%2F";
-                    var recallres = await service.client.GetAsync(recall);
+                    var recallres = await CCloginservice.client.GetAsync(recall);
                     
                 }
                 else
@@ -136,14 +137,14 @@ namespace App3
             }
         }
 
-        private async void StartDraw(string mode)
+        private async Task<string> StartDraw(string mode)
         {
             CardList.ItemsSource = null;
             cards.Clear();
             CardList.ItemsSource = cards;
             string single = "https://card.cc98.org/Draw/Detail/"+mode;
             //mode为1表示单抽，2为十一连抽
-            var singleRes = await service.client.GetAsync(single);
+            var singleRes = await CCloginservice.client.GetAsync(single);
             string singleContent = await singleRes.Content.ReadAsStringAsync();
             HtmlDocument singleDoc = new HtmlDocument();
             singleDoc.LoadHtml(singleContent);
@@ -157,7 +158,7 @@ namespace App3
                             {"X-Requested-With","XMLHttpRequest" }
                         };
                 var singlepackdata = new FormUrlEncodedContent(singlepack);
-                var drawres = await service.client.PostAsync("https://card.cc98.org/Draw/Run/"+mode, singlepackdata);
+                var drawres = await CCloginservice.client.PostAsync("https://card.cc98.org/Draw/Run/"+mode, singlepackdata);
                 if (drawres.StatusCode == System.Net.HttpStatusCode.OK)
                 {
                     string drawContent = await drawres.Content.ReadAsStringAsync();
@@ -177,17 +178,22 @@ namespace App3
                             };
                             cards.Add(card);
                         }
+                        return "1";
                     }
                     else
                     {
-                        
+                        return "0";
                     }
                 }
                 else
                 {
-
+                    return "0";
                 }
 
+            }
+            else
+            {
+                return "0";
             }
         }
         private List<string> ExtractNode(HtmlDocument doc,string xpath)
@@ -235,15 +241,24 @@ namespace App3
             }
         }
 
-        private void Draw_Click(object sender, RoutedEventArgs e)
+        private async void Draw_Click(object sender, RoutedEventArgs e)
         {
-            
-            StartDraw("1"); 
+            BusyIndicator.Visibility = Visibility.Visible;
+            ResultViewer.Visibility = Visibility.Collapsed;
+            string draw=await StartDraw("1");
+            await Task.Delay(1000);
+            BusyIndicator.Visibility = Visibility.Collapsed;
+            ResultViewer.Visibility = Visibility.Visible;
         }
 
-        private void Drawn_Click(object sender, RoutedEventArgs e)
+        private async void Drawn_Click(object sender, RoutedEventArgs e)
         {
-            StartDraw("2");
+            BusyIndicator.Visibility = Visibility.Visible;
+            ResultViewer.Visibility = Visibility.Collapsed;
+            string draw = await StartDraw("2");
+            await Task.Delay(1500);
+            BusyIndicator.Visibility = Visibility.Collapsed;
+            ResultViewer.Visibility = Visibility.Visible;
         }
 
         private void Unfold_Click(object sender, RoutedEventArgs e)

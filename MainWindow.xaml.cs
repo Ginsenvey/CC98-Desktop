@@ -55,16 +55,38 @@ namespace App3
             LoadSettings();
             App.ThemeChanged += OnAppThemeChanged;
             Vault = new();
-            collections = new ObservableCollection<string>()
-            {
-                
-            };
-            //likecollection.MenuItemsSource = collections;
-             
+            collections = new ObservableCollection<string>() { };      
             CheckLoginStatus();
             UnreadCount = 0;
-            
+            InitializeTimer();
+            FetchIndex();
             contentframe.Navigate(typeof(Index),"hotTopic");
+        }
+        private void InitializeTimer()
+        {
+            
+            SyncTimer = new DispatcherTimer();
+            SyncTimer.Interval = TimeSpan.FromSeconds(120);  
+            SyncTimer.Tick += DispatcherTimer_Tick;  
+            SyncTimer.Start();  
+        }
+        
+        
+        private void DispatcherTimer_Tick(object? sender, object e)
+        {
+            FetchIndex();
+        }
+        private async void FetchIndex()
+        {
+            string IndexText = await RequestSender.SimpleRequest("https://api.cc98.org/config/index");
+            if (!IndexText.StartsWith("404"))
+            {
+                ValidationHelper.JsonWritter(IndexText, "IndexCache.json");
+            }
+            else
+            {
+                Flower.PlayAnimation("\uEA39", "更新首页缓存失败");
+            }
         }
         private void LoadSettings()
         {
@@ -126,7 +148,18 @@ namespace App3
                 Set.Values["Theme"] = "2";
                 RootGrid.RequestedTheme = ElementTheme.Default;
             }
+            //检查主题色是否初始化。默认值是mid-autumn.
+            if (!ValidationHelper.IsTokenExist(Set,"ThemePic"))
+            {
+                string themesPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Themes");
+                var Files = Directory.GetFiles(themesPath, "*.jpg", SearchOption.AllDirectories);
+                var file = Files[0];
+                Set.Values["Themepic"]= file;
+            }
+            
         }
+        //同步计数时钟:每分钟发出一个Tick信号，使得可迭代对象enum在三个值之间切换。只有为其中一值时，触发首页刷新。
+        private DispatcherTimer SyncTimer { get; set; }
         private void OnAppThemeChanged(ElementTheme theme)
         {
             // 更新 RootGrid 的主题
@@ -136,7 +169,7 @@ namespace App3
         
         public ApplicationDataContainer Set= ApplicationData.Current.LocalSettings;
         public ObservableCollection<string> collections;
-        public static CCloginservice loginservice =new CCloginservice();
+        
         private async void CheckLoginStatus()
             
         {
@@ -153,30 +186,31 @@ namespace App3
                             try
                             {
                                 client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AccessCode as string);
-                                // 发送 GET 请求
                                 HttpResponseMessage response = await client.GetAsync("https://api.cc98.org/me/unread-count");
-
-                                // 确保响应成功
                                 if (response.StatusCode == HttpStatusCode.Unauthorized)
                                 {
                                     Auth();
                                 }
                                 else if(response.StatusCode == HttpStatusCode.OK)
                                 {
-                                    //de.Text = "在线模式";
+                                   
                                     string CheckResponse = await response.Content.ReadAsStringAsync();
                                     var js = JsonConvert.DeserializeObject<Dictionary<string, object>>(CheckResponse);
                                     UnreadCount = Convert.ToInt16(js["messageCount"])+ Convert.ToInt16(js["replyCount"]);
                                     MsgCount.Value = UnreadCount;
-                                    loginservice.client.DefaultRequestHeaders.Authorization=new AuthenticationHeaderValue("Bearer",AccessCode as string);
-                                    
+                                    CCloginservice.client.DefaultRequestHeaders.Authorization=new AuthenticationHeaderValue("Bearer",AccessCode as string);
+                                    bool r=await GetFavorites();
+                                    if(r)
+                                    {
+                                        LoadFavorites();
+                                    }
                                     
                                 }
 
                             }
                             catch (HttpRequestException ex)
                             {
-                                //de.Text=ex.Message;
+                             
                             }
                         }
                     }
@@ -200,7 +234,7 @@ namespace App3
         //检查第一个字段IsActive(是否获取R和A)，否则弹出登录窗口。登录成功IsActive赋值1.
         private  async void Auth()
         {
-            var loginservice=new CCkernel.CCloginservice();
+            
             if (Set.Values.ContainsKey("Refresh"))
             {
                 if (Set.Values["Refresh"] != null)
@@ -208,11 +242,11 @@ namespace App3
                     string refresh = Set.Values["Refresh"] as string;
                     if (!string.IsNullOrEmpty(refresh)&&refresh!="0")
                     {
-                        string token = await loginservice.RefreshToken(refresh);
+                        string token = await CCloginservice.RefreshToken(refresh);
                         Set.Values["Access"] = token;
                         Set.Values["IsActive"] = "1";
-                        loginservice.client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-                        //de.Text = "鉴权状态正常";
+                        CCloginservice.client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+                        
                     }
                     else
                     {
@@ -230,39 +264,43 @@ namespace App3
             }
             
         }
-        private async void GetLikeCollection()
+        private async Task<bool> GetFavorites()
         {
-            string LikeUrl = "https://api.cc98.org/me/favorite-topic-group";
-            try
+            var Favorites = await RequestSender.FavoritesList();
+            if (Favorites != null)
             {
-                var LikeRes = await loginservice.client.GetAsync(LikeUrl);
-                if (LikeRes.StatusCode == HttpStatusCode.OK)
+                if (Favorites.Count > 0)
                 {
-                    
-                    string LikeText = await LikeRes.Content.ReadAsStringAsync();
-                    var likes = JsonConvert.DeserializeObject<Dictionary<string, object>>(LikeText);
-                    var LikeList = JsonConvert.DeserializeObject<JArray>(likes["data"].ToString());
-                    likecollection.MenuItems.Clear();
-                    foreach (var like in LikeList)
-                    {
-                        var likeinfo = JsonConvert.DeserializeObject<Dictionary<string, object>>(like.ToString());
-                        string collection = likeinfo["name"].ToString();
-                        string sortid = "f"+like["id"].ToString();
-                        likecollection.MenuItems.Add(new NavigationViewItem { Content = collection, Tag = sortid, Icon = new FluentIcons.WinUI.SymbolIcon { Symbol = FluentIcons.Common.Symbol.List } });
-                        if (likecollection.MenuItems.Count > 0)
-                        {
-                            likecollection.IsExpanded = !likecollection.IsExpanded;//自动展开，减少鼠标操作
-                        }
-                        else
-                        {
-                            likecollection.MenuItems.Add(new NavigationViewItem { Content = "点击创建新收藏夹", Tag = "200", Icon = new FluentIcons.WinUI.SymbolIcon { Symbol = FluentIcons.Common.Symbol.List } });
-                        }
-                    }
+                    //临时存储收藏夹列表
+                    string FavoJson = JsonConvert.SerializeObject(Favorites);
+                    Set.Values["Favorites"] = FavoJson;
+                    return true;
+                }
+                else
+                {
+                    Flower.PlayAnimation("\uE783", "暂无收藏夹");
+                    likecollection.MenuItems.Add(new NavigationViewItem { Content = "点击创建新收藏夹", Tag = "200", Icon = new FluentIcons.WinUI.SymbolIcon { Symbol = FluentIcons.Common.Symbol.List } });
+                    return false;
                 }
             }
-            catch(Exception ex)
+            else
             {
-
+                Flower.PlayAnimation("\uEA39", "同步收藏夹失败");
+                return false;
+            }
+        }
+        private void LoadFavorites()
+        {
+            if (ValidationHelper.IsTokenExist(Set, "Favorites"))
+            {
+                var LikeList = JsonConvert.DeserializeObject<JArray>(Set.Values["Favorites"].ToString());
+                foreach (var like in LikeList)
+                {
+                    var likeinfo = JsonConvert.DeserializeObject<Dictionary<string, object>>(like.ToString());
+                    string collection = likeinfo["name"].ToString();
+                    string sortid = "f" + like["id"].ToString();
+                    likecollection.MenuItems.Add(new NavigationViewItem { Content = collection, Tag = sortid, Icon = new FluentIcons.WinUI.SymbolIcon { Symbol = FluentIcons.Common.Symbol.List } });  
+                }
             }
         }
         public int UnreadCount { get; set; }
@@ -276,9 +314,12 @@ namespace App3
                         contentframe.Navigate(typeof(Index));
                         break;
                     case "1":
-                        Set.Values["ProfileNaviMode"] = "Me";
-                        Set.Values["CurrentPerson"] = "1";
-                        contentframe.Navigate(typeof(Profile),"Me");
+                        var param = new Dictionary<string, string>()
+                        {
+                            {"Mode","Me" },
+                            {"UserId","1" }//自己是1，与匿名模式0区分开。
+                        };
+                        contentframe.Navigate(typeof(Profile),param);
                         break;
                     case "2":
                         contentframe.Navigate(typeof(Post), "Recommend");
@@ -306,7 +347,7 @@ namespace App3
                         contentframe.Navigate(typeof(Setting), "0");
                         break;
                     case "10":
-                        GetLikeCollection();
+                        
                         break;
                     case "11":
                         contentframe.Navigate(typeof(Focus));
@@ -317,18 +358,14 @@ namespace App3
                         {
                             string GroupId = (selection.Tag as string).Replace("f", "");
                             string GroupName = selection.Content as string;
-                            var param = new Dictionary<string, string>()
+                            var param2 = new Dictionary<string, string>()
                             { 
                                 {"mode","favorite" },
                                 { "gid", GroupId},
                                 { "name",GroupName}
                             }
                         ;
-                        contentframe.Navigate(typeof(Repeater), param);
-
-
-
-
+                        contentframe.Navigate(typeof(Repeater), param2);
                 }
                         break;
                 }

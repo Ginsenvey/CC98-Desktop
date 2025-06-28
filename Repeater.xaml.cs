@@ -16,6 +16,7 @@ using Windows.Foundation;
 using Windows.Foundation.Collections;
 using static App3.Index;
 using System.Collections.ObjectModel;
+using CCkernel;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -65,7 +66,7 @@ namespace App3
             if (mode == "favorite")
             {
                 string url = "https://api.cc98.org/topic/me/favorite?from=" + start + "&size=11&order=" + order + "&groupid=" + groupid;
-                var r = await MainWindow.loginservice.client.GetAsync(url);
+                var r = await CCloginservice.client.GetAsync(url);
                 if (r.StatusCode == System.Net.HttpStatusCode.OK)
                 {
                     string restext = await r.Content.ReadAsStringAsync();

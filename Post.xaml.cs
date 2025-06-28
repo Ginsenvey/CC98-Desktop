@@ -173,7 +173,7 @@ namespace App3
         }
         private void Editor_TextChanged(object sender, TextChangedEventArgs e)
         {
-            Previewer.Text = UBBToMarkdownConverter.Convert(Editor.Text.Replace("\r\n", "  \n").Replace("\r","  \n"),false);
+            Previewer.Text = UBBConverter.Convert(Editor.Text.Replace("\r\n", "  \n").Replace("\r","  \n"),false);
         }
         private void InsertCodeBlock()
         {

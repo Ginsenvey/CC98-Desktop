@@ -17,6 +17,7 @@ using System.Runtime.InteropServices.WindowsRuntime;
 using Windows.Foundation;
 using Windows.Foundation.Collections;
 using Windows.UI;
+using CCkernel;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -59,7 +60,7 @@ namespace App3
         private async void GetDialogs(string uid,string start)
         {
             string murl = "https://api.cc98.org/message/user/" + uid + "?from="+start+"&size=10";
-            var res = await MainWindow.loginservice.client.GetAsync(murl);
+            var res = await CCloginservice.client.GetAsync(murl);
             if (res.StatusCode == System.Net.HttpStatusCode.OK)
             {
                 string restext = await res.Content.ReadAsStringAsync();

@@ -25,6 +25,7 @@ using System.Net.Http;
 using Microsoft.VisualBasic;
 using System.Text.RegularExpressions;
 using System.Runtime.CompilerServices;
+using CCkernel;
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
 
@@ -47,17 +48,10 @@ namespace App3
 
             };
             STileList.ItemsSource = stiles;
-            InitializeClient();
+           
             
         }
-        private void InitializeClient()
-        {
-            if (Set.Values.ContainsKey("Access"))
-            {
-                MainWindow.loginservice.client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", Set.Values["Access"] as string);
-            }
-
-        }
+        
         protected override void OnNavigatedTo(Microsoft.UI.Xaml.Navigation.NavigationEventArgs e)
         {
             base.OnNavigatedTo(e);
@@ -83,7 +77,7 @@ namespace App3
             
             try
             {
-                var BoardRes = await MainWindow.loginservice.client.GetAsync(BoardUrl);
+                var BoardRes = await CCloginservice.client.GetAsync(BoardUrl);
                 if (BoardRes.StatusCode == System.Net.HttpStatusCode.OK)
                 {
                     string BoardText = await BoardRes.Content.ReadAsStringAsync();
@@ -115,7 +109,7 @@ namespace App3
                                 Todaycount = "今日帖数:" + todaycount,
                                 Totalcount = "总话题数:" + totaltopic,
                                 Masters = "版主:" + masters,
-                                BanText = UBBToMarkdownConverter.Convert(bantext,false)
+                                BanText = UBBConverter.Convert(bantext,false)
                             };
                             BoardBanner.DataContext = boarddata;
                             
@@ -134,7 +128,7 @@ namespace App3
             string TileUrl = "https://api.cc98.org/board/"+bid+"/topic?from="+start+"&size=20";
             try
             {
-                var TileRes = await MainWindow.loginservice.client.GetAsync(TileUrl);
+                var TileRes = await CCloginservice.client.GetAsync(TileUrl);
                 if (TileRes.StatusCode == System.Net.HttpStatusCode.OK)
                 {
                     string TileText = await TileRes.Content.ReadAsStringAsync();
@@ -214,9 +208,19 @@ namespace App3
                         {
                             var Info = JsonConvert.DeserializeObject<Dictionary<string, object>>(content);
                             string uid = Info["id"].ToString();
-                            //de.Text = uid;
-                            Set.Values["ProfileNaviMode"] = "Others";
-                            Frame.Navigate(typeof(Profile), uid);
+                            if (uid != null)
+                            {
+                                if (uid != "0")
+                                {
+                                    var param = new Dictionary<string, string>()
+                            {
+                                {"Mode","Others" },
+                                {"UserId",uid }
+                            };
+                                    Frame.Navigate(typeof(Profile), param);
+                                }
+                            }
+                            
                         }
                         catch (Exception ex)
                         {

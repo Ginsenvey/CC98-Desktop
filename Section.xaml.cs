@@ -18,6 +18,8 @@ using Newtonsoft.Json.Linq;
 using Microsoft.UI.Xaml.Media.Imaging;
 using Windows.Storage;
 using System.Runtime.CompilerServices;
+using CCkernel;
+using System.Threading.Tasks;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -39,65 +41,41 @@ namespace App3
                 
             };
             SectionPresenter.ItemsSource = allSections;
-            LoadSettings();
+            
             GetAllSection();
         }
-        private void LoadSettings()
-        {
-            if (Set.Values.ContainsKey("ThemePic"))
-            {
-                if (Set.Values["ThemePic"] as string != "0")
-                {
-                    string pic = (string)Set.Values["ThemePic"];
-                    var bitmap = new BitmapImage(new Uri(pic));
-                    ThemePresenter.ImageSource = bitmap;
-                }
 
+        private async Task<bool> FetchSection()
+        {
+            string SectionText = await RequestSender.SimpleRequest("https://api.cc98.org/Board/all");
+            if (!SectionText.StartsWith("404"))
+            {
+                ValidationHelper.JsonWritter(SectionText, "SectionCache.json");
+                return true;
             }
             else
             {
-                Set.Values["ThemePic"] = "0";
+                return false;
+                //Flower.PlayAnimation("\uEA39", "¸üÐÂÊ×Ò³»º´æÊ§°Ü");
             }
         }
         private async void GetAllSection()
         {
-            string SectionUrl = "https://api.cc98.org/Board/all";
-            try
+            StorageFolder cacheFolder = ApplicationData.Current.LocalCacheFolder;
+            string path = cacheFolder.Path + "/" + "SectionCache.json";
+            string SectionText = ValidationHelper.JsonReader(path);
+            if (!SectionText.StartsWith("10"))
             {
-                var SectionRes = await MainWindow.loginservice.client.GetAsync(SectionUrl);
-                if (SectionRes.StatusCode == System.Net.HttpStatusCode.OK)
+                LoadSection(SectionText);
+            }
+            else
+            {
+                if (await FetchSection())
                 {
-                    string SectionText = await SectionRes.Content.ReadAsStringAsync();
-                    if (!string.IsNullOrEmpty(SectionText))
-                    {
-                        var SectionArray = JsonConvert.DeserializeObject<JArray>(SectionText);
-                        if (SectionArray != null)
-                        {
-                            if (SectionArray.Count > 0)
-                            {
-                                foreach(var section in SectionArray)
-                                {
-                                    List<BoardInfo> boardinfo = new();
-                                    var info = JsonConvert.DeserializeObject<Dictionary<string, object>>(section.ToString());
-                                    string name = info["name"].ToString();
-                                    string mastertext = info["masters"].ToString();
-                                    var boards = JsonConvert.DeserializeObject<JArray>(info["boards"].ToString());
-                                    foreach(var board in boards)
-                                    {
-                                        var js = JsonConvert.DeserializeObject<Dictionary<string,object>>(board.ToString());
-                                        boardinfo.Add(new BoardInfo { BoardName = js["name"].ToString(), BoardId = js["id"].ToString() });
-                                    }
-                                    allSections.Add(new AllSection { SectionName = name,Boards = boardinfo });
-                                }
-                            }
-                        }
-                    }
+                    LoadSection(SectionText);
                 }
             }
-            catch (Exception ex)
-            {
-
-            }
+            
         }
 
         private void BoardButton_Click(object sender, RoutedEventArgs e)
@@ -107,6 +85,44 @@ namespace App3
             if(tag != null)
             {
                 Frame.Navigate(typeof(Board),tag); 
+            }
+        }
+        private void LoadSection(string SectionText)
+        {
+            var SectionArray = Deserializer.ToArray(SectionText);
+            if (SectionArray != null)
+            {
+                if (SectionArray.Count > 0)
+                {
+                    foreach (var section in SectionArray)
+                    {
+                        List<BoardInfo> boardinfo = new();
+                        var info = JsonConvert.DeserializeObject<Dictionary<string, object>>(section.ToString());
+                        string name = info["name"].ToString();
+                        string mastertext = info["masters"].ToString();
+                        var boards = JsonConvert.DeserializeObject<JArray>(info["boards"].ToString());
+                        foreach (var board in boards)
+                        {
+                            var js = JsonConvert.DeserializeObject<Dictionary<string, object>>(board.ToString());
+                            boardinfo.Add(new BoardInfo { BoardName = js["name"].ToString(), BoardId = js["id"].ToString() });
+                        }
+                        allSections.Add(new AllSection { SectionName = name, Boards = boardinfo });
+                    }
+                }
+            }
+        }
+
+        private async void RefreshSection_Click(object sender, RoutedEventArgs e)
+        {
+            if (await FetchSection())
+            {
+                StorageFolder cacheFolder = ApplicationData.Current.LocalCacheFolder;
+                string path = cacheFolder.Path + "/" + "SectionCache.json";
+                string SectionText = ValidationHelper.JsonReader(path);
+                if (!SectionText.StartsWith("10"))
+                {
+                    LoadSection(SectionText);
+                }
             }
         }
     }

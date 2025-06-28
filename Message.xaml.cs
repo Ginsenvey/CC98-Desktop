@@ -1,3 +1,4 @@
+using CCkernel;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Controls.Primitives;
@@ -33,18 +34,16 @@ namespace App3
     public sealed partial class Message : Page
     {
         public ObservableCollection<Contact> contacts;
+        public ObservableCollection<Notice> notices;
         public ApplicationDataContainer Set = ApplicationData.Current.LocalSettings;
         public Message()
         {
             this.InitializeComponent();
-            contacts = new()
-            {   
-            };
+            contacts = new ObservableCollection<Contact>();
+            notices = new ObservableCollection<Notice>();
+ 
             
-            InitializeClient();
-            
-            
-
+          
         }
         protected override void OnNavigatedTo(Microsoft.UI.Xaml.Navigation.NavigationEventArgs e)
         {
@@ -57,8 +56,14 @@ namespace App3
             {
                 if (parameter == "0")
                 {
-                    GetRecent();
+                    
                     PrivateMsg.IsSelected=true;
+                    
+                }
+                else if(parameter == "1") 
+                {
+                    SystemNotice.IsSelected=true;
+                    
                 }
                 
             }
@@ -67,24 +72,21 @@ namespace App3
 
             }
         }
-        private void InitializeClient()
-        {
-            if (Set.Values.ContainsKey("Access"))
-            {
-                MainWindow.loginservice.client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", Set.Values["Access"] as string);
-            }
-
-        }
+        
         private void ContactRepeater_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             int i = ContactRepeater.SelectedIndex;
-            string uid = contacts[i].mid;
-            MsgFrame.Navigate(typeof(MyMsg), uid);
+            if (i > -1)
+            {
+                string uid = contacts[i].mid;
+                MsgFrame.Navigate(typeof(MyMsg), uid);
+            }
+            
         }
         private async void GetRecent()
         {
             string url = "https://api.cc98.org/message/recent-contact-users?from=0&size=10";
-            var res = await MainWindow.loginservice.client.GetAsync(url);
+            var res = await CCloginservice.client.GetAsync(url);
             if (res.StatusCode == System.Net.HttpStatusCode.OK)
             {
                 string restext = await res.Content.ReadAsStringAsync();
@@ -108,7 +110,7 @@ namespace App3
                         porturl += string.Join("&",users);
                         if (users.Count > 0)
                         {
-                            var portres = await MainWindow.loginservice.client.GetAsync(porturl);
+                            var portres = await CCloginservice.client.GetAsync(porturl);
                             if (portres.StatusCode == System.Net.HttpStatusCode.OK)
                             {
                                 string port =await portres.Content.ReadAsStringAsync();
@@ -148,6 +150,84 @@ namespace App3
                 ContactRepeater.SelectedIndex = 0;
             }
         }
+        public int history = 0;
+        private async void GetNotice(string start)
+        {
+            string NoticeText=await RequestSender.SystemNotice(start);
+            if (NoticeText.StartsWith("404:"))
+            {
+                return;
+            }
+            else
+            {
+                var NoticeList = Deserializer.ToArray(NoticeText);
+                if (NoticeList != null)
+                {
+                    if(NoticeList.Count > 0)
+                    {
+                        history += 10;
+                        notices.Clear();
+                        foreach (var notice in NoticeList)
+                        {
+                            var js = JsonConvert.DeserializeObject<Dictionary<string, object>>(notice.ToString());
+                            if (js != null)
+                            {
+                                string floor = "0";
+                                string topicid = "0";
+                                if (js["topicId"] != null)
+                                {
+                                    topicid = js["topicId"].ToString();
+                                }
+                                if (js["postBasicInfo"] != null)
+                                {
+                                    var info = JsonConvert.DeserializeObject<Dictionary<string, object>>(js["postBasicInfo"].ToString());
+                                    floor = info["floor"].ToString();
+                                }
+                                notices.Add(new Notice
+                                {
+                                    Title = js["title"].ToString(),
+                                    Time = js["time"].ToString(),
+                                    TopicId = topicid,
+                                    Content = js["content"].ToString(),
+                                    NoticeId = js["id"].ToString(),
+                                    Floor = floor,
+                                });
+                                NoticeRepeater.ItemsSource = notices ;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        private void NaviBar_SelectionChanged(SelectorBar sender, SelectorBarSelectionChangedEventArgs args)
+        {
+            var bar = NaviBar.SelectedItem as SelectorBarItem;
+            if (bar != null)
+            {
+                string tag = bar.Tag as string;
+                if (tag == "0")
+                {
+                    NoticeViewer.Visibility = Visibility.Collapsed;
+                    NoticeRepeater.ItemsSource = null;
+                    notices.Clear();
+                    MessageViewer.Visibility = Visibility.Visible;
+                    GetRecent();
+                }
+                else if (tag == "1")
+                {
+                    NoticeViewer.Visibility = Visibility.Visible;
+                    ContactRepeater.ItemsSource = null;
+                    contacts.Clear();
+                    MessageViewer.Visibility = Visibility.Collapsed;
+                    GetNotice("0");
+                }
+            }
+        }
+
+        private void MoreNotice_RefreshRequested(RefreshContainer sender, RefreshRequestedEventArgs args)
+        {
+            GetNotice(history.ToString());
+        }
         public class SInfo
         {
             public string Name { get; set; }
@@ -159,7 +239,16 @@ namespace App3
             public string Time { get; set; }
             public string Mid { get; set; }
         }
-        
+        public class Notice
+        {
+            public string Time { get; set; }
+            public string Title { get; set; }
+            public string NoticeId { get; set; }
+            public string TopicId {  get; set; }
+            public string Content { get; set; }
+            public string Floor {  get; set; }
+
+        }
         public class Contact : INotifyPropertyChanged
         {
             private string _text;
@@ -242,7 +331,6 @@ namespace App3
             }
         }
 
-        
         
     }
 }

@@ -27,6 +27,7 @@ using Microsoft.Security.Authentication.OAuth;
 using HtmlAgilityPack;
 using System.Net.Http;
 using Windows.Media.Protection.PlayReady;
+using System.Reflection.Emit;
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
 
@@ -104,19 +105,15 @@ namespace App3
                 Set.Values["Theme"] = "2";
                 Follow.IsChecked = true;
             }
-            if(Set.Values.ContainsKey("ThemePic"))
+            if(ValidationHelper.IsTokenExist(Set,"Themepic"))
             {
-                if (Set.Values["ThemePic"] as string != "0")
-                {
-                    string pic = (string)Set.Values["ThemePic"];
-                    var bitmap = new BitmapImage(new Uri(pic));
-                    PicPreview.ImageSource = bitmap;
-                }
-               
+                string pic = (string)Set.Values["ThemePic"];
+                var bitmap = new BitmapImage(new Uri(pic));
+                PicPreview.ImageSource = bitmap;
             }
             else
             {
-                Set.Values["ThemePic"] = "0";
+                //这种情况不存在。
             }
         }
         public string EffectHistory = "";
@@ -204,11 +201,9 @@ namespace App3
             var Files = Directory.GetFiles(themesPath, "*.jpg", SearchOption.AllDirectories);
             pics.Clear();
             foreach ( var file in Files)
-            {
-                
+            {  
                 string filename = Path.GetFileName(file);
-                pics.Add(new Pic{ FileName = filename, FilePath = file });
-                
+                pics.Add(new Pic{ FileName = filename, FilePath = file });  
             }
             ThemesGrid.ItemsSource = pics;
         }
@@ -304,8 +299,8 @@ namespace App3
                 {
                     if (IdBox.Text != "" && PassBox.Password != "")
                     {
-                        var loginservice = new CCloginservice();
-                        string DeepAuthRes = await loginservice.DeepAuthService(IdBox.Text, PassBox.Password);
+                        
+                        string DeepAuthRes = await CCloginservice.DeepAuthService(IdBox.Text, PassBox.Password);
                         if (DeepAuthRes == "0")
                         {
                             ContentDialog dialog = new ContentDialog
