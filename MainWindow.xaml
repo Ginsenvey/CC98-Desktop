@@ -34,6 +34,11 @@
             <NavigationView.MenuItems>
                 <NavigationViewItemHeader Content="首页"></NavigationViewItemHeader>
                 <NavigationViewItem Height="Auto" Tag="0">
+                    <NavigationViewItem.ContextFlyout>
+                        <MenuFlyout>
+                            <MenuFlyoutItem Text="刷新" Icon="{ic:SymbolIcon Symbol=ArrowSync}" x:Name="PaneFlyout" Click="PaneFlyout_Click"  Tag="0"></MenuFlyoutItem>
+                        </MenuFlyout>
+                    </NavigationViewItem.ContextFlyout>
                     <StackPanel Orientation="Horizontal" >
                         <ic:SymbolIcon Symbol="DesignIdeas" FontSize="20"  Margin="2,0,10,0"></ic:SymbolIcon>
                         <TextBlock Text="今日话题" ></TextBlock>
@@ -67,6 +72,7 @@
                     <NavigationViewItem.ContextFlyout>
                         <MenuFlyout>
                             <MenuFlyoutItem Text="新收藏集" Icon="{ic:SymbolIcon Symbol=Add}"></MenuFlyoutItem>
+                            <MenuFlyoutItem Text="刷新" Icon="{ic:SymbolIcon Symbol=ArrowSync}" ></MenuFlyoutItem>
                         </MenuFlyout>
                     </NavigationViewItem.ContextFlyout>
                     <StackPanel Orientation="Horizontal">

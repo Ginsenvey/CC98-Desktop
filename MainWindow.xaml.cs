@@ -472,6 +472,23 @@ namespace App3
             }
         }
 
-        
+        private void PaneFlyout_Click(object sender, RoutedEventArgs e)
+        {
+            var f=sender as MenuFlyoutItem;
+            if(f!=null)
+            {
+                string tag = f.Tag as string;
+                if(tag!=null)
+                {
+                    switch (tag)
+                    {
+                        case "0":
+                            FetchIndex();
+                            contentframe.Navigate(typeof(Index));
+                            break;
+                    }
+                }
+            }
+        }
     }
 }
