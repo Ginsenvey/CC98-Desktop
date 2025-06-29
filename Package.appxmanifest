@@ -12,7 +12,7 @@
   <Identity
     Name="2a9e9d26-8aca-44b1-a864-82f8e404ac23"
     Publisher="CN=Ansherly"
-    Version="1.1.0.0" />
+    Version="1.1.1.0" />
 
   <mp:PhoneIdentity PhoneProductId="2a9e9d26-8aca-44b1-a864-82f8e404ac23" PhonePublisherId="00000000-0000-0000-0000-000000000000"/>
 
