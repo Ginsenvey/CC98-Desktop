@@ -131,12 +131,20 @@ namespace App3
                 var LikeList = JsonConvert.DeserializeObject<JArray>(Set.Values["Favorites"].ToString());
                 foreach (var like in LikeList)
                 {
-                    var likeinfo = JsonConvert.DeserializeObject<Dictionary<string, object>>(like.ToString());
-                    string collection = likeinfo["name"].ToString();
-                    string sortid = like["id"].ToString();
-                    var s = new MenuFlyoutItem { Text = collection, Tag = sortid, Icon = new FluentIcons.WinUI.SymbolIcon { Symbol = FluentIcons.Common.Symbol.List } };
-                    s.Click += CollectionItem_Click;
-                    CollectionMenu.Items.Add(s);
+                    try
+                    {
+                        var likeinfo = JsonConvert.DeserializeObject<Dictionary<string, object>>(like.ToString());
+                        string collection = likeinfo["name"].ToString();
+                        string sortid = like["id"].ToString();
+                        var s = new MenuFlyoutItem { Text = collection, Tag = sortid, Icon = new FluentIcons.WinUI.SymbolIcon { Symbol = FluentIcons.Common.Symbol.List } };
+                        s.Click += CollectionItem_Click;
+                        CollectionMenu.Items.Add(s);
+                    }
+                    catch (Exception ex)
+                    {
+                        Flower.PlayAnimation("\uEA39", "出错。反馈此问题。");
+                    }
+                    
                 }
             }
             else
@@ -762,98 +770,7 @@ namespace App3
 
         }
 
-        public static class LinkAnalyzer
-        {
-            public static KeyValuePair<string, string> LinkDefinite(string link)
-            {
-                if (!string.IsNullOrEmpty(link))
-                {
-
-                    if (link.Contains("user/name"))
-                    {
-
-                        string pattern = @"https:\/\/api\.cc98\.org\/user\/name\/([^\/\s]+)";
-                        MatchCollection matches = Regex.Matches(link, pattern);
-                        if (matches.Count == 1)
-                        {
-                            string username = matches[0].Groups[1].Value;
-                            return new KeyValuePair<string, string>("user", username);
-                        }
-                        else
-                        {
-                            return new KeyValuePair<string, string>("null", link);
-                        }
-
-                    }
-                    else if (link.Contains("/topic/") && (!link.Contains("#")))
-                    {
-                        string pattern = @"\/topic\/([^\/\s]+)";
-                        MatchCollection matches = Regex.Matches(link, pattern);
-                        if (matches.Count == 1)
-                        {
-                            string pid = matches[0].Groups[1].Value;
-                            return new KeyValuePair<string, string>("topic", pid);
-                        }
-                        else
-                        {
-                            return new KeyValuePair<string, string>("null", link);
-                        }
-                    }
-                    else if (link.Contains("#"))
-                    {
-                        Match match = Regex.Match(link, @"/topic/(\d{7})/(\d+)#(\d+)");
-                        if (match.Success)
-                        {
-                            string numberAfterHash = match.Groups[1].Value;
-                            return new KeyValuePair<string, string>("anchor", link);//返回索引楼层
-                        }
-                        return new KeyValuePair<string, string>("null", link);
-                    }
-                    else if (link.Contains("file"))
-                    {
-                        string ext = Path.GetExtension(link)?.TrimStart('.').ToLowerInvariant();
-
-                        HashSet<string> picformats = new() { "jpg", "jpeg", "png", "gif", "webp" };
-                        HashSet<string> audioformats = new() { "mp3", "wav", "m4a", "ogg", "flac" };
-                        HashSet<string> videofromats = new() { "mp4", "avi", "mkv", "mov", "wmv" };
-
-                        if (!string.IsNullOrEmpty(ext))
-                        {
-                            if (picformats.Contains(ext))
-                            {
-                                return new KeyValuePair<string, string>("file", "image");
-                            }
-                            else if (audioformats.Contains(ext))
-                            {
-                                return new KeyValuePair<string, string>("file", "audio");
-                            }
-                            else if (videofromats.Contains(ext))
-                            {
-                                return new KeyValuePair<string, string>("file", "video");
-                            }
-                            else
-                            {
-                                return new KeyValuePair<string, string>("file", "doc");
-                            }
-                        }
-                        else
-                        {
-                            return new KeyValuePair<string, string>("null", link);
-                        }
-
-                    }
-                    else
-                    {
-                        return new KeyValuePair<string, string>("null", link);
-                    }
-                }
-                else
-                {
-                    return new KeyValuePair<string, string>("null", link);
-                }
-
-            }
-        }
+        
         public class Reply : INotifyPropertyChanged
         {
             private string _text;

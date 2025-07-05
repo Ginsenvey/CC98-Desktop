@@ -19,7 +19,7 @@
         </Grid.RowDefinitions>
         <Grid  Grid.Row="0" Padding="10" >
 
-            <TextBlock Text="收藏集" FontSize="20" FontWeight="Bold" x:Name="de"  Foreground="{ThemeResource AccentAAFillColorSecondaryBrush}" VerticalAlignment="Center" HorizontalAlignment="Left"></TextBlock>
+            <TextBlock Text="收藏集" FontSize="20" FontWeight="Bold" x:Name="de"  Foreground="#4d9891" VerticalAlignment="Center" HorizontalAlignment="Left"></TextBlock>
             <Button Style="{ThemeResource AccentButtonStyle}" HorizontalAlignment="Right" Padding="8">
                 <StackPanel Orientation="Horizontal" Spacing="8">
                     <ic:SymbolIcon Symbol="ArrowSort" FontSize="16"></ic:SymbolIcon>
@@ -33,7 +33,7 @@
                 <ItemsRepeater.ItemTemplate>
                     <DataTemplate>
                         <HyperlinkButton HorizontalContentAlignment="Stretch" HorizontalAlignment="Stretch" CornerRadius="0" x:Name="TileContent" Click="TileContent_Click">
-                            <Grid Padding="3" RowSpacing="8">
+                            <Grid Padding="3" >
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="60"></ColumnDefinition>
                                     <ColumnDefinition Width="*"></ColumnDefinition>

@@ -10,7 +10,7 @@
     xmlns:ic="using:FluentIcons.WinUI"
     xmlns:controls="using:CommunityToolkit.WinUI.Controls"
     xmlns:tool="using:CommunityToolkit.WinUI.UI.Controls"
-    Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+    Background="{ThemeResource DesktopAcrylicTransparentBrush}">
 
     <Grid >
         <Grid.RowDefinitions>
@@ -38,7 +38,7 @@
                 <RowDefinition Height="30"></RowDefinition>
             </Grid.RowDefinitions>
             
-            <controls:Ribbon HorizontalAlignment="Stretch" Grid.Row="0">
+            <controls:Ribbon HorizontalAlignment="Stretch" Grid.Row="0" CornerRadius="0" BorderThickness="0"> 
 
                 <controls:RibbonCollapsibleGroup AccessKey="AB"
                                              CollapsedAccessKey="AA"
@@ -127,11 +127,11 @@
                                              RequestedWidths="400,200,300"
                                                  >
                     <controls:RibbonCollapsibleGroup.IconSource>
-                        <ic:SymbolIconSource Symbol="List" />
+                        <ic:SymbolIconSource Symbol="Heart" />
                     </controls:RibbonCollapsibleGroup.IconSource>
                     <StackPanel Orientation="Vertical" Spacing="8">
-                        <GridView Height="96"
-      MaxWidth="400"
+                        <GridView Height="80" x:Name="EmojiContainer"
+      MaxWidth="300"
       HorizontalAlignment="Stretch"
       VerticalAlignment="Center"
       BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
@@ -140,31 +140,19 @@
       ScrollViewer.HorizontalScrollMode="Disabled"
       ScrollViewer.VerticalScrollBarVisibility="Auto">
                             <GridView.ItemTemplate>
-                                <DataTemplate>
-                                    <TextBlock Width="24"
-                   Height="24"
-                   HorizontalTextAlignment="Center"
-                   Text="{Binding}" />
+                                <DataTemplate x:DataType="local:Emoji">
+                                    <Border Background="White" CornerRadius="2">
+                                        <Image Source="{x:Bind EmojiPath}" Width="32" Height="32"  ToolTipService.ToolTip="{x:Bind EmojiName}" Tag="{x:Bind EmojiName}"></Image>
+                                    </Border>
                                 </DataTemplate>
                             </GridView.ItemTemplate>
-                            <GridView.Items>
-                                <x:Double>1</x:Double>
-                                <x:Double>2</x:Double>
-                                <x:Double>3</x:Double>
-                                <x:Double>4</x:Double>
-                                <x:Double>5</x:Double>
-                                <x:Double>6</x:Double>
-                                <x:Double>7</x:Double>
-                                <x:Double>8</x:Double>
-                                <x:Double>9</x:Double>
-
-                            </GridView.Items>
+                            
                         </GridView>
                         <controls:Segmented HorizontalAlignment="Center" >
-                            <controls:SegmentedItem Content="CC98" PointerEntered="EmojiType_PointerEntered" IsSelected="True" x:Name="EmojiType" Tag="1"></controls:SegmentedItem>
-                            <controls:SegmentedItem Content="AC娘" PointerEntered="EmojiType_PointerEntered"   Tag="2"></controls:SegmentedItem>
-                            <controls:SegmentedItem Content="贴吧" PointerEntered="EmojiType_PointerEntered"   Tag="3"></controls:SegmentedItem>
-                            <controls:SegmentedItem Content="雀魂" PointerEntered="EmojiType_PointerEntered"   Tag="4"></controls:SegmentedItem>
+                            <controls:SegmentedItem Content="CC98" PointerEntered="EmojiType_PointerEntered" IsSelected="True" x:Name="EmojiType" Tag="CC98"></controls:SegmentedItem>
+                            <controls:SegmentedItem Content="AC娘" PointerEntered="EmojiType_PointerEntered"   Tag="ac"></controls:SegmentedItem>
+                            <controls:SegmentedItem Content="贴吧" PointerEntered="EmojiType_PointerEntered"   Tag="tb"></controls:SegmentedItem>
+                            <controls:SegmentedItem Content="雀魂" PointerEntered="EmojiType_PointerEntered"   Tag="ms"></controls:SegmentedItem>
                         </controls:Segmented>
                     </StackPanel>
                 </controls:RibbonCollapsibleGroup>
@@ -221,9 +209,9 @@
                 </controls:RibbonGroup>
             </controls:Ribbon>
 
-            <SplitView Grid.Row="1" PanePlacement="Right" DisplayMode="Inline" IsPaneOpen="True" x:Name="EditArea">
+            <SplitView Grid.Row="1" PanePlacement="Right" DisplayMode="Inline" IsPaneOpen="True" x:Name="EditArea" PaneBackground="{ThemeResource CardBackgroundFillColorDefaultBrush}">
                 <SplitView.Pane>
-                    <tool:MarkdownTextBlock  x:Name="Previewer" CornerRadius="5" BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}" BorderThickness="1"></tool:MarkdownTextBlock>
+                    <tool:MarkdownTextBlock  x:Name="Previewer" CornerRadius="5" BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}" BorderThickness="1"  Background="Transparent" ImageMaxWidth="60" ImageMaxHeight="50"></tool:MarkdownTextBlock>
                 </SplitView.Pane>
                 <SplitView.Content>
                     <Grid>
@@ -232,9 +220,15 @@
                     
                 </SplitView.Content>
             </SplitView>
-            <Border Grid.Row="2" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1">
-                <TextBlock Margin="10,0,10,0" Text="状态" x:Name="status" Foreground="{ThemeResource TextFillColorSecondaryBrush}"></TextBlock>
-            </Border>
+            <Grid Grid.Row="2" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1">
+                <TextBlock Margin="10,0,10,0" HorizontalAlignment="Left" Text="状态" x:Name="status" Foreground="{ThemeResource TextFillColorSecondaryBrush}"></TextBlock>
+                <HyperlinkButton Padding="0" HorizontalAlignment="Right" CornerRadius="0" VerticalAlignment="Stretch">
+                    <StackPanel Orientation="Horizontal" Spacing="10" Margin="3">
+                        <ic:SymbolIcon Symbol="Markdown"></ic:SymbolIcon>
+                        <TextBlock Text="切换为Markdown"></TextBlock>
+                    </StackPanel>
+                </HyperlinkButton>
+            </Grid>
         </Grid>
         <ContentDialog x:Name="SendDialog" CloseButtonText="取消" PrimaryButtonText="发表" >
             <ContentDialog.Content>

@@ -16,8 +16,8 @@
     <Grid x:Name="RootGrid">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"></RowDefinition>
-            <RowDefinition Height="5*"></RowDefinition>
-            <RowDefinition Height="*" MinHeight="100" ></RowDefinition>
+            <RowDefinition Height="*"></RowDefinition>
+            <RowDefinition Height="70" ></RowDefinition>
         </Grid.RowDefinitions>
         <Expander Grid.Row="0" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch"  x:Name="BoardBanner" VerticalContentAlignment="Stretch" CornerRadius="0">
             <Expander.Header>
@@ -91,8 +91,8 @@
                 </ItemsRepeater.ItemTemplate>
             </ItemsRepeater>
         </ScrollViewer>
-        <Grid Grid.Row="2" Background="{ThemeResource ControlAltFillColorTransparentBrush}" Padding="10">
-            <dev:BubbleButton Height="45" HorizontalAlignment="Center" Width="200" Margin="10" x:Name="writepost" Click="writepost_Click" BubbleForeground="{ThemeResource AccentAAFillColorDefaultBrush}">
+        <Grid Grid.Row="2" Background="{ThemeResource ControlAltFillColorTransparentBrush}" >
+            <dev:BubbleButton Height="45" HorizontalAlignment="Center" Width="200" VerticalAlignment="Center" x:Name="writepost" Click="writepost_Click" BubbleForeground="{ThemeResource AccentAAFillColorDefaultBrush}">
                 <StackPanel Orientation="Horizontal" Spacing="25">
                     <ic:SymbolIcon Symbol="Add" FontSize="16" Foreground="{ThemeResource AccentAAFillColorDefaultBrush}" ></ic:SymbolIcon>
                     <TextBlock Text="发帖" ></TextBlock>

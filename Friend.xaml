@@ -30,7 +30,7 @@
                                     <MenuFlyoutItem Text="取关" Icon="{ic:FluentIcon Icon=Dismiss}"></MenuFlyoutItem>
                                 </MenuFlyout>
                             </HyperlinkButton.ContextFlyout>
-                            <Grid Padding="5" RowSpacing="5" ColumnSpacing="10">
+                            <Grid Padding="3"  ColumnSpacing="10">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="45"></ColumnDefinition>
                                     <ColumnDefinition Width="*"></ColumnDefinition>

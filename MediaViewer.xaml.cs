@@ -59,6 +59,8 @@ namespace App3
                 ImageControl.Visibility = Visibility.Collapsed;
                 zoomer.Visibility = Visibility.Collapsed;
                 VideoPlayer.Visibility = Visibility.Visible;
+                Grid.SetRow(VideoPlayer,0);
+                Grid.SetRowSpan(VideoPlayer, 2);
                 VideoPlayer.Source = MediaSource.CreateFromUri(new Uri(_url));
             }
             else if (_type == "image")

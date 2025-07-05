@@ -1,5 +1,8 @@
-﻿using FluentIcons.Common;
+﻿using App3;
+using FluentIcons.Common;
+using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Hosting;
+using Microsoft.UI.Xaml.Media.Imaging;
 using Microsoft.Windows.Security.AccessControl;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -14,6 +17,8 @@ using System.Net.Http.Json;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using Windows.Graphics.Imaging;
+using Windows.Media.Core;
 using Windows.Media.Protection.PlayReady;
 using Windows.Storage;
 using static App3.Topic;
@@ -178,6 +183,8 @@ namespace CCkernel
             var response = await CCloginservice.client.GetAsync(api);
             return await ValidationHelper.AutoResponse(response); 
         }
+        //获取新帖
+        
         public static async Task<string> TopicReply(string uid,  string start)
         {
             try
@@ -457,6 +464,69 @@ namespace CCkernel
                 return null;
             }
         }
+        public static StandardPost ToItem(string TopicText)
+        {
+            //此函数专用于解析帖子，应对有无MediaType的情况，用于版面主页和新帖页。
+            Dictionary<string, object> TopicProperty = JsonConvert.DeserializeObject<Dictionary<string, object>>(TopicText);
+            if (TopicProperty != null)
+            {
+                string pid = "0";
+                if (TopicProperty["id"] != null)
+                {
+                    pid= TopicProperty["id"].ToString();
+                }
+                string hit = TopicProperty["hitCount"].ToString();
+                string title = TopicProperty["title"].ToString();
+                string time = TopicProperty["time"].ToString();
+                string reply = TopicProperty["replyCount"].ToString();
+                string author = "@ 匿名";
+                List<MediaContent> images = new();
+                List<MediaContent> videos = new();
+                if (TopicProperty["userName"] != null)
+                {
+                    author ="@ "+ TopicProperty["userName"].ToString();
+                }
+               
+                if (TopicProperty.TryGetValue("mediaContent", out var value))
+                {
+                    if (value != null)
+                    {
+                        if (value.ToString() != null)
+                        {
+                            var js=JsonConvert.DeserializeObject<Dictionary<string,object>>(value.ToString());
+                            if (js != null)
+                            {
+                                if (js.ContainsKey("thumbnail"))
+                                {
+                                    if (js["thumbnail"] != null)
+                                    {
+                                        var MediaList = JsonConvert.DeserializeObject<JArray>(js["thumbnail"].ToString());
+                                        foreach (var media in MediaList)
+                                        {
+                                            string link = media.ToString();
+                                            var result = LinkAnalyzer.LinkDefinite(link);
+                                            if (result.Value == "image")
+                                            {
+                                                images.Add(new MediaContent { MediaType = "image", MediaSource = link });
+                                            }
+                                        }
+                                    }
+
+                                }
+                            }
+                            
+                            
+                        }
+                    }
+                }
+                return new StandardPost { author = author, reply = reply, hit = hit, time = time, pid = pid, images=images,videos=videos, title = title };
+
+            }
+            else
+            {
+                return null;
+            }
+        }
     }
     //约定：检验HttpResponse的字符串内容是否为空。检验输入合法性。
     public static class ValidationHelper
@@ -548,6 +618,7 @@ namespace CCkernel
             StorageFile file = await cacheFolder.CreateFileAsync(filename, CreationCollisionOption.ReplaceExisting);
             await FileIO.WriteTextAsync(file, json);  
         }
+        
     }
 
     public static class UBBConverter
@@ -769,6 +840,99 @@ namespace CCkernel
             var charsToEscape = new[] { '\\', '_', '+', '-', '.' };
             return charsToEscape.Aggregate(input, (current, c) =>
                 current.Replace(c.ToString(), $"\\{c}"));
+        }
+    }
+
+    public static class LinkAnalyzer
+    {
+        public static KeyValuePair<string, string> LinkDefinite(string link)
+        {
+            if (!string.IsNullOrEmpty(link))
+            {
+
+                if (link.Contains("user/name"))
+                {
+
+                    string pattern = @"https:\/\/api\.cc98\.org\/user\/name\/([^\/\s]+)";
+                    MatchCollection matches = Regex.Matches(link, pattern);
+                    if (matches.Count == 1)
+                    {
+                        string username = matches[0].Groups[1].Value;
+                        return new KeyValuePair<string, string>("user", username);
+                    }
+                    else
+                    {
+                        return new KeyValuePair<string, string>("null", link);
+                    }
+
+                }
+                else if (link.Contains("/topic/") && (!link.Contains("#")))
+                {
+                    string pattern = @"\/topic\/([^\/\s]+)";
+                    MatchCollection matches = Regex.Matches(link, pattern);
+                    if (matches.Count == 1)
+                    {
+                        string pid = matches[0].Groups[1].Value;
+                        return new KeyValuePair<string, string>("topic", pid);
+                    }
+                    else
+                    {
+                        return new KeyValuePair<string, string>("null", link);
+                    }
+                }
+                else if (link.Contains("#"))
+                {
+                    Match match = Regex.Match(link, @"/topic/(\d{7})/(\d+)#(\d+)");
+                    if (match.Success)
+                    {
+                        string numberAfterHash = match.Groups[1].Value;
+                        return new KeyValuePair<string, string>("anchor", link);//返回索引楼层
+                    }
+                    return new KeyValuePair<string, string>("null", link);
+                }
+                else if (link.Contains("file"))
+                {
+                    string ext = Path.GetExtension(link)?.TrimStart('.').ToLowerInvariant();
+
+                    HashSet<string> picformats = new() { "jpg", "jpeg", "png", "gif", "webp" };
+                    HashSet<string> audioformats = new() { "mp3", "wav", "m4a", "ogg", "flac" };
+                    HashSet<string> videofromats = new() { "mp4", "avi", "mkv", "mov", "wmv" };
+
+                    if (!string.IsNullOrEmpty(ext))
+                    {
+                        if (picformats.Contains(ext))
+                        {
+                            return new KeyValuePair<string, string>("file", "image");
+                        }
+                        else if (audioformats.Contains(ext))
+                        {
+                            return new KeyValuePair<string, string>("file", "audio");
+                        }
+                        else if (videofromats.Contains(ext))
+                        {
+                            return new KeyValuePair<string, string>("file", "video");
+                        }
+                        else
+                        {
+                            return new KeyValuePair<string, string>("file", "doc");
+                        }
+                    }
+                    else
+                    {
+                        return new KeyValuePair<string, string>("null", link);
+                    }
+
+                }
+                else
+                {
+                    return new KeyValuePair<string, string>("null", link);
+                }
+            }
+            else
+            {
+                return new KeyValuePair<string, string>("null", link);
+            }
+
         }
     }
 }

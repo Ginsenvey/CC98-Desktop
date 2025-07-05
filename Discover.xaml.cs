@@ -11,6 +11,7 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Newtonsoft.Json.Serialization;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
@@ -34,91 +35,56 @@ namespace App3
     public sealed partial class Discover : Page
     {
         public ApplicationDataContainer Set=ApplicationData.Current.LocalSettings;
-        public ObservableCollection<Tile> tiles;
-        public ObservableCollection<RandomTile> randomtiles;//必须是可观测集合，否则UI不显示。
+        public ObservableCollection<StandardPost> tiles=new();
+        public ObservableCollection<RandomPost> randomtiles=new();//必须是可观测集合，否则UI不显示。
         public Discover()
         {
             this.InitializeComponent();
-            tiles = new ObservableCollection<Tile>() { };
-            
-            randomtiles = new ObservableCollection<RandomTile>();
+           
             Set = ApplicationData.Current.LocalSettings;
-            DiscoverList.ItemsSource = tiles;
+            
             RandomTiles.ItemsSource = randomtiles;
-            GetNewTopic();
+            GetNewTopic("0");
             GetRandomTile();
+            
         }
         
-        private async void GetNewTopic()
+        private async void GetNewTopic(string start)
         {
-            string NewTopicUrl = "https://api.cc98.org/topic/new?from=0&size=20";
-            try
+            
+            string NewTopicUrl = "https://api.cc98.org/topic/new?from=" + start + "&size=20";
+            string NewTopicText=await RequestSender.SimpleRequest(NewTopicUrl);
+            if (!NewTopicText.StartsWith("404"))
             {
-                string access = Set.Values["Access"] as string;
-                if (!string.IsNullOrEmpty(access))
+                var NewTopicList = Deserializer.ToArray(NewTopicText);
+                if (NewTopicList != null)
                 {
-                    CCloginservice.client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", access);
-                    var NewRes = await CCloginservice.client.GetAsync(NewTopicUrl);
-                    if (NewRes.StatusCode == System.Net.HttpStatusCode.OK)
+                    if(NewTopicList.Count > 0)
                     {
-                        string NewText = await NewRes.Content.ReadAsStringAsync();
-                        var js = JsonConvert.DeserializeObject<JArray>(NewText);
-                        if (js != null)
+                        tiles.Clear();
+                        foreach (var Topic in NewTopicList)
                         {
-                            if (js.Count > 0)
+                            try
                             {
-                                
-                                foreach (var news in js)
+                                var topic = Deserializer.ToItem(Topic.ToString());
+                                if (topic != null)
                                 {
-                                    var tile = JsonConvert.DeserializeObject<Dictionary<string, object>>(news.ToString());
-                                    string rid = "0";
-                                    if (tile["userId"] != null)
-                                    {
-                                        rid = tile["userId"].ToString();
-                                    }
-                                    string pid = tile["id"].ToString();
-                                    string hit = tile["hitCount"].ToString();
-                                    string title = tile["title"].ToString();
-                                    string time = tile["time"].ToString();
-                                    string reply = tile["replyCount"].ToString();
-                                    string author = "匿名";
-                                    if (tile["userName"] != null)
-                                    {
-                                        author = tile["userName"].ToString();
-                                    }
-                                    
-                                    tiles.Add(new Tile { rid = rid, uid = pid, title = title, time = time, hit = hit, reply = reply,author="@ "+author });
+                                    tiles.Add(topic);
+                                    //此加载过程有问题。
                                 }
+                            }
+                            catch(Exception ex)
+                            {
+
                             }
                         }
                     }
-                    else
-                    {
-                        
-                    }
                 }
-                
             }
-            catch(Exception ex)
-            {
-                de.Text= ex.Message;
-            }
+            
         }
 
-        private void NewTileArea_Click(object sender, RoutedEventArgs e)
-        {
-            var h = sender as HyperlinkButton;
-            var t = h?.DataContext as Tile;
-            if (t != null)
-            {
-                string param = t.uid;
-                if (param != null)
-                {
-                    Frame.Navigate(typeof(Topic), param);
-                }
-                
-            }
-        }
+        
         private async void GetRandomTile()
         {
             string NewTopicUrl = "https://api.cc98.org/topic/random-recent?size=10";
@@ -151,7 +117,7 @@ namespace App3
                                     string title = tile["title"].ToString();
                                     string time = tile["time"].ToString();
                                     string reply = tile["replyCount"].ToString();
-                                    randomtiles.Add(new RandomTile { title = title, pid = pid, time = time, hit = hit, reply = reply });
+                                    randomtiles.Add(new RandomPost { title = title, pid = pid, time = time, hit = hit, reply = reply });
                                 }
                             }
                         }
@@ -165,7 +131,7 @@ namespace App3
             }
             catch (Exception ex)
             {
-                de.Text = ex.Message;
+                
             }
         }
 
@@ -174,42 +140,134 @@ namespace App3
             GetRandomTile();
         }
 
-        private void RandomTiles_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        
+
+        private void Image_Tapped(object sender, TappedRoutedEventArgs e)
         {
-            if (RandomTiles.SelectedItem!=null)
+            var ImageFrame = sender as Image;
+            if (ImageFrame != null)
             {
-                int selected = RandomTiles.SelectedIndex;
-                RandomTile selection = randomtiles[selected]; 
-                if(selection!= null)
+                string url = ImageFrame.Tag.ToString();
+                var param = new Dictionary<string, string>()
                 {
-                    if (selection.pid != null)
+                    {"url",url },
+                    {"type","image" }
+                };
+                var picviewer = new MediaViewer(param);
+                picviewer.Activate();
+            }
+        }
+        public int current = 0;
+
+        private void NaviBar_Click(object sender, RoutedEventArgs e)
+        {
+            var b = sender as Button;
+            if (b != null)
+            {
+                string tag=b.Tag.ToString();
+                if (tag == "Back")
+                {
+                    if (current > 0)
                     {
-                        Frame.Navigate(typeof(Topic), selection.pid);
+                        current -= 20;
+                    }
+                    else
+                    {
+                        current = 0;
+                        Flower.PlayAnimation("\uE946", "已到达最新页面");
                     }
                 }
-                else
+                else if (tag == "Forward")
                 {
-                    ShowTips("无数据", "");
+                    current += 20;
+                }
+                GetNewTopic(current.ToString());
+                NewTopicViewer.ScrollToVerticalOffset(0);
+            }
+        }
+
+        private void RandomPost_Click(object sender, RoutedEventArgs e)
+        {
+            var h = sender as HyperlinkButton;
+            if (h != null)
+            {
+                var p=h?.DataContext as RandomPost;
+                if(p != null)
+                {
+                    Frame.Navigate(typeof(Topic),p.pid);
                 }
             }
-            else
+        }
+
+        private void MainText_Click(object sender, RoutedEventArgs e)
+        {
+            var h = sender as HyperlinkButton;
+            if (h != null)
             {
-                ShowTips("未选中","");
+                var pid = h.Tag as string;
+                if (pid != null)
+                {
+                    Frame.Navigate(typeof(Topic), pid);
+                }
             }
         }
-        private void ShowTips(string title,string content)
-        {
-            msg.Title = title;
-            msg.Content = content;
-            msg.IsOpen = true;
-        }
     }
-    public class RandomTile
+    public class RandomPost
     {
         public string title { get; set; }
         public string reply { get; set; }
         public string hit { get; set; }
         public string pid { get; set; }
         public string time { get; set; }
+    }
+    public class PostTemplateSelector : DataTemplateSelector
+    {
+        // 定义不同模板属性
+        public DataTemplate? ImageTemplate { get; set; }
+        public DataTemplate? TextOnlyTemplate { get; set; }
+        
+
+        // 重写选择方法
+        protected override DataTemplate SelectTemplateCore(object item)
+        {
+            if (item is StandardPost post)
+            {
+                if (post.images.Count > 0)
+                {
+                    return ImageTemplate;
+                }
+            }
+            return TextOnlyTemplate;
+        }
+
+        
+        
+    }
+    public class StringToImageConverter : IValueConverter
+    {
+        public object Convert(object value, Type targetType, object parameter, string language)
+        {
+            if (value is string path && !string.IsNullOrWhiteSpace(path))
+            {
+                try
+                {
+                    return new BitmapImage(new Uri(path));
+                }
+                catch
+                {
+                    return GetFallbackImage();
+                }
+            }
+            return GetFallbackImage(); // 处理空值
+        }
+
+        private static ImageSource GetFallbackImage()
+        {
+            // 返回默认图片或null
+            return new BitmapImage(new Uri("ms-appx:///Assets/DefaultImage.png"));
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, string language)
+            => throw new NotImplementedException();
     }
 }

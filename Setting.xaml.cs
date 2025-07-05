@@ -28,6 +28,7 @@ using HtmlAgilityPack;
 using System.Net.Http;
 using Windows.Media.Protection.PlayReady;
 using System.Reflection.Emit;
+using System.Net;
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
 
@@ -346,6 +347,42 @@ namespace App3
         {
             Frame.Navigate(typeof(Game));
             
+        }
+
+        private async void Emoji_Click(object sender, RoutedEventArgs e)
+        {
+            List<string> list = new List<string>();
+            for(int i= 0; i < 55; i++)
+            {
+                string param = "";
+                if (i < 10)
+                {
+                    param="0"+i.ToString();
+                }
+                else
+                {
+                    param=i.ToString();
+                }
+                list.Add(param);
+
+                
+            }
+            
+            foreach (string param in list)
+            {
+                string url = "https://www.cc98.org/static/images/ms/ms"+param + ".png";
+                string path = "C:\\Users\\Ansherly\\Documents\\Emoji\\" + "ms" + param+".png";
+                var fileres = await CCloginservice.client.GetAsync(url, HttpCompletionOption.ResponseHeadersRead);
+                if (fileres.StatusCode == HttpStatusCode.OK)
+                {
+                    using (Stream contentStream = await fileres.Content.ReadAsStreamAsync(),
+                    fileStream = new FileStream(path, FileMode.Create, FileAccess.Write, FileShare.None))
+                    {
+                        await contentStream.CopyToAsync(fileStream);
+
+                    }
+                }
+            }
         }
     }
     public class Pic

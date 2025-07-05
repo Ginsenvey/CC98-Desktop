@@ -28,12 +28,12 @@ namespace App3
     /// </summary>
     public sealed partial class Repeater : Page
     {
-        public ObservableCollection<Tile> tiles;
+        public ObservableCollection<StandardPost> tiles;
         public int SortId = 0;
         public Repeater()
         {
             this.InitializeComponent();
-            tiles = new ObservableCollection<Tile>();
+            tiles = new();
         }
         public string mode = "0";
         public string groupid = "0";
@@ -92,7 +92,7 @@ namespace App3
                             string Pid = TopicInfo["id"].ToString();
                             string Hit = TopicInfo["hitCount"].ToString();
                             string Reply = TopicInfo["replyCount"].ToString();
-                            tiles.Add(new Tile { author = "@ " + Author, section = Section, title = Title, uid = Pid, hit = Hit, reply = Reply, rid = AuthorId ,time=Time,sort=(SortId+1).ToString()});
+                            tiles.Add(new StandardPost { author = "@ " + Author, section = Section, title = Title, pid = Pid, hit = Hit, reply = Reply, rid = AuthorId ,time=Time,sort=(SortId+1).ToString()});
                             SortId++;
                         }
                     }
@@ -123,10 +123,10 @@ namespace App3
             var h = sender as HyperlinkButton;
             if (h != null)
             {
-                var t = h?.DataContext as Tile;
+                var t = h?.DataContext as SimplePost;
                 if (t != null)
                 {
-                    Frame.Navigate(typeof(Topic), t.uid);
+                    Frame.Navigate(typeof(Topic), t.pid);
                 }
             }
         }

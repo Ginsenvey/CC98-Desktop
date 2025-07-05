@@ -31,22 +31,18 @@
     <Grid>
         
         <Grid.RowDefinitions>
-            <RowDefinition Height="*" MinHeight="80"></RowDefinition>
-            <RowDefinition Height="6*"></RowDefinition>
+            <RowDefinition Height="Auto" ></RowDefinition>
+            <RowDefinition Height="*"></RowDefinition>
         </Grid.RowDefinitions>
-        <Border    Margin="10" >
-            
-            <Grid>
-                <TextBlock HorizontalAlignment="Left" Text="版面"  FontSize="24" FontWeight="Bold" Foreground="{ThemeResource AccentAAFillColorDefaultBrush}" VerticalAlignment="Center" Margin="20,0,0,0"></TextBlock>
-                <HyperlinkButton HorizontalAlignment="Right" x:Name="RefreshSection" Click="RefreshSection_Click">
-                    <StackPanel Orientation="Horizontal" Spacing="8">
-                        <ic:SymbolIcon Symbol="ArrowSync"></ic:SymbolIcon>
-                        <TextBlock Text="刷新列表"></TextBlock>
-                    </StackPanel>
-                </HyperlinkButton>
-            </Grid>
-           
-        </Border>
+        <Grid Grid.Row="0" Margin="10,20,10,30">
+            <TextBlock HorizontalAlignment="Left" Text="版面"  FontSize="24" FontWeight="Bold" Foreground="{ThemeResource AccentAAFillColorDefaultBrush}"  Margin="20,0,0,0"></TextBlock>
+            <Button HorizontalAlignment="Right" x:Name="RefreshSection" Click="RefreshSection_Click">
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                    <ic:SymbolIcon Symbol="ArrowSync"></ic:SymbolIcon>
+                    <TextBlock Text="刷新列表"></TextBlock>
+                </StackPanel>
+            </Button>
+        </Grid>
         <Border Height="1" Grid.Row="0" VerticalAlignment="Bottom" BorderThickness="1" BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}" Margin="0,0,0,10"></Border>
         <ScrollViewer Grid.Row="1">
             <ItemsRepeater x:Name="SectionPresenter"  ItemTemplate="{StaticResource SectionCase}">

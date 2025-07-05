@@ -231,7 +231,7 @@ namespace App3
             }
 
         }
-        //检查第一个字段IsActive(是否获取R和A)，否则弹出登录窗口。登录成功IsActive赋值1.
+
         private  async void Auth()
         {
             
@@ -279,7 +279,7 @@ namespace App3
                 else
                 {
                     Flower.PlayAnimation("\uE783", "暂无收藏夹");
-                    likecollection.MenuItems.Add(new NavigationViewItem { Content = "点击创建新收藏夹", Tag = "200", Icon = new FluentIcons.WinUI.SymbolIcon { Symbol = FluentIcons.Common.Symbol.List } });
+                    
                     return false;
                 }
             }
@@ -299,7 +299,7 @@ namespace App3
                     var likeinfo = JsonConvert.DeserializeObject<Dictionary<string, object>>(like.ToString());
                     string collection = likeinfo["name"].ToString();
                     string sortid = "f" + like["id"].ToString();
-                    likecollection.MenuItems.Add(new NavigationViewItem { Content = collection, Tag = sortid, Icon = new FluentIcons.WinUI.SymbolIcon { Symbol = FluentIcons.Common.Symbol.List } });  
+                    likecollection.MenuItems.Add(new NavigationViewItem { Content = collection, Tag = sortid, Icon = new FluentIcons.WinUI.SymbolIcon { Symbol = FluentIcons.Common.Symbol.Tag } });  
                 }
             }
         }

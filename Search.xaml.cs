@@ -34,7 +34,7 @@ namespace App3
     public sealed partial class Search : Page
     {
         public ApplicationDataContainer Set = ApplicationData.Current.LocalSettings;
-        public ObservableCollection<Tile> Tiles = new ObservableCollection<Tile>();
+        public ObservableCollection<StandardPost> Tiles = new();
         public Search()
         {
             this.InitializeComponent();
@@ -97,7 +97,7 @@ namespace App3
                         string title = js["title"].ToString();
                         string hit = js["hitCount"].ToString();
                         string reply = js["replyCount"].ToString();
-                        Tiles.Add(new Tile { author ="@ "+ author, uid = uid, time = time, title = title, hit = hit, reply = reply,  rid= js["id"].ToString()});
+                        Tiles.Add(new StandardPost { author ="@ "+ author, pid = uid, time = time, title = title, hit = hit, reply = reply,  rid= js["id"].ToString()});
                     }
                     SearchList.ItemsSource = Tiles;
                     
@@ -105,19 +105,19 @@ namespace App3
             }
             else
             {
-                Tiles.Add(new Tile { author = "搜索失败", uid = "0", time = "0", title = "0", hit = "0", reply = "0" });
+                Tiles.Add(new StandardPost { author = "搜索失败",pid = "0", time = "0", title = "0", hit = "0", reply = "0" });
             }
         }
 
         private void SearchContent_Click(object sender, RoutedEventArgs e)
         {
             var h = sender as HyperlinkButton;
-            var t = h?.DataContext as Tile;
+            var t = h?.DataContext as StandardPost;
             if (t != null)
             {
-                if (t.rid!= null)
+                if (t.pid!= null)
                 {
-                    Frame.Navigate(typeof(Topic), t.rid);
+                    Frame.Navigate(typeof(Topic), t.pid);
                     //存在一个问题，我们需要缓存页面的数据源，否则在用户从其中一个帖子返回后，搜索结果是空的。
                 }
 

@@ -13,10 +13,10 @@
     
     Background="{ThemeResource DesktopAcrylicTransparentBrush}">
     <Page.Resources>
-        <DataTemplate x:Key="Presenter" x:DataType="local:Tile">
+        <DataTemplate x:Key="Presenter" x:DataType="local:SimplePost">
           
 
-                <HyperlinkButton  PointerEntered="ContentCard_PointerEntered" PointerExited="ContentCard_PointerExited" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch" x:Name="TopicItem" Click="TopicItem_Click" Tag="{x:Bind uid}" CornerRadius="0" Height="53">
+                <HyperlinkButton  PointerEntered="ContentCard_PointerEntered" PointerExited="ContentCard_PointerExited" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch" x:Name="TopicItem" Click="TopicItem_Click" Tag="{x:Bind pid}" CornerRadius="0" Height="53">
                     <HyperlinkButton.RenderTransform>
                         <TranslateTransform x:Name="CardTranslate" X="0" Y="0"/>
                     </HyperlinkButton.RenderTransform> 
@@ -85,7 +85,7 @@
                         <ic:SymbolIcon Symbol="DesignIdeas" FontSize="26" Foreground="{ThemeResource AccentAAFillColorDefaultBrush}" Grid.Column="0" Grid.Row="0" Grid.RowSpan="2"></ic:SymbolIcon>
                         <TextBlock Text="{Binding content}" Grid.Row="1" Grid.Column="1" Foreground="{ThemeResource TextFillColorSecondaryBrush}" ></TextBlock>
                         <TextBlock  Grid.Row="0" Grid.Column="1"  FontWeight="Bold" TextDecorations="Underline">
-                            <Hyperlink NavigateUri="{Binding uid}" Click="RecomHyperlink_Click" x:Name="RecomHyperlink">
+                            <Hyperlink NavigateUri="{Binding pid}" Click="RecomHyperlink_Click" x:Name="RecomHyperlink">
                                 <Run Text="{Binding title}" ></Run>
                             </Hyperlink>
                         </TextBlock>

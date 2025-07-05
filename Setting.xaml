@@ -181,9 +181,7 @@
                     <HyperlinkButton Content="开始" Click="ForceGC_Click" x:Name="ForceGC"></HyperlinkButton>
                 </tool:SettingsCard>
                 <tool:SettingsExpander Header="管理本地设置" Description="仅作调试用途" HeaderIcon="{ic:SymbolIcon Symbol=Toolbox}" x:Name="LocalSetManager" Expanded="LocalSetManager_Expanded">
-                    <tool:SettingsExpander.Content>
-                        <Button Content="查看本地配置" x:Name="ViewLocalSet" Click="ViewLocalSet_Click"></Button>
-                    </tool:SettingsExpander.Content>
+                   
                     <tool:SettingsExpander.Items>
                         <tool:SettingsCard Padding="20">
                             <ScrollViewer HorizontalScrollMode="Enabled" HorizontalScrollBarVisibility="Visible">
@@ -198,6 +196,12 @@
                         <ic:SymbolIcon Symbol="Lottery"></ic:SymbolIcon>
                     </tool:SettingsCard.HeaderIcon>
                     <HyperlinkButton Content="开始" Click="DrawACard_Click" x:Name="DrawACard"></HyperlinkButton>
+                </tool:SettingsCard>
+                <tool:SettingsCard Header="表情包管理">
+                    <tool:SettingsCard.HeaderIcon>
+                        <ic:SymbolIcon Symbol="Heart"></ic:SymbolIcon>
+                    </tool:SettingsCard.HeaderIcon>
+                    <HyperlinkButton Content="开始"  x:Name="EmojiManager"></HyperlinkButton>
                 </tool:SettingsCard>
             </StackPanel>
         </ScrollViewer>

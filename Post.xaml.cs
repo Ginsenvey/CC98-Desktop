@@ -41,6 +41,7 @@ namespace App3
         {
             this.InitializeComponent();
             Set= ApplicationData.Current.LocalSettings;
+            LoadEmojiSet("CC98");
         }
         
         public string Mode = "0";
@@ -324,9 +325,32 @@ namespace App3
             if (type != null)
             {
                 type.IsSelected = true;
+                if (type.Tag.ToString()!=null)
+                {
+                    LoadEmojiSet(type.Tag.ToString());
+                }
+                
+
             }
         }
-
+        private void LoadEmojiSet(string type)//包含类型和拓展名两个参数.
+        {
+            EmojiContainer.ItemsSource = null;
+            string EmojiPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Emoji", type);
+            var Files = Directory.GetFiles(EmojiPath, "*", SearchOption.AllDirectories);
+            var emojis = new List<Emoji>();
+            foreach (var file in Files)
+            {
+                string filename = Path.GetFileName(file);
+                emojis.Add(new Emoji { EmojiName = filename.Split(".")[0].ToLower(), EmojiPath = file });
+            }
+            EmojiContainer.ItemsSource = emojis;
+        }
         
+    }
+    public class Emoji
+    {
+        public string EmojiName {  get; set; }
+        public string EmojiPath { get; set; }
     }
 }

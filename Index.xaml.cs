@@ -26,6 +26,8 @@ using System.Runtime.InteropServices;
 using Windows.Storage;
 using CCkernel;
 using Microsoft.UI.Xaml.Documents;
+using Microsoft.UI.Xaml.Media.Imaging;
+using System.Net.Http.Headers;
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
 
@@ -37,7 +39,7 @@ namespace App3
     public sealed partial class Index : Page
     {
         public ObservableCollection<SectionCard> cards;
-        public ObservableCollection<FTile> ftiles;
+        public ObservableCollection<FlipPost> ftiles;
         public ApplicationDataContainer Set;
         
         public Index()
@@ -45,7 +47,7 @@ namespace App3
             this.InitializeComponent();
             cards = new ObservableCollection<SectionCard>(){};
             
-            ftiles= new ObservableCollection<FTile>();
+            ftiles= new ObservableCollection<FlipPost>();
             RecomList.ItemsSource = ftiles;
             Set = ApplicationData.Current.LocalSettings;
             
@@ -95,7 +97,7 @@ namespace App3
                             var TopicList = JsonConvert.DeserializeObject<JArray>(Topics.ToString());
                             if (TopicList != null && TopicList.Count > 0)
                             {
-                                var tiles = new List<Tile>();
+                                var tiles = new List<SimplePost>();
                                 foreach (var Topic in TopicList)
                                 {
                                     var TopicInfo = JsonConvert.DeserializeObject<Dictionary<string, object>>(Topic.ToString());
@@ -123,7 +125,7 @@ namespace App3
                                     {
                                         hasboardname = true;
                                     }
-                                    tiles.Add(new Tile {  section = Section, title = Title, uid = Pid,hasboardname=hasboardname });
+                                    tiles.Add(new SimplePost {  section = Section, title = Title, pid = Pid,hasboardname=hasboardname });
                                 }
                                 cards.Add(new SectionCard { SectionName = _SectionNames[i], Tiles = tiles });
                             }
@@ -142,9 +144,9 @@ namespace App3
                             var js=JsonConvert.DeserializeObject<Dictionary<string,object>>(r.ToString());
                             string title = js["title"].ToString();
                             string content = js["content"].ToString();
-                            string uid = js["url"].ToString();
+                            string pid = js["url"].ToString();
                             string time = js["time"].ToString();
-                            ftiles.Add(new FTile { content = content, time = time, uid ="cc98:/"+uid, title = title });
+                            ftiles.Add(new FlipPost { content = content, time = time, pid ="cc98:/"+pid, title = title });
                         }
                         Pips.NumberOfPages = recomlist.Count;
                     }
@@ -226,12 +228,12 @@ namespace App3
             }
         }
         
-        public class FTile : INotifyPropertyChanged
+        public class FlipPost : INotifyPropertyChanged
         {
             private string _title;//标题
             
             
-            private string _uid;//话题id
+            private string _pid;//话题id
             
 
             private string _time;//时间
@@ -254,15 +256,15 @@ namespace App3
 
             
 
-            public string uid
+            public string pid
             {
-                get => _uid;
+                get => _pid;
                 set
                 {
-                    if (_uid != value)
+                    if (_pid != value)
                     {
-                        _uid = value;
-                        OnPropertyChanged(nameof(uid));
+                        _pid = value;
+                        OnPropertyChanged(nameof(pid));
                     }
                 }
             }
@@ -319,21 +321,85 @@ namespace App3
     {
         public string SectionName { get; set; }
         public FluentIcons.Common.Symbol SectionIcon { get; set; }
-        public List<Tile> Tiles { get; set; }
+        public List<SimplePost> Tiles { get; set; }
     }
-    public class Tile : INotifyPropertyChanged
+    public class SimplePost : INotifyPropertyChanged
     {
         private string _title;//标题
-        private string _section;//版面
-        private string _author;//楼主
-        private string _uid;//话题id
-        private string _reply;//回复数
+        private string _section;//版面    
+        private string _pid;//话题id
+        private bool _hasboardname;//是否已包含版面名
+       
+        public string title
+        {
+            get => _title;
+            set
+            {
+                if (_title != value)
+                {
+                    _title = value;
+                    OnPropertyChanged(nameof(title));
+                }
+            }
+        }
+        public string section
+        {
+            get => _section;
+            set
+            {
+                if (_section != value)
+                {
+                    _section = value;
+                    OnPropertyChanged(nameof(section));
+                }
+            }
+        }
+        public string pid
+        {
+            get => _pid;
+            set
+            {
+                if (_pid != value)
+                {
+                    _pid = value;
+                    OnPropertyChanged(nameof(pid));
+                }
+            }
+        }
 
-        private string _time;//时间
-        private string _hit;//热度
-        private string _rid;//楼主id
-        private string _sort;//序号
-        private bool _hasboardname;
+        public bool hasboardname
+        {
+            get => _hasboardname;
+            set
+            {
+                if (_hasboardname != value)
+                {
+                    _hasboardname = value;
+                    OnPropertyChanged(nameof(hasboardname));
+                }
+            }
+        }
+        
+        public event PropertyChangedEventHandler PropertyChanged;
+
+        protected virtual void OnPropertyChanged(string propertyName)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        }
+    }
+    public class StandardPost: INotifyPropertyChanged
+    {
+        private string? _title;//标题
+        private string? _section;//版面
+        private string? _author;//楼主
+        private string? _pid;//话题id
+        private string? _reply;//回复数
+        private string? _time;//时间
+        private string? _hit;//热度
+        private string? _rid;//楼主id
+        private string? _sort;//序号
+        private List<MediaContent>? _images;
+        private List<MediaContent>? _videos;
         public string title
         {
             get => _title;
@@ -374,15 +440,15 @@ namespace App3
             }
         }
 
-        public string uid
+        public string pid
         {
-            get => _uid;
+            get => _pid;
             set
             {
-                if (_uid != value)
+                if (_pid != value)
                 {
-                    _uid = value;
-                    OnPropertyChanged(nameof(uid));
+                    _pid = value;
+                    OnPropertyChanged(nameof(pid));
                 }
             }
         }
@@ -449,15 +515,28 @@ namespace App3
                 }
             }
         }
-        public bool hasboardname
+        
+        public List<MediaContent> images
         {
-            get => _hasboardname;
+            get => _images;
             set
             {
-                if (_hasboardname != value)
+                if (_images != value)
                 {
-                    _hasboardname = value;
-                    OnPropertyChanged(nameof(hasboardname));
+                    _images = value;
+                    OnPropertyChanged(nameof(images));
+                }
+            }
+        }
+        public List<MediaContent> videos
+        {
+            get => _videos;
+            set
+            {
+                if (_videos != value)
+                {
+                    _videos = value;
+                    OnPropertyChanged(nameof(videos));
                 }
             }
         }
@@ -467,5 +546,12 @@ namespace App3
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
+    }
+    
+    public class MediaContent
+    {
+        public string MediaType { get; set; }
+        public string MediaSource {  get; set; }
+        
     }
 }
