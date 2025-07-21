@@ -84,3 +84,12 @@
 
 除了应用已列出的代码源外，个人空间页面、部分列表样式参考了网易云第三方`LyricEase`；用户信息的右键预览、卡片样式、信息提示框和标题栏参考了[Richasy](https://github.com/Richasy)的哔哩助理。
 
+**从源开始构建**
+
+1. 克隆本仓库到Visual Studio 2022.当然，仓库代码不一定是最新的。
+
+2. 将以下Nuget源添加到vs:[https://pkgs.dev.azure.com/dotnet/CommunityToolkit/_packaging/CommunityToolkit-Labs/nuget/v3/index.json](https://pkgs.dev.azure.com/dotnet/CommunityToolkit/_packaging/CommunityToolkit-Labs/nuget/v3/index.json) 
+
+3. 生成应用程序。如果报错，可以多生成几次，vs会自动补全依赖库。
+
+4. 调试！
