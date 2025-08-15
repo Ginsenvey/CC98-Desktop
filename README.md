@@ -108,7 +108,7 @@ ps:如果一个按钮点不动那多半是作者没有做这个功能😎
 
 **从源开始构建**
 
-1.下载CC98.zip.解压缩，使用Visual Studio打开sln文件。
+1. 下载CC98.zip.解压缩，使用Visual Studio打开sln文件。
 
 2. 将以下Nuget源添加到vs:[https://pkgs.dev.azure.com/dotnet/CommunityToolkit/_packaging/CommunityToolkit-Labs/nuget/v3/index.json](https://pkgs.dev.azure.com/dotnet/CommunityToolkit/_packaging/CommunityToolkit-Labs/nuget/v3/index.json) 
 
