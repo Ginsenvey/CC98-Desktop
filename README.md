@@ -1,7 +1,7 @@
 ## CC98 Desktop 
 现在，可以从微软商店下载本应用的最新版本,并在校外免RVPN访问论坛。增加了内置WebVPN支持，以及自定义表情包功能。采用了新的登录方式。
 
-<p align="left">
+<p align="center">
   <a title="从 Microsoft 获取" href="https://apps.microsoft.com/detail/9NJ1LFJ8CDQ0?hl=zh-cn&gl=CN&ocid=pdpshare">
       <img src="https://get.microsoft.com/images/zh-CN%20dark.svg" width=144 />
   </a>
