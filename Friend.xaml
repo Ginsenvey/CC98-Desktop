@@ -10,7 +10,7 @@
     xmlns:ic="using:FluentIcons.WinUI"
     Background="{ThemeResource DesktopAcrylicTransparentBrush}">
 
-    <Grid Padding="20">
+    <Grid Padding="15,0,15,0">
         <Grid.RowDefinitions>
             <RowDefinition Height="*" MinHeight="75"></RowDefinition>
             <RowDefinition Height="12*"></RowDefinition>
@@ -19,18 +19,18 @@
             <TextBlock Text="关注" x:Name="FriendType" FontSize="24" FontWeight="Bold"   Foreground="#4d9891" VerticalAlignment="Center" HorizontalAlignment="Left"></TextBlock>
         </Grid>
 
-        <ScrollViewer Grid.Row="1" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" CornerRadius="8" Margin="0,0,0,15">
+        <ScrollViewer Grid.Row="1"  Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" CornerRadius="7" Margin="0,0,0,30">
             <ItemsRepeater  x:Name="Collection" Loaded="Collection_Loaded">
                 <ItemsRepeater.ItemTemplate>
                     <DataTemplate>
-                        <HyperlinkButton HorizontalContentAlignment="Stretch" HorizontalAlignment="Stretch" CornerRadius="0" x:Name="TileContent" Click="TileContent_Click" >
+                        <HyperlinkButton HorizontalContentAlignment="Stretch" HorizontalAlignment="Stretch" CornerRadius="0" x:Name="TileContent" Click="TileContent_Click" BorderThickness="0.5" BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}">
                             <HyperlinkButton.ContextFlyout>
                                 <MenuFlyout>
-                                    <MenuFlyoutItem Text="私信" Icon="{ic:SymbolIcon Symbol=ChatAdd}"></MenuFlyoutItem>
-                                    <MenuFlyoutItem Text="取关" Icon="{ic:FluentIcon Icon=Dismiss}"></MenuFlyoutItem>
+                                    <MenuFlyoutItem Text="私信" Icon="{ic:SymbolIcon Symbol=ChatAdd}"  Click="Chat_Click" ></MenuFlyoutItem>
+                                    <MenuFlyoutItem Text="取关" Icon="{ic:FluentIcon Icon=Dismiss}" Click="Follow_Click" Tag="{Binding uid}"></MenuFlyoutItem>
                                 </MenuFlyout>
                             </HyperlinkButton.ContextFlyout>
-                            <Grid Padding="3"  ColumnSpacing="10">
+                            <Grid Padding="3,0,3,0"  ColumnSpacing="10">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="45"></ColumnDefinition>
                                     <ColumnDefinition Width="*"></ColumnDefinition>
@@ -58,6 +58,6 @@
             </ItemsRepeater>
         </ScrollViewer>
 
-
+        <local:InfoFlower HorizontalAlignment="Center" x:Name="Flower"  Grid.Row="0" Grid.RowSpan="2" ></local:InfoFlower>
     </Grid>
 </Page>

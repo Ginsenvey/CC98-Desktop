@@ -17,15 +17,14 @@
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"></RowDefinition>
             <RowDefinition Height="*"></RowDefinition>
-            <RowDefinition Height="70" ></RowDefinition>
+          
         </Grid.RowDefinitions>
-        <Expander Grid.Row="0" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch"  x:Name="BoardBanner" VerticalContentAlignment="Stretch" CornerRadius="0">
+        <Expander Grid.Row="0" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch"  x:Name="BoardBanner" VerticalContentAlignment="Stretch" CornerRadius="6" >
             <Expander.Header>
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto" MinHeight="45"></RowDefinition>
                         <RowDefinition Height="Auto" MinHeight="45"></RowDefinition>
-                       
                     </Grid.RowDefinitions>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="60"></ColumnDefinition>
@@ -36,7 +35,7 @@
                     <ic:SymbolIcon Symbol="Chat" Grid.Row="0" Grid.RowSpan="2" FontSize="22" Grid.Column="0" Foreground="{ThemeResource AccentAAFillColorDefaultBrush}"></ic:SymbolIcon>
                     <TextBlock Grid.Row="0" Grid.RowSpan="2" Grid.Column="1" Text="{Binding Name}" FontSize="20" FontWeight="Bold" Foreground="{ThemeResource AccentAAFillColorDefaultBrush}" VerticalAlignment="Center"></TextBlock>
                     <TextBlock Grid.Row="0" Grid.Column="2" Text="{Binding Description}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" VerticalAlignment="Center" TextWrapping="Wrap" Margin="0,10,10,0"></TextBlock>
-                    <TextBlock Grid.Row="1" Grid.Column="2" Text="{Binding Masters}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" VerticalAlignment="Bottom" Margin="0,0,10,5"></TextBlock>
+                    <TextBlock Grid.Row="1" Grid.Column="2" Text="{Binding Masters}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" VerticalAlignment="Bottom" Margin="0,0,10,10"></TextBlock>
                     <lab:TokenView Grid.Column="3" Grid.Row="0" Grid.RowSpan="2" >
                         <lab:TokenItem>
                             <TextBlock Text="{Binding Totalcount}"></TextBlock>
@@ -51,10 +50,13 @@
                 </Grid>
             </Expander.Header>
             <Expander.Content>
-                <tool:MarkdownTextBlock x:Name="Banner" Text="{Binding BanText}" CornerRadius="10"   Background="Transparent" LinkClicked="Banner_LinkClicked"></tool:MarkdownTextBlock>
+                <ScrollViewer>
+                    <tool:MarkdownTextBlock x:Name="Banner" Text="{Binding BanText}" CornerRadius="10"   Background="Transparent" LinkClicked="MarkdownTextBlock_LinkClicked"></tool:MarkdownTextBlock>
+                </ScrollViewer>
+                
             </Expander.Content>
         </Expander>
-        <ScrollViewer Grid.Row="1" Grid.RowSpan="1" Margin="0,10,0,10">
+        <ScrollViewer Grid.Row="1" Margin="0,10,0,10">
             <ItemsRepeater x:Name="STileList" Loaded="STileList_Loaded">
                 <ItemsRepeater.ItemTemplate>
                     <DataTemplate>
@@ -67,7 +69,7 @@
                                     <ColumnDefinition Width="*"></ColumnDefinition>
                                 </Grid.ColumnDefinitions>
                                 <ic:SymbolIcon Symbol="{Binding symbol}" Grid.Column="0" Foreground="{ThemeResource AccentAAFillColorDefaultBrush}"></ic:SymbolIcon>
-                                <TextBlock Text="{Binding text}" Grid.Column="1" VerticalAlignment="Center" Foreground="{ThemeResource TextFillColorSecondaryBrush}"></TextBlock>
+                                <TextBlock Text="{Binding text}" Grid.Column="1" VerticalAlignment="Center" Foreground="{ThemeResource TextFillColorSecondaryBrush}" FontFamily="Noto Sans SC"></TextBlock>
                                 <TextBlock Text="{Binding author}" Grid.Column="2" VerticalAlignment="Center" Foreground="{ThemeResource TextFillColorSecondaryBrush}"></TextBlock>
                                 <StackPanel Orientation="Horizontal" Grid.Column="3" Spacing="10" VerticalAlignment="Center" >
                                     <Button Background="Transparent"  HorizontalAlignment="Left" >
@@ -86,21 +88,31 @@
                                 </StackPanel>
                             </Grid>
                         </HyperlinkButton>
-                        
+
                     </DataTemplate>
                 </ItemsRepeater.ItemTemplate>
             </ItemsRepeater>
+
         </ScrollViewer>
-        <Grid Grid.Row="2" Background="{ThemeResource ControlAltFillColorTransparentBrush}" >
-            <dev:BubbleButton Height="45" HorizontalAlignment="Center" Width="200" VerticalAlignment="Center" x:Name="writepost" Click="writepost_Click" BubbleForeground="{ThemeResource AccentAAFillColorDefaultBrush}">
-                <StackPanel Orientation="Horizontal" Spacing="25">
-                    <ic:SymbolIcon Symbol="Add" FontSize="16" Foreground="{ThemeResource AccentAAFillColorDefaultBrush}" ></ic:SymbolIcon>
-                    <TextBlock Text="发帖" ></TextBlock>
-                </StackPanel> 
-            </dev:BubbleButton>
-            
-            
-        </Grid>
+        <dev:GooeyButton x:Name="GooeyGroup" Grid.Row="1" HorizontalAlignment="Right" VerticalAlignment="Bottom"    Background="Purple" Width="50" Height="50" Margin="0,0,60,60">
+            <dev:GooeyButton.Content>
+                <SymbolIcon Symbol="Add"/>
+            </dev:GooeyButton.Content>
+            <dev:GooeyButton.Items>
+
+                <dev:GooeyButtonItem  Background="LightSeaGreen" Width="50" Height="50" Click="Gooey_Click" x:Name="Gooey" Tag="Vote" ToolTipService.ToolTip="发起投票">
+                    <ic:SymbolIcon Symbol="Vote"></ic:SymbolIcon>
+                </dev:GooeyButtonItem >
+                <dev:GooeyButtonItem Background="LightBlue" Width="50" Height="50" Click="Gooey_Click" Tag="Pin" ToolTipService.ToolTip="固定到导航栏">
+                    <ic:SymbolIcon Symbol="Pin" ></ic:SymbolIcon>
+
+                </dev:GooeyButtonItem>
+                <dev:GooeyButtonItem Background="LightSteelBlue" Width="50" Height="50" Click="Gooey_Click" Tag="Send" ToolTipService.ToolTip="发帖">
+                    <ic:SymbolIcon Symbol="Send" ></ic:SymbolIcon>
+                </dev:GooeyButtonItem>
+            </dev:GooeyButton.Items>
+        </dev:GooeyButton>
+
         <ContentDialog Title="发表主题" x:Name="PostPanel" HorizontalAlignment="Center" VerticalAlignment="Center">
             <ContentDialog.Content>
                 <StackPanel Orientation="Vertical" Spacing="10">
@@ -112,5 +124,7 @@
                 </StackPanel>
             </ContentDialog.Content>
         </ContentDialog>
+        <local:InfoFlower x:Name="Flower" Grid.Row="0" Grid.RowSpan="3" HorizontalAlignment="Center" VerticalAlignment="Bottom"></local:InfoFlower>
+  
     </Grid>
 </Page>

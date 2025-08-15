@@ -22,6 +22,7 @@ using static App3.Message;
 using System.ComponentModel;
 using System.Collections.ObjectModel;
 using CCkernel;
+using System.Threading.Tasks;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -61,14 +62,12 @@ namespace App3
                 else if(parameter == "followee")
                 {
                     FriendType.Text = "关注";
-                }
-                
-
-               
+                }  
             }
-            if(Set.Values["CurrentFriendType"] as string != null)
+            string type = ValidationHelper.IsTokenExist(Set, "CurrentFriendType");
+            if(type!="0")
             {
-                LoadFriend(Set.Values["CurrentFriendType"] as string, "0");
+                LoadFriend(type, "0");
             }
             
 
@@ -76,32 +75,30 @@ namespace App3
         private async void LoadFriend(string type,string start)
         {
             string url = "https://api.cc98.org/me/"+type+"?from="+start+"&size=10";
-            var response =await CCloginservice.client.GetAsync(url);
-            if (response.StatusCode == HttpStatusCode.OK)
+            string res_text=await RequestSender.SimpleRequest(url);
+            
+            if (!res_text.StartsWith("404:"))
             {
-                string json = await response.Content.ReadAsStringAsync();
-                var js = JsonConvert.DeserializeObject<JArray>(json);
+                var js=Deserializer.ToArray(res_text);
                 if (js != null)
                 {
-                    List<string> Uids= new List<string>();
+                    List<string> Uids = new List<string>();
                     List<string> Params = new List<string>();
                     foreach (var item in js)
                     {
                         Uids.Add(item.ToString());
-                        Params.Add("id="+item.ToString());
+                        Params.Add("id=" + item.ToString());
                     }
                     if (Uids.Count > 0)
                     {
                         string MInfoUrl = "https://api.cc98.org/user?" + string.Join("&", Params);
-                        var portres = await CCloginservice.client.GetAsync(MInfoUrl);
-                        if (portres.StatusCode == System.Net.HttpStatusCode.OK)
+                        string port=await RequestSender.SimpleRequest(MInfoUrl);
+                        if (!port.StartsWith("404:"))
                         {
-                            string port = await portres.Content.ReadAsStringAsync();
-                            if (!string.IsNullOrEmpty(port))
+                            var portlist = Deserializer.ToArray(port);
+                            Dictionary<string, MInfo> personinfo = new();
+                            if (portlist != null)
                             {
-                                var portlist = JsonConvert.DeserializeObject<JArray>(port);
-                                Dictionary<string, MInfo> personinfo = new();
-
                                 foreach (var p in portlist)
                                 {
                                     var info = JsonConvert.DeserializeObject<Dictionary<string, object>>(p.ToString());
@@ -110,9 +107,9 @@ namespace App3
                                     string id = info["id"].ToString();
                                     string post = info["postCount"].ToString();
                                     string follower = info["fanCount"].ToString();
-                                    personinfo.Add(id, new MInfo { name = name, url = purl,post=post,follower=follower });
+                                    personinfo.Add(id, new MInfo { name = name, url = purl, post = post, follower = follower });
                                 }
-                                foreach(var f in Uids)
+                                foreach (var f in Uids)
                                 {
                                     friends.Add(new Friends
                                     {
@@ -125,11 +122,14 @@ namespace App3
                                 }
                                 Collection.ItemsSource = friends;
                             }
+                            
                         }
+                        
                     }
 
                 }
             }
+            
         }
 
         private void TileContent_Click(object sender, RoutedEventArgs e)
@@ -170,7 +170,53 @@ namespace App3
             };
         }
 
-        
+        private async void Follow_Click(object sender, RoutedEventArgs e)
+        {
+            var m = sender as MenuFlyoutItem;
+            if (m != null)
+            {
+                var _tag = m.Tag;
+                if(_tag is string tag)
+                {
+                    string url = $"https://api.cc98.org/me/followee/{tag}";
+                    var res = await CCloginservice.vpn.DeleteAsync(url);
+                    try
+                    {
+                        if (res.StatusCode == HttpStatusCode.OK)
+                        {
+                            friends.Clear();
+                            LoadFriend(Set.Values["CurrentFriendType"] as string, "0");
+                            history = 0;
+                            Flower.PlayAnimation("\uE930", "已取消关注");
+                        }
+                        else
+                        {
+                            Flower.PlayAnimation("\uEA39", "取消关注失败");
+                        }
+                    }
+                    catch { }
+                }
+            }
+        }
+
+        private void Chat_Click(object sender, RoutedEventArgs e)
+        {
+            var m= sender as MenuFlyoutItem;
+            if (m != null)
+            {
+                var f = m?.DataContext as Friends;
+                if (f != null)
+                {
+                    var c=new Contact { mid=f.uid,name=f.name ,url=f.url};
+                    var p = new Dictionary<string, object>()
+                    {
+                        {"Type","2" },
+                        {"Info",c }
+                    };
+                    Frame.Navigate(typeof(Message), p);
+                }
+            }
+        }
     }
     public class MInfo
     {

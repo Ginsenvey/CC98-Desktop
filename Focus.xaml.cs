@@ -22,6 +22,7 @@ using Windows.Foundation;
 using Windows.Foundation.Collections;
 using Windows.Storage;
 using Windows.System;
+using static App3.Profile;
 using static App3.Section;
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -34,171 +35,99 @@ namespace App3
     public sealed partial class Focus : Page
     {
         public ApplicationDataContainer Set = ApplicationData.Current.LocalSettings;
-        public ObservableCollection<ToggleBoardInfo> boards=new ObservableCollection<ToggleBoardInfo>();
-        
+        public ObservableCollection<StandardPost> Tiles=new ObservableCollection<StandardPost>();
         public Focus()
         {
             this.InitializeComponent();
-            if (Set.Values.ContainsKey("CustomBoards"))
-            {
-                if (Set.Values["CustomBoards"].ToString() != "0")
-                {
-                    memory = JsonConvert.DeserializeObject<Dictionary<string, string>>(Set.Values["CustomBoards"].ToString());
-                }
-                
-                
-            }
-            else
-            {
-                //初始化本地缓存
-                Set.Values["CustomBoards"] = "0";
-            }
-            Focuses.ItemsSource = boards;
-            GetFocusBoards();
+            STileList.ItemsSource = Tiles;
+            GetMoments("0");
         }
-        
-        private async void GetFocusBoards()
+        public string mode = "0";
+        private async void GetMoments(string start)
         {
-            string ProfileUrl = "https://api.cc98.org/me";
-            var ProfileRes = await CCloginservice.client.GetAsync(ProfileUrl);
-            if (ProfileRes.StatusCode == System.Net.HttpStatusCode.OK)
+            string MomentsUrl = $"https://api.cc98.org/me/followee/topic?from={start}&size=20&order=0"; ;
+            if (mode == "1")
             {
-                string ProfileText = await ProfileRes.Content.ReadAsStringAsync();
-                var js = JsonConvert.DeserializeObject<Dictionary<string, object>>(ProfileText);
-                var boards = JsonConvert.DeserializeObject<JArray>(js["customBoards"].ToString());
-                Dictionary<string, string> CustomBoards = new();
-                foreach (var b in boards)
-                {
-                    AddBoards(b.ToString());
-                }
-
-                
-
+                MomentsUrl = $"https://api.cc98.org/topic/me/favorite?from={start}&size=20&order=1";
             }
-        }
-        public Dictionary<string, string> memory = new();
-        private async void AddBoards(string BoardId)
-        {
-            //先判断本地存储是否有此板块
-            if (!memory.ContainsKey(BoardId))
+            
+            string MomentsText = await RequestSender.SimpleRequest(MomentsUrl);
+            if (!MomentsText.StartsWith("404"))
             {
-                string BoardUrl = "https://api.cc98.org/board/" + BoardId;
-                try
+                var Moments = Deserializer.ToArray(MomentsText);
+                if (Moments != null)
                 {
-                    var BoardRes = await CCloginservice.client.GetAsync(BoardUrl);
-                    if (BoardRes.StatusCode == System.Net.HttpStatusCode.OK)
+                    if (Moments.Count > 0)
                     {
-                        string BoardText = await BoardRes.Content.ReadAsStringAsync();
-                        if (!string.IsNullOrEmpty(BoardText))
+                        foreach (var Topic in Moments)
                         {
-                            var js = JsonConvert.DeserializeObject<Dictionary<string, object>>(BoardText);
-                            if (js != null)
+                            try
                             {
-                                string name = js["name"].ToString();
-                                memory.Add(BoardId, name);
-                                boards.Add(new ToggleBoardInfo {Name=BoardId,Sort=name,IsSelected=false});
-                                string boardjsontext = JsonConvert.SerializeObject(memory);
-                                Set.Values["CustomBoards"] = boardjsontext;
+                                var topic = Deserializer.ToItem(Topic.ToString());
+                                if (topic != null)
+                                {
+                                    Tiles.Add(topic);
+                                }
+                            }
+                            catch (Exception ex)
+                            {
+
                             }
                         }
                     }
                 }
-                catch
-                {
-
-                }
             }
-            else
+
+        }
+
+        public int history = 0;
+        private void STileList_Loaded(object sender, RoutedEventArgs e)
+        {
+            STileList.ElementPrepared += (s, e) =>
             {
-                //如果本地存储有此板块，则直接添加
-                boards.Add(new ToggleBoardInfo { Name = memory[BoardId], Sort = BoardId,IsSelected=false });
+                if (STileList.ItemsSource != null)
+                {
+                    int current = e.Index;
+                   
+                    if (current > 0 && (current + 1) % 20 == 0 && current > history)
+                    {
+                        history = current;
+                        GetMoments((current + 1).ToString());
+                    }
+                }
+
+            };
+        }
+
+        private void TypeChoice_SelectionChanged(SelectorBar sender, SelectorBarSelectionChangedEventArgs args)
+        {
+            var s=TypeChoice.SelectedItem as SelectorBarItem;
+            if(s != null)
+            {
+                var tag = s.Tag;
+                if(tag is string _tag)
+                {
+                    mode = _tag;
+                    history = 0;
+                    Tiles.Clear();
+                    GetMoments("0");
+                }
             }
         }
 
-        private void ExclusiveButton_Click(object sender, RoutedEventArgs e)
+        private void Tile_Click(object sender, RoutedEventArgs e)
         {
-            var t=sender as ToggleButton;
-            if (t != null)
+            var h = sender as HyperlinkButton;
+            if (h != null)
             {
-                var i = t.DataContext as ToggleBoardInfo;
-                if (i!=null)
+                var s = h?.DataContext as StandardPost;
+                if (s != null)
                 {
-                    string sort = i.Sort;
-                    foreach (var board in boards)
-                    {
-                        if (board.Sort != sort)
-                        {
-                            board.IsSelected = false;
-                        }
-                    }
+                    Frame.Navigate(typeof(Topic), s.pid);
                 }
             }
-            
-        }
-
-        private void ExclusiveButton_Checked(object sender, RoutedEventArgs e)
-        {
-            var t=sender as ToggleButton;
-            
-            if (t != null)
-            {
-                var i = t.DataContext as ToggleBoardInfo;
-                if (i != null)
-                {
-                    if (i.IsSelected== false)
-                    {
-                        i.IsSelected = true ;
-                    }
-                    else
-                    {
-                        i.IsSelected = true;
-                    }
-                }
-                
-                
-            }
-            
-            
         }
     }
 
-    public class ToggleBoardInfo:INotifyPropertyChanged
-    {
-        private bool _IsSelected;
-        private string _name;
-        private string _sort;
-
-        public string Name
-        {
-            get => _name;
-            set => SetProperty(ref _name, value);
-        }
-
-        public bool IsSelected
-        {
-            get => _IsSelected;
-            set => SetProperty(ref _IsSelected, value);
-        }
-
-        public string Sort
-        {
-            get => _sort;
-            set => SetProperty(ref _sort, value);
-        }
-
-        public event PropertyChangedEventHandler PropertyChanged;
-
-        protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
-        {
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-        }
-
-        protected bool SetProperty<T>(ref T field, T value, [CallerMemberName] string propertyName = null)
-        {
-            if (EqualityComparer<T>.Default.Equals(field, value)) return false;
-            field = value;
-            OnPropertyChanged(propertyName);
-            return true;
-        }
-    }
+    
 }

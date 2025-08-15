@@ -8,6 +8,7 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d"
     xmlns:ic="using:FluentIcons.WinUI"
+    xmlns:tool="using:CommunityToolkit.WinUI.UI.Controls"
     Background="Transparent">
     <Page.Resources>
         <local:AlignmentConverter x:Key="AlignmentConverter"/>
@@ -15,11 +16,17 @@
     </Page.Resources>
     <Grid>
         <Grid.RowDefinitions>
+            <RowDefinition Height="50"></RowDefinition>
             <RowDefinition Height="*"></RowDefinition>
             <RowDefinition Height="130"></RowDefinition>
             <RowDefinition Height="65"></RowDefinition>
         </Grid.RowDefinitions>
-        <RefreshContainer x:Name="MoreMsg" RefreshRequested="MoreMsg_RefreshRequested" Grid.Row="0" VerticalAlignment="Stretch" CornerRadius="6">
+        <Grid>
+            <HyperlinkButton Margin="15,0,0,0" Click="More_Click" x:Name="More">
+                <ic:SymbolIcon Symbol="ChevronUp"  ></ic:SymbolIcon>
+            </HyperlinkButton>
+        </Grid>
+        <RefreshContainer x:Name="MoreMsg" RefreshRequested="MoreMsg_RefreshRequested" Grid.Row="1" VerticalAlignment="Stretch" CornerRadius="6">
             <ListView x:Name="MessagesList"   SelectionMode="None" >
                 <ListView.ItemTemplate>
                     <DataTemplate>
@@ -27,7 +34,7 @@
 HorizontalAlignment="{Binding uid,Converter={StaticResource AlignmentConverter}}">
                             <Border BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}" Background="{ThemeResource DesktopAcrylicTransparentBrush}" BorderThickness="1" CornerRadius="5" Padding="10" Height="Auto" MaxWidth="350" MinWidth="200">
                                 <StackPanel>
-                                    <TextBlock Text="{Binding text}"
+                                    <tool:MarkdownTextBlock Text="{Binding text}" Background="Transparent" ImageClicked="Drawer_ImageClicked"
                  TextWrapping="Wrap" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
                                     <TextBlock Text="{Binding time}"
                  Style="{ThemeResource CaptionTextBlockStyle}"
@@ -41,8 +48,9 @@ HorizontalAlignment="{Binding uid,Converter={StaticResource AlignmentConverter}}
             </ListView>
         </RefreshContainer>
         
-        <TextBox x:Name="Send" Grid.Row="1" AcceptsReturn="True" TextWrapping="Wrap" CornerRadius="5" Margin="15,15,15,0" ></TextBox>
-        <Button Style="{ThemeResource AccentButtonStyle}" Grid.Row="2" HorizontalAlignment="Right" Margin="15"  IsEnabled="False">
+        <TextBox x:Name="Send" Grid.Row="2" AcceptsReturn="True" TextWrapping="Wrap" CornerRadius="5" Margin="15,15,15,0" ></TextBox>
+        
+        <Button Style="{ThemeResource AccentButtonStyle}" Grid.Row="3" HorizontalAlignment="Right" Margin="15"  IsEnabled="False">
             <StackPanel Orientation="Horizontal" Spacing="10" >
                 <ic:SymbolIcon Symbol="Send"></ic:SymbolIcon>
                 <TextBlock Text="发送"></TextBlock>

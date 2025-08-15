@@ -14,12 +14,12 @@
     xmlns:sh="using:CommunityToolkit.WinUI.Media"
     Background="{ThemeResource DesktopAcrylicTransparentBrush}">
     <Page.Resources>
-        <sh:AttachedCardShadow x:Key="shadow" Offset="4"></sh:AttachedCardShadow>
+        <sh:AttachedCardShadow x:Key="shadow" Offset="4"   Color="LightGreen"></sh:AttachedCardShadow>
     </Page.Resources>
-    <Grid dev:Growl.GrowlParent="True">
+    <Grid>
         <ScrollViewer >
             <StackPanel Orientation="Vertical" Padding="15" Spacing="10">
-                <Grid Height="230" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1" Padding="15" CornerRadius="5" x:Name="InfoContent">
+                <Grid  Height="230" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1" Padding="15" CornerRadius="5" x:Name="InfoContent">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="5*"></RowDefinition>
                         <RowDefinition Height="3*"></RowDefinition>
@@ -30,12 +30,7 @@
                         <ColumnDefinition Width="3*"></ColumnDefinition>
                     </Grid.ColumnDefinitions>
                     <Border x:Name="Picture" Width="90" Height="90" Grid.Row="0" Grid.Column="0" HorizontalAlignment="Left" VerticalAlignment="Top" CornerRadius="6" >
-                        <PersonPicture 
-    Width="90"
-    Height="90"
-    ProfilePicture="{Binding Port}"
-    lab:Effects.Shadow="{StaticResource shadow}"
-    IsGroup="False"/>
+                        <PersonPicture Width="90" Height="90" x:Name="MyProfile"/>
                     </Border>
                     <TextBlock Grid.Row="1" Grid.Column="0" FontSize="35" FontWeight="Bold" Text="{Binding Name}" Foreground="#4d9891" VerticalAlignment="Center" IsTextSelectionEnabled="True"></TextBlock>
 
@@ -81,7 +76,7 @@
                 <TextBlock Text="签名档" FontSize="23" FontWeight="Bold" Foreground="#A9A9A9" Margin="0,5,0,0"></TextBlock>
                 
                 <Border Height="1" BorderBrush="{ThemeResource DividerBrush}" HorizontalAlignment="Stretch" BorderThickness="1"></Border>
-                <tool:MarkdownTextBlock Text="{Binding Signature}" x:Name="SignBoard" LinkClicked="SignBoard_LinkClicked" Background="Transparent" ImageStretch="UniformToFill" ImageMaxWidth="450" ImageMaxHeight="450"></tool:MarkdownTextBlock>
+                <tool:MarkdownTextBlock Text="{Binding Signature}" x:Name="SignBoard" FontFamily="Noto Sans SC" LinkClicked="SignBoard_LinkClicked" Background="Transparent" ImageStretch="UniformToFill" ImageMaxWidth="450" ImageMaxHeight="450" ImageResolving="Drawer_ImageResolving"></tool:MarkdownTextBlock>
                 
                 <TextBlock Text="主题" FontSize="23" FontWeight="Bold" Foreground="#A9A9A9" x:Name="de" IsTextSelectionEnabled="True"></TextBlock>
                 <Border Height="1" BorderBrush="{ThemeResource DividerBrush}" HorizontalAlignment="Stretch" BorderThickness="1"></Border>
@@ -93,13 +88,12 @@
                                     <Grid Padding="12">
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="50"></ColumnDefinition>
-                                            <ColumnDefinition Width="4*"></ColumnDefinition>
-                                            <ColumnDefinition Width="3*"></ColumnDefinition>
+                                            <ColumnDefinition Width="7*"></ColumnDefinition>
                                             <ColumnDefinition Width="2*"></ColumnDefinition>
                                         </Grid.ColumnDefinitions>
                                         <ic:SymbolIcon Symbol="Note" Grid.Column="0" Foreground="{ThemeResource AccentAAFillColorDefaultBrush}"></ic:SymbolIcon>
                                         <TextBlock Text="{Binding text}" Grid.Column="1" VerticalAlignment="Center" Foreground="{ThemeResource TextFillColorSecondaryBrush}"></TextBlock>
-                                        <TextBlock Text="{Binding time}" Grid.Column="3" VerticalAlignment="Center" Foreground="{ThemeResource TextFillColorSecondaryBrush}"></TextBlock>
+                                        <TextBlock Text="{Binding time}" Grid.Column="2" VerticalAlignment="Center" Foreground="{ThemeResource TextFillColorSecondaryBrush}"></TextBlock>
 
                                     </Grid>
                                 </HyperlinkButton>
@@ -109,5 +103,6 @@
                 </Border>
             </StackPanel>
         </ScrollViewer>
+        <local:InfoFlower x:Name="Flower"  HorizontalAlignment="Center" ></local:InfoFlower>
     </Grid>
 </Page>

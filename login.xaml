@@ -7,49 +7,123 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:ic="using:FluentIcons.WinUI"
+    xmlns:tool="using:CommunityToolkit.WinUI.UI.Controls"
     mc:Ignorable="d"
-    
     >
+    <Window.SystemBackdrop>
+        <MicaBackdrop></MicaBackdrop>
+    </Window.SystemBackdrop>
 
-    <Grid>
+    <Grid x:Name="RootGrid" >
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="2*"></ColumnDefinition>
-            <ColumnDefinition Width="2*"></ColumnDefinition>
-            <ColumnDefinition Width="2*"></ColumnDefinition>
+            <ColumnDefinition Width="*"></ColumnDefinition>
+            <ColumnDefinition Width="1"></ColumnDefinition>
+            <ColumnDefinition Width="*"></ColumnDefinition>
         </Grid.ColumnDefinitions>
         <Grid.RowDefinitions>
-            <RowDefinition Height="2*"></RowDefinition>
             <RowDefinition Height="Auto"></RowDefinition>
-            <RowDefinition Height="3*"></RowDefinition>
+            <RowDefinition Height="*"></RowDefinition>
+            <RowDefinition Height="68"></RowDefinition>
         </Grid.RowDefinitions>
-        <Grid Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="3" x:Name="GridTitleBar">
+        <Border Grid.Row="0" Grid.RowSpan="2" Grid.Column="1" BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}" Width="1" BorderThickness="1"></Border>
+        <Grid Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="3" x:Name="GridTitleBar"></Grid>
+        <Grid Grid.Column="0" Grid.Row="1"   Padding="20"   x:Name="MainArea" RowSpacing="40">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"></RowDefinition>
+                <RowDefinition Height="144"></RowDefinition>
+                <RowDefinition Height="Auto"></RowDefinition>
 
-            <TextBlock Text="CC98 Desktop"  Margin="10,10,5,0" HorizontalAlignment="Left" VerticalAlignment="Top" FontSize="15"></TextBlock>
-            
-
+            </Grid.RowDefinitions>
+            <TextBlock Grid.Row="0" Text="登录CC98" FontWeight="Bold" FontSize="18" Foreground="{ThemeResource AccentAAFillColorDefaultBrush}"></TextBlock>
+            <Image Grid.Row="1" Source="/Assets/back.png" ></Image>
+            <Border Grid.Row="2"  Background="{ThemeResource AcrylicCardBrush}"  CornerRadius="4" Padding="10">
+                <TextBlock IsTextSelectionEnabled="False" FontFamily="Noto Sans SC" FontSize="12" x:Name="Introducing"  Foreground="{ThemeResource TextFillColorSecondaryBrush}"  Text="浙江大学校内论坛CC98的Windows客户端。使用本应用时，请阅读并遵守论坛规则。" TextWrapping="Wrap"></TextBlock>
+            </Border>
         </Grid>
-        <StackPanel Grid.Column="1" Grid.Row="1"  BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1" Spacing="20" Padding="30" CornerRadius="8">
-            <StackPanel.Background>
-                <ImageBrush ImageSource="Assets/cc98.png" Stretch="UniformToFill" Opacity="0.08"></ImageBrush>
-            </StackPanel.Background>
-            <Grid Margin="10,0,10,0">
-                <TextBlock Text="登录 CC98"  Foreground="{ThemeResource AccentAAFillColorDefaultBrush}" FontWeight="Bold" FontSize="18" VerticalAlignment="Center"></TextBlock>
-                <HyperlinkButton  HorizontalAlignment="Right" Width="45" Height="45">
-                    <StackPanel Orientation="Horizontal">
-                        <ic:SymbolIcon Symbol="Document" FontSize="18" ToolTipService.ToolTip="获取帮助"></ic:SymbolIcon>
-                    </StackPanel>
-                </HyperlinkButton>
-            </Grid>
+        <Grid x:Name="GuidePane" Visibility="Collapsed" Grid.Column="2" Grid.Row="1" Padding="20" RowSpacing="15">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"></RowDefinition>
+                <RowDefinition Height="*"></RowDefinition>
+            </Grid.RowDefinitions>
+            <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="5">
+                <Button Grid.Row="0"  Click="GuideBack_Click" x:Name="GuideBack" Padding="5" Foreground="{ThemeResource TextFillColorSecondaryBrush}" BorderThickness="0">
+                    <ic:SymbolIcon Symbol="ChevronLeft" FontSize="16"></ic:SymbolIcon>
+                </Button>
+                <TextBlock Text="使用指南" FontWeight="Bold" FontSize="18" Foreground="LightSeaGreen"></TextBlock>
+            </StackPanel>
             
-            <TextBox x:Name="idbox" Header="用户名" Margin="10,0,10,0"></TextBox>
-            <PasswordBox x:Name="passbox" Header="密码" Margin="10,0,10,0"></PasswordBox>
-            <Grid>
-                <Button Background="Transparent" Content="登录" HorizontalAlignment="Right" MinWidth="75" Margin="0,15,10,0" x:Name="LoginButton" Click="LoginButton_Click"></Button>
-                <HyperlinkButton Content="以离线模式继续" HorizontalAlignment="Left" Margin="10,15,10,0"></HyperlinkButton>
-            </Grid>
-            <TextBlock Margin="10,15,10,10" HorizontalAlignment="Center">
-                <Hyperlink NavigateUri="https://www.cc98.org/" >CC98官方</Hyperlink>
-            </TextBlock>
+            <ScrollViewer Grid.Row="1" Padding="5">
+                <tool:MarkdownTextBlock x:Name="GuidePresenter" Background="Transparent" Foreground="{ThemeResource TextFillColorSecondaryBrush}" FontSize="12" LinkClicked="MarkdownTextBlock_LinkClicked" ></tool:MarkdownTextBlock>
+            </ScrollViewer>
+        </Grid>
+        <Grid x:Name="LoadingPane" Grid.Column="2" Grid.Row="1" Padding="20" RowSpacing="15" Visibility="Collapsed">
+            <StackPanel Orientation="Vertical" Spacing="30" x:Name="Loading" VerticalAlignment="Center">
+                <ProgressRing IsIndeterminate="True" Width="35" Height="35"></ProgressRing>
+                <TextBlock Text="正在检验OpenID凭据" x:Name="LoadingInfo" TextAlignment="Center"></TextBlock>
+            </StackPanel>
+        </Grid>
+        <Grid x:Name="VpnPane"  Grid.Column="2" Grid.Row="1" Padding="20" RowSpacing="15" Visibility="Collapsed">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"></RowDefinition>
+                <RowDefinition Height="Auto"></RowDefinition>
+                <RowDefinition Height="Auto"></RowDefinition>
+                <RowDefinition Height="Auto"></RowDefinition>
+                <RowDefinition Height="Auto"></RowDefinition>
+            </Grid.RowDefinitions>
+            <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="5">
+                <Button Padding="5" Foreground="{ThemeResource TextFillColorSecondaryBrush}" BorderThickness="0" x:Name="VpnBack" Click="VpnBack_Click">
+                    <ic:SymbolIcon Symbol="ChevronLeft" FontSize="16"></ic:SymbolIcon>
+                </Button>
+                <TextBlock Text="连接到WebVPN" FontWeight="Bold" FontSize="18" Foreground="LightSeaGreen"></TextBlock>
+            </StackPanel>
+            
+            <TextBlock Grid.Row="1" Text="VPN的凭据与浙大通行证一致。" Foreground="{ThemeResource TextFillColorSecondaryBrush}" FontSize="12" Margin="0,10,0,0"></TextBlock>
+            <TextBox Grid.Row="2" Header="账号" x:Name="idbox" Margin="0,10,0,0" FontFamily="Noto Sans SC"></TextBox>
+            <PasswordBox Grid.Row="3" Header="密码" x:Name="passbox" FontFamily="Noto Sans SC"></PasswordBox>
+            <Button Grid.Row="4" HorizontalAlignment="Right" Margin="0,10,0,0" x:Name="Link" Click="Link_Click">
+                <StackPanel Orientation="Horizontal" Spacing="5">
+                    <ic:SymbolIcon Symbol="ArrowEnter" FontSize="14" ></ic:SymbolIcon>
+                    <TextBlock Text="登录" ></TextBlock>
+                </StackPanel>
+            </Button>
+        </Grid>
+        <Grid x:Name="LoginPane"  Grid.Column="2" Grid.Row="1" Padding="20" RowSpacing="15">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"></RowDefinition>
+                <RowDefinition Height="Auto"></RowDefinition>
+                <RowDefinition Height="Auto"></RowDefinition>
+                <RowDefinition Height="Auto"></RowDefinition>
+            </Grid.RowDefinitions>
+            <TextBlock Text="欢迎回家。" FontWeight="Bold" FontSize="18" Foreground="LightSeaGreen"></TextBlock>
+            <tool:MarkdownTextBlock Grid.Row="1" Margin="0,10,0,0" Text="如果尚未连接浙江大学内网，请在此处登录WebVPN,或者使用[ZJU Connect](https://github.com/Mythologyli/ZJU-Connect-for-Windows/releases)." Background="Transparent" Foreground="{ThemeResource TextFillColorSecondaryBrush}" FontSize="12" LinkClicked="MarkdownTextBlock_LinkClicked"></tool:MarkdownTextBlock>
+            <Button Grid.Row="2" Margin="0,12,0,0" Click="OIDC_Click">
+                <StackPanel   Orientation="Vertical" Padding="5">
+                    <TextBlock Text="使用OpenID登录" FontWeight="Bold"></TextBlock>
+                    <TextBlock Text="跳转到CC98应用中心进行授权。然后，应用会自动处理凭据。"  FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="Wrap"></TextBlock>
+                </StackPanel>
+            </Button>
+            <Button Grid.Row="3" x:Name="LinkToVpn" Click="LinkToVpn_Click">
+                <StackPanel   Orientation="Vertical" Padding="5">
+                    <TextBlock Text="连接到WebVPN" FontWeight="Bold"></TextBlock>
+                    <TextBlock Text="使用VPN访问内网资源。这是一个实验性功能，有时候不稳定。"  FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="Wrap"></TextBlock>
+                </StackPanel>
+            </Button>
+        </Grid>
+        <Border Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="3" BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}" BorderThickness="1" Height="1" VerticalAlignment="Top"></Border>
+        <TextBlock Grid.Row="2" Grid.Column="0" Text="版本: v1.1.6 beta." Foreground="{ThemeResource TextFillColorSecondaryBrush}" VerticalAlignment="Center" Margin="20,0,0,0"></TextBlock>
+        <StackPanel Orientation="Horizontal" Spacing="5" Grid.Row="2" Grid.Column="2" HorizontalAlignment="Right" Margin="0,0,20,0">
+            <HyperlinkButton Background="Transparent"   Padding="0"  x:Name="Github"  NavigateUri="https://github.com/Ginsenvey/CC98-Desktop" ToolTipService.ToolTip="查看仓库" Height="42" Width="42">
+                <ImageIcon Source="/Assets/github.png" Width="25" Height="25"></ImageIcon>
+            </HyperlinkButton>
+            <AppBarSeparator Margin="0,8,0,8" BorderThickness="4"></AppBarSeparator>
+            <HyperlinkButton Width="42" Height="42" Click="Guide_Click">
+                <ic:SymbolIcon Symbol="Document" IconVariant="Color"></ic:SymbolIcon>
+            </HyperlinkButton>
+            <HyperlinkButton Width="42" Height="42" Padding="0" NavigateUri="https://www.cc98.org">
+                <ic:SymbolIcon Symbol="Home" IconVariant="Color"></ic:SymbolIcon>
+            </HyperlinkButton>
         </StackPanel>
+        <local:InfoFlower x:Name="Flower" Grid.Row="0" Grid.RowSpan="3" Grid.Column="0" Grid.ColumnSpan="3" HorizontalAlignment="Center" VerticalAlignment="Bottom"></local:InfoFlower>
+        
     </Grid>
 </Window>

@@ -50,17 +50,17 @@ namespace App3
             {
                 GetDialogs(parameter,"0");
                 currentuid = parameter;
+                
             }
-            else
-            {
-
-            }
+            
         }
+        
+        
         public string currentuid = "";
         private async void GetDialogs(string uid,string start)
         {
             string murl = "https://api.cc98.org/message/user/" + uid + "?from="+start+"&size=10";
-            var res = await CCloginservice.client.GetAsync(murl);
+            var res = await CCloginservice.vpn.GetAsync(murl);
             if (res.StatusCode == System.Net.HttpStatusCode.OK)
             {
                 string restext = await res.Content.ReadAsStringAsync();
@@ -75,7 +75,7 @@ namespace App3
                             var js = JsonConvert.DeserializeObject<Dictionary<string, object>>(c.ToString());
                             string msgid = js["id"].ToString();//ÏûÏ¢ID
                             bool isMe = js["receiverId"].ToString() == uid;
-                            string text = js["content"].ToString();
+                            string text = UBBConverter.Convert(js["content"].ToString(),true);
                             string time = js["time"].ToString();
                             Msgs.Add(new Msg
                             {
@@ -100,6 +100,26 @@ namespace App3
                 GetDialogs(currentuid, history.ToString());
             }
             
+        }
+
+        private void More_Click(object sender, RoutedEventArgs e)
+        {
+            if (currentuid != "")
+            {
+                GetDialogs(currentuid, history.ToString());
+            }
+        }
+        private void Drawer_ImageClicked(object sender, CommunityToolkit.WinUI.UI.Controls.LinkClickedEventArgs e)
+        {
+            string ImageUrl = e.Link.ToString();
+            var param = new Dictionary<string, string>()
+{
+    {"url",ImageUrl },
+    {"type","image" }
+};
+            var picviewer = new MediaViewer(param);
+            picviewer.Activate();
+
         }
     }
     public class Msg : INotifyPropertyChanged

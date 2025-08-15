@@ -7,11 +7,12 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d"
-    Title="CC98"
+    Title="CC98"  
+    xmlns:animatedvisuals="using:Microsoft.UI.Xaml.Controls.AnimatedVisuals"
     xmlns:dev="using:DevWinUI"
     xmlns:ic="using:FluentIcons.WinUI"
     SystemBackdrop="{ThemeResource AcrylicBackgroundFillColorDefaultBackdrop}">
-
+    
     <Grid x:Name="RootGrid">
         <Grid.RowDefinitions>
             <RowDefinition Height="48"></RowDefinition>
@@ -19,125 +20,120 @@
             <RowDefinition Height="12*"></RowDefinition>
             
         </Grid.RowDefinitions>
+        
         <Grid Grid.Row="0" x:Name="GridTitleBar">
-            
-            <TextBlock Text="CC98 Desktop"  Margin="10,0,5,0" HorizontalAlignment="Left" VerticalAlignment="Center" FontSize="15"></TextBlock>
-            <AutoSuggestBox x:Name="search" HorizontalAlignment="Center" Margin="5" MinWidth="160" Width="Auto" QueryIcon="{ic:FluentIcon Icon=Search}" TextChanged="search_TextChanged" UpdateTextOnSelect="False" SuggestionChosen="search_SuggestionChosen"  >
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="45"></ColumnDefinition>
+                <ColumnDefinition Width="Auto"></ColumnDefinition>
+                <ColumnDefinition Width="Auto"></ColumnDefinition>
+                <ColumnDefinition Width="Auto"></ColumnDefinition>
+
+                <ColumnDefinition Width="*"></ColumnDefinition>
+                <ColumnDefinition Width="50"></ColumnDefinition>
+                <ColumnDefinition Width="155"></ColumnDefinition>
                 
-            </AutoSuggestBox>
-            
+            </Grid.ColumnDefinitions>
+            <Image Grid.Column="0" Source="/Assets/back.png" Width="28" VerticalAlignment="Center" Margin="5,0,0,3"></Image>
+            <Button Grid.Column="1" Width="41" Height="37" Background="Transparent" BorderThickness="0" Margin="3,0,0,0" x:Name="Back" Click="Back_Click" PointerEntered="Back_PointerEntered"   PointerExited="Back_PointerExited">
+                <AnimatedIcon  x:Name="BackIcon">
+                    <AnimatedIcon.Source>
+                        <animatedvisuals:AnimatedBackVisualSource/>
+                    </AnimatedIcon.Source>
+                    <AnimatedIcon.FallbackIconSource>
+                        <SymbolIconSource Symbol="Back" />
+                    </AnimatedIcon.FallbackIconSource>
+                </AnimatedIcon>
+            </Button>
+            <Button Grid.Column="2" Width="41" Height="37" Background="Transparent" BorderThickness="0" Margin="3,0,0,0" x:Name="PaneExpand" Click="PaneExpand_Click" PointerEntered="PaneExpand_PointerEntered"   PointerExited="PaneExpand_PointerExited">
+                <AnimatedIcon  x:Name="NaviIcon">
+                    <AnimatedIcon.Source>
+                        <animatedvisuals:AnimatedGlobalNavigationButtonVisualSource/>
+                    </AnimatedIcon.Source>
+                    <AnimatedIcon.FallbackIconSource>
+                        <SymbolIconSource Symbol="GlobalNavigationButton"/>
+                    </AnimatedIcon.FallbackIconSource>
+                </AnimatedIcon>
+            </Button>
+            <Button Grid.Column="5" HorizontalAlignment="Right" Width="30" Height="30" BorderThickness="0" Background="Transparent"  VerticalAlignment="Center" x:Name="Me" CornerRadius="9999" Padding="0" RenderTransformOrigin="0.5,0.5" PointerEntered="Me_PointerEntered" PointerExited="Me_PointerExited" PointerPressed="Me_PointerPressed" PointerReleased="Me_PointerReleased" PointerCanceled="Me_PointerCanceled" Click="Me_Click" >
+                <PersonPicture  Width="28" Height="28" x:Name="MyPicture" BorderThickness="0" ></PersonPicture>
+                <Button.RenderTransform >
+                    <ScaleTransform ScaleX="1" ScaleY="1" x:Name="PortScaleTransform"></ScaleTransform>
+                </Button.RenderTransform>
+                <Button.ContextFlyout>
+                    <MenuFlyout  Placement="LeftEdgeAlignedBottom"  SystemBackdrop="{ThemeResource AcrylicBackgroundFillColorDefaultBackdrop}" >
+                        <MenuFlyoutItem Text="CC98抽卡" Icon="{ic:SymbolIcon Symbol=GiftOpen}"  Click="CCZone_Click" Tag="0"></MenuFlyoutItem>
+                        <MenuFlyoutItem Text="统计数据" Icon="{ic:SymbolIcon Symbol=MathFormula}" Tag="1"></MenuFlyoutItem>
+                        <MenuFlyoutSeparator ></MenuFlyoutSeparator>
+                        <MenuFlyoutItem Text="稍后再看" Icon="{ic:SymbolIcon Symbol=History}" Tag="2"></MenuFlyoutItem>
+                        <MenuFlyoutItem Text="浏览足迹" Icon="{ic:SymbolIcon Symbol=AnimalPawPrint}" Tag="3"></MenuFlyoutItem>
+                        
+                    </MenuFlyout>
+                </Button.ContextFlyout>
+            </Button>
+            <TextBlock Grid.Column="4"  Text="CC98 Desktop" x:Name="de" FontFamily="Noto Sans SC" Margin="10,0,5,0" HorizontalAlignment="Left" VerticalAlignment="Center" FontSize="15"></TextBlock>
+            <Grid x:Name="UserArea" Grid.Column="3" Grid.ColumnSpan="2"></Grid>
         </Grid>
-        <local:InfoFlower Grid.Row="0" Grid.RowSpan="3" x:Name="Flower"></local:InfoFlower>
+        
 
 
-        <NavigationView Grid.Row="1" Grid.RowSpan="2" HorizontalAlignment="Stretch" PaneDisplayMode="Auto" IsPaneToggleButtonVisible="True" IsPaneOpen="True" OpenPaneLength="240"   IsBackEnabled="True" IsSettingsVisible="False" SelectionChanged="Navi_SelectionChanged" x:Name="Navi"  BackRequested="Navi_BackRequested" >
-            <NavigationView.MenuItems>
-                <NavigationViewItemHeader Content="首页"></NavigationViewItemHeader>
-                <NavigationViewItem Height="Auto" Tag="0">
-                    <NavigationViewItem.ContextFlyout>
-                        <MenuFlyout>
-                            <MenuFlyoutItem Text="刷新" Icon="{ic:SymbolIcon Symbol=ArrowSync}" x:Name="PaneFlyout" Click="PaneFlyout_Click"  Tag="0"></MenuFlyoutItem>
-                        </MenuFlyout>
-                    </NavigationViewItem.ContextFlyout>
-                    <StackPanel Orientation="Horizontal" >
-                        <ic:SymbolIcon Symbol="DesignIdeas" FontSize="20"  Margin="2,0,10,0"></ic:SymbolIcon>
-                        <TextBlock Text="今日话题" ></TextBlock>
-                    </StackPanel>
-                </NavigationViewItem>
-                
-                <NavigationViewItem Height="Auto" Tag="3">
-                    <StackPanel Orientation="Horizontal">
-                        <ic:SymbolIcon Symbol="Board" FontSize="20" Margin="2,0,10,0"></ic:SymbolIcon>
-                        <TextBlock Text="全部版面" ></TextBlock>
-                    </StackPanel>
-                </NavigationViewItem>
-                <NavigationViewItem Height="Auto" Tag="4">
-                    <StackPanel Orientation="Horizontal">
-                        <ic:SymbolIcon Symbol="ArrowSync" FontSize="20" Margin="2,0,10,0"></ic:SymbolIcon>
-                        <TextBlock Text="新帖" ></TextBlock>
-                    </StackPanel>
-                </NavigationViewItem>
-                <NavigationViewItemHeader Content="集锦">
+        <NavigationView Grid.Row="1" Grid.RowSpan="2" HorizontalAlignment="Stretch" PaneDisplayMode="Auto"  IsPaneOpen="True" OpenPaneLength="240" IsPaneToggleButtonVisible="False"  IsBackEnabled="True" IsSettingsVisible="False" IsBackButtonVisible="Collapsed"  x:Name="Navi"  MenuItemsSource="{x:Bind MenuItems}" ItemInvoked="Navi_ItemInvoked" FooterMenuItemsSource="{x:Bind FooterMenuItems}" >
+            <NavigationView.Resources>
+                <DataTemplate x:Key="GroupTemplate" x:DataType="local:NavigationGroup">
+                    <NavigationViewItemHeader Content="{x:Bind Name}"/>
+                </DataTemplate>
 
-                </NavigationViewItemHeader>
-                
-                <NavigationViewItem Height="Auto" Tag="11">
+                <DataTemplate x:Key="PinnedItemTemplate" x:DataType="local:NavigationItem">
+                    <NavigationViewItem  Tag="{x:Bind Tag}" >
+                        <NavigationViewItem.ContextFlyout>
+                            <MenuFlyout>
+                                <MenuFlyoutItem Text="取消固定" Tag="{x:Bind Tag}"  Icon="{ic:SymbolIcon Symbol=PinOff}"  x:Name="PinOff" Click="PinOff_Click"></MenuFlyoutItem>
+                            </MenuFlyout>
+                        </NavigationViewItem.ContextFlyout>
+                        <StackPanel Orientation="Horizontal" >
+                            <ic:SymbolIcon Symbol="{x:Bind IconSymbol}" FontSize="20"  Margin="2,0,10,0"></ic:SymbolIcon>
+                            <TextBlock Text="{x:Bind Name}" FontFamily="Noto Sans SC"></TextBlock>
+                        </StackPanel>
+                        
+                    </NavigationViewItem>
+                </DataTemplate>
+                <DataTemplate x:Key="ItemTemplate" x:DataType="local:NavigationItem">
+                    <NavigationViewItem  Tag="{x:Bind Tag}" >
+                        <StackPanel Orientation="Horizontal" >
+                            <ic:SymbolIcon Symbol="{x:Bind IconSymbol}" FontSize="20"  Margin="2,0,10,0"></ic:SymbolIcon>
+                            <TextBlock Text="{x:Bind Name}" FontFamily="Noto Sans SC"></TextBlock>
+                        </StackPanel>
+                    </NavigationViewItem>
+                </DataTemplate>
+                <local:NavigationTemplateSelector 
+            x:Key="TemplateSelector"
+            GroupTemplate="{StaticResource GroupTemplate}"
+            PinnedItemTemplate="{StaticResource PinnedItemTemplate}"
+            ItemTemplate="{StaticResource ItemTemplate}"/>
+            </NavigationView.Resources>
+            <NavigationView.AutoSuggestBox>
+                <AutoSuggestBox PlaceholderText="CC98,My home" AutomationProperties.Name="Search" TextChanged="search_TextChanged" UpdateTextOnSelect="False" SuggestionChosen="search_SuggestionChosen" >
+                    <AutoSuggestBox.QueryIcon>
+                        <ic:SymbolIcon Symbol="Search" ></ic:SymbolIcon>
+                    </AutoSuggestBox.QueryIcon>
+                </AutoSuggestBox>
+            </NavigationView.AutoSuggestBox>
 
-                    <StackPanel Orientation="Horizontal">
-                        <ic:SymbolIcon Symbol="Bookmark"  Margin="2,0,10,0"></ic:SymbolIcon>
-                        <TextBlock Text="关注版面" ></TextBlock>
-                    </StackPanel>
-                </NavigationViewItem>
-                <NavigationViewItem Height="Auto" Tag="10" HorizontalContentAlignment="Stretch" x:Name="likecollection" >
-                    <NavigationViewItem.ContextFlyout>
-                        <MenuFlyout>
-                            <MenuFlyoutItem Text="新收藏集" Icon="{ic:SymbolIcon Symbol=Add}"></MenuFlyoutItem>
-                            <MenuFlyoutItem Text="刷新" Icon="{ic:SymbolIcon Symbol=ArrowSync}" ></MenuFlyoutItem>
-                        </MenuFlyout>
-                    </NavigationViewItem.ContextFlyout>
-                    <StackPanel Orientation="Horizontal">
-                        <ic:SymbolIcon Symbol="Collections"  Margin="2,0,10,0"></ic:SymbolIcon>
-                        <TextBlock Text="收藏集" ></TextBlock>
-
-                    </StackPanel>
-                </NavigationViewItem>
-                <NavigationViewItemHeader Content="推荐" FontWeight="Bold"></NavigationViewItemHeader>
-                <NavigationViewItem Height="Auto" Tag="5">
-                    <StackPanel Orientation="Horizontal">
-                        <ic:SymbolIcon Symbol="Library"  Margin="2,0,10,0"></ic:SymbolIcon>
-                        <TextBlock Text="学习天地" ></TextBlock>
-                    </StackPanel>
-                </NavigationViewItem>
-                <NavigationViewItem Height="Auto" Tag="6">
-                    <StackPanel Orientation="Horizontal">
-                        <ic:SymbolIcon Symbol="LeafOne"  Margin="2,0,10,0"></ic:SymbolIcon>
-                        <TextBlock Text="感性空间" ></TextBlock>
-                    </StackPanel>
-                </NavigationViewItem>
-                <NavigationViewItem Height="Auto" Tag="7">
-                    <StackPanel Orientation="Horizontal">
-                        <ic:SymbolIcon Symbol="FoodFish"  Margin="2,0,10,0"></ic:SymbolIcon>
-                        <TextBlock Text="跳蚤市场" ></TextBlock>
-
-                    </StackPanel>
-                </NavigationViewItem>
-                <NavigationViewItem Height="Auto" Tag="8">
-                    <StackPanel Orientation="Horizontal">
-                        <ic:SymbolIcon Symbol="Agents"  Margin="2,0,10,0"></ic:SymbolIcon>
-                        <TextBlock Text="求职广场" ></TextBlock>
-                    </StackPanel>
-                </NavigationViewItem>
-                
-                
-                
-            </NavigationView.MenuItems>
+            <NavigationView.MenuItemTemplateSelector>
+                <StaticResource ResourceKey="TemplateSelector"/>
+            </NavigationView.MenuItemTemplateSelector>
             <NavigationView.FooterMenuItems>
-                <NavigationViewItem Height="Auto" Tag="1">
-                    <NavigationViewItem.ContextFlyout>
-                        <MenuFlyout>
-                            <MenuFlyoutItem  Text="私信" Icon="{ic:SymbolIcon Symbol=MailAlert}" x:Name="msgflyout" Click="msgflyout_Click"></MenuFlyoutItem>
-                        </MenuFlyout>
-                    </NavigationViewItem.ContextFlyout>
-                    <NavigationViewItem.InfoBadge>
-                        <InfoBadge x:Name="MsgCount" Value="{Binding UnreadCount}" />
-                    </NavigationViewItem.InfoBadge>
-
-                    <StackPanel Orientation="Horizontal">
-                        <ic:SymbolIcon Symbol="MailRead" FontSize="20"  Margin="2,0,10,0"></ic:SymbolIcon>
-                        <TextBlock Text="我" ></TextBlock>
+                <DataTemplate x:DataType="local:NavigationItem">
+                    <StackPanel Orientation="Horizontal" >
+                        <ic:SymbolIcon Symbol="{x:Bind IconSymbol}" FontSize="20"  Margin="2,0,10,0"></ic:SymbolIcon>
+                        <TextBlock Text="{x:Bind Name}"></TextBlock>
                     </StackPanel>
-                </NavigationViewItem>
-                <NavigationViewItem Height="Auto" Tag="9">
-                    <StackPanel Orientation="Horizontal">
-                        <ic:SymbolIcon Symbol="StarSettings" FontSize="20"  Margin="2,0,10,0"></ic:SymbolIcon>
-                        <TextBlock Text="设定" ></TextBlock>
-                    </StackPanel>
-                </NavigationViewItem>
+                </DataTemplate>
             </NavigationView.FooterMenuItems>
-        <Frame x:Name="contentframe">
-                
-        </Frame>
+
+            <Frame x:Name="contentframe"></Frame>
             
         </NavigationView>
+        <TeachingTip x:Name="StatusReport" Target="{x:Bind Me}" IsLightDismissEnabled="True"></TeachingTip>
+        <local:InfoFlower Grid.Row="0" Grid.RowSpan="3" x:Name="Flower"></local:InfoFlower>
     </Grid>
 </Window>

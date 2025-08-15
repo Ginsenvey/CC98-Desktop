@@ -7,19 +7,20 @@
   xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities"
   xmlns:uap3="http://schemas.microsoft.com/appx/manifest/uap/windows10/3"
   xmlns:uap6="http://schemas.microsoft.com/appx/manifest/uap/windows10/6"
-  IgnorableNamespaces="uap rescap uap3 uap6">
+  xmlns:uap18="http://schemas.microsoft.com/appx/manifest/uap/windows10/18"
+  IgnorableNamespaces="uap rescap uap3 uap6 uap18">
 
   <Identity
-    Name="2a9e9d26-8aca-44b1-a864-82f8e404ac23"
-    Publisher="CN=Ansherly"
-    Version="1.1.1.0" />
+    Name="OrangePlanet.CC98"
+    Publisher="CN=5E739DE2-5824-463F-BFB7-16411BC0F71A"
+    Version="1.1.6.0" />
 
-  <mp:PhoneIdentity PhoneProductId="2a9e9d26-8aca-44b1-a864-82f8e404ac23" PhonePublisherId="00000000-0000-0000-0000-000000000000"/>
+  <mp:PhoneIdentity PhoneProductId="5eeae64f-e2f1-4d47-be24-1ca8665fbbe5" PhonePublisherId="00000000-0000-0000-0000-000000000000"/>
 
   <Properties>
-    <DisplayName>CC98 Release</DisplayName>
-    <PublisherDisplayName>Ansherly</PublisherDisplayName>
-    <Logo>Assets\StoreLogo.png</Logo>
+    <DisplayName>CC98</DisplayName>
+    <PublisherDisplayName>OrangePlanet</PublisherDisplayName>
+    <Logo>Assets\SquareLogo.png</Logo>
   </Properties>
 
   <Dependencies>
@@ -34,25 +35,32 @@
   <Applications>
     <Application Id="App"
       Executable="$targetnametoken$.exe"
-      EntryPoint="$targetentrypoint$">
+      EntryPoint="$targetentrypoint$"  >
       <uap:VisualElements
         DisplayName="CC98"
         Description="浙江大学校内论坛 CC98 的Windows 11客户端。"
         BackgroundColor="transparent"
-        Square150x150Logo="Assets\Square150x150Logo.png"
-        Square44x44Logo="Assets\Square44x44Logo.png">
-        <uap:DefaultTile Wide310x150Logo="Assets\Wide310x150Logo.png"  Square71x71Logo="Assets\SmallTile.png" Square310x310Logo="Assets\LargeTile.png"/>
-        <uap:SplashScreen Image="Assets\SplashScreen.png" />
+        Square150x150Logo="Assets\LockScreenLogo.png"  Square44x44Logo="Assets\SquareLogo.png">
+        <uap:DefaultTile Square71x71Logo="Assets\SmallTile.png" Square310x310Logo="Assets\LargeTile.png" ShortName="CC98" Wide310x150Logo="Assets\Wide310x150Logo.png">
+          <uap:ShowNameOnTiles>
+            <uap:ShowOn Tile="square150x150Logo"/>
+            <uap:ShowOn Tile="wide310x150Logo"/>
+            <uap:ShowOn Tile="square310x310Logo"/>
+          </uap:ShowNameOnTiles>
+        </uap:DefaultTile >
         <uap:InitialRotationPreference>
           <uap:Rotation Preference="landscape"/>
           <uap:Rotation Preference="portrait"/>
           <uap:Rotation Preference="landscapeFlipped"/>
           <uap:Rotation Preference="portraitFlipped"/></uap:InitialRotationPreference>
+        <uap:LockScreen Notification="badge" BadgeLogo="Assets\cc98.png"/>
+        <uap:SplashScreen Image="Assets\SplashScreen.png"/>
+	
       </uap:VisualElements>
       <Extensions>
         <uap:Extension Category="windows.protocol">
           <uap:Protocol  Name="cc98">
-            <uap:Logo>Assets\App.jpg</uap:Logo>
+            <uap:Logo>Assets\cc98.png</uap:Logo>
             <uap:DisplayName>CC98 Desktop</uap:DisplayName>
           </uap:Protocol>
         </uap:Extension>
@@ -61,6 +69,12 @@
   </Applications>
 
   <Capabilities>
-    <rescap:Capability Name="runFullTrust" />
+    <Capability Name="internetClient"/>
+    <uap3:Capability Name="backgroundMediaPlayback"/>
+    <uap:Capability Name="removableStorage"/>
+    <rescap:Capability Name="runFullTrust"/>
+    <uap:Capability Name="picturesLibrary"/>
   </Capabilities>
+
+
 </Package>

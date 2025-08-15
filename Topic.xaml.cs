@@ -1,6 +1,5 @@
-using ABI.Microsoft.UI.Xaml.Media.Animation;
 using CCkernel;
-using CommunityToolkit.Labs.WinUI.MarkdownTextBlock;
+using CCUserModel;
 using CommunityToolkit.WinUI.UI.Controls;
 using DevWinUI;
 using FluentIcons.Common;
@@ -20,6 +19,7 @@ using Microsoft.Windows.AppNotifications.Builder;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
@@ -28,6 +28,7 @@ using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Reflection.Metadata.Ecma335;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices.WindowsRuntime;
 using System.Text;
@@ -35,19 +36,18 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Windows.ApplicationModel.Contacts;
 using Windows.ApplicationModel.DataTransfer;
-using Windows.Devices.Geolocation;
-using Windows.Devices.Power;
+using Windows.Devices.SmartCards;
 using Windows.Foundation;
 using Windows.Foundation.Collections;
 using Windows.Media.Core;
 using Windows.Media.Playback;
 using Windows.Media.Protection.PlayReady;
 using Windows.Storage;
-using Windows.UI;
+using Windows.Storage.Streams;
 using static App3.Index;
 using static App3.Message;
+using static App3.Profile;
 using static App3.Topic;
-using static System.Net.Mime.MediaTypeNames;
 using static System.Net.WebRequestMethods;
 
 
@@ -82,9 +82,8 @@ namespace App3
 
             };
             MetaDataArea.DataContext = metadata;
-
-
-
+            LoadSet();
+            TileList.ItemsSource = replies;
         }
 
 
@@ -100,7 +99,6 @@ namespace App3
 
             TileList.ItemsSource = null;
             replies.Clear();
-
             TileList = null;
 
             MetaDataArea.DataContext = null;
@@ -116,7 +114,7 @@ namespace App3
             {
                 Set.Values["CurrentTopicId"] = parameter;
                 LoadMetaData(parameter);
-                LoadReply(Set.Values["CurrentTopicId"] as string, "0", IsImageVisible);
+                LoadReply(parameter, "0");
                 LoadFavorites();
             }
             else
@@ -124,11 +122,22 @@ namespace App3
 
             }
         }
+        private void LoadSet()
+        {
+            string _IsImageVisible = ValidationHelper.IsTokenExist(Set, "IsImageVisible");
+            if (_IsImageVisible == "0")
+            {
+                Set.Values["IsImageVisible"] = "2";   //此时默认为不可见
+            }
+            
+        }
+        
         private void LoadFavorites()
         {
-            if (ValidationHelper.IsTokenExist(Set, "Favorites"))
+            var f = ValidationHelper.IsTokenExist(Set, "Favorites");
+            if (f!="0")
             {
-                var LikeList = JsonConvert.DeserializeObject<JArray>(Set.Values["Favorites"].ToString());
+                var LikeList = JsonConvert.DeserializeObject<JArray>(f);
                 foreach (var like in LikeList)
                 {
                     try
@@ -136,9 +145,9 @@ namespace App3
                         var likeinfo = JsonConvert.DeserializeObject<Dictionary<string, object>>(like.ToString());
                         string collection = likeinfo["name"].ToString();
                         string sortid = like["id"].ToString();
-                        var s = new MenuFlyoutItem { Text = collection, Tag = sortid, Icon = new FluentIcons.WinUI.SymbolIcon { Symbol = FluentIcons.Common.Symbol.List } };
-                        s.Click += CollectionItem_Click;
-                        CollectionMenu.Items.Add(s);
+                        var m=new MenuFlyoutItem { Text = collection, Tag = sortid, Icon =new FluentIcons.WinUI.SymbolIcon{ Symbol = FluentIcons.Common.Symbol.Tag } };
+                        m.Click += CollectionItem_Click;
+                        CollectionMenu.Items.Add(m);
                     }
                     catch (Exception ex)
                     {
@@ -155,7 +164,7 @@ namespace App3
         private void Stats(string board)
         //统计板块访问次数，作为用户体验模型的一部分。
         {
-            if (!Set.Values.ContainsKey("Stats"))
+            if (ValidationHelper.IsTokenExist(Set,"Stats")=="0")
             {
                 Dictionary<string, int> stats = new Dictionary<string, int>();
                 stats[board] = 1;
@@ -187,195 +196,180 @@ namespace App3
         }
         private async void LoadMetaData(string pid)
         {
-            string access = Set.Values["Access"] as string;
-            if (!string.IsNullOrEmpty(access))
+            string MetaDataUrl = "https://api.cc98.org/topic/" + pid;
+            string MetaData = await RequestSender.SimpleRequest(MetaDataUrl);
+            var js = Deserializer.ToDictionary(MetaData);
+            if(js != null)
             {
-                CCloginservice.client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", access);
-                string MetaDataUrl = "https://api.cc98.org/topic/" + pid;
-                var MetaDataRes = await CCloginservice.client.GetAsync(MetaDataUrl);
-                if (MetaDataRes.StatusCode == System.Net.HttpStatusCode.OK)
+                metadata.favorite = js["favoriteCount"].ToString();
+                metadata.text = js["title"].ToString();
+                metadata.time = js["time"].ToString();
+                metadata.hit = js["hitCount"].ToString();
+                metadata.reply = js["replyCount"].ToString();
+                string favourl = "https://api.cc98.org/topic/" + pid + "/isfavorite";
+                string content = await RequestSender.SimpleRequest(favourl);
+                if (content == "true")
                 {
-                    string MetaDataText = await MetaDataRes.Content.ReadAsStringAsync();
-                    var js = JsonConvert.DeserializeObject<Dictionary<string, object>>(MetaDataText);
-                    metadata.favorite = js["favoriteCount"].ToString();
-                    metadata.text = js["title"].ToString();
-                    metadata.time = js["time"].ToString();
-                    metadata.hit = js["hitCount"].ToString();
-                    metadata.reply = js["replyCount"].ToString();
-                    string favourl = "https://api.cc98.org/topic/" + pid + "/isfavorite";
-                    var favourres = await CCloginservice.client.GetAsync(favourl);
-
-                    if (favourres.StatusCode == System.Net.HttpStatusCode.OK)
-                    {
-                        string content = await favourres.Content.ReadAsStringAsync();
-                        if (content == "true")
-                        {
-                            metadata.variant = IconVariant.Color;
-                        }
-                        else
-                        {
-                            metadata.variant = IconVariant.Regular;
-                        }
-                    }
-                    else
-                    {
-                        metadata.variant = IconVariant.Regular;
-                    }
-
-                    string boardid = js["boardId"].ToString();
-                    if (boardid != null)
-                    {
-                        Stats(boardid);
-                    }
-
-                    if (metadata.reply != null)
-                    {
-                        Pager.NumberOfPages = (Convert.ToInt32(metadata.reply) / 10) + 1;
-                    }
-                    else
-                    {
-                        Pager.NumberOfPages = 1;
-                    }
-                }
-            }
-        }
-        public bool IsImageVisible = false;
-        private async void LoadReply(string pid, string start, bool mode)
-        {
-            if (ValidationHelper.IsTokenExist(Set, "Access"))
-            {
-                JArray Posts = new JArray();
-                string PostText = await RequestSender.TopicReply(pid, start);
-                if (ValidationHelper.IsValidResponse(PostText))//回复有效
-                {
-                    Posts = Deserializer.ToArray(PostText);
-                }
-                else//回复无效，重试一次。
-                {
-                    if (PostText.StartsWith("404:"))
-                    {
-                        if (ValidationHelper.IsTokenExist(Set, "Refresh"))
-                        {
-                            string NewAccess = await CCloginservice.RefreshToken(Set.Values["Refresh"].ToString());
-                            if (NewAccess != "0")
-                            {
-                                Set.Values["Access"] = NewAccess;
-                                CCloginservice.client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", NewAccess);
-                                string _PostText = await RequestSender.TopicReply(pid, start);
-                                if (ValidationHelper.IsValidResponse(_PostText))
-                                {
-                                    Posts = Deserializer.ToArray(_PostText);
-
-                                }
-                                else
-                                {
-                                    return;//失败
-                                }
-                            }
-                            else
-                            {
-                                return;//刷新令牌失败
-                            }
-                        }
-                        else
-                        {
-                            return;//刷新令牌不存在
-                        }
-                    }
-                    else
-                    {
-                        return;//边缘情况，理论上不存在此分支
-                    }
-                }
-
-                if (Posts != null)
-                {
-                    if (Posts.Count > 0)
-                    {
-                        replies.Clear();
-                        TileList.ItemsSource = null;//清除绑定，防止重复数据。此处必须在TileList.ItemsSource赋值之前调用，否则会导致数据重复绑定。
-                        List<string> users = new();
-                        List<Reply> ReplyList = new List<Reply>();
-                        string hideurl = "/Assets/hide.gif";
-                        foreach (var Tile in Posts)
-                        {
-                            string TileText = Tile.ToString();
-                            var TilePair = JsonConvert.DeserializeObject<Dictionary<string, object>>(TileText);
-                            string content = TilePair["content"].ToString();
-                            string author = "匿名";
-                            string time = TilePair["time"].ToString();
-                            string rid = TilePair["id"].ToString();
-                            string id = "0";//如果是匿名模式，id值为0
-                            if (TilePair["userId"] != null)
-                            {
-                                id = TilePair["userId"].ToString();
-                                author = TilePair["userName"].ToString();
-                            }
-                            string floor = TilePair["floor"].ToString();
-                            string like = TilePair["likeCount"].ToString();
-                            string dislike = TilePair["dislikeCount"].ToString();
-                            string likestate = TilePair["likeState"].ToString();
-                            IconVariant variant1 = IconVariant.Regular ;
-                            IconVariant variant2= IconVariant.Regular ;
-                            if (likestate == "1")
-                            {
-                                variant1 = IconVariant.Filled;
-                                variant2 = IconVariant.Regular;
-                            }
-                            else if(likestate == "2")
-                            {
-                                variant1 = IconVariant.Regular;
-                                variant2 = IconVariant.Filled;
-                            }
-                            else
-                            {
-                                variant1 = IconVariant.Regular;
-                                variant2 = IconVariant.Regular;
-                            }
-                            if (author != "null" && author != null && id != "0")
-                            {
-                                users.Add("id=" + id);
-                            }
-                            ReplyList.Add(new Reply { author = author, text=content, like = like, dislike = dislike, rid = rid, time = time, uid = id, floor = floor + "L", url = hideurl,likestate=variant1,dislikestate=variant2 });
-                        }
-                        if (users.Count > 0)
-                        {
-                            string _SimpleUseInfo = await RequestSender.SimpleUserInfo(users);
-                            Dictionary<string, string> PortDict = Deserializer.UserInfoList(_SimpleUseInfo);
-                            //此处有一个玄学问题，上方已经运行过一次Clear方法，为什么还会有重复数据？原因是TileList.ItemsSource的绑定没有被清除掉，导致TileList.ItemsSource在下一次加载时仍然保留了上一次的引用。解决方法是每次加载前先清空replies集合，然后重新绑定。
-                            if (PortDict != null)
-                            {
-                                foreach (Reply r in ReplyList)
-                                {
-                                    if (PortDict.ContainsKey(r.uid))
-                                    {
-                                        r.url = PortDict[r.uid];
-                                    }
-
-                                    replies.Add(r);
-                                }
-                            }
-                        }
-                        else
-                        {
-
-                            foreach (Reply r in ReplyList)
-                            {
-                                replies.Add(r);
-                            }
-                        }
-                        TileList.ItemsSource = replies;
-                        RootViewer.ScrollToVerticalOffset(0);//滚动到一页的最上方。这个方法必须在帖子load结束之后调用，否则ui切换逻辑错误。
-                    }
+                    metadata.variant = IconVariant.Color;
                 }
                 else
                 {
-                    return;//posts被赋值null，获取失败
+                    metadata.variant = IconVariant.Regular;
+                }
+                string boardid = js["boardId"].ToString();
+                if (boardid != null)
+                {
+                    Stats(boardid);
+                }
+
+                if (metadata.reply != null)
+                {
+                    Pager.NumberOfPages = (Convert.ToInt32(metadata.reply) / 10) + 1;
+                    PagerFix();
+                }
+                else
+                {
+                    Pager.NumberOfPages = 1;
+                    Pager.NextButtonVisibility = DevWinUI.PagerControlButtonVisibility.Hidden;
                 }
             }
             else
             {
-                return;//Access令牌不存在
+                Flower.PlayAnimation("\uEA39", MetaData);
+            }
+            
+        }
+        public bool IsImageVisible = false;
+        public bool IsTracing=false;
+        int Reply_Retry = 0;
+        List<Reply> ReplyList = new List<Reply>();
+        JArray Posts = new JArray();
+        List<string> users = new();
+        private async void LoadReply(string pid, string start)
+        {
+            Reply_Retry++;
+            replies.Clear();
+            ReplyList.Clear();
+            Posts.Clear();
+            users.Clear();
+            string PostText = await RequestSender.TopicReply(pid, start);
+            if (ValidationHelper.IsValidResponse(PostText))//回复有效
+            {
+                Posts = Deserializer.ToArray(PostText);
+            }
+            else//回复无效，重试一次。
+            {
+                if (PostText.StartsWith("404:"))
+                {
+                    if (Reply_Retry < 3)
+                    {
+                        LoadReply(pid, start);
+                    }
+                    else
+                    {
+                        return;
+                    }
+                }
+                else
+                {
+                    return;//边缘情况，理论上不存在此分支
+                }
+            }
+
+            if (Posts != null)
+            {
+                if (Posts.Count > 0)
+                {
+                    
+                   //清除绑定，防止重复数据。此处必须在TileList.ItemsSource赋值之前调用，否则会导致数据重复绑定。  
+                    string hideurl = "ms-appx:///Assets/hide.gif";
+                    foreach (var Tile in Posts)
+                    {
+                        string TileText = Tile.ToString();
+                        var TilePair = JsonConvert.DeserializeObject<Dictionary<string, object>>(TileText);
+                        string content = TilePair["content"].ToString();
+                        string author = "匿名";
+                        string time = TilePair["time"].ToString();
+                        string rid = TilePair["id"].ToString();
+                        string id = "0";//如果是匿名模式，id值为0
+                        if (TilePair["userId"] != null)
+                        {
+                            id = TilePair["userId"].ToString();
+                            author = TilePair["userName"].ToString();
+                        }
+                        else//在删帖的情况下，cc98deleter的id和name都是null
+                        {
+                            string user_name = ValidationHelper.GetKey(TilePair, "userName");
+                            if ( user_name!= "0")
+                            {
+                                author = "匿名 " + user_name.ToUpper();
+                            }
+                            else
+                            {
+                                author = "CC98 Deleter";
+                                content = "<--该回复已被管理员或发布者删除-->";
+                            }
+                            
+                        }
+                        string floor = TilePair["floor"].ToString();
+                        string like = TilePair["likeCount"].ToString();
+                        string dislike = TilePair["dislikeCount"].ToString();
+                        string likestate = TilePair["likeState"].ToString();
+                        IconVariant variant1 = IconVariant.Regular;
+                        IconVariant variant2 = IconVariant.Regular;
+                        if (likestate == "1")
+                        {
+                            variant1 = IconVariant.Filled;
+                            variant2 = IconVariant.Regular;
+                        }
+                        else if (likestate == "2")
+                        {
+                            variant1 = IconVariant.Regular;
+                            variant2 = IconVariant.Filled;
+                        }
+                        else
+                        {
+                            variant1 = IconVariant.Regular;
+                            variant2 = IconVariant.Regular;
+                        }
+                        if (author != "null" && author != null && id != "0")
+                        {
+                            users.Add("id=" + id);
+                        }
+                        ReplyList.Add(new Reply { author = author, text = content, like = like, dislike = dislike, rid = rid, time = time, uid = id, floor = floor + "L", url = hideurl, likestate = variant1, dislikestate = variant2 });
+                    }
+                    if (users.Count > 0)
+                    {
+                        string _SimpleUseInfo = await RequestSender.SimpleUserInfo(users);
+                        Dictionary<string, string> PortDict = Deserializer.UserInfoList(_SimpleUseInfo);
+                        //此处有一个玄学问题，上方已经运行过一次Clear方法，为什么还会有重复数据？原因是TileList.ItemsSource的绑定没有被清除掉，导致TileList.ItemsSource在下一次加载时仍然保留了上一次的引用。解决方法是每次加载前先清空replies集合，然后重新绑定。
+                        if (PortDict != null)
+                        {
+                            foreach (Reply r in ReplyList)
+                            {
+                                if (PortDict.ContainsKey(r.uid))
+                                {
+                                    r.url = PortDict[r.uid];
+                                }
+
+                                replies.Add(r);
+                            }
+                        }
+                    }
+                    else
+                    {
+
+                        foreach (Reply r in ReplyList)
+                        {
+                            replies.Add(r);
+                        }
+                    }
+                    RootViewer.ScrollToVerticalOffset(0);//滚动到一页的最上方。这个方法必须在帖子load结束之后调用，否则ui切换逻辑错误。
+                }
+            }
+            else
+            {
+                return;//posts被赋值null，获取失败
             }
 
         }
@@ -400,22 +394,40 @@ namespace App3
             }
         }
         public int CurrentPage = 0;
-
+        public int CurrentTracingPage = 0;
+        public string TracingPostId = "";
         private void Pager_SelectedIndexChanged(DevWinUI.PagerControl sender, DevWinUI.PagerControlSelectedIndexChangedEventArgs args)
         {
             //此方法在页面加载完成后会被调用一次，Pager的SelectedIndex会被设置为0。
             //所以页面构造函数处不需要单独调用LoadReply方法。
             //限定了只有页面主动加载和用户点击翻页，index从-1到0不触发数据加载。这似乎是pager的bug.
+            PagerFix();
             if (args.PreviousPageIndex != -1)
             {
-                int index = Pager.SelectedPageIndex;
-                CurrentPage = index;
-
-                if (index >= 0)
+                if (!IsTracing)
                 {
-                    int startindex = 10 * (index);
-                    LoadReply(Set.Values["CurrentTopicId"] as string, startindex.ToString(), IsImageVisible);
+                    int index = Pager.SelectedPageIndex;
+                    CurrentPage = index;
 
+                    if (index >= 0)
+                    {
+                        
+                        int startindex = 10 * (index);
+                        LoadReply(Set.Values["CurrentTopicId"] as string, startindex.ToString());
+                        
+                    }
+                }
+                else
+                {
+                    int index = Pager.SelectedPageIndex;
+                    CurrentTracingPage = index;
+                    if (index >= 0)
+                    {
+                        
+                        int startindex = 10 * (index);
+                        LoadTrace(TracingPostId, startindex.ToString());
+
+                    }
                 }
             }
 
@@ -441,46 +453,38 @@ namespace App3
             switch (result.Key)
             {
                 case "topic":
+                    Set.Values["CurrentTopicId"]=result.Value;
                     LoadMetaData(result.Value);
-                    LoadReply(result.Value, "0", IsImageVisible);
+                    LoadReply(result.Value, "0");
                     break;
                 case "user":
                     {
-                        string _url = "https://api.cc98.org/user/name/" + url;
-                        using var client = new HttpClient();
-                        var PortRes = await client.GetAsync(_url);
-                        if (PortRes.StatusCode == System.Net.HttpStatusCode.OK)
+                        string _url = "https://api.cc98.org/user/name/" + result.Value;
+                        string infotext = await RequestSender.SimpleRequest(_url);
+                        
+                        if (!infotext.StartsWith("404:"))
                         {
-                            string content = await PortRes.Content.ReadAsStringAsync();
-                            if (!string.IsNullOrEmpty(content))
+                            var Info = Deserializer.ToDictionary(infotext);
+                            if (Info != null)
                             {
-                                try
+                                string uid = Info["id"].ToString();
+                                if (uid != null)
                                 {
-                                    var Info = JsonConvert.DeserializeObject<Dictionary<string, object>>(content);
-                                    string uid = Info["id"].ToString();
-                                    if (uid != null)
+                                    if (uid.All(char.IsDigit))
                                     {
-                                        if (uid.All(char.IsDigit))
-                                        {
-                                            var param = new Dictionary<string, string>()
+                                        var param = new Dictionary<string, string>()
                                         {
                                             {"Mode","Others" },
                                             {"UserId",uid }
                                         };
-                                            Frame.Navigate(typeof(Profile), param);
-                                        }
+                                        Frame.Navigate(typeof(Profile), param);
                                     }
-
-
-                                }
-                                catch (Exception ex)
-                                {
-
                                 }
                             }
-
+                            
                         }
-                        break;
+       
+                            break;
                     }
                 //using语句不能在switch语句中直接出现。因此，使用大括号包围这个case.
                 case "anchor":
@@ -515,6 +519,9 @@ namespace App3
 
                         }
                     }
+                    break;
+                case "board":
+                    Frame.Navigate(typeof(Board), result.Value);
                     break;
                 case "file":
                     if (result.Value == "image")
@@ -574,11 +581,7 @@ namespace App3
                             string DownloadsFolder = System.IO.Path.Combine(UserProfile, "Downloads");
                             string DownloadLocation = "";
                             string filepattern = @"(?<=https://file\.cc98\.org/v4-upload/d/\d{4}/\d{4}/)[^/]+";
-
-                            // 创建正则表达式对象
                             Regex fileregex = new Regex(filepattern);
-
-                            // 执行匹配
                             Match filematch = fileregex.Match(url);
                             if (filematch.Success)
                             {
@@ -594,21 +597,21 @@ namespace App3
 
                                 try
                                 {
-                                    var client = new HttpClient();
-                                    var fileres = await client.GetAsync(url, HttpCompletionOption.ResponseHeadersRead);
+                                    string target_url=CCloginservice.vpn.IsVpnEnabled?VpnService.ConvertUrl(url) : url;
+                                    var fileres = await CCloginservice.vpn.client.GetAsync(target_url, HttpCompletionOption.ResponseHeadersRead);
                                     if (fileres.StatusCode == HttpStatusCode.OK)
                                     {
                                         using (Stream contentStream = await fileres.Content.ReadAsStreamAsync(),
                                         fileStream = new FileStream(DownloadLocation, FileMode.Create, FileAccess.Write, FileShare.None))
                                         {
                                             await contentStream.CopyToAsync(fileStream);
-                                            ShowTips("下载完成:", DownloadLocation);
+                                            Flower.PlayAnimation("\uE930", "下载文件成功");
                                         }
                                     }
                                 }
                                 catch (Exception ex)
                                 {
-                                    ShowTips("下载出错:", ex.Message);
+                                    Flower.PlayAnimation("\uEA39", "下载文件失败");
                                 }
 
 
@@ -617,10 +620,17 @@ namespace App3
 
                     }
                     break;
+                case "backlink":
+                    if (result.Value == "bili")
+                    {
+                        Flower.PlayAnimation("\uE930", "已复制Bili外链");
+                    }
+                    break ;
                 default://自动复制到用户剪切板
                     var datapackage = new DataPackage();
                     datapackage.SetText(url);
                     Clipboard.SetContent(datapackage);
+                    Flower.PlayAnimation("\uE930", "已复制外部链接");
                     break;
             }
 
@@ -656,7 +666,7 @@ namespace App3
                 if (tag == "0")
                 {
                     LoadMetaData(Set.Values["CurrentTopicId"] as string);
-                    Flower.PlayAnimation("\uE930", "刷新成功");
+                    Flower.PlayAnimation("\uE930", "刷新标题栏成功");
                 }
                 else if (tag == "1")
                 {
@@ -665,6 +675,23 @@ namespace App3
                     datapackage.SetText(shareurl);
                     Clipboard.SetContent(datapackage);
                     Flower.PlayAnimation("\uE930", "已复制帖子链接");
+                }
+                else if (tag == "2")
+                {
+
+                }
+                else if (tag == "3")
+                {
+                    string _Visibility = ValidationHelper.IsTokenExist(Set, "IsImageVisible");
+                    if (_Visibility == "1")
+                    {
+                        Set.Values["IsImageVisible"] = "2"; ;
+                    }
+                    else
+                    {
+                        Set.Values["IsImageVisible"] = "1";
+                    }
+                    LoadReply(Set.Values["CurrentTopicId"] as string, (Pager.SelectedPageIndex * 10).ToString());
                 }
 
             }
@@ -769,8 +796,43 @@ namespace App3
             picviewer.Activate();
 
         }
+        private async void Person_ContextRequested(UIElement sender, ContextRequestedEventArgs args)
+        {
+            ProfileViewer.Target = sender as HyperlinkButton;
+            var h = sender as HyperlinkButton;
+            var t = h?.DataContext as Reply;
+            if (t != null)
+            {
+                if (t.uid != "0")//非匿名才会跳转
+                {
+                    string ProfileUrl = "https://api.cc98.org/user/" + t.uid;
+                    string ProfileText = await RequestSender.SimpleRequest(ProfileUrl);
+                    if (!ProfileText.StartsWith("404:"))
+                    {
+                        var js = JsonConvert.DeserializeObject<Dictionary<string, object>>(ProfileText);
+                        var profile = new Info()
+                        {
+                            Name = js["name"].ToString(),
+                            Id = js["id"].ToString(),
+                            Popularity = js["popularity"].ToString(),
+                            Fan = js["fanCount"].ToString(),
+                            Port = js["portraitUrl"].ToString(),
+                            Signature = UBBConverter.Convert(js["signatureCode"].ToString(), true),
+                            Posts = js["postCount"].ToString(),
+                        };
+                        ProfileViewer.DataContext = profile;
+                        ProfileViewer.IsOpen = true;
+                    }
+                    else
+                    {
+                        de.Text = ProfileText;
+                    }
+                    
+                }
+            }
 
-        
+        }
+
         public class Reply : INotifyPropertyChanged
         {
             private string _text;
@@ -1113,34 +1175,156 @@ namespace App3
             var operation = sender as MenuFlyoutItem;
             if (operation != null)
             {
-                string tag = operation.Tag as string;
+                var tag = operation.Tag;
                 var reply = operation.DataContext as Reply;
-                if (reply != null)
+                if (reply != null&&tag is string _tag )
                 {
-                    if (tag == "0")//复制为UBB
+
+                    if (_tag == "UBB")//复制为UBB
                     {
                         var pack = new DataPackage();
                         pack.SetText(reply.text);
                         Clipboard.SetContent(pack);
                         Flower.PlayAnimation("\uE930", "已复制为UBB代码");
                     }
-                    else if (tag == "1")
+                    else if (_tag == "MD")
                     {
                         var pack = new DataPackage();
                         pack.SetText(UBBConverter.Convert(reply.text,true));
                         Clipboard.SetContent(pack);
                         Flower.PlayAnimation("\uE930", "已复制为Markdown文本");
                     }
-                    else if (tag == "3")
+                    else if (_tag.All(char.IsDigit))//追踪
                     {
+                        TracingPostId = _tag;
+                        Pager.SelectedPageIndex = -1;
+                        IsTracing= true;
+                        LoadTrace(TracingPostId, "0");
+                        StopTrace.Visibility = Visibility.Visible;
+                    }
+                    else if (_tag == "QUOTE")
+                    {
+                        
+                        if (reply.text != null)
+                        {
+                            var param = new Dictionary<string, string>()
+                        {
+                            {"Mode","1"},//回复主题为0，回帖为1，发主题、投票为2
+                            {"Pid",Set.Values["CurrentTopicId"] as string },
+                            {"QuoteText", reply.text},
+                            {"ParentId", reply.rid}
 
-
+                        };
+                            Frame.Navigate(typeof(Post), param);
+                        }
+                        
                     }
                 }
                 
             }
         }
+        private void PagerFix()
+        {
+            if (Pager.NumberOfPages == 1)
+            {
+                Pager.NextButtonVisibility = DevWinUI.PagerControlButtonVisibility.Hidden;
+            }
+            else
+            {
+                Pager.NextButtonVisibility = DevWinUI.PagerControlButtonVisibility.Visible;
+            }
+        }
+        private async void LoadTrace(string post_id,string start)
+        {
+            string url = $"https://api.cc98.org/post/topic/specific-user?topicid={ValidationHelper.IsTokenExist(Set, "CurrentTopicId")}&postid={post_id}&from={start}&size=10";
+            string trace = await RequestSender.SimpleRequest(url);
+            if (!trace.StartsWith("404:"))
+            {
+                var Posts=Deserializer.ToArray(trace);
+                if (Posts != null)
+                {
+                    replies.Clear();
+                    List<string> users = new();
+                    List<Reply> ReplyList = new List<Reply>();
+                    string hideurl = "/Assets/hide.gif";
+                    foreach (var Tile in Posts)
+                    {
+                        string TileText = Tile.ToString();
+                        var TilePair = JsonConvert.DeserializeObject<Dictionary<string, object>>(TileText);
+                        int count = Convert.ToInt32(TilePair["count"]);
+                        Pager.NumberOfPages= count/10+1;
+                        PagerFix();
+                        string content = TilePair["content"].ToString();
+                        string author = "匿名";
+                        string time = TilePair["time"].ToString();
+                        string rid = TilePair["id"].ToString();
+                        string id = "0";//如果是匿名模式，id值为0
+                        if (TilePair["userId"] != null)
+                        {
+                            id = TilePair["userId"].ToString();
+                            author = TilePair["userName"].ToString();
+                        }
+                        else
+                        {
+                            author = "匿名 " + TilePair["userName"].ToString().ToUpper();
+                        }
+                        string floor = TilePair["floor"].ToString();
+                        string like = TilePair["likeCount"].ToString();
+                        string dislike = TilePair["dislikeCount"].ToString();
+                        string likestate = TilePair["likeState"].ToString();
+                        IconVariant variant1 = IconVariant.Regular;
+                        IconVariant variant2 = IconVariant.Regular;
+                        if (likestate == "1")
+                        {
+                            variant1 = IconVariant.Filled;
+                            variant2 = IconVariant.Regular;
+                        }
+                        else if (likestate == "2")
+                        {
+                            variant1 = IconVariant.Regular;
+                            variant2 = IconVariant.Filled;
+                        }
+                        else
+                        {
+                            variant1 = IconVariant.Regular;
+                            variant2 = IconVariant.Regular;
+                        }
+                        if (author != "null" && author != null && id != "0")
+                        {
+                            users.Add("id=" + id);
+                        }
+                        ReplyList.Add(new Reply { author = author, text = content, like = like, dislike = dislike, rid = rid, time = time, uid = id, floor = floor + "L", url = hideurl, likestate = variant1, dislikestate = variant2 });
+                    }
+                    if (users.Count > 0)
+                    {
+                        string _SimpleUseInfo = await RequestSender.SimpleUserInfo(users);
+                        Dictionary<string, string> PortDict = Deserializer.UserInfoList(_SimpleUseInfo);
+                        if (PortDict != null)
+                        {
+                            foreach (Reply r in ReplyList)
+                            {
+                                if (PortDict.ContainsKey(r.uid))
+                                {
+                                    r.url = PortDict[r.uid];
+                                }
 
+                                replies.Add(r);
+                            }
+                        }
+                    }
+                    else
+                    {
+
+                        foreach (Reply r in ReplyList)
+                        {
+                            replies.Add(r);
+                        }
+                    }
+                    RootViewer.ScrollToVerticalOffset(0);//滚动到一页的最上方。这个方法必须在帖子load结束之后调用，否则ui切换逻辑错误。
+                }
+            
+            }
+        }
 
 
         private async void Like_Click(object sender, RoutedEventArgs e)
@@ -1186,10 +1370,67 @@ namespace App3
 
         }
 
-       
+        private void StopTrace_Click(object sender, RoutedEventArgs e)
+        {
+            IsTracing = false;
+            LoadReply(ValidationHelper.IsTokenExist(Set, "CurrentTopicId"), (CurrentPage * 10).ToString());
+           StopTrace.Visibility = Visibility.Collapsed;
+        }
+
+        private async void Drawer_ImageResolving(object sender, ImageResolvingEventArgs e)
+        {
+            var defr=e.GetDeferral();
+            var Source=e.Url;
+            if (Source == null) return;
+
+            try
+            {
+                switch (Source)
+                {
+                    case string url when ImageResolver.IsWebUrl(url):
+                        e.Image=await ImageResolver.LoadWebImage(url);
+                        break;
+
+                    case string path when ImageResolver.IsLocalPath(path):
+                        e.Image= await ImageResolver.LoadLocalImage(path);
+                        break;
+                }
+            }
+            catch
+            {
+                e.Image = null;
+            }
+            e.Handled = true;
+            defr.Complete();
+            
+        }
+
+        private async void SmallProfile_Loaded(object sender, RoutedEventArgs e)
+        {
+            var p = sender as PersonPicture;
+            if (p != null)
+            {
+                var _tag = p.Tag;
+                if(_tag is string tag)
+                {
+                    var bitmap = await ImageResolver.LoadWebImage(tag);
+                    p.ProfilePicture= bitmap;
+                }
+            }
+        }
+
+        private void SmallProfile_Unloaded(object sender, RoutedEventArgs e)
+        {
+            var p = sender as PersonPicture;
+            if (p != null)
+            {
+                p.ProfilePicture = null;
+            }
+        }
     }
     public class UBBTextConverter : IValueConverter
     {
+        public ApplicationDataContainer Set = ApplicationData.Current.LocalSettings;
         object IValueConverter.Convert(object value, Type targetType, object parameter, string language)
         {
             if (value != null)
@@ -1197,7 +1438,8 @@ namespace App3
                 string input = value as string;
                 if (!string.IsNullOrEmpty(input))
                 {
-                    return UBBConverter.Convert(input, false);
+                    return UBBConverter.Convert(input, ValidationHelper.IsTokenExist(Set, "IsImageVisible")=="1");
+                    
                 }
                 else
                 {

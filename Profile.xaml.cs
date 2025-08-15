@@ -1,4 +1,8 @@
+using ABI.System;
 using CCkernel;
+using CCUserModel;
+using CommunityToolkit.WinUI.Controls;
+using CommunityToolkit.WinUI.UI.Controls;
 using DevWinUI;
 using FluentIcons.Common;
 using Microsoft.UI.Xaml;
@@ -22,9 +26,15 @@ using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Runtime.InteropServices.WindowsRuntime;
 using System.Text;
+using System.Text.RegularExpressions;
+using Windows.ApplicationModel.DataTransfer;
+using Windows.Devices.Enumeration;
 using Windows.Foundation;
 using Windows.Foundation.Collections;
+using Windows.Media;
 using Windows.Media.Capture;
+using Windows.Media.Core;
+using Windows.Media.Playback;
 using Windows.Storage;
 using Windows.System;
 using static App3.Topic;
@@ -81,6 +91,7 @@ namespace App3
             if(SignInResult=="0")
             {
                 WealthInfo.Text = "财富值(签到失败)";
+                
             }
             else if (SignInResult == "1")
             {
@@ -99,10 +110,9 @@ namespace App3
             {
                 ProfileUrl = "https://api.cc98.org/user/" + uid;
             }
-            var ProfileRes = await CCloginservice.client.GetAsync(ProfileUrl);
-            if (ProfileRes.StatusCode == System.Net.HttpStatusCode.OK)
+            string ProfileText = await RequestSender.SimpleRequest(ProfileUrl);
+            if (!ProfileText.StartsWith("404:"))
             {
-                string ProfileText = await ProfileRes.Content.ReadAsStringAsync();
                 var js = JsonConvert.DeserializeObject<Dictionary<string, object>>(ProfileText);
                 Set.Values["Uid"] = js["id"].ToString();
                 bool isme = false;
@@ -120,20 +130,23 @@ namespace App3
                     Fan = js["fanCount"].ToString(),
                     Follow = js["followCount"].ToString(),
                     Logtime = js["lastLogOnTime"].ToString(),
-                    Port = js["portraitUrl"].ToString(),
+                    Port = ValidationHelper.GetKey(js, "portraitUrl"),
                     Signature = UBBConverter.Convert(js["signatureCode"].ToString(), true),
                     Posts = js["postCount"].ToString(),
                     Wealth = js["wealth"].ToString(),
                     IsMe = isme
 
                 };
+                MyProfile.ProfilePicture = await ImageResolver.LoadWebImage(profile.Port);
                 InfoContent.DataContext = profile;
                 SignBoard.DataContext = profile;
             }
             else
             {
-                de.Text = "网络问题";
-            }
+                de.Text = ProfileText;
+            }   
+            
+            
 
         }
         private async void LoadMyTopic(string start,string uid,string mode)
@@ -143,7 +156,7 @@ namespace App3
             {
                 RecentTopicUrl = "https://api.cc98.org/user/" + uid + "/recent-topic?userid=" + uid + "&from=" + start + "&size=11";
             }
-            var Res = await CCloginservice.client.GetAsync(RecentTopicUrl);
+            var Res = await CCloginservice.vpn.GetAsync(RecentTopicUrl);
             if (Res.StatusCode == System.Net.HttpStatusCode.OK)
             {
                 string ProfileText = await Res.Content.ReadAsStringAsync();
@@ -170,7 +183,161 @@ namespace App3
 
 
         }
+        private async void Drawer_ImageResolving(object sender, ImageResolvingEventArgs e)
+        {
+            var defr = e.GetDeferral();
+            var Source = e.Url;
+            if (Source == null) return;
 
+            try
+            {
+                switch (Source)
+                {
+                    case string url when ImageResolver.IsWebUrl(url):
+                        e.Image = await ImageResolver.LoadWebImage(url);
+                        break;
+
+                    case string path when ImageResolver.IsLocalPath(path):
+                        e.Image = await ImageResolver.LoadLocalImage(path);
+                        break;
+                }
+            }
+            catch
+            {
+                e.Image = null;
+            }
+            e.Handled = true;
+            defr.Complete();
+
+        }
+        private void STileButton_Click(object sender, RoutedEventArgs e)
+        {
+            var h = sender as HyperlinkButton;
+            var s = h?.DataContext as STile;
+            if (s != null)
+            {
+                if (s.pid != null)
+                {
+                    Frame.Navigate(typeof(Topic), s.pid);
+                }
+
+            }
+        }
+
+
+        private void SimpleTile_Loaded(object sender, RoutedEventArgs e)
+        {
+            SimpleTile.ElementPrepared += (s, e) =>
+            {
+                if (SimpleTile.ItemsSource != null)
+                {
+                    int current = e.Index;
+                    if (current > 0 && (current + 1) % 11 == 0)
+                    {
+                        LoadMyTopic((current + 1).ToString(), CurrentPerson, CurrentMode);
+                    }
+                }
+            };
+        }
+
+        private async void SignBoard_LinkClicked(object sender, CommunityToolkit.WinUI.UI.Controls.LinkClickedEventArgs e)
+        {
+            string link = e.Link;
+            var result = LinkAnalyzer.LinkDefinite(link);
+            switch (result.Key)
+            {
+                case "topic":
+                    Frame.Navigate(typeof(Topic), result.Value);
+                    break;
+                case "user":
+                    {
+                        string _url = "https://api.cc98.org/user/name/" + result.Value;
+                        string infotext = await RequestSender.SimpleRequest(_url);
+
+                        if (!infotext.StartsWith("404:"))
+                        {
+                            var Info = Deserializer.ToDictionary(infotext);
+                            if (Info != null)
+                            {
+                                string uid = Info["id"].ToString();
+                                if (uid != null)
+                                {
+                                    if (uid.All(char.IsDigit))
+                                    {
+                                        var param = new Dictionary<string, string>()
+                                        {
+                                            {"Mode","Others" },
+                                            {"UserId",uid }
+                                        };
+                                        Frame.Navigate(typeof(Profile), param);
+                                    }
+                                }
+                            }
+
+                        }
+
+                        break;
+                    }
+                //using语句不能在switch语句中直接出现。因此，使用大括号包围这个case.
+                case "board":
+                    Frame.Navigate(typeof(Board), result.Value);
+                    break;
+                case "file":
+                    if (result.Value == "image")
+                    {
+                        try
+                        {
+                            var param = new Dictionary<string, string>()
+                            {
+                                {"url",link },
+                                {"type","image" }
+                             };
+                            var picviewer = new MediaViewer(param);
+                            picviewer.Activate();
+                        }
+                        catch
+                        {
+
+                        }
+                    }   
+                    break;
+                case "backlink":
+                    if (result.Value == "bili")
+                    {
+                        Flower.PlayAnimation("\uE930", "已复制Bili外链");
+                    }
+                    break;
+                default://自动复制到用户剪切板
+                    var datapackage = new DataPackage();
+                    datapackage.SetText(result.Value);
+                    Clipboard.SetContent(datapackage);
+                    Flower.PlayAnimation("\uE930", "已复制外部链接");
+                    break;
+            }
+        }
+
+        private void Follow_Click(object sender, RoutedEventArgs e)
+        {
+            var h = sender as HyperlinkButton;
+
+            if (h != null)
+            {
+                var i = h.DataContext as Info;
+                if (i != null)
+                {
+                    if (i.IsMe)
+                    {
+                        string tag = h.Tag as string;
+                        if (!string.IsNullOrEmpty(tag))
+                        {
+                            Frame.Navigate(typeof(Friend), tag);
+                        }
+                    }
+                }
+
+
+            }
+        }
         public class Info
         {
             public string Name { get; set; }
@@ -183,6 +350,7 @@ namespace App3
             public string Popularity {  get; set; }
             public string Fan {  get; set; }
             public string Follow { get; set; }
+           
             public bool IsMe { get; set; }
         }
         public class STile : INotifyPropertyChanged
@@ -306,97 +474,7 @@ namespace App3
             }
         }
 
-        private void STileButton_Click(object sender, RoutedEventArgs e)
-        {
-            var h = sender as HyperlinkButton;
-            var s = h?.DataContext as STile;
-            if (s != null)
-            {
-                if (s.pid != null)
-                {
-                    Frame.Navigate(typeof(Topic),s.pid);
-                }
-                
-            }
-        }
         
-        
-        private void SimpleTile_Loaded(object sender, RoutedEventArgs e)
-        {
-            SimpleTile.ElementPrepared += (s, e) =>
-            {
-                if (SimpleTile.ItemsSource != null)
-                {
-                    int current = e.Index;
-                    if (current > 0 && (current+1 )% 11 == 0)
-                    {
-                        LoadMyTopic((current + 1).ToString(), CurrentPerson,CurrentMode);
-                    }
-                }
-            };
-        }
-
-        private async void SignBoard_LinkClicked(object sender, CommunityToolkit.WinUI.UI.Controls.LinkClickedEventArgs e)
-        {
-            string link = e.Link;
-            var result = LinkAnalyzer.LinkDefinite(link);
-            if (result.Key == "topic")
-            {
-                Frame.Navigate(typeof(Topic), result.Value);
-            }
-            else if(result.Key == "user")
-            {
-                string url = "https://api.cc98.org/user/name/" + result.Value;
-                using var client = new HttpClient();
-                var PortRes = await client.GetAsync(url);
-                if (PortRes.StatusCode == System.Net.HttpStatusCode.OK)
-                {
-                    string content = await PortRes.Content.ReadAsStringAsync();
-                    if (!string.IsNullOrEmpty(content))
-                    {
-                        try
-                        {
-                            var Info = JsonConvert.DeserializeObject<Dictionary<string, object>>(content);
-                            string uid = Info["id"].ToString();
-                            //de.Text = uid;
-                            Set.Values["ProfileNaviMode"] = "Others";
-                            Frame.Navigate(typeof(Profile), uid);
-                        }
-                        catch (Exception ex)
-                        {
-                            //de.Text = ex.Message;
-                        }
-                    }
-                    else
-                    {
-                        //de.Text = "空返回";
-                    }
-                }
-            }
-        }
-
-        private void Follow_Click(object sender, RoutedEventArgs e)
-        {
-            var h = sender as HyperlinkButton;
-            
-            if(h!= null)
-            {
-                var i=h.DataContext as Info;
-                if (i!= null)
-                {
-                    if (i.IsMe)
-                    {
-                        string tag = h.Tag as string;
-                        if (!string.IsNullOrEmpty(tag))
-                        {
-                            Frame.Navigate(typeof(Friend), tag);
-                        }
-                    }
-                }
-                
-                
-            }
-        }
     }
 
 }

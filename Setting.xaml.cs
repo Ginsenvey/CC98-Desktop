@@ -1,4 +1,8 @@
+using CCkernel;
+using CCUserModel;
 using DevWinUI;
+using HtmlAgilityPack;
+using Microsoft.Security.Authentication.OAuth;
 using Microsoft.UI.Composition.SystemBackdrops;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -8,27 +12,27 @@ using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Media.Imaging;
 using Microsoft.UI.Xaml.Navigation;
+using Microsoft.Windows.AppNotifications;
+using Microsoft.Windows.AppNotifications.Builder;
+using Microsoft.Windows.BadgeNotifications;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Net;
+using System.Net.Http;
+using System.Reflection.Emit;
 using System.Runtime.InteropServices.WindowsRuntime;
 using System.Threading.Tasks;
+using Windows.ApplicationModel.DataTransfer;
 using Windows.Foundation;
 using Windows.Foundation.Collections;
-using Windows.Storage;
-using CCkernel;
-using Windows.Security.Credentials;
-using Microsoft.Windows.AppNotifications.Builder;
-using Microsoft.Windows.AppNotifications;
-using Microsoft.Security.Authentication.OAuth;
-using HtmlAgilityPack;
-using System.Net.Http;
 using Windows.Media.Protection.PlayReady;
-using System.Reflection.Emit;
-using System.Net;
+using Windows.Security.Credentials;
+using Windows.Storage;
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
 
@@ -106,15 +110,40 @@ namespace App3
                 Set.Values["Theme"] = "2";
                 Follow.IsChecked = true;
             }
-            if(ValidationHelper.IsTokenExist(Set,"Themepic"))
-            {
-                string pic = (string)Set.Values["ThemePic"];
+            string pic = ValidationHelper.IsTokenExist(Set, "Themepic");
+            if (pic!="0")
+            {  
                 var bitmap = new BitmapImage(new Uri(pic));
                 PicPreview.ImageSource = bitmap;
             }
             else
             {
                 //这种情况不存在。
+            }
+            if (ValidationHelper.IsTokenExist(Set,"TitlePage") != "0")
+            {
+                TitlePage.SelectedIndex = Convert.ToInt32(Set.Values["TitlePage"])-1;
+            }
+            else
+            {
+                Set.Values["TitlePage"] = "1";
+            }
+            string _IsImageVisible = ValidationHelper.IsTokenExist(Set, "IsImageVisible");
+            if (_IsImageVisible == "0")
+            {
+                Set.Values["IsImageVisible"] = "2";//初始化为不显示
+                IsImageVisible.IsOn = false;
+            }
+            else
+            {
+                if (_IsImageVisible == "1")
+                {
+                    IsImageVisible.IsOn = true;//1
+                }
+                else
+                {
+                    IsImageVisible.IsOn = false;//2
+                }
             }
         }
         public string EffectHistory = "";
@@ -222,22 +251,7 @@ namespace App3
 
         }
 
-        private void ForceGC_Click(object sender, RoutedEventArgs e)
-        {
-            GC.Collect();
-            
-        }
-
-        private void ViewLocalSet_Click(object sender, RoutedEventArgs e)
-        {
-            string settings = "配置项:\n";
-            foreach (var item in Set.Values)
-            {
-                settings += $"{item.Key}: {item.Value}\n";
-            }
-            LocalSet.Text = settings;
-            LocalSetManager.IsExpanded = true;
-        }
+       
 
         private void LocalSetManager_Expanded(object sender, EventArgs e)
         {
@@ -247,51 +261,26 @@ namespace App3
                 settings += $"{item.Key}: {item.Value}\n";
             }
             LocalSet.Text = settings;
+
             LocalSetManager.IsExpanded = true;
         }
 
-        private async void SwitchUser_Click(object sender, RoutedEventArgs e)
+        private  void SwitchUser_Click(object sender, RoutedEventArgs e)
         {
             Set.Values.Clear();
-            await RestartApplicationAsync();
+            PasswordManager.Logout();
+            Application.Current.Exit();
         }
-        private async Task RestartApplicationAsync()
-        {
-            try
-            {
-                // 获取当前应用的可执行文件路径
-                string exePath = Process.GetCurrentProcess().MainModule.FileName;
-
-                // 退出当前应用
-                Application.Current.Exit();
-
-                // 重新启动应用
-                Process.Start(exePath);
-            }
-            catch (Exception ex)
-            {
-                // 捕获异常，处理错误
-                ContentDialog dialog = new ContentDialog
-                {
-                    Title = "Error",
-                    Content = $"重新启动应用失败: {ex.Message}",
-                    CloseButtonText = "OK"
-                };
-                dialog.XamlRoot = this.XamlRoot;
-                await dialog.ShowAsync();
-            }
-        }
-        private static PasswordVault vault = new PasswordVault();
+        
+      
         private async void DeepAuth_Click(object sender, RoutedEventArgs e)
         {
             AuthDialog.XamlRoot = this.XamlRoot;
             bool isDeepAuthEnabled = false;
-            if (Set.Values.ContainsKey("DeepAuth"))
+            var d = ValidationHelper.IsTokenExist(Set, "DeepAuth");
+            if (d!= "0")
             {
-                if (Set.Values["DeepAuth"] as string=="1")
-                {
-                    isDeepAuthEnabled = true;
-                }
+                isDeepAuthEnabled = true;//只要值不存在，或者存在但值为0，都返回0.
             }
             if (isDeepAuthEnabled == false)
             {
@@ -300,7 +289,6 @@ namespace App3
                 {
                     if (IdBox.Text != "" && PassBox.Password != "")
                     {
-                        
                         string DeepAuthRes = await CCloginservice.DeepAuthService(IdBox.Text, PassBox.Password);
                         if (DeepAuthRes == "0")
                         {
@@ -316,8 +304,7 @@ namespace App3
                         else
                         {
 
-                            PasswordCredential credential = new PasswordCredential("CC98", "User", PassBox.Password);
-                            vault.Add(credential);
+                            PasswordManager.SavePassword(PassBox.Password,"DeepAuth",IdBox.Text);//此密码的用户名为真名，而不是"CC98"
                             Set.Values["DeepAuth"] = "1";//深度认证已启用
                             AppNotification notification = new AppNotificationBuilder()
         .AddText("登录成功！")
@@ -330,7 +317,7 @@ namespace App3
                 }
                 else
                 {
-                    
+                    //关闭对话框
                 }
             }
             else
@@ -343,16 +330,93 @@ namespace App3
             
         }
         
-        private async void DrawACard_Click(object sender, RoutedEventArgs e)
+        private  void DrawACard_Click(object sender, RoutedEventArgs e)
         {
-            Frame.Navigate(typeof(Game));
-            
-        }
+            bool IsEnabled = false;
+            var d = ValidationHelper.IsTokenExist(Set, "DeepAuth");
+            if (d!= "0")
+            {
+                IsEnabled = true;
+                Frame.Navigate(typeof(Game));
+            }
 
+            if (IsEnabled == false)
+            {
+                Flower.PlayAnimation("\uEA39","未深度授权");
+            }
+        }
         private async void Emoji_Click(object sender, RoutedEventArgs e)
         {
+            var h = sender as HyperlinkButton;
+            if (h != null)
+            {
+                var _tag = h.Tag;
+                if(_tag is string tag)
+                {
+                    if (tag == "0")
+                    {
+                        StorageFolder Folder = ApplicationData.Current.LocalCacheFolder;
+                        string path = Folder.Path + "/" + "CustomEmoji.json";
+                        string content = ValidationHelper.JsonReader(path);
+                        if (!content.StartsWith("10:"))
+                        {
+                            var package = new DataPackage();
+                            package.SetText(content);
+                            Clipboard.SetContent(package);
+
+                            Flower.PlayAnimation("\uE930", "已复制到剪贴板");
+                        }
+                        else
+                        {
+                            Flower.PlayAnimation("\uEA39", content);
+                        }
+                    }
+                    else if (tag == "1")
+                    {
+                        var package = Clipboard.GetContent();
+                        if (package.Contains(StandardDataFormats.Text))
+                        {
+                            var text = await package.GetTextAsync();
+                            try
+                            {
+                                var add=JsonConvert.DeserializeObject<List<string>>(text);
+                                if (add != null)
+                                {
+                                    var list = CustomEmoji.GetAllEmoji();
+                                    list.AddRange(add);
+                                    string content = JsonConvert.SerializeObject(list);
+                                    string path = "CustomEmoji.json";
+                                    ValidationHelper.JsonWritter(content, path);
+                                    Flower.PlayAnimation("\uE930", "载入完成");
+                                }
+                                else
+                                {
+                                    Flower.PlayAnimation("\uEA39", "内容无效");
+                                }
+                                
+                            }
+                            catch(Exception ex)
+                            {
+                                Flower.PlayAnimation("\uEA39", ex.Message);
+                            }
+                        }
+                        else
+                        {
+                            Flower.PlayAnimation("\uEA39", "剪切板中没有文本");
+                        }
+                    }
+                    else
+                    {
+                        CustomEmoji.ClearAllEmoji();
+                        Flower.PlayAnimation("\uE930", "已清空表情");
+                    }
+                }
+            }
+        }
+        private async void Emoji0_Click(object sender, RoutedEventArgs e)
+        {
             List<string> list = new List<string>();
-            for(int i= 0; i < 55; i++)
+            for(int i= 0; i < 92; i++)
             {
                 string param = "";
                 if (i < 10)
@@ -370,9 +434,9 @@ namespace App3
             
             foreach (string param in list)
             {
-                string url = "https://www.cc98.org/static/images/ms/ms"+param + ".png";
-                string path = "C:\\Users\\Ansherly\\Documents\\Emoji\\" + "ms" + param+".png";
-                var fileres = await CCloginservice.client.GetAsync(url, HttpCompletionOption.ResponseHeadersRead);
+                string url = "https://www.cc98.org/static/images/em/em"+param + ".gif";
+                string path = "C:\\Users\\Ansherly\\Documents\\Emoji\\" + "em" + param+".gif";
+                var fileres = await CCloginservice.vpn.client.GetAsync(url, HttpCompletionOption.ResponseHeadersRead);
                 if (fileres.StatusCode == HttpStatusCode.OK)
                 {
                     using (Stream contentStream = await fileres.Content.ReadAsStreamAsync(),
@@ -383,6 +447,76 @@ namespace App3
                     }
                 }
             }
+        }
+
+        private void TitlePage_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            var c = TitlePage.SelectedIndex;
+            if (c != -1)
+            {
+                Set.Values["TitlePage"] = (c+1).ToString();
+             
+            }
+        }
+
+        private void IsImageVisible_Toggled(object sender, RoutedEventArgs e)
+        {
+            if(IsImageVisible.IsOn)
+            {
+                Set.Values["IsImageVisible"] = 1;
+            }
+            else
+            {
+                Set.Values["IsImageVisible"] = 2;
+            }
+        }
+
+        private async void VpnSetup_Click(object sender, RoutedEventArgs e)
+        {
+            if(ValidationHelper.IsTokenExist(Set, "IsVpnUsable") == "1")
+            {
+                Flower.PlayAnimation("\uE946", "VPN已配置,无需其他操作");
+            }
+            else
+            {
+                AuthDialog.XamlRoot = this.XamlRoot;
+                var r = await AuthDialog.ShowAsync();
+                if (r == ContentDialogResult.Primary)
+                {
+                    if (!string.IsNullOrEmpty(IdBox.Text) && !string.IsNullOrEmpty(PassBox.Password))
+                    {
+                        string vpn_res = await CCloginservice.vpn.LoginAsync(IdBox.Text, PassBox.Password);
+                        if (vpn_res == "1")
+                        {
+                            Set.Values["IsVpnUsable"] = "1";
+                            var cookie = CCloginservice.vpn.TWFID;
+                            string token = JsonConvert.SerializeObject(cookie);
+                            if (!string.IsNullOrEmpty(token))
+                            {
+                                PasswordManager.SavePassword(token, "TWFID");
+                                Flower.PlayAnimation("\uE930", "Cookie已自动保存。");
+                            }//保存失败或者token为空时，会出现VPN启用但找不到令牌的情况。
+                            else
+                            {
+                                Flower.PlayAnimation("\uEA39", "Cookie保存失败");
+                            }
+                            PasswordManager.SavePassword(IdBox.Text, "VpnUserName");
+                            PasswordManager.SavePassword(PassBox.Password, "VpnPassWord");
+
+
+                        }
+                        else
+                        {
+                            Flower.PlayAnimation("\uEA39", vpn_res);
+                        }
+                    }
+                    else
+                    {
+                        Flower.PlayAnimation("\uEA39", "凭据不完整");
+                    }
+                }
+            }
+            
         }
     }
     public class Pic

@@ -7,9 +7,10 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d"
+    xmlns:ic="using:FluentIcons.WinUI"
     Background="{ThemeResource DesktopAcrylicTransparentBrush}">
 
-    <Grid Padding="15">
+    <Grid Padding="15,5,15,15">
         <Grid.RowDefinitions>
             <RowDefinition Height="*" MinHeight="60"></RowDefinition>
             <RowDefinition Height="12*"></RowDefinition>
@@ -17,8 +18,9 @@
         <SelectorBar Grid.Row="0" HorizontalAlignment="Left" SelectionChanged="NaviBar_SelectionChanged" x:Name="NaviBar">
             <SelectorBarItem Text="私信" x:Name="PrivateMsg" Tag="0"></SelectorBarItem>
             <SelectorBarItem Text="系统通知" x:Name="SystemNotice" Tag="1"></SelectorBarItem>
-            <SelectorBarItem Text="@ 我的" Tag="2"></SelectorBarItem>
+            <SelectorBarItem Text="@ 我的" Tag="2" IsEnabled="False"></SelectorBarItem>
         </SelectorBar>
+        
         <Grid  Grid.Row="1" CornerRadius="6" BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}" BorderThickness="1">
             <SplitView IsPaneOpen="True" DisplayMode="Inline" PaneBackground="{ThemeResource DesktopAcrylicTransparentBrush}" x:Name="MessageViewer">
                 <SplitView.Pane>
@@ -37,8 +39,8 @@
                                                 <ColumnDefinition Width="*"></ColumnDefinition>
                                             </Grid.ColumnDefinitions>
                                             <Border Grid.Column="0" Grid.Row="0" Grid.RowSpan="2" CornerRadius="5" Height="50" Width="50">
-                                                <Image Source="{Binding url}" Stretch="UniformToFill"></Image>
-                                            </Border>
+                                            <local:SmartImage Source="{Binding url}" Stretch="UniformToFill"></local:SmartImage>
+                                        </Border>
                                             <TextBlock Text="{Binding name}" Grid.Column="1" Grid.Row="0" FontSize="15"></TextBlock>
                                             <TextBlock Text="{Binding text}" Grid.Column="1" Grid.Row="1" FontSize="13" Foreground="{ThemeResource TextFillColorSecondaryBrush}"></TextBlock>
                                            

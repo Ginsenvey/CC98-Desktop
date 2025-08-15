@@ -1,3 +1,6 @@
+using CCkernel;
+using CCUserModel;
+using DevWinUI;
 using FluentIcons.Common;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -6,26 +9,35 @@ using Microsoft.UI.Xaml.Data;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Navigation;
-using Newtonsoft.Json.Linq;
+using Microsoft.VisualBasic;
+using Microsoft.Windows.AppNotifications;
+using Microsoft.Windows.AppNotifications.Builder;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
+using System.Net.Http;
+using System.Net.Http.Headers;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices.WindowsRuntime;
+using System.Text.RegularExpressions;
+using System.Threading.Tasks;
+using Windows.ApplicationModel.DataTransfer;
+using Windows.Devices.Enumeration;
 using Windows.Foundation;
 using Windows.Foundation.Collections;
-using static App3.Profile;
+using Windows.Media;
+using Windows.Media.AppBroadcasting;
+using Windows.Media.Core;
+using Windows.Media.Playback;
 using Windows.Storage;
 using Windows.UI.Core.Preview;
+using static App3.Profile;
 using static App3.Topic;
-using System.Threading.Tasks;
-using System.Net.Http;
-using Microsoft.VisualBasic;
-using System.Text.RegularExpressions;
-using System.Runtime.CompilerServices;
-using CCkernel;
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
 
@@ -38,7 +50,7 @@ namespace App3
     {
         public ObservableCollection<STile> stiles;
         public ApplicationDataContainer Set;
-        
+        public BoardData board_data = new();
         public Board()
         {
             this.InitializeComponent();
@@ -48,8 +60,8 @@ namespace App3
 
             };
             STileList.ItemsSource = stiles;
-           
             
+
         }
         
         protected override void OnNavigatedTo(Microsoft.UI.Xaml.Navigation.NavigationEventArgs e)
@@ -61,23 +73,24 @@ namespace App3
 
             if (parameter != null)
             {
-                pid = parameter;
+                bid = parameter;
                 GetData(parameter);
-                LoadSTiles(parameter,"0");
+                LoadTopics(parameter,"0");
+
             }
             else
             {
 
             }
         }
-        public string pid= "0";
+        public string bid= "0";
         private async void GetData(string bid)
         {
             string BoardUrl = "https://api.cc98.org/board/"+bid;
             
             try
             {
-                var BoardRes = await CCloginservice.client.GetAsync(BoardUrl);
+                var BoardRes = await CCloginservice.vpn.GetAsync(BoardUrl);
                 if (BoardRes.StatusCode == System.Net.HttpStatusCode.OK)
                 {
                     string BoardText = await BoardRes.Content.ReadAsStringAsync();
@@ -102,16 +115,16 @@ namespace App3
                             string todaycount = js["todayCount"].ToString();
                             string totaltopic = js["topicCount"].ToString();
                             string bantext = js["bigPaper"].ToString() ;
-                            var boarddata = new BoardData()
+                            board_data = new BoardData()
                             {
                                 Name = name,
                                 Description = description,
                                 Todaycount = "今日帖数:" + todaycount,
                                 Totalcount = "总话题数:" + totaltopic,
                                 Masters = "版主:" + masters,
-                                BanText = UBBConverter.Convert(bantext,false)
+                                BanText = UBBConverter.Convert(bantext,true)
                             };
-                            BoardBanner.DataContext = boarddata;
+                            BoardBanner.DataContext = board_data;
                             
                             
                         }
@@ -123,48 +136,37 @@ namespace App3
 
             }
         }
-        private async void LoadSTiles(string bid,string start)
-        {
-            string TileUrl = "https://api.cc98.org/board/"+bid+"/topic?from="+start+"&size=20";
-            try
+
+        private async void LoadTopics(string bid,string start)
+        {       
+            string url = "https://api.cc98.org/board/" + bid + "/topic?from=" + start + "&size=20";
+            var list = new JArray();
+            string res=await RequestSender.SimpleRequest(url);
+            if (!res.StartsWith("404"))
             {
-                var TileRes = await CCloginservice.client.GetAsync(TileUrl);
-                if (TileRes.StatusCode == System.Net.HttpStatusCode.OK)
-                {
-                    string TileText = await TileRes.Content.ReadAsStringAsync();
-                    if (!string.IsNullOrEmpty(TileText))
-                    {
-                        var TileArray = JsonConvert.DeserializeObject<JArray>(TileText);
-                        if (TileArray != null)
-                        {
-                            if (TileArray.Count > 0)
-                            {
-                                foreach (var tile in TileArray)
-                                {
-                                    var info = JsonConvert.DeserializeObject<Dictionary<string, object>>(tile.ToString());
-                                    string hit = info["hitCount"].ToString();
-                                    string pid = info["id"].ToString();
-                                    string author = "匿名";
-                                    string text = info["title"].ToString();
-                                    if (info["userName"] != null)
-                                    {
-                                        author = info["userName"].ToString();
-                                    }
-                                    string reply = info["replyCount"].ToString();
-                                    stiles.Add(new STile { author = author, hit = hit, reply = reply, pid = pid, text = text, symbol = FluentIcons.Common.Symbol.Note });
-                                }
-                            }
-                        }
-                    }
-                }
-                else
-                {
-                    //de.Text = "失败";
-                }
+                list = Deserializer.ToArray(res);
             }
-            catch(Exception ex)
+            else
             {
-                //de.Text= ex.Message;
+                Flower.PlayAnimation("\uEA39", res);
+            }
+            if (list.Count > 0)
+            {
+                foreach (var topic in list)
+                {
+                    var info = JsonConvert.DeserializeObject<Dictionary<string, object>>(topic.ToString());
+                    string hit = info["hitCount"].ToString();
+                    string pid = info["id"].ToString();
+                    string author = "匿名";
+                    string text = info["title"].ToString();
+                    if (info["userName"] != null)
+                    {
+                        author = info["userName"].ToString();
+                    }
+                    string reply = info["replyCount"].ToString();
+                    stiles.Add(new STile { author = author, hit = hit, reply = reply, pid = pid, text = text, symbol = FluentIcons.Common.Symbol.Note });
+                }
+
             }
         }
         public class BoardData
@@ -190,63 +192,105 @@ namespace App3
             }
         }
 
-        private async void Banner_LinkClicked(object sender, CommunityToolkit.WinUI.UI.Controls.LinkClickedEventArgs e)
+        
+        private async void MarkdownTextBlock_LinkClicked(object sender, CommunityToolkit.WinUI.UI.Controls.LinkClickedEventArgs e)
         {
-            string link=e.Link as string;
-            var result=LinkAnalyzer.LinkDefinite(link);
-            if (result.Key == "user")
+            var url = e.Link.ToString();
+            var result = LinkAnalyzer.LinkDefinite(url);
+            switch (result.Key)
             {
-                string url = "https://api.cc98.org/user/name/" + result.Value;
-                using var client = new HttpClient();
-                var PortRes = await client.GetAsync(url);
-                if (PortRes.StatusCode == System.Net.HttpStatusCode.OK)
-                {
-                    string content = await PortRes.Content.ReadAsStringAsync();
-                    if (!string.IsNullOrEmpty(content))
+                case "topic":
+                    Frame.Navigate(typeof (Topic), result.Value);
+                    break;
+                case "user":
+                    {
+                        string _url = "https://api.cc98.org/user/name/" + result.Value;
+                        
+                        var PortRes = await CCloginservice.vpn.GetAsync(_url);
+                        if (PortRes.StatusCode == System.Net.HttpStatusCode.OK)
+                        {
+                            string content = await PortRes.Content.ReadAsStringAsync();
+                            if (!string.IsNullOrEmpty(content))
+                            {
+                                try
+                                {
+                                    var Info = JsonConvert.DeserializeObject<Dictionary<string, object>>(content);
+                                    string uid = Info["id"].ToString();
+                                    if (uid != null)
+                                    {
+                                        if (uid.All(char.IsDigit))
+                                        {
+                                            var param = new Dictionary<string, string>()
+                                        {
+                                            {"Mode","Others" },
+                                            {"UserId",uid }
+                                        };
+                                            Frame.Navigate(typeof(Profile), param);
+                                        }
+                                    }
+
+
+                                }
+                                catch (Exception ex)
+                                {
+
+                                }
+                            }
+
+                        }
+                        break;
+                    }
+                //using语句不能在switch语句中直接出现。因此，使用大括号包围这个case.
+                case "board":
+                    Frame.Navigate(typeof(Board), result.Value);
+                    break;
+                case "file":
+                    if (result.Value == "image")
                     {
                         try
                         {
-                            var Info = JsonConvert.DeserializeObject<Dictionary<string, object>>(content);
-                            string uid = Info["id"].ToString();
-                            if (uid != null)
+                            var param = new Dictionary<string, string>()
                             {
-                                if (uid != "0")
-                                {
-                                    var param = new Dictionary<string, string>()
-                            {
-                                {"Mode","Others" },
-                                {"UserId",uid }
-                            };
-                                    Frame.Navigate(typeof(Profile), param);
-                                }
-                            }
-                            
+                                {"url",url },
+                                {"type","image" }
+                             };
+                            var picviewer = new MediaViewer(param);
+                            picviewer.Activate();
                         }
-                        catch (Exception ex)
+                        catch
                         {
-                            //de.Text = ex.Message;
+
                         }
                     }
-                    else
+                    
+                    else if (result.Value == "video")
                     {
-                        //de.Text = "空返回";
+                        var param = new Dictionary<string, string>()
+                            {
+                                {"url",url },
+                                {"type","video" }
+                             };
+                        var picviewer = new MediaViewer(param);
+                        picviewer.Activate();
                     }
-                }
+                    break;
+
+                case "backlink":
+                    if (result.Value == "bili")
+                    {
+                        Flower.PlayAnimation("\uE930", "已复制Bili外链");
+                    }
+                    break;
+                default://自动复制到用户剪切板
+                    var datapackage = new DataPackage();
+                    datapackage.SetText(url);
+                    Clipboard.SetContent(datapackage);
+                    Flower.PlayAnimation("\uE930", "已复制外部链接");
+                    break;
             }
-            else if (result.Key == "topic")
-            {
-                Frame.Navigate (typeof(Topic), result.Value);
-            }
-
-
-
 
         }
-
-        private async void writepost_Click(object sender, RoutedEventArgs e)
-        {
-            Frame.Navigate(typeof (Post), null);
-        }
+        
         public int history;
         private void STileList_Loaded(object sender, RoutedEventArgs e)
         {
@@ -259,10 +303,58 @@ namespace App3
                     if (current > 0 && (current + 1) % 20 == 0 && current > history)
                     {
                         history = current;
-                        LoadSTiles(pid, (current + 1).ToString());
+                        LoadTopics(bid, (current + 1).ToString());
                     }
                 }
             };
+        }
+
+        private async void Gooey_Click(object sender, RoutedEventArgs e)
+        {
+            GooeyGroup.Distance += 10;
+            var s = sender as GooeyButtonItem;
+            if (s != null)
+            {
+                var _tag = s.Tag;
+                if (_tag is string tag)
+                {
+                    switch (tag)
+                    {
+                        case "Send":
+                            var param = new Dictionary<string, string>()
+                            {
+                                {"Mode","2" },
+                                {"BoardId",bid }
+                            };
+                            Frame.Navigate(typeof(Post), param);
+                            break;
+                        case "Pin":
+                            var r = await RequestSender.EditFocusList("add", bid);
+                            if (r == "1")
+                            {
+                                
+                                var i = new NavigationItem
+                                {
+                                    IconSymbol = BoardIcon.GetSymbol(bid, board_data.Name),
+                                    Name = board_data.Name,
+                                    IsEditable = true,
+                                    Tag = bid
+                                };
+                                Messenger.Instance.AddNavigationItem(i);
+                            }
+                            else
+                            {
+                                Flower.PlayAnimation("\uEA39", r);
+                            }
+
+                            break;
+                        case "Vote":
+                            break;
+                    }
+                        
+                }
+            }
+            
         }
     }
 }

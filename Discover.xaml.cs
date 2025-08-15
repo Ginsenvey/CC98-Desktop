@@ -70,7 +70,6 @@ namespace App3
                                 if (topic != null)
                                 {
                                     tiles.Add(topic);
-                                    //此加载过程有问题。
                                 }
                             }
                             catch(Exception ex)
@@ -90,42 +89,37 @@ namespace App3
             string NewTopicUrl = "https://api.cc98.org/topic/random-recent?size=10";
             try
             {
-                string access = Set.Values["Access"] as string;
-                if (!string.IsNullOrEmpty(access))
+                var RandomRes = await CCloginservice.vpn.GetAsync(NewTopicUrl);
+                if (RandomRes.StatusCode == System.Net.HttpStatusCode.OK)
                 {
-                    
-                    var RandomRes = await CCloginservice.client.GetAsync(NewTopicUrl);
-                    if (RandomRes.StatusCode == System.Net.HttpStatusCode.OK)
+                    string RandomText = await RandomRes.Content.ReadAsStringAsync();
+                    var js = JsonConvert.DeserializeObject<JArray>(RandomText);
+                    if (js != null)
                     {
-                        string RandomText = await RandomRes.Content.ReadAsStringAsync();
-                        var js = JsonConvert.DeserializeObject<JArray>(RandomText);
-                        if (js != null)
+                        if (js.Count > 0)
                         {
-                            if (js.Count > 0)
+                            randomtiles.Clear();
+                            foreach (var news in js)
                             {
-                                randomtiles.Clear();
-                                foreach (var news in js)
+                                var tile = JsonConvert.DeserializeObject<Dictionary<string, object>>(news.ToString());
+                                string rid = "0";
+                                if (tile["userId"] != null)
                                 {
-                                    var tile = JsonConvert.DeserializeObject<Dictionary<string, object>>(news.ToString());
-                                    string rid = "0";
-                                    if (tile["userId"] != null)
-                                    {
-                                        rid = tile["userId"].ToString();
-                                    }
-                                    string pid = tile["id"].ToString();
-                                    string hit = tile["hitCount"].ToString();
-                                    string title = tile["title"].ToString();
-                                    string time = tile["time"].ToString();
-                                    string reply = tile["replyCount"].ToString();
-                                    randomtiles.Add(new RandomPost { title = title, pid = pid, time = time, hit = hit, reply = reply });
+                                    rid = tile["userId"].ToString();
                                 }
+                                string pid = tile["id"].ToString();
+                                string hit = tile["hitCount"].ToString();
+                                string title = tile["title"].ToString();
+                                string time = tile["time"].ToString();
+                                string reply = tile["replyCount"].ToString();
+                                randomtiles.Add(new RandomPost { title = title, pid = pid, time = time, hit = hit, reply = reply });
                             }
                         }
                     }
-                    else
-                    {
+                }
+                else
+                {
 
-                    }
                 }
 
             }
@@ -144,7 +138,7 @@ namespace App3
 
         private void Image_Tapped(object sender, TappedRoutedEventArgs e)
         {
-            var ImageFrame = sender as Image;
+            var ImageFrame = sender as SmartImage;
             if (ImageFrame != null)
             {
                 string url = ImageFrame.Tag.ToString();
@@ -182,6 +176,7 @@ namespace App3
                     current += 20;
                 }
                 GetNewTopic(current.ToString());
+                PageIndex.Text = "第 "+(current/20+1).ToString()+" 页";
                 NewTopicViewer.ScrollToVerticalOffset(0);
             }
         }
@@ -208,6 +203,24 @@ namespace App3
                 if (pid != null)
                 {
                     Frame.Navigate(typeof(Topic), pid);
+                }
+            }
+        }
+
+        private void Person_Click(object sender, RoutedEventArgs e)
+        {
+            var h= sender as HyperlinkButton;
+            if(h != null)
+            {
+                var tag=h.Tag as string;
+                if(tag != null&&tag!="0")
+                {
+                    var param = new Dictionary<string, string>()
+                        {
+                            {"Mode","Others" },
+                            {"UserId",tag }
+                        };
+                    Frame.Navigate(typeof(Profile), param);
                 }
             }
         }

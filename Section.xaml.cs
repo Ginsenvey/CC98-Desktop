@@ -43,8 +43,16 @@ namespace App3
             SectionPresenter.ItemsSource = allSections;
             
             GetAllSection();
+            LoadSet();
         }
-
+        private void LoadSet()
+        {
+            var _Theme = ValidationHelper.IsTokenExist(Set, "ThemePic");
+            if (_Theme != "0")
+            {
+                ThemePresenter.Source = new BitmapImage(new Uri(_Theme));
+            }
+        }
         private async Task<bool> FetchSection()
         {
             string SectionText = await RequestSender.SimpleRequest("https://api.cc98.org/Board/all");
@@ -94,6 +102,7 @@ namespace App3
             {
                 if (SectionArray.Count > 0)
                 {
+                    allSections.Clear();
                     foreach (var section in SectionArray)
                     {
                         List<BoardInfo> boardinfo = new();
@@ -122,6 +131,7 @@ namespace App3
                 if (!SectionText.StartsWith("10"))
                 {
                     LoadSection(SectionText);
+                    Flower.PlayAnimation("\uE930", "刷新版面成功");
                 }
             }
         }

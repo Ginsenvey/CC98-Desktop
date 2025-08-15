@@ -13,10 +13,11 @@
     
     Background="{ThemeResource DesktopAcrylicTransparentBrush}">
     <Page.Resources>
+        <local:HexToBrushConverter x:Key="HexToColorBrush"></local:HexToBrushConverter>
         <DataTemplate x:Key="Presenter" x:DataType="local:SimplePost">
           
 
-                <HyperlinkButton  PointerEntered="ContentCard_PointerEntered" PointerExited="ContentCard_PointerExited" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch" x:Name="TopicItem" Click="TopicItem_Click" Tag="{x:Bind pid}" CornerRadius="0" Height="53">
+                <HyperlinkButton  PointerEntered="ContentCard_PointerEntered" PointerExited="ContentCard_PointerExited" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch" x:Name="TopicItem" Click="TopicItem_Click" Tag="{x:Bind pid}" CornerRadius="0" Height="53" >
                     <HyperlinkButton.RenderTransform>
                         <TranslateTransform x:Name="CardTranslate" X="0" Y="0"/>
                     </HyperlinkButton.RenderTransform> 
@@ -25,9 +26,9 @@
                             <ColumnDefinition Width="Auto"></ColumnDefinition>
                             <ColumnDefinition Width="*"></ColumnDefinition>
                         </Grid.ColumnDefinitions>
-                        <TextBlock Text="{x:Bind title}" Grid.Column="1" FontSize="12"    VerticalAlignment="Center" Foreground="{ThemeResource TextFillColorSecondaryBrush}" HorizontalAlignment="Left"></TextBlock>
-                        <Border Grid.Column="0" Background="{ThemeResource MarkdownBackgroudBrush}" CornerRadius="3" VerticalAlignment="Center" Padding="5" Visibility="{x:Bind hasboardname}">
-                            <TextBlock Text="{x:Bind  section}"  FontSize="12" Grid.Row="0"   Foreground="{ThemeResource AccentAAFillColorSecondaryBrush}"></TextBlock>
+                        <TextBlock Text="{x:Bind title}" Grid.Column="1" FontSize="14"  VerticalAlignment="Center" Foreground="{ThemeResource TextFillColorSecondaryBrush}" HorizontalAlignment="Left"></TextBlock>
+                        <Border Grid.Column="0" Background="{ThemeResource MarkdownBackgroudBrush}" CornerRadius="3" VerticalAlignment="Center" Padding="3" Visibility="{x:Bind hasboardname}">
+                            <TextBlock Text="{x:Bind  section}"   FontSize="12" Grid.Row="0"   Foreground="{ThemeResource AccentAAFillColorSecondaryBrush}"></TextBlock>
                         </Border>
                     </Grid>
                 </HyperlinkButton>
@@ -42,7 +43,7 @@
                     <RowDefinition Height="Auto"></RowDefinition>
                 </Grid.RowDefinitions>
                 <StackPanel Orientation="Horizontal" Margin="2,0,0,0" Grid.Row="0">
-                    <Border Width="4" Margin="10,20,0,15" Height="20" BorderBrush="{ThemeResource AccentAAFillColorDefaultBrush}" BorderThickness="4"></Border>
+                    <Border Width="4" Margin="10,20,0,15" Height="22" BorderBrush="{x:Bind HexColor,Converter={StaticResource HexToColorBrush}}" BorderThickness="4"></Border>
                     <TextBlock Text="{x:Bind SectionName}" Margin="10,20,10,15" FontSize="16" Foreground="{ThemeResource TextFillColorSecondaryBrush}"></TextBlock>
                 </StackPanel>
                 <Border Grid.Row="1" Height="2" BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}" HorizontalAlignment="Stretch" BorderThickness="2"></Border>
@@ -55,21 +56,15 @@
             <RowDefinition Height="*" MinHeight="100" ></RowDefinition>
             <RowDefinition Height="6*"></RowDefinition>
         </Grid.RowDefinitions>
+        <Grid.ContextFlyout>
+            <MenuFlyout>
+                <MenuFlyoutItem Text="刷新"  Icon="{ic:SymbolIcon Symbol=ArrowSync}" ></MenuFlyoutItem>
+            </MenuFlyout>
+        </Grid.ContextFlyout>
         
-        <Border Grid.Row="0" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Visibility="Collapsed" >
-            <Border.Background>
-                <ImageBrush ImageSource="/Assets/mid_autumn.jpg" Stretch="UniformToFill"></ImageBrush>
-            </Border.Background>
-            <StackPanel Orientation="Horizontal" VerticalAlignment="Center" Margin="20,10,20,10" Padding="10">
-                
-                <ic:SymbolIcon Symbol="DesignIdeas" FontSize="22" Foreground="{ThemeResource AccentAAFillColorDefaultBrush}" Margin="0,0,10,0"></ic:SymbolIcon>
-                <TextBlock Text="今日话题" FontWeight="Bold" FontSize="24" Foreground="{ThemeResource AccentAAFillColorDefaultBrush}" ></TextBlock>
-                <TextBlock x:Name="de" ></TextBlock>
-            </StackPanel>
-        </Border>
-        <FlipView  Grid.Row="0"  x:Name="RecomList" VerticalAlignment="Top">
+        <FlipView  Grid.Row="0"  x:Name="RecomList" VerticalAlignment="Top" CornerRadius="6">
             <FlipView.Background>
-                <ImageBrush ImageSource="/Assets/Themes/autumn_2022.jpg" Opacity="0.4"></ImageBrush>
+                <ImageBrush x:Name="ThemePresenter" Opacity="0.4" Stretch="UniformToFill"></ImageBrush>
             </FlipView.Background>
             <FlipView.ItemTemplate>
                 <DataTemplate>

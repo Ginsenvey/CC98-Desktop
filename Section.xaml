@@ -9,47 +9,49 @@
     mc:Ignorable="d"
     xmlns:tool="using:CommunityToolkit.WinUI.UI.Controls"
     xmlns:ic="using:FluentIcons.WinUI"
+    xmlns:media="using:CommunityToolkit.WinUI.Media"
     Background="{ThemeResource DesktopAcrylicTransparentBrush}">
     <Page.Resources>
         <DataTemplate x:Key="BoardCase" x:DataType="local:BoardInfo">
-            <Border BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}" BorderThickness="1" Margin="10,0,10,10" CornerRadius="5">
-                <HyperlinkButton Content="{x:Bind BoardName}" Padding="8" Tag="{x:Bind BoardId}" Click="BoardButton_Click" x:Name="BoardButton" ></HyperlinkButton>
-            </Border>
+
+            <HyperlinkButton Content="{x:Bind BoardName}" FontFamily="Noto Sans SC" Padding="8" Tag="{x:Bind BoardId}"  Click="BoardButton_Click" x:Name="BoardButton" BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}" BorderThickness="1" Margin="10,0,10,10"></HyperlinkButton>
+            
         </DataTemplate>
         <DataTemplate x:Key="SectionCase" x:DataType="local:AllSection">
             <StackPanel Orientation="Vertical" CornerRadius="5" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1" Margin="10,10,10,10" Padding="10">
-                <TextBlock Text="{x:Bind SectionName}" FontWeight="Bold" FontSize="16" Margin="12,0,12,12"></TextBlock>
+                <TextBlock Text="{x:Bind SectionName}" FontFamily="Noto Sans SC" FontWeight="Bold" FontSize="16" Margin="12,0,12,12"></TextBlock>
                
                 <ItemsRepeater ItemTemplate="{StaticResource  BoardCase}" ItemsSource="{x:Bind Boards}">
                     <ItemsRepeater.Layout>
-                        <tool:WrapLayout></tool:WrapLayout>
+                        <UniformGridLayout ItemsJustification="Start" ItemsStretch="Fill"></UniformGridLayout>
                     </ItemsRepeater.Layout>
                 </ItemsRepeater>
             </StackPanel>
         </DataTemplate>
     </Page.Resources>
     <Grid>
-        
         <Grid.RowDefinitions>
-            <RowDefinition Height="Auto" ></RowDefinition>
-            <RowDefinition Height="*"></RowDefinition>
+            <RowDefinition Height="*" MinHeight="100" ></RowDefinition>
+            <RowDefinition Height="6*"></RowDefinition>
         </Grid.RowDefinitions>
-        <Grid Grid.Row="0" Margin="10,20,10,30">
-            <TextBlock HorizontalAlignment="Left" Text="版面"  FontSize="24" FontWeight="Bold" Foreground="{ThemeResource AccentAAFillColorDefaultBrush}"  Margin="20,0,0,0"></TextBlock>
-            <Button HorizontalAlignment="Right" x:Name="RefreshSection" Click="RefreshSection_Click">
+        <Grid Grid.Row="0" >
+            <Image x:Name="ThemePresenter" Stretch="UniformToFill" Opacity="0.6"></Image>
+            <TextBlock HorizontalAlignment="Left" VerticalAlignment="Center" Text="版面"  FontSize="24" FontWeight="Bold" Foreground="{ThemeResource AccentAAFillColorDefaultBrush}"  Margin="20,0,0,0"></TextBlock>
+            <Button HorizontalAlignment="Right" Margin="0,0,20,0" x:Name="RefreshSection" Click="RefreshSection_Click">
                 <StackPanel Orientation="Horizontal" Spacing="8">
                     <ic:SymbolIcon Symbol="ArrowSync"></ic:SymbolIcon>
                     <TextBlock Text="刷新列表"></TextBlock>
                 </StackPanel>
             </Button>
         </Grid>
-        <Border Height="1" Grid.Row="0" VerticalAlignment="Bottom" BorderThickness="1" BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}" Margin="0,0,0,10"></Border>
+        
         <ScrollViewer Grid.Row="1">
             <ItemsRepeater x:Name="SectionPresenter"  ItemTemplate="{StaticResource SectionCase}">
                 <ItemsRepeater.Layout>
-                    <tool:WrapLayout></tool:WrapLayout>
+                    <StackLayout Orientation="Vertical"></StackLayout>
                 </ItemsRepeater.Layout>
             </ItemsRepeater>
         </ScrollViewer>
+        <local:InfoFlower Grid.Row="0" Grid.RowSpan="2" x:Name="Flower"></local:InfoFlower>
     </Grid>
 </Page>

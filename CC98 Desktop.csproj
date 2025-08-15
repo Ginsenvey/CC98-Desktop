@@ -14,6 +14,57 @@
 	  <WindowsSdkPackageVersion>10.0.19041.38</WindowsSdkPackageVersion>
   </PropertyGroup>
   <ItemGroup>
+    <Content Remove="Assets\cc98.altform-lightunplated_targetsize-16.png" />
+    <Content Remove="Assets\cc98.altform-lightunplated_targetsize-24.png" />
+    <Content Remove="Assets\cc98.altform-lightunplated_targetsize-256.png" />
+    <Content Remove="Assets\cc98.altform-lightunplated_targetsize-32.png" />
+    <Content Remove="Assets\cc98.altform-lightunplated_targetsize-48.png" />
+    <Content Remove="Assets\cc98.altform-unplated_targetsize-16.png" />
+    <Content Remove="Assets\cc98.altform-unplated_targetsize-24.png" />
+    <Content Remove="Assets\cc98.altform-unplated_targetsize-256.png" />
+    <Content Remove="Assets\cc98.altform-unplated_targetsize-32.png" />
+    <Content Remove="Assets\cc98.altform-unplated_targetsize-48.png" />
+    <Content Remove="Assets\cc98.scale-100.png" />
+    <Content Remove="Assets\cc98.scale-125.png" />
+    <Content Remove="Assets\cc98.scale-150.png" />
+    <Content Remove="Assets\cc98.scale-200.png" />
+    <Content Remove="Assets\cc98.scale-400.png" />
+    <Content Remove="Assets\cc98.targetsize-16.png" />
+    <Content Remove="Assets\cc98.targetsize-24.png" />
+    <Content Remove="Assets\cc98.targetsize-256.png" />
+    <Content Remove="Assets\cc98.targetsize-32.png" />
+    <Content Remove="Assets\cc98.targetsize-48.png" />
+    <Content Remove="Assets\LargeTile.altform-lightunplated_targetsize-16.png" />
+    <Content Remove="Assets\LargeTile.altform-lightunplated_targetsize-24.png" />
+    <Content Remove="Assets\LargeTile.altform-lightunplated_targetsize-256.png" />
+    <Content Remove="Assets\LargeTile.altform-lightunplated_targetsize-32.png" />
+    <Content Remove="Assets\LargeTile.altform-lightunplated_targetsize-48.png" />
+    <Content Remove="Assets\LargeTile.altform-unplated_targetsize-16.png" />
+    <Content Remove="Assets\LargeTile.altform-unplated_targetsize-24.png" />
+    <Content Remove="Assets\LargeTile.altform-unplated_targetsize-256.png" />
+    <Content Remove="Assets\LargeTile.altform-unplated_targetsize-32.png" />
+    <Content Remove="Assets\LargeTile.altform-unplated_targetsize-48.png" />
+    <Content Remove="Assets\LargeTile.targetsize-16.png" />
+    <Content Remove="Assets\LargeTile.targetsize-24.png" />
+    <Content Remove="Assets\LargeTile.targetsize-256.png" />
+    <Content Remove="Assets\LargeTile.targetsize-32.png" />
+    <Content Remove="Assets\LargeTile.targetsize-48.png" />
+    <Content Remove="Assets\LockScreenLogo.scale-100.png" />
+    <Content Remove="Assets\LockScreenLogo.scale-125.png" />
+    <Content Remove="Assets\LockScreenLogo.scale-150.png" />
+    <Content Remove="Assets\LockScreenLogo.scale-400.png" />
+    <Content Remove="Assets\SmallTile.scale-100.png" />
+    <Content Remove="Assets\SmallTile.scale-125.png" />
+    <Content Remove="Assets\SmallTile.scale-150.png" />
+    <Content Remove="Assets\SmallTile.scale-200.png" />
+    <Content Remove="Assets\SplashScreen.scale-100.png" />
+    <Content Remove="Assets\SplashScreen.scale-125.png" />
+    <Content Remove="Assets\SplashScreen.scale-150.png" />
+    <Content Remove="Assets\SplashScreen.scale-400.png" />
+    <Content Remove="Assets\Square150x150Logo.scale-100.png" />
+    <Content Remove="Assets\Square150x150Logo.scale-125.png" />
+    <Content Remove="Assets\Square150x150Logo.scale-150.png" />
+    <Content Remove="Assets\Square150x150Logo.scale-400.png" />
     <Content Remove="Assets\Square44x44Logo.altform-lightunplated_targetsize-16.png" />
     <Content Remove="Assets\Square44x44Logo.altform-lightunplated_targetsize-24.png" />
     <Content Remove="Assets\Square44x44Logo.altform-lightunplated_targetsize-256.png" />
@@ -23,27 +74,56 @@
     <Content Remove="Assets\Square44x44Logo.altform-unplated_targetsize-256.png" />
     <Content Remove="Assets\Square44x44Logo.altform-unplated_targetsize-32.png" />
     <Content Remove="Assets\Square44x44Logo.altform-unplated_targetsize-48.png" />
-    <Content Remove="Assets\Square44x44Logo.scale-100.png" />
-    <Content Remove="Assets\Square44x44Logo.scale-125.png" />
-    <Content Remove="Assets\Square44x44Logo.scale-150.png" />
     <Content Remove="Assets\Square44x44Logo.targetsize-16.png" />
     <Content Remove="Assets\Square44x44Logo.targetsize-24.png" />
     <Content Remove="Assets\Square44x44Logo.targetsize-256.png" />
     <Content Remove="Assets\Square44x44Logo.targetsize-32.png" />
     <Content Remove="Assets\Square44x44Logo.targetsize-48.png" />
+    <Content Remove="Assets\SquareLogo.altform-lightunplated_targetsize-16.png" />
+    <Content Remove="Assets\SquareLogo.altform-lightunplated_targetsize-24.png" />
+    <Content Remove="Assets\SquareLogo.altform-lightunplated_targetsize-256.png" />
+    <Content Remove="Assets\SquareLogo.altform-lightunplated_targetsize-32.png" />
+    <Content Remove="Assets\SquareLogo.altform-lightunplated_targetsize-48.png" />
+    <Content Remove="Assets\SquareLogo.altform-unplated_targetsize-16.png" />
+    <Content Remove="Assets\SquareLogo.altform-unplated_targetsize-24.png" />
+    <Content Remove="Assets\SquareLogo.altform-unplated_targetsize-256.png" />
+    <Content Remove="Assets\SquareLogo.altform-unplated_targetsize-32.png" />
+    <Content Remove="Assets\SquareLogo.altform-unplated_targetsize-48.png" />
+    <Content Remove="Assets\SquareLogo.scale-100.png" />
+    <Content Remove="Assets\SquareLogo.scale-125.png" />
+    <Content Remove="Assets\SquareLogo.scale-150.png" />
+    <Content Remove="Assets\SquareLogo.scale-200.png" />
+    <Content Remove="Assets\SquareLogo.targetsize-16.png" />
+    <Content Remove="Assets\SquareLogo.targetsize-24.png" />
+    <Content Remove="Assets\SquareLogo.targetsize-256.png" />
+    <Content Remove="Assets\SquareLogo.targetsize-32.png" />
+    <Content Remove="Assets\SquareLogo.targetsize-48.png" />
     <Content Remove="Assets\StoreLogo.scale-100.png" />
     <Content Remove="Assets\StoreLogo.scale-125.png" />
     <Content Remove="Assets\StoreLogo.scale-150.png" />
     <Content Remove="Assets\StoreLogo.scale-200.png" />
     <Content Remove="Assets\StoreLogo.scale-400.png" />
+    <Content Remove="Assets\Wide310x150Logo.scale-100.png" />
+    <Content Remove="Assets\Wide310x150Logo.scale-125.png" />
+    <Content Remove="Assets\Wide310x150Logo.scale-150.png" />
+    <Content Remove="Assets\Wide310x150Logo.scale-400.png" />
   </ItemGroup>
   <ItemGroup>
+    <None Remove="Assets\LargeTile.scale-100.png" />
+    <None Remove="Assets\LargeTile.scale-125.png" />
+    <None Remove="Assets\LargeTile.scale-150.png" />
+    <None Remove="Assets\LargeTile.scale-200.png" />
+    <None Remove="Assets\LargeTile.scale-400.png" />
+    <None Remove="Assets\SmallTile.scale-400.png" />
+    <None Remove="Assets\Square44x44Logo.scale-100.png" />
+    <None Remove="Assets\Square44x44Logo.scale-125.png" />
+    <None Remove="Assets\Square44x44Logo.scale-150.png" />
     <None Remove="Assets\Square44x44Logo.scale-400.png" />
+    <None Remove="Assets\SquareLogo.scale-400.png" />
     <None Remove="Board.xaml" />
     <None Remove="CC98 Desktop_1.0.5.0_x64_Debug.cer" />
     <None Remove="CC98 Desktop_1.0.5预览体验（x64）.zip" />
     <None Remove="CC98 Desktop_1.0.6.0_x64_Debug.cer" />
-    <None Remove="CC98 Desktop_TemporaryKey.pfx" />
     <None Remove="Discover.xaml" />
     <None Remove="Focus.xaml" />
     <None Remove="Friend.xaml" />
@@ -56,23 +136,20 @@
     <None Remove="MyMsg.xaml" />
     <None Remove="Post.xaml" />
     <None Remove="Profile.xaml" />
-    <None Remove="Repeater.xaml" />
     <None Remove="Search.xaml" />
     <None Remove="Section.xaml" />
     <None Remove="Setting.xaml" />
     <None Remove="Topic.xaml" />
     <None Remove="UBBRichTextBlock.xaml" />
   </ItemGroup>
+  <ItemGroup>
+    <Page Remove="Themes\Generic.xaml" />
+  </ItemGroup>
 
   <ItemGroup>
     <Content Include="Assets\SplashScreen.scale-200.png" />
     <Content Include="Assets\LockScreenLogo.scale-200.png" />
-    <Content Include="Assets\Square150x150Logo.scale-200.png" />
-    <Content Include="Assets\Square44x44Logo.scale-200.png" />
-    <Content Include="Assets\Square44x44Logo.targetsize-24_altform-unplated.png" />
     <Content Include="Assets\Wide310x150Logo.scale-200.png" />
-    <Content Include="CC98 Desktop_1.0.6.0_x64_Debug.cer" />
-    <Content Include="CC98 Desktop_TemporaryKey.pfx" />
   </ItemGroup>
 
   <ItemGroup>
@@ -88,22 +165,21 @@
     <ProjectCapability Include="Msix" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="CommunityToolkit.Labs.WinUI.Controls.MarkdownTextBlock" Version="0.1.250610-build.2151" />
-    <PackageReference Include="CommunityToolkit.Labs.WinUI.Ribbon" Version="0.1.250610-build.2151" />
-    <PackageReference Include="CommunityToolkit.Labs.WinUI.TokenView" Version="0.1.250610-build.2151" />
+    <PackageReference Include="CommunityToolkit.Labs.WinUI.Ribbon" Version="0.1.250721-build.2183" />
+    <PackageReference Include="CommunityToolkit.Labs.WinUI.TokenView" Version="0.1.250721-build.2183" />
     <PackageReference Include="CommunityToolkit.WinUI.Controls.ColorPicker" Version="8.2.250402" />
     <PackageReference Include="CommunityToolkit.WinUI.Controls.SettingsControls" Version="8.2.250402" />
     <PackageReference Include="CommunityToolkit.WinUI.Media" Version="8.2.250402" />
     <PackageReference Include="CommunityToolkit.WinUI.UI.Controls" Version="7.1.2" />
-    <PackageReference Include="CommunityToolkit.WinUI.UI.Controls.Layout" Version="7.1.2" />
     <PackageReference Include="CommunityToolkit.WinUI.UI.Controls.Markdown" Version="7.1.2" />
-    <PackageReference Include="DevWinUI" Version="8.3.0" />
-    <PackageReference Include="DevWinUI.Controls" Version="8.3.0" />
-    <PackageReference Include="FluentIcons.WinUI" Version="1.1.303-ci" />
+    <PackageReference Include="DevWinUI" Version="8.6.0" />
+    <PackageReference Include="DevWinUI.Controls" Version="8.6.0" />
+    <PackageReference Include="Duende.IdentityModel.OidcClient" Version="6.0.1" />
+    <PackageReference Include="FluentIcons.WinUI" Version="1.1.307-ci" />
     <PackageReference Include="HtmlAgilityPack" Version="1.12.1" />
     <PackageReference Include="Microsoft.Windows.CsWinRT" Version="2.2.0" />
     <PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.26100.4188" />
-    <PackageReference Include="Microsoft.WindowsAppSDK" Version="1.8.250610002-experimental3" />
+    <PackageReference Include="Microsoft.WindowsAppSDK" Version="1.7.250606001" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
   </ItemGroup>
   <ItemGroup>
@@ -172,7 +248,7 @@
     </Page>
   </ItemGroup>
   <ItemGroup>
-    <Page Update="Repeater.xaml">
+    <Page Update="Favorite.xaml">
       <Generator>MSBuild:Compile</Generator>
     </Page>
   </ItemGroup>
@@ -207,7 +283,12 @@
     </Page>
   </ItemGroup>
   <ItemGroup>
-    <Folder Include="Themes\" />
+    <None Update="Themes\Generic.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </None>
+    <Page Update="SmartImage.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <WebView2DispatchAdapterNamespace>CC98</WebView2DispatchAdapterNamespace>
@@ -236,8 +317,10 @@
     <AppxAutoIncrementPackageRevision>False</AppxAutoIncrementPackageRevision>
     <AppxSymbolPackageEnabled>False</AppxSymbolPackageEnabled>
     <GenerateTestArtifacts>True</GenerateTestArtifacts>
-    <AppxBundle>Never</AppxBundle>
+    <AppxBundle>Auto</AppxBundle>
     <HoursBetweenUpdateChecks>0</HoursBetweenUpdateChecks>
     <AppxPackageDir>C:\Users\Ansherly\Downloads\</AppxPackageDir>
+    <GenerateTemporaryStoreCertificate>True</GenerateTemporaryStoreCertificate>
+    <AppxBundlePlatforms>x64</AppxBundlePlatforms>
   </PropertyGroup>
 </Project>

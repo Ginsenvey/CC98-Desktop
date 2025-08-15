@@ -16,7 +16,7 @@
             <RowDefinition Height="48"></RowDefinition>
             <RowDefinition Height="Auto" MinHeight="60"></RowDefinition>
             <RowDefinition Height="*"></RowDefinition>
-
+            <RowDefinition Height="25"></RowDefinition>
         </Grid.RowDefinitions>
         <Grid Grid.Row="0" x:Name="GridTitleBar">
             <TextBlock Text="CC98 预览"  Margin="10,0,5,0" HorizontalAlignment="Left" VerticalAlignment="Center" FontSize="15" x:Name="de"></TextBlock>
@@ -34,26 +34,31 @@
                 <Button Height="45" Width="45" BorderThickness="0" x:Name="Rotate" Click="Rotate_Click">
                     <ic:SymbolIcon Symbol="RotateRight"></ic:SymbolIcon>
                 </Button>
-                <dev:CopyButton Width="45" Height="45" BorderThickness="0" x:Name="CopyPic" Click="SavePic_Click"></dev:CopyButton>
-                <Button Height="45" Width="45" BorderThickness="0" x:Name="SavePic" Click="SavePic_Click_1">
-                    <ic:SymbolIcon Symbol="Save"></ic:SymbolIcon>
+                <dev:CopyButton Width="45" Height="45" BorderThickness="0" x:Name="CopyPic" Click="SavePic_Click" ToolTipService.ToolTip="复制"></dev:CopyButton>
+                <Button Height="45" Width="45" BorderThickness="0" x:Name="AddAsEmoji" Click="AddAsEmoji_Click" ToolTipService.ToolTip="添加到表情">
+                    <ic:SymbolIcon Symbol="StarAdd" ></ic:SymbolIcon>
                 </Button>
-                <TeachingTip x:Name="msg" Target="{x:Bind SavePic}"></TeachingTip>
+                <Button Height="45" Width="45" BorderThickness="0" x:Name="SavePic" Click="SavePic_Click_1" ToolTipService.ToolTip="保存">
+                    <ic:SymbolIcon Symbol="Save" ></ic:SymbolIcon>
+                </Button>
+                <TeachingTip x:Name="msg" Target="{x:Bind SavePic}" IsLightDismissEnabled="True"></TeachingTip>
             </StackPanel>
             
         </Border>
-        <ScrollViewer Grid.Row="2" ZoomMode="Enabled"  Padding="20" x:Name="zoomer" ViewChanged="zoomer_ViewChanged" HorizontalContentAlignment="Center" VerticalAlignment="Stretch" HorizontalScrollMode="Enabled" HorizontalScrollBarVisibility="Visible" HorizontalAlignment="Stretch">
-            <Image Stretch="UniformToFill" x:Name="PicViewer" HorizontalAlignment="Center" RenderTransformOrigin="0.5,0.5">
-                <Image.RenderTransform>
+        <ScrollViewer Grid.Row="2" ZoomMode="Enabled"  Padding="20" x:Name="zoomer" ViewChanged="zoomer_ViewChanged" HorizontalContentAlignment="Center" VerticalAlignment="Stretch" HorizontalScrollMode="Enabled" HorizontalScrollBarVisibility="Visible" HorizontalAlignment="Stretch" >
+            <local:SmartImage Stretch="None" x:Name="PicViewer" HorizontalAlignment="Center" RenderTransformOrigin="0.5,0.5">
+                <local:SmartImage.RenderTransform>
                     <RotateTransform x:Name="ImageRotationTransform" Angle="0"/>
-                </Image.RenderTransform>
-            </Image>
+                </local:SmartImage.RenderTransform>
+            </local:SmartImage>
         </ScrollViewer>
         <MediaPlayerElement Grid.Row="2" x:Name="VideoPlayer" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"  AreTransportControlsEnabled="True"  AutoPlay="False" Visibility="Collapsed" Margin="20" >
             <MediaPlayerElement.TransportControls>
                 <MediaTransportControls IsCompact="False"/>
             </MediaPlayerElement.TransportControls>
         </MediaPlayerElement>
+        <Border Grid.Row="3" Height="1" VerticalAlignment="Top" BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}" BorderThickness="1"></Border>
+        <TextBlock x:Name="MediaInfo" Grid.Row="3" Margin="5,0,0,0" Foreground="{ThemeResource TextFillColorSecondaryBrush}" IsTextSelectionEnabled="True"></TextBlock>
     </Grid>
 
 

@@ -1,10 +1,5 @@
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Runtime.InteropServices.WindowsRuntime;
-using Windows.Foundation;
-using Windows.Foundation.Collections;
+using ABI.System;
+using CCkernel;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Controls.Primitives;
@@ -13,16 +8,22 @@ using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Navigation;
 using Microsoft.VisualBasic.FileIO;
-using CCkernel;
-using System.Net;
-using Windows.Storage;
-using Newtonsoft.Json.Linq;
 using Newtonsoft.Json;
-using static App3.Profile;
-using static App3.Index;
+using Newtonsoft.Json.Linq;
+using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using Windows.Security.Authentication.OnlineId;
+using System.IO;
+using System.Linq;
+using System.Net;
+using System.Runtime.InteropServices.WindowsRuntime;
 using System.Web;
+using Windows.Foundation;
+using Windows.Foundation.Collections;
+using Windows.Security.Authentication.OnlineId;
+using Windows.Storage;
+using static App3.Index;
+using static App3.Profile;
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
 
@@ -38,9 +39,10 @@ namespace App3
         public Search()
         {
             this.InitializeComponent();
-            
+            SearchList.ItemsSource = Tiles;
         }
-        
+        public string key = "";
+        public string type = "";
         protected override void OnNavigatedTo(Microsoft.UI.Xaml.Navigation.NavigationEventArgs e)
         {
             base.OnNavigatedTo(e);
@@ -50,15 +52,15 @@ namespace App3
 
             if (p!=null)
             {
-               string type = p["type"];
-               string key = p["key"];
+               type = p["type"];
+               key = p["key"];
                 if(type== "user")
                 {
-                    SearchUser(key);
+                    SearchUser(key);//弃用
                 }
                 else if (type == "topic")
                 {
-                    SearchTopic(HttpUtility.UrlEncode(key));
+                    SearchTopic(HttpUtility.UrlEncode(key),"0");
                 }
 
             }
@@ -67,15 +69,37 @@ namespace App3
 
         }
 
-        private void SearchUser(string key)
+        private async void SearchUser(string key)
         {
-            throw new NotImplementedException();
+            string url = $"https://api.cc98.org/user/name/{key}" ;
+            string infotext = await RequestSender.SimpleRequest(url);
+            if (!infotext.StartsWith("404:"))
+            {
+                var Info = Deserializer.ToDictionary(infotext);
+                if (Info != null)
+                {
+                    string uid = Info["id"].ToString();
+                    if (uid != null)
+                    {
+                        if (uid.All(char.IsDigit))
+                        {
+                            var param = new Dictionary<string, string>()
+                                        {
+                                            {"Mode","Others" },
+                                            {"UserId",uid }
+                                        };
+                            Frame.Navigate(typeof(Profile), param);
+                        }
+                    }
+                }
+
+            }
         }
 
-        private async void SearchTopic(string key)
+        private async void SearchTopic(string key,string start)
         {
-            string searchurl = "https://api.cc98.org/topic/search?keyword="+key+"&size=20&from=0";
-            var r = await CCloginservice.client.GetAsync(searchurl);
+            string searchurl = $"https://api.cc98.org/topic/search?keyword={key}&size=20&from={start}";
+            var r = await CCloginservice.vpn.GetAsync(searchurl);
             if (r.StatusCode == HttpStatusCode.OK)
             {
                 string SText = await r.Content.ReadAsStringAsync();
@@ -83,6 +107,7 @@ namespace App3
                 var Posts = JsonConvert.DeserializeObject<JArray>(SText);
                 if (Posts != null)
                 {
+                    Tiles.Clear();
                     foreach (var post in Posts)
                     {
                         var js = JsonConvert.DeserializeObject<Dictionary<string, object>>(post.ToString());
@@ -94,12 +119,13 @@ namespace App3
                             uid = js["userId"].ToString();
                         }
                         string time = js["time"].ToString();
+                        string pid = js["id"].ToString();
                         string title = js["title"].ToString();
                         string hit = js["hitCount"].ToString();
                         string reply = js["replyCount"].ToString();
-                        Tiles.Add(new StandardPost { author ="@ "+ author, pid = uid, time = time, title = title, hit = hit, reply = reply,  rid= js["id"].ToString()});
+                        Tiles.Add(new StandardPost { author ="@ "+ author, pid = pid, time = time, title = title, hit = hit, reply = reply,  rid= uid});
                     }
-                    SearchList.ItemsSource = Tiles;
+                    
                     
                 }
             }
@@ -108,19 +134,65 @@ namespace App3
                 Tiles.Add(new StandardPost { author = "搜索失败",pid = "0", time = "0", title = "0", hit = "0", reply = "0" });
             }
         }
-
+        public int current = 0;
+        private void NaviBar_Click(object sender, RoutedEventArgs e)
+        {
+            var b = sender as Button;
+            if (b != null)
+            {
+                string tag = b.Tag.ToString();
+                if (tag == "Back")
+                {
+                    if (current > 0)
+                    {
+                        current -= 20;
+                    }
+                    else
+                    {
+                        current = 0;
+                        Flower.PlayAnimation("\uE946", "已到达最新页面");
+                    }
+                }
+                else if (tag == "Forward")
+                {
+                    current += 20;
+                }
+                SearchTopic(key,current.ToString());
+                PageIndex.Text = "第 " + (current / 20 + 1).ToString() + " 页";
+                RootViewer.ScrollToVerticalOffset(0);
+            }
+        }
         private void SearchContent_Click(object sender, RoutedEventArgs e)
         {
             var h = sender as HyperlinkButton;
-            var t = h?.DataContext as StandardPost;
+            var t = h?.Tag;
+
             if (t != null)
             {
-                if (t.pid!= null)
+                if (t is string _t)
                 {
-                    Frame.Navigate(typeof(Topic), t.pid);
-                    //存在一个问题，我们需要缓存页面的数据源，否则在用户从其中一个帖子返回后，搜索结果是空的。
+                    Frame.Navigate(typeof(Topic), _t);
+                    
                 }
 
+            }
+        }
+
+        private void Person_Click(object sender, RoutedEventArgs e)
+        {
+            var h = sender as HyperlinkButton;
+            if (h != null)
+            {
+                var tag = h.Tag as string;
+                if (tag != null && tag != "0")
+                {
+                    var param = new Dictionary<string, string>()
+                        {
+                            {"Mode","Others" },
+                            {"UserId",tag }
+                        };
+                    Frame.Navigate(typeof(Profile), param);
+                }
             }
         }
     }

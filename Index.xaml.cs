@@ -1,3 +1,18 @@
+using CCkernel;
+using CommunityToolkit.WinUI;
+using Microsoft.UI;
+using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Controls.Primitives;
+using Microsoft.UI.Xaml.Data;
+using Microsoft.UI.Xaml.Documents;
+using Microsoft.UI.Xaml.Input;
+using Microsoft.UI.Xaml.Media;
+using Microsoft.UI.Xaml.Media.Animation;
+using Microsoft.UI.Xaml.Media.Imaging;
+using Microsoft.UI.Xaml.Navigation;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -5,29 +20,17 @@ using System.Collections.Specialized;
 using System.ComponentModel;
 using System.IO;
 using System.Linq;
+using System.Net;
+using System.Net.Http;
+using System.Net.Http.Headers;
+using System.Runtime.InteropServices;
 using System.Runtime.InteropServices.WindowsRuntime;
-using Microsoft.UI.Xaml;
-using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml.Controls.Primitives;
-using Microsoft.UI.Xaml.Data;
-using Microsoft.UI.Xaml.Input;
-using Microsoft.UI.Xaml.Media;
-using Microsoft.UI.Xaml.Media.Animation;
-using Microsoft.UI.Xaml.Navigation;
+using System.Text.Json.Serialization;
+using System.Threading.Tasks;
 using Windows.Foundation;
 using Windows.Foundation.Collections;
-using System.Net.Http;
-using System.Net;
-using System.Threading.Tasks;
-using System.Text.Json.Serialization;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
-using System.Runtime.InteropServices;
 using Windows.Storage;
-using CCkernel;
-using Microsoft.UI.Xaml.Documents;
-using Microsoft.UI.Xaml.Media.Imaging;
-using System.Net.Http.Headers;
+using Windows.UI;
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
 
@@ -41,52 +44,43 @@ namespace App3
         public ObservableCollection<SectionCard> cards;
         public ObservableCollection<FlipPost> ftiles;
         public ApplicationDataContainer Set;
-        
+        public ImageSource ThemePic;
         public Index()
         {
             this.InitializeComponent();
             cards = new ObservableCollection<SectionCard>(){};
-            
             ftiles= new ObservableCollection<FlipPost>();
             RecomList.ItemsSource = ftiles;
             Set = ApplicationData.Current.LocalSettings;
-            
-            Jar = new();
-            client=new HttpClient();
-
-            
+            GetTopic();
+            LoadSet();
         }
-        private CookieContainer Jar;
-        private HttpClient client;
+       
         
-        protected override void OnNavigatedTo(Microsoft.UI.Xaml.Navigation.NavigationEventArgs e)
+        private void LoadSet()
         {
-            base.OnNavigatedTo(e);
-
-            // 获取传递的参数
-            var parameter = e.Parameter as string;
-
-            if (parameter != null)
+            var _Theme = ValidationHelper.IsTokenExist(Set, "ThemePic");
+            if (_Theme != "0")
             {
-                GetHotTopic();
-            }
-            else
-            {
-                GetHotTopic();
+                ThemePresenter.ImageSource = new BitmapImage(new Uri(_Theme));
             }
         }
-        private async void GetHotTopic()
+        private  void GetTopic()
         {
             //只从缓存中读取。
+           
             StorageFolder cacheFolder = ApplicationData.Current.LocalCacheFolder;
             string path = cacheFolder.Path+"/"+"IndexCache.json";
+            
             string IndexText = ValidationHelper.JsonReader(path);
+          
             var AllTopics = Deserializer.ToDictionary(IndexText);
             
             List<string> SectionNames = new List<string>() {"hotTopic","schoolEvent", "academics", "study", "emotion", "fleaMarket", "fullTimeJob", "partTimeJob" };
             List<string> _SectionNames = new List<string>() { "十大话题", "校园活动","学术通知", "学习天地","感性·情感", "跳蚤市场" ,"求职广场","实习兼职"};
             if(AllTopics != null)
             {
+                
                 for(int i = 0; i < 8; i++)
                 {
                     string key = SectionNames[i];
@@ -127,7 +121,7 @@ namespace App3
                                     }
                                     tiles.Add(new SimplePost {  section = Section, title = Title, pid = Pid,hasboardname=hasboardname });
                                 }
-                                cards.Add(new SectionCard { SectionName = _SectionNames[i], Tiles = tiles });
+                                cards.Add(new SectionCard { SectionName = _SectionNames[i], Tiles = tiles ,HexColor=ColorPaint.GenerateMorandiColorHex()});
                             }
                         }
                     }
@@ -135,6 +129,7 @@ namespace App3
                 
                 if(AllTopics.TryGetValue("recommendationReading",out var recom))
                 {
+                    
                     if (recom != null)
                     {
                         var recomlist = JsonConvert.DeserializeObject<JArray>(recom.ToString());
@@ -317,10 +312,55 @@ namespace App3
             
         }
     }
+    public static class ColorPaint
+    {
+
+        public static string GenerateMorandiColorHex()
+        {
+            var random = new Random();
+            double hue = random.Next(0, 360);
+
+            // 低饱和度（10-30%）
+            double saturation = random.Next(40, 70) / 100.0;
+
+            // 中低明度（50-70%）
+            double lightness = random.Next(50, 70) / 100.0;
+            // 将 HSL 转换为 RGB
+            var (r, g, b) = HslToRgb(hue, saturation, lightness);
+            
+
+            // 转换为十六进制
+            return $"#{r:X2}{g:X2}{b:X2}";
+        }
+
+        // HSL 转 RGB 辅助函数
+        private static (byte r, byte g, byte b) HslToRgb(double h, double s, double l)
+        {
+            double c = (1 - Math.Abs(2 * l - 1)) * s;
+            double x = c * (1 - Math.Abs((h / 60) % 2 - 1));
+            double m = l - c / 2;
+
+            (double r, double g, double b) rgb = h switch
+            {
+                < 60 => (c, x, 0),
+                < 120 => (x, c, 0),
+                < 180 => (0, c, x),
+                < 240 => (0, x, c),
+                < 300 => (x, 0, c),
+                _ => (c, 0, x)
+            };
+
+            byte R = (byte)((rgb.r + m) * 255);
+            byte G = (byte)((rgb.g + m) * 255);
+            byte B = (byte)((rgb.b + m) * 255);
+
+            return (R, G, B);
+        }
+    }
     public class SectionCard
     {
         public string SectionName { get; set; }
-        public FluentIcons.Common.Symbol SectionIcon { get; set; }
+        public string HexColor { get; set; }
         public List<SimplePost> Tiles { get; set; }
     }
     public class SimplePost : INotifyPropertyChanged
@@ -553,5 +593,53 @@ namespace App3
         public string MediaType { get; set; }
         public string MediaSource {  get; set; }
         
+    }
+    public class HexToBrushConverter : IValueConverter
+    {
+        public object Convert(object value, Type targetType, object parameter, string language)
+        {
+            if (value is string hexColor)
+            {
+                try
+                {
+                    // 移除可能的 "#" 前缀
+                    hexColor = hexColor.Replace("#", string.Empty);
+
+                    // 解析 ARGB 或 RGB 格式
+                    byte a = 255; // 默认不透明
+                    byte r, g, b;
+
+                    if (hexColor.Length == 6) // RGB 格式（如 "4287F5"）
+                    {
+                        r = System.Convert.ToByte(hexColor.Substring(0, 2), 16);
+                        g = System.Convert.ToByte(hexColor.Substring(2, 2), 16);
+                        b = System.Convert.ToByte(hexColor.Substring(4, 2), 16);
+                    }
+                    else if (hexColor.Length == 8) // ARGB 格式（如 "FF4287F5"）
+                    {
+                        a = System.Convert.ToByte(hexColor.Substring(0, 2), 16);
+                        r = System.Convert.ToByte(hexColor.Substring(2, 2), 16);
+                        g = System.Convert.ToByte(hexColor.Substring(4, 2), 16);
+                        b = System.Convert.ToByte(hexColor.Substring(6, 2), 16);
+                    }
+                    else
+                    {
+                        return new SolidColorBrush(Colors.Transparent); // 无效格式返回透明
+                    }
+
+                    return new SolidColorBrush(Color.FromArgb(a, r, g, b));
+                }
+                catch
+                {
+                    return new SolidColorBrush(Colors.Transparent); // 解析失败返回透明
+                }
+            }
+            return new SolidColorBrush(Colors.Transparent); // 非字符串输入返回透明
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, string language)
+        {
+            throw new NotImplementedException(); // 单向绑定不需要反向转换
+        }
     }
 }

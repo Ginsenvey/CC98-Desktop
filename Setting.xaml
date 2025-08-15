@@ -18,11 +18,9 @@
             <RowDefinition Height="*" MinHeight="60"></RowDefinition>
             <RowDefinition Height="12*"></RowDefinition>
         </Grid.RowDefinitions>
+
         
-        <local:InfoFlower HorizontalAlignment="Center" x:Name="Flow"  Grid.Row="0" Grid.RowSpan="2" Canvas.ZIndex="9999">
-            
-        </local:InfoFlower>
-        <ContentDialog Title="授权" x:Name="AuthDialog" PrimaryButtonText="确认" CloseButtonText="取消" >
+        <ContentDialog Title="配置WebVPN" x:Name="AuthDialog" PrimaryButtonText="确认" CloseButtonText="取消" >
             <ContentDialog.PrimaryButtonStyle>
                 <Style  TargetType="Button">
                     <Setter Property="Background" Value="{ThemeResource AccentAAFillColorDefaultBrush}" />
@@ -32,7 +30,8 @@
             </ContentDialog.PrimaryButtonStyle>
             <ContentDialog.Content>
                 <StackPanel Orientation="Vertical" Spacing="10">
-                    <TextBox x:Name="IdBox" Header="昵称"></TextBox>
+                    <TextBlock FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="WebVPN的凭据与浙大通行证一致。"></TextBlock>
+                    <TextBox x:Name="IdBox" Header="VPN账号"></TextBox>
                     <PasswordBox x:Name="PassBox" Header="密码"></PasswordBox>
                 </StackPanel>
             </ContentDialog.Content>
@@ -49,8 +48,8 @@
                         <ic:SymbolIcon Symbol="Key"></ic:SymbolIcon>
                     </tool:SettingsExpander.HeaderIcon>
                     <tool:SettingsExpander.Items>
-                        <tool:SettingsCard Header="深度授权" Description="登录CC98应用中心">
-                            <HyperlinkButton  x:Name="DeepAuth" Content="授权" Click="DeepAuth_Click"></HyperlinkButton>
+                        <tool:SettingsCard Header="WebVPN" >
+                            <HyperlinkButton  x:Name="VpnSetup" Content="授权" Click="VpnSetup_Click"></HyperlinkButton>
                         </tool:SettingsCard>
                         <tool:SettingsCard Header="切换用户或登出">
                             <HyperlinkButton  x:Name="SwitchUser" Click="SwitchUser_Click">
@@ -65,15 +64,14 @@
 
                     </tool:SettingsExpander.Items>
                 </tool:SettingsExpander>
-                <tool:SettingsCard Header="启动页面" >
+                <tool:SettingsCard Header="启动页面" Description="重启生效">
                     <tool:SettingsCard.HeaderIcon>
                         <ic:SymbolIcon Symbol="Apps"></ic:SymbolIcon>
                     </tool:SettingsCard.HeaderIcon>
-                    <ComboBox Background="Transparent" Width="Auto" SelectedIndex="3">
-                        <ComboBoxItem Content="全部版面"></ComboBoxItem>
+                    <ComboBox Background="Transparent" PlaceholderText="选择扉页" Width="Auto"  x:Name="TitlePage" SelectionChanged="TitlePage_SelectionChanged">
+                        <ComboBoxItem Content="首页"   ></ComboBoxItem>
                         <ComboBoxItem Content="个人主页" ></ComboBoxItem>
                         <ComboBoxItem Content="新帖" ></ComboBoxItem>
-                        <ComboBoxItem Content="首页" ></ComboBoxItem>
                     </ComboBox>
                 </tool:SettingsCard>
                 <TextBlock  Text="外观" FontSize="16" Margin="5,2,0,5"></TextBlock>
@@ -102,7 +100,7 @@
                         <tool:SettingsCard ContentAlignment="Left">
                             <StackPanel HorizontalAlignment="Left" Margin="10,10,10,10">
                                 <RadioButton Content="Mica(云母)" Tag="0" x:Name="Mica" Checked="Effect_Checked"/>
-                                <RadioButton Content="Mica Alt" Tag="1" x:Name="MicaAlt" Checked="Effect_Checked"></RadioButton>
+                                <RadioButton Content="Mica Alt(薄云母)" Tag="1" x:Name="MicaAlt" Checked="Effect_Checked"></RadioButton>
                                 <RadioButton Content="Acrylic(亚克力)" Tag="2" x:Name="AcrylicBase" Checked="Effect_Checked"/>
                                 <RadioButton Content="薄亚克力" Tag="3" x:Name="AcrylicThin" Checked="Effect_Checked"></RadioButton>
                                 
@@ -143,12 +141,19 @@
                         </tool:SettingsCard>
                     </tool:SettingsExpander.Items>
                 </tool:SettingsExpander>
+                <TextBlock  Text="浏览" FontSize="16" Margin="5,2,0,5"></TextBlock>
+                <tool:SettingsCard Header="帖子显示图片">
+                    <tool:SettingsCard.HeaderIcon>
+                        <ic:SymbolIcon Symbol="Frame"></ic:SymbolIcon>
+                    </tool:SettingsCard.HeaderIcon>
+                    <ToggleSwitch x:Name="IsImageVisible" Toggled="IsImageVisible_Toggled"></ToggleSwitch>
+                </tool:SettingsCard>
                 <TextBlock  Text="关于" FontSize="16" Margin="5,2,0,5"></TextBlock>
-                <tool:SettingsExpander Header="CC98 Desktop" Description="2025.测试构建。">
+                <tool:SettingsExpander Header="CC98 Desktop" Description="2025.发布构建。">
                     <tool:SettingsExpander.HeaderIcon>
                         <ic:SymbolIcon Symbol="Info" ></ic:SymbolIcon>
                     </tool:SettingsExpander.HeaderIcon>
-                    <TextBlock Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="Version 1.0.5" />
+                    <TextBlock Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="Version 1.1.6" />
                     <tool:SettingsExpander.ItemsHeader>
                         <TextBlock Text="开放源代码库" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Margin="20,10,10,10"></TextBlock>
                     </tool:SettingsExpander.ItemsHeader>
@@ -161,6 +166,9 @@
                                 <HyperlinkButton Content="API For CC98"></HyperlinkButton>
                                 <HyperlinkButton Content="FluentIcons.WinUI"></HyperlinkButton>
                                 <HyperlinkButton Content="Windows App SDK"></HyperlinkButton>
+                                <HyperlinkButton Content="HtmlAgilityPack"></HyperlinkButton>
+                                <HyperlinkButton Content="ZJU-WebVPN"></HyperlinkButton>
+                                <HyperlinkButton Content="IdentityModel"></HyperlinkButton>
                             </tool:WrapPanel>
                         </tool:SettingsCard>
                         
@@ -174,36 +182,31 @@
                     <HyperlinkButton Content="查看" Click="ToFeedBack_Click" x:Name="ToFeedBack"></HyperlinkButton>
                 </tool:SettingsCard>
                 <TextBlock  Text="实验性功能" FontSize="16" Margin="5,2,0,5"></TextBlock>
-                <tool:SettingsCard Header="内存优化">
-                    <tool:SettingsCard.HeaderIcon>
-                        <ic:SymbolIcon Symbol="Recycle"></ic:SymbolIcon>
-                    </tool:SettingsCard.HeaderIcon>
-                    <HyperlinkButton Content="开始" Click="ForceGC_Click" x:Name="ForceGC"></HyperlinkButton>
-                </tool:SettingsCard>
+                
                 <tool:SettingsExpander Header="管理本地设置" Description="仅作调试用途" HeaderIcon="{ic:SymbolIcon Symbol=Toolbox}" x:Name="LocalSetManager" Expanded="LocalSetManager_Expanded">
-                   
                     <tool:SettingsExpander.Items>
-                        <tool:SettingsCard Padding="20">
-                            <ScrollViewer HorizontalScrollMode="Enabled" HorizontalScrollBarVisibility="Visible">
-                                <TextBlock TextWrapping="WrapWholeWords" IsTextSelectionEnabled="True" x:Name="LocalSet"></TextBlock>
-                            </ScrollViewer>
-                            
+                        <tool:SettingsCard Padding="20" HorizontalContentAlignment="Left" >
+                            <TextBlock TextWrapping="Wrap" IsTextSelectionEnabled="True" x:Name="LocalSet" ></TextBlock>
                         </tool:SettingsCard>
                     </tool:SettingsExpander.Items>
                 </tool:SettingsExpander>
-                <tool:SettingsCard Header="抽卡">
-                    <tool:SettingsCard.HeaderIcon>
-                        <ic:SymbolIcon Symbol="Lottery"></ic:SymbolIcon>
-                    </tool:SettingsCard.HeaderIcon>
-                    <HyperlinkButton Content="开始" Click="DrawACard_Click" x:Name="DrawACard"></HyperlinkButton>
-                </tool:SettingsCard>
-                <tool:SettingsCard Header="表情包管理">
-                    <tool:SettingsCard.HeaderIcon>
-                        <ic:SymbolIcon Symbol="Heart"></ic:SymbolIcon>
-                    </tool:SettingsCard.HeaderIcon>
-                    <HyperlinkButton Content="开始"  x:Name="EmojiManager"></HyperlinkButton>
-                </tool:SettingsCard>
+
+                <tool:SettingsExpander Header="表情包管理" Description="清理、导出自定义贴图" HeaderIcon="{ic:SymbolIcon Symbol=Heart}" >
+                    <tool:SettingsExpander.Items>
+                        <tool:SettingsCard Header="导出表情包文本" >
+                            <HyperlinkButton Content="导出"  x:Name="ExtractEmoji" Click="Emoji_Click" Tag="0"></HyperlinkButton>
+                        </tool:SettingsCard>
+                        <tool:SettingsCard Header="载入表情包" Description="将剪切板上的文本载入自定义表情库">
+                            <HyperlinkButton Content="开始"   Click="Emoji_Click" Tag="1"></HyperlinkButton>
+                        </tool:SettingsCard>
+                        <tool:SettingsCard Header="删除所有表情" >
+                            <HyperlinkButton Content="确认"   Click="Emoji_Click" Tag="2"></HyperlinkButton>
+                        </tool:SettingsCard>
+                    </tool:SettingsExpander.Items>
+                </tool:SettingsExpander>
+                
             </StackPanel>
         </ScrollViewer>
+        <local:InfoFlower HorizontalAlignment="Center" x:Name="Flower"  Grid.Row="0" Grid.RowSpan="2" ></local:InfoFlower>
     </Grid>
 </Page>

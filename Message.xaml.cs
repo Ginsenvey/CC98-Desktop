@@ -33,45 +33,55 @@ namespace App3
     /// </summary>
     public sealed partial class Message : Page
     {
-        public ObservableCollection<Contact> contacts;
-        public ObservableCollection<Notice> notices;
+        public ObservableCollection<Contact> contacts=new();
+        public ObservableCollection<Notice> notices=new();
         public ApplicationDataContainer Set = ApplicationData.Current.LocalSettings;
+        public string type = "0";
+        public Contact NewSession = new();
         public Message()
         {
             this.InitializeComponent();
-            contacts = new ObservableCollection<Contact>();
-            notices = new ObservableCollection<Notice>();
- 
-            
-          
         }
         protected override void OnNavigatedTo(Microsoft.UI.Xaml.Navigation.NavigationEventArgs e)
         {
             base.OnNavigatedTo(e);
 
             // 获取传递的参数
-            var parameter = e.Parameter as string;
+            var param = e.Parameter as Dictionary<string,object>;
 
-            if (parameter != null)
+            if (param != null)
             {
-                if (parameter == "0")
+                type= ValidationHelper.GetKey(param,"Type");
+                if ( type== "0")
                 {
                     
                     PrivateMsg.IsSelected=true;
                     
                 }
-                else if(parameter == "1") 
+                else if (type == "1") 
                 {
                     SystemNotice.IsSelected=true;
                     
+                } 
+                else if (type== "2")//由私信功能跳转
+                {
+                    var contact = param["Info"] as Contact;
+                    if ( contact != null)
+                    {
+                        NewSession = contact;
+                    }
+                    PrivateMsg.IsSelected = true;
                 }
                 
             }
             else
             {
-
+                PrivateMsg.IsSelected = true;
             }
+            
         }
+        
+
         
         private void ContactRepeater_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
@@ -86,69 +96,75 @@ namespace App3
         private async void GetRecent()
         {
             string url = "https://api.cc98.org/message/recent-contact-users?from=0&size=10";
-            var res = await CCloginservice.client.GetAsync(url);
-            if (res.StatusCode == System.Net.HttpStatusCode.OK)
+            string res=await RequestSender.SimpleRequest(url);
+            if (!res.StartsWith("404:"))
             {
-                string restext = await res.Content.ReadAsStringAsync();
-                if (!string.IsNullOrEmpty(restext))
+                var list = Deserializer.ToArray(res);
+                if (list != null)
                 {
-                    var list = JsonConvert.DeserializeObject<JArray>(restext);
-                    if (list != null)
+                    string porturl = "https://api.cc98.org/user/basic?";
+                    List<string> users = new();
+                    List<SMsg> msgs = new();
+                    foreach (var c in list)
                     {
-                        string porturl = "https://api.cc98.org/user/basic?";
-                        List<string> users = new();
-                        List<SMsg> msgs = new();
-                        foreach (var c in list)
-                        {
-                            var js = JsonConvert.DeserializeObject<Dictionary<string, object>>(c.ToString());
-                            string mid = js["userId"].ToString();//联系人CCID
-                            string time = js["time"].ToString();
-                            string text = js["lastContent"].ToString();
-                            users.Add("id=" + mid);
-                            msgs.Add(new SMsg { Mid=mid,Time=time,Text=text} );
-                        }
-                        porturl += string.Join("&",users);
-                        if (users.Count > 0)
-                        {
-                            var portres = await CCloginservice.client.GetAsync(porturl);
-                            if (portres.StatusCode == System.Net.HttpStatusCode.OK)
-                            {
-                                string port =await portres.Content.ReadAsStringAsync();
-                                if (!string.IsNullOrEmpty(port))
-                                {
-                                    var portlist = JsonConvert.DeserializeObject<JArray>(port);
-                                    Dictionary<string,SInfo> personinfo = new();
+                        var js = JsonConvert.DeserializeObject<Dictionary<string, object>>(c.ToString());
+                        string mid = js["userId"].ToString();//联系人CCID
+                        string time = js["time"].ToString();
+                        string text = js["lastContent"].ToString();
+                        users.Add("id=" + mid);
+                        msgs.Add(new SMsg { Mid = mid, Time = time, Text = text });
+                    }
 
-                                    foreach (var p in portlist)
-                                    {
-                                        var info = JsonConvert.DeserializeObject <Dictionary<string, object>>(p.ToString());
-                                        string name = info["name"].ToString();
-                                        string purl = info["portraitUrl"].ToString();
-                                        string id = info["id"].ToString();
-                                        personinfo.Add(id, new SInfo { Name = name, PortraitUrl = purl });
-                                    }
-                                    foreach (SMsg m in msgs)
-                                    {
-                                        if (personinfo.ContainsKey(m.Mid))
-                                        {
-                                            contacts.Add(new Contact { mid = m.Mid, name = personinfo[m.Mid].Name, url = personinfo[m.Mid].PortraitUrl, text = m.Text, time = m.Time });
-                                        }
-                                        
-                                    }
-                                    ContactRepeater.ItemsSource = contacts;
-                                    
-                                    //事实上如果删改web端的sessionStorage，web端也会出现错位。说明98的代码也有一定问题。
+                    if ((!users.Contains("id=" + NewSession.mid))&&type=="2")
+                    {
+                        contacts.Add(NewSession);
+                        ContactRepeater.SelectedIndex = 0;
+                    }
+                    porturl += string.Join("&", users);
+                    if (users.Count > 0)
+                    {
+                        var portres = await CCloginservice.vpn.GetAsync(porturl);
+                        if (portres.StatusCode == System.Net.HttpStatusCode.OK)
+                        {
+                            string port = await portres.Content.ReadAsStringAsync();
+                            if (!string.IsNullOrEmpty(port))
+                            {
+                                var portlist = JsonConvert.DeserializeObject<JArray>(port);
+                                Dictionary<string, SInfo> personinfo = new();
+
+                                foreach (var p in portlist)
+                                {
+                                    var info = JsonConvert.DeserializeObject<Dictionary<string, object>>(p.ToString());
+                                    string name = info["name"].ToString();
+                                    string purl = info["portraitUrl"].ToString();
+                                    string id = info["id"].ToString();
+                                    personinfo.Add(id, new SInfo { Name = name, PortraitUrl = purl });
                                 }
+                                foreach (SMsg m in msgs)
+                                {
+                                    if (personinfo.ContainsKey(m.Mid))
+                                    {
+                                        contacts.Add(new Contact { mid = m.Mid, name = personinfo[m.Mid].Name, url = personinfo[m.Mid].PortraitUrl, text = m.Text, time = m.Time });
+                                    }
+
+                                }
+                                ContactRepeater.ItemsSource = contacts;
+                                if (type == "2")
+                                {
+                                    ContactRepeater.SelectedItem = contacts.First(c => c.mid == NewSession.mid);
+                                }
+                                if (contacts.Count > 0 && type != "2")
+                                {
+                                    ContactRepeater.SelectedIndex = 0;
+                                }
+                                //如果删改web端的sessionStorage，web端会出现错位。说明98的代码也有一定问题。
                             }
                         }
                     }
-                    
+
                 }
             }
-            if (contacts.Count > 0)
-            {
-                ContactRepeater.SelectedIndex = 0;
-            }
+            
         }
         public int history = 0;
         private async void GetNotice(string start)
@@ -224,10 +240,7 @@ namespace App3
             }
         }
 
-        private void MoreNotice_RefreshRequested(RefreshContainer sender, RefreshRequestedEventArgs args)
-        {
-            GetNotice(history.ToString());
-        }
+        
         public class SInfo
         {
             public string Name { get; set; }

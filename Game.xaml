@@ -21,8 +21,9 @@
             <ColumnDefinition Width="*"></ColumnDefinition>
             <ColumnDefinition Width="Auto" MinWidth="200"></ColumnDefinition>
         </Grid.ColumnDefinitions>
+        <ContentDialog x:Name="DestroyCardDialog" Title="分解所有卡牌" Content="确认分解全部多余卡牌？此操作不可撤销。" PrimaryButtonText="确认" CloseButtonText="取消"></ContentDialog>
         <StackPanel Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2" Orientation="Vertical" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" CornerRadius="5" Padding="10" Spacing="5">
-            <TextBlock FontSize="24" x:Name="de" Text="CC98抽卡" FontWeight="Bold" Foreground="#4d9891"  HorizontalAlignment="Left" Margin="5,0,0,0" ></TextBlock>
+            <TextBlock  FontSize="22" x:Name="de" Text="CC98抽卡" FontWeight="Bold" Foreground="#4d9891"  HorizontalAlignment="Left" Margin="5,0,0,0" TextWrapping="Wrap"></TextBlock>
             <tool:MarkdownTextBlock Foreground="{ThemeResource TextFillColorSecondaryBrush}" Background="Transparent" Margin="5,0,0,0" Text="CC98 抽卡是由 `CC98` 和 `NexusHD` 共同推出的一款抽卡小游戏。卡牌内容包括 CC98、NexusHD，以及浙江大学相关的各种人事物，不同的卡片具有不同的等级，同时也具有不同的价值和抽取几率。
 
 你可以使用 CC98 账号登录这个游戏，然后选择一种抽卡规则进行抽卡。抽卡得到的卡片可用于收藏展示，通过卡片带来的附加奖励值，还可以兑换其它更有价值的东西哦！"></tool:MarkdownTextBlock>
@@ -31,20 +32,42 @@
             <StackPanel  Orientation="Vertical"  Spacing="10">
                 <Grid>
                     <TextBlock Text="操作" Foreground="{ThemeResource AccentAAFillColorDefaultBrush}" FontWeight="Bold" VerticalAlignment="Center"></TextBlock>
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="5">
+                        <Button x:Name="RefStat" Click="Operate_Click" Tag="ref-stat" Background="Transparent" Foreground="{ThemeResource AccentAAFillColorDefaultBrush}" Width="30" Height="30" Padding="0"  ToolTipService.ToolTip="刷新统计数据">
+                            <ic:FluentIcon Icon="ArrowSync" ></ic:FluentIcon>
+                        </Button>
+                        <Button x:Name="DestroyAll" Click="Operate_Click" Tag="destroy-all"  Background="Transparent" Foreground="{ThemeResource AccentAAFillColorDefaultBrush}" Width="30" Height="30" Padding="0"  ToolTipService.ToolTip="分解所有卡牌" >
+                            <ic:FluentIcon Icon="BeakerDismiss" ></ic:FluentIcon>
+                        </Button>
+                        <dev:BubbleButton x:Name="Unfold"  Click="Unfold_Click"  Background="Transparent" Foreground="{ThemeResource AccentAAFillColorDefaultBrush}" BubbleForeground="{ThemeResource AccentAAFillColorDefaultBrush}" Width="30" Height="30" Padding="0"  ToolTipService.ToolTip="全部翻开">
+                            <ic:FluentIcon Icon="GiftOpen" ></ic:FluentIcon>
+                        </dev:BubbleButton>
+                    </StackPanel>
                 </Grid>
                 <Border BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}" Height="2" BorderThickness="2"></Border>
-                <dev:BubbleButton x:Name="Unfold" Grid.Row="1"  Grid.Column="1" Click="Unfold_Click"  HorizontalAlignment="Center" Padding="10" Foreground="{ThemeResource AccentAAFillColorDefaultBrush}" BubbleForeground="{ThemeResource AccentAAFillColorDefaultBrush}">
-                    <StackPanel Orientation="Horizontal" Spacing="10">
-                        <ic:SymbolIcon Symbol="GiftOpen"></ic:SymbolIcon>
-                        <TextBlock Text="全部翻开"></TextBlock>
-                    </StackPanel>
-                </dev:BubbleButton>
+                <ListView x:Name="StatList">
+                    <ListView.ItemTemplate>
+                        <DataTemplate>
+                            <Grid>
+                                <TextBlock Text="{Binding StatItem}" HorizontalAlignment="Left"></TextBlock>
+                                <TextBlock Text="{Binding Value}" HorizontalAlignment="Right" Foreground="{ThemeResource TextFillColorSecondaryBrush}"></TextBlock>
+                            </Grid>
+                        </DataTemplate>
+                    </ListView.ItemTemplate>
+                </ListView>
                 <Grid>
                     <TextBlock Text="单抽" Foreground="{ThemeResource AccentAAFillColorDefaultBrush}" FontWeight="Bold" VerticalAlignment="Center"></TextBlock>
-                    <dev:BubbleButton x:Name="Draw" Grid.Row="1"  Grid.Column="1" Click="Draw_Click"  Background="Transparent" Foreground="{ThemeResource AccentAAFillColorDefaultBrush}" BubbleForeground="{ThemeResource AccentAAFillColorDefaultBrush}" Width="30" Height="30" Padding="0" HorizontalAlignment="Right">
-                        <ic:FluentIcon Icon="Play" IconSize="Size12"></ic:FluentIcon>
-                    </dev:BubbleButton>
+                    <StackPanel Orientation="Horizontal" Spacing="5" HorizontalAlignment="Right">
+                        <Button x:Name="More"  Click="Operate_Click" Tag="single-more" Background="Transparent" Foreground="{ThemeResource AccentAAFillColorDefaultBrush}"  Width="30" Height="30" Padding="0" ToolTipService.ToolTip="查看概率">
+                            <ic:FluentIcon Icon="MoreHorizontal" ></ic:FluentIcon>
+                        </Button>
+                        <dev:BubbleButton x:Name="Draw"  Click="Draw_Click"  Background="Transparent" Foreground="{ThemeResource AccentAAFillColorDefaultBrush}" BubbleForeground="{ThemeResource AccentAAFillColorDefaultBrush}" Width="30" Height="30" Padding="0" >
+                            <ic:FluentIcon Icon="Play" IconSize="Size12"></ic:FluentIcon>
+                        </dev:BubbleButton>
+                    </StackPanel>
+                    
                 </Grid>
+                
                 <Border BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}" Height="2" BorderThickness="2"></Border>
                 <ListView x:Name="SingleProperList">
                     <ListView.ItemTemplate>
@@ -59,9 +82,15 @@
 
                 <Grid>
                     <TextBlock Text="连抽【11张】" Foreground="{ThemeResource AccentAAFillColorDefaultBrush}" FontWeight="Bold" VerticalAlignment="Center"></TextBlock>
-                    <dev:BubbleButton x:Name="Drawn" Grid.Row="1"  Grid.Column="1" Click="Drawn_Click"  Background="Transparent" Foreground="{ThemeResource AccentAAFillColorDefaultBrush}" BubbleForeground="{ThemeResource AccentAAFillColorDefaultBrush}" Width="30" Height="30" Padding="0" HorizontalAlignment="Right">
-                        <ic:FluentIcon Icon="Play" IconSize="Size12"></ic:FluentIcon>
-                    </dev:BubbleButton>
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="5">
+                        <Button  Click="Operate_Click" Tag="multi-more" Background="Transparent" Foreground="{ThemeResource AccentAAFillColorDefaultBrush}"  Width="30" Height="30" Padding="0" ToolTipService.ToolTip="查看概率">
+                            <ic:FluentIcon Icon="MoreHorizontal" ></ic:FluentIcon>
+                        </Button>
+                        <dev:BubbleButton x:Name="Drawn"  Click="Drawn_Click"  Background="Transparent" Foreground="{ThemeResource AccentAAFillColorDefaultBrush}" BubbleForeground="{ThemeResource AccentAAFillColorDefaultBrush}" Width="30" Height="30" Padding="0" HorizontalAlignment="Right">
+                            <ic:FluentIcon Icon="Play" IconSize="Size12"></ic:FluentIcon>
+                        </dev:BubbleButton>
+                    </StackPanel>
+                    
                 </Grid>
                 <Border BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}" Height="2" BorderThickness="2"></Border>
                 <ListView x:Name="MultiProperList">
@@ -82,10 +111,13 @@
             <dev:LoadingIndicator Mode="FlipPlane"></dev:LoadingIndicator>
             <TextBlock Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="少女祈祷中···"></TextBlock>
         </StackPanel>
-        <ScrollViewer x:Name="ResultViewer" Grid.Row="1" Grid.Column="0" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" CornerRadius="5" Padding="10">
+        <Grid x:Name="Bulletin" Grid.Row="1" Grid.Column="0" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" CornerRadius="5" Padding="10" Visibility="Collapsed">
+            
+        </Grid>
+        <ScrollViewer x:Name="ResultViewer" Grid.Row="1" Grid.Column="0" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" CornerRadius="5" Padding="10" >
             <ItemsRepeater x:Name="CardList" Margin="0,10,0,0">
                 <ItemsRepeater.Layout>
-                    <FlowLayout MinRowSpacing="20" MinColumnSpacing="25" LineAlignment="SpaceEvenly"></FlowLayout>
+                    <LinedFlowLayout MinItemSpacing="15" LineSpacing="15" ItemsStretch="Fill" ItemsJustification="Center"></LinedFlowLayout>
                 </ItemsRepeater.Layout>
                 <ItemsRepeater.ItemTemplate>
                     <DataTemplate>
@@ -94,7 +126,7 @@
                                 <Image Source="/Assets/Card.jpg" Width="175" Height="280" Stretch="UniformToFill"></Image>
                             </dev:FlipSide.Side1>
                             <dev:FlipSide.Side2>
-                                <Image Source="{Binding ImageUrl}"  Width="175" Height="280" ></Image>
+                                <local:SmartImage Source="{Binding ImageUrl}"  Width="175" Height="280" ></local:SmartImage>
                             </dev:FlipSide.Side2>
                         </dev:FlipSide >
                     </DataTemplate>
@@ -102,7 +134,7 @@
             </ItemsRepeater>
         </ScrollViewer>
 
-        
+        <local:InfoFlower x:Name="Flower" Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2" Grid.RowSpan="2" HorizontalAlignment="Center" VerticalAlignment="Bottom"></local:InfoFlower>
         
     </Grid>
 </Page>

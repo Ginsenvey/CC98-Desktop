@@ -1,38 +1,53 @@
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Runtime.InteropServices.WindowsRuntime;
+Ôªøusing CCkernel;
+using CCUserModel;
+using CommunityToolkit.WinUI.Converters;
+using CommunityToolkit.WinUI.Media;
+using DevWinUI;
+using FluentIcons.Common;
+using FluentIcons.WinUI;
+using Microsoft.UI.Composition.SystemBackdrops;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Controls.Primitives;
 using Microsoft.UI.Xaml.Data;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
+using Microsoft.UI.Xaml.Media.Animation;
+using Microsoft.UI.Xaml.Media.Imaging;
 using Microsoft.UI.Xaml.Navigation;
+using Microsoft.Windows.AppNotifications;
+using Microsoft.Windows.AppNotifications.Builder;
+using Microsoft.Windows.BadgeNotifications;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.ComponentModel;
+using System.Diagnostics;
+using System.IO;
+using System.Linq;
+using System.Net;
+using System.Net.Http;
+using System.Net.Http.Headers;
+using System.Net.Http.Json;
+using System.Net.Security;
+using System.Reflection;
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices.WindowsRuntime;
+using System.Text.RegularExpressions;
+using System.Threading.Tasks;
+using Windows.ApplicationModel.DataTransfer;
 using Windows.Foundation;
 using Windows.Foundation.Collections;
-using CCkernel;
-using System.Net.Security;
+using Windows.Media.Protection.PlayReady;
 using Windows.Security.Credentials;
-using System.Net.Http.Json;
-using Newtonsoft.Json;
-using Windows.Storage;
-using System.Collections;
-using System.Net.Http.Headers;
-using System.Net.Http;
-using System.Threading.Tasks;
-using System.Net;
-using DevWinUI;
-using System.Collections.ObjectModel;
-using Newtonsoft.Json.Linq;
-using Windows.UI.WebUI;
-using FluentIcons.WinUI;
-using Microsoft.UI.Composition.SystemBackdrops;
-using Windows.ApplicationModel.DataTransfer;
-using System.Text.RegularExpressions;
-using System.Reflection;
 using Windows.Security.Cryptography.Certificates;
+using Windows.Storage;
+using Windows.Storage.Streams;
+
+
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
 
@@ -43,26 +58,240 @@ namespace App3
     /// </summary>
     public sealed partial class MainWindow : Window
     {
-        
+        public ObservableCollection<CategoryBase> MenuItems { get; } = new ObservableCollection<CategoryBase>();
+        public ObservableCollection<CategoryBase> FooterMenuItems { get; } = new ObservableCollection<CategoryBase>();
         public MainWindow()
         {
             this.InitializeComponent();
-            
             this.ExtendsContentIntoTitleBar = true;
-            this.SetTitleBar(GridTitleBar);
+            this.SetTitleBar(UserArea);
+            this.AppWindow.SetTaskbarIcon("Assets/cc98.png");
             AppWindow.TitleBar.PreferredHeightOption = Microsoft.UI.Windowing.TitleBarHeightOption.Tall;
-            
             LoadSettings();
             App.ThemeChanged += OnAppThemeChanged;
-            Vault = new();
-            collections = new ObservableCollection<string>() { };      
-            CheckLoginStatus();
-            UnreadCount = 0;
-            InitializeTimer();
-            FetchIndex();
-            contentframe.Navigate(typeof(Index),"hotTopic");
+            Messenger.Instance.NavigationItemAdded += OnNavigationItemAdded;
+            Surfing();
         }
-        private void InitializeTimer()
+
+        
+        private void ShowTips(string title,string content)
+        {
+            StatusReport.Title = title;
+            StatusReport.Content = content;
+            StatusReport.IsOpen = true;
+        }
+        private void Surfing()
+        {
+            CheckLoginStatus();
+            LoadProfile();
+            LoadMenuItem();
+            InitializeTimer();
+        }
+        private async void LoadProfile()
+        {
+            string port = ValidationHelper.IsTokenExist(Set, "Portrait");
+            if (port != "0")
+            {
+                try
+                {
+                    MyPicture.ProfilePicture = await ImageResolver.LoadWebImage(port);
+                }
+                catch { }
+            }
+            else
+            {
+               MyPicture.ProfilePicture = new BitmapImage(new Uri("ms-appx:///Assets/cc98.png"));
+            }
+
+           
+        }
+        private void OnNavigationItemAdded(NavigationItem item)
+        {
+            bool flag = true;
+            foreach (var menu in MenuItems)
+            {
+                if(menu is NavigationItem i)
+                {
+                    if (i.Tag == item.Tag)
+                    {
+                        flag = false;
+                    }
+                }
+            }
+            if (flag)
+            {
+                MenuItems.Add(item);
+            }
+        }
+        private void LoadMenuItem()
+        {
+            var Favorite=new NavigationGroup {Name="ÈõÜÈî¶", IsEditable = false };
+            var PinnedGroup = new NavigationGroup{Name = "Êé®Ëçê", IsEditable = true };
+            MenuItems.Add(new NavigationItem{Name = "‰ªäÊó•ËØùÈ¢ò",IconSymbol = FluentIcons.Common.Symbol.DesignIdeas,Tag = "Index",IsEditable=false} );
+            MenuItems.Add(new NavigationItem { Name = "ÂÖ®ÈÉ®ÁâàÈù¢", IconSymbol = FluentIcons.Common.Symbol.Board, Tag = "Section", IsEditable = false });
+            MenuItems.Add(new NavigationItem { Name = "Êñ∞Â∏ñ", IconSymbol = FluentIcons.Common.Symbol.Note, Tag = "Discover", IsEditable = false });
+            MenuItems.Add(Favorite);
+            MenuItems.Add(new NavigationItem { Name = "Âä®ÊÄÅ", IconSymbol = FluentIcons.Common.Symbol.Home, Tag = "Focus", IsEditable = false });    
+            MenuItems.Add(new NavigationItem { Name = "Êî∂ËóèÈõÜ", IconSymbol = FluentIcons.Common.Symbol.StarLineHorizontal3, Tag = "Favorite", IsEditable = false });
+            MenuItems.Add(PinnedGroup);      
+            FooterMenuItems.Add(new NavigationItem { Name = "Ê∂àÊÅØ", IconSymbol = FluentIcons.Common.Symbol.MailRead, Tag = "Message",IsEditable=false });
+            FooterMenuItems.Add(new NavigationItem { Name = "ËÆæÁΩÆ", IconSymbol = FluentIcons.Common.Symbol.StarSettings, Tag = "Setting",IsEditable=false});
+        }
+        private async void PinOff_Click(object sender, RoutedEventArgs e)
+        {
+            if ((sender as MenuFlyoutItem)?.Tag is string tag)
+            {
+                string r=await RequestSender.EditFocusList("delete", tag);
+                if (r == "1")
+                {
+                    string custom_boards = ValidationHelper.IsTokenExist(Set, "CustomBoards");
+                    if (custom_boards != "0")
+                    {
+                        var boardinfo = JsonConvert.DeserializeObject<Dictionary<string,string>>(custom_boards);
+                        if(boardinfo != null)
+                        {
+                            if (boardinfo.ContainsKey(tag))
+                            {
+                                boardinfo.Remove(tag);
+                            }
+                        }
+                    }
+                    var item = MenuItems.OfType<NavigationItem>().First(g => g.Tag == tag);
+                    MenuItems.Remove(item);
+                }
+                else
+                {
+                    Flower.PlayAnimation("\uEA39", $"ÂèñÊ∂àÂÖ≥Ê≥®Â§±Ë¥•:{r.Split(":")[1]}");
+                }
+                
+            }
+            
+        }
+        
+        private async void GetFocusBoards()//ÂêåÊ≠•ÂÆ¢Êà∑Á´ØÂíåÂú®Á∫øÂÖ≥Ê≥®ÁâàÂùóÁöÑ‰ø°ÊÅØ
+        {
+            string custom_boards = ValidationHelper.IsTokenExist(Set, "CustomBoards");
+            if (custom_boards!="0")
+            {
+                memory = JsonConvert.DeserializeObject<Dictionary<string, string>>(custom_boards);
+            }
+            else
+            {
+                Set.Values["CustomBoards"] = "0";
+            }
+            //ÂàùÂßãÂåñÊú¨Âú∞ÁºìÂ≠ò
+            string ProfileUrl = "https://api.cc98.org/me";
+            string ProfileText=await RequestSender.SimpleRequest(ProfileUrl);
+            if (!ProfileText.StartsWith("404:"))
+            {
+                var js = Deserializer.ToDictionary(ProfileText);
+                if(js != null)
+                {
+                    var boardlist = Deserializer.ToArray(js["customBoards"].ToString());
+                    if (boardlist != null)
+                    {
+                        foreach(var board in boardlist)
+                        {
+                            AddBoards(board.ToString());
+                        }
+
+                    }
+                }
+            }
+            else//Êó†ÁΩëÁªúÁ≠âÔºåÂàôÁõ¥Êé•‰ΩøÁî®ÁºìÂ≠òÊï∞ÊçÆ
+            {
+                if (memory != null)
+                {
+                    foreach (var b in memory)
+                    {
+                        MenuItems.Add(new NavigationItem { Name = b.Value, IconSymbol=BoardIcon.GetSymbol(b.Key,b.Value), Tag = b.Key, IsEditable = true });
+                    }
+                }
+            }
+        }
+        public Dictionary<string, string> memory = new();
+        private async void AddBoards(string BoardId)
+        {
+            //Ê≠§ÊñπÊ≥ïÂ∞ÜÊ£ÄÊµãÊú¨Âú∞ÊòØÂê¶Â∑≤Â≠òÂÇ®ÊùøÂùóÔºåÊ≤°ÊúâÂàôÊ∑ªÂä†„ÄÇÊó†ËÆ∫Êú¨Âú∞ÊòØÂê¶Â∑≤ÁªèÂ≠òÂú®ÔºåÈÉΩ‰ºöÂä†ËΩΩÂà∞ÂØºËà™Ê†è„ÄÇ
+            //ÂÖàÂà§Êñ≠Êú¨Âú∞Â≠òÂÇ®ÊòØÂê¶ÊúâÊ≠§ÊùøÂùó
+            if (!memory.ContainsKey(BoardId))
+            {
+                string BoardUrl = "https://api.cc98.org/board/" + BoardId;
+                try
+                {
+                    var BoardRes = await CCloginservice.vpn.GetAsync(BoardUrl);
+                    if (BoardRes.StatusCode == System.Net.HttpStatusCode.OK)
+                    {
+                        string BoardText = await BoardRes.Content.ReadAsStringAsync();
+                        if (!string.IsNullOrEmpty(BoardText))
+                        {
+                            var js = JsonConvert.DeserializeObject<Dictionary<string, object>>(BoardText);
+                            if (js != null)
+                            {
+                                string name = js["name"].ToString();
+                                memory.Add(BoardId, name);
+                                MenuItems.Add(new NavigationItem { Name = name, IconSymbol = BoardIcon.GetSymbol(BoardId,name), Tag = BoardId, IsEditable = true });
+                                string boardjsontext = JsonConvert.SerializeObject(memory);
+                                Set.Values["CustomBoards"] = boardjsontext;
+                            }
+                        }
+                    }
+                }
+                catch
+                {
+
+                }
+            }
+            else
+            {
+                //Â¶ÇÊûúÊú¨Âú∞Â≠òÂÇ®ÊúâÊ≠§ÊùøÂùóÔºåÂàôÁõ¥Êé•Ê∑ªÂä†
+                MenuItems.Add(new NavigationItem { Name = memory[BoardId], IconSymbol = BoardIcon.GetSymbol(BoardId,""), Tag = BoardId, IsEditable = true });
+            }
+        }
+        private async void LoadIndex()
+        {
+            string tag = ValidationHelper.IsTokenExist(Set, "TitlePage");
+            if (tag!="0")
+            {
+                switch (tag)
+                {
+                    case "1":
+
+                        var index = await FetchIndex();
+                        if (!index)
+                        {
+                            Flower.PlayAnimation("\uEA39", "Âà∑Êñ∞È¶ñÈ°µÂ§±Ë¥•");
+                        }
+                        contentframe.Navigate(typeof(Index));
+                        break;
+                    
+                    case"2":
+                        var param = new Dictionary<string, string>()
+                        {
+                            {"Mode","Me" },
+                            {"UserId","1" }//Ëá™Â∑±ÊòØ1Ôºå‰∏éÂåøÂêçÊ®°Âºè0Âå∫ÂàÜÂºÄ„ÄÇ
+                        };
+                        contentframe.Navigate(typeof(Profile),param);
+                        break;
+                    case "3":
+                        contentframe.Navigate(typeof(Discover));
+                        break;
+                    
+                }
+            }
+            else
+            {
+                Set.Values["TitlePage"] = "1";
+                var index = await FetchIndex();
+                if (index)
+                {
+                    contentframe.Navigate(typeof(Index));
+                }
+                
+            }
+            
+        }
+        private  void InitializeTimer()
         {
             
             SyncTimer = new DispatcherTimer();
@@ -72,23 +301,23 @@ namespace App3
         }
         
         
-        private void DispatcherTimer_Tick(object? sender, object e)
+        private  async void DispatcherTimer_Tick(object? sender, object e)
         {
-            FetchIndex();
+            await FetchIndex();
+            RefreshMessage();
         }
-        private async void FetchIndex()
+        private async Task<bool> FetchIndex()
         {
             string IndexText = await RequestSender.SimpleRequest("https://api.cc98.org/config/index");
             if (!IndexText.StartsWith("404"))
             {
                 ValidationHelper.JsonWritter(IndexText, "IndexCache.json");
+                return true;
             }
-            else
-            {
-                Flower.PlayAnimation("\uEA39", "∏¸–¬ ◊“≥ª∫¥Ê ß∞‹");
-            }
+            
+            return false;
         }
-        private void LoadSettings()
+        private  void LoadSettings()
         {
             if (Set.Values.ContainsKey("Effect"))
             {
@@ -148,8 +377,7 @@ namespace App3
                 Set.Values["Theme"] = "2";
                 RootGrid.RequestedTheme = ElementTheme.Default;
             }
-            //ºÏ≤È÷˜Ã‚…´ «∑Ò≥ı ºªØ°£ƒ¨»œ÷µ «mid-autumn.
-            if (!ValidationHelper.IsTokenExist(Set,"ThemePic"))
+            if (ValidationHelper.IsTokenExist(Set,"ThemePic")=="0")
             {
                 string themesPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Themes");
                 var Files = Directory.GetFiles(themesPath, "*.jpg", SearchOption.AllDirectories);
@@ -158,229 +386,150 @@ namespace App3
             }
             
         }
-        //Õ¨≤Ωº∆ ˝ ±÷”:√ø∑÷÷”∑¢≥ˆ“ª∏ˆTick–≈∫≈£¨ πµ√ø…µ¸¥˙∂‘œÛenum‘⁄»˝∏ˆ÷µ÷Æº‰«–ªª°£÷ª”–Œ™∆‰÷–“ª÷µ ±£¨¥•∑¢ ◊“≥À¢–¬°£
+        
         private DispatcherTimer SyncTimer { get; set; }
         private void OnAppThemeChanged(ElementTheme theme)
         {
-            // ∏¸–¬ RootGrid µƒ÷˜Ã‚
+            // Êõ¥Êñ∞ RootGrid ÁöÑ‰∏ªÈ¢ò
             RootGrid.RequestedTheme = theme;
         }
         private PasswordVault Vault;
         
         public ApplicationDataContainer Set= ApplicationData.Current.LocalSettings;
         public ObservableCollection<string> collections;
-        
-        private async void CheckLoginStatus()
-            
+        private async void CheckLoginStatus()   
         {
-            var info = Set.Values;
-            if(info.TryGetValue("Access", out var AccessCode))// «∑Ò≥ı ºªØAccess
+            
+            string Access = PasswordManager.RetrievePassword("Access");
+            if (!string.IsNullOrEmpty(Access))
             {
-                // «∑ÒŒ™”––ßµ«¬º◊¥Ã¨
-                if (AccessCode != null)
+                try
                 {
-                    if (!string.IsNullOrEmpty(AccessCode.ToString()))
+                    CCloginservice.vpn.client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Access);
+                    var response = await CCloginservice.vpn.GetAsync("https://api.cc98.org/me/unread-count");
+                    if (response.StatusCode == HttpStatusCode.OK)
                     {
-                        using (HttpClient client = new HttpClient() { })
+                        string CheckResponse = await response.Content.ReadAsStringAsync();
+                        try
                         {
-                            try
+                            var js = JsonConvert.DeserializeObject<Dictionary<string, object>>(CheckResponse);
+                            if (js != null)
                             {
-                                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", AccessCode as string);
-                                HttpResponseMessage response = await client.GetAsync("https://api.cc98.org/me/unread-count");
-                                if (response.StatusCode == HttpStatusCode.Unauthorized)
-                                {
-                                    Auth();
-                                }
-                                else if(response.StatusCode == HttpStatusCode.OK)
-                                {
-                                   
-                                    string CheckResponse = await response.Content.ReadAsStringAsync();
-                                    var js = JsonConvert.DeserializeObject<Dictionary<string, object>>(CheckResponse);
-                                    UnreadCount = Convert.ToInt16(js["messageCount"])+ Convert.ToInt16(js["replyCount"]);
-                                    MsgCount.Value = UnreadCount;
-                                    CCloginservice.client.DefaultRequestHeaders.Authorization=new AuthenticationHeaderValue("Bearer",AccessCode as string);
-                                    bool r=await GetFavorites();
-                                    if(r)
-                                    {
-                                        LoadFavorites();
-                                    }
-                                    
-                                }
+                                UnreadCount = Convert.ToInt32(js["messageCount"]) + Convert.ToInt32(js["replyCount"]);
+                                BadgeNotificationManager.Current.SetBadgeAsCount((uint)UnreadCount);
+                                GetFocusBoards();
+                                await GetFavorites();
+                                LoadIndex();
+                                return;
+                            }
+                            else
+                            {
+                                LoadIndex();
+                            }
 
-                            }
-                            catch (HttpRequestException ex)
+                        }
+                        catch (Exception ex)//Ê≠§Á±ªÊÉÖÂÜµÈÄöÂ∏∏‰∏∫ÁΩëÁªúÈóÆÈ¢òÔºå‰∏çÂÜçÂ∞ùËØïÁôªÂΩï
+                        {
+                            if (CCloginservice.vpn.IsVpnEnabled)
                             {
-                             
+                                LoadIndex();
                             }
+                            else
+                            {
+                                ShowTips("ÁΩëÁªúÈóÆÈ¢ò:", ex.Message);
+                            }
+                        }
+
+
+                    }
+
+                    else//Êó†ÊÑüÁü•ËÆ§ËØÅ
+                    {
+                        LoadIndex();
+                    }
+                    GetFocusBoards();
+
+                }
+                catch (HttpRequestException ex)
+                {
+                    ShowTips("ÁΩëÁªúÈóÆÈ¢ò:", ex.Message);
+                }
+            }
+
+        }
+        
+        
+
+        private async void RefreshMessage()
+        {
+            var response = await CCloginservice.vpn.GetAsync("https://api.cc98.org/me/unread-count");
+            if (response.StatusCode == HttpStatusCode.OK)
+            {
+
+                string CheckResponse = await response.Content.ReadAsStringAsync();
+                try
+                {
+                    var js = JsonConvert.DeserializeObject<Dictionary<string, object>>(CheckResponse);
+                    if (js != null)
+                    {
+                        UnreadCount = Convert.ToInt32(js["messageCount"]) + Convert.ToInt32(js["replyCount"]);
+                        BadgeNotificationManager.Current.SetBadgeAsCount((uint)UnreadCount);
+                    }
+                    else
+                    {
+                        BadgeNotificationManager.Current.SetBadgeAsCount(0);
+                    }
+                }
+                catch
+                {
+                    BadgeNotificationManager.Current.SetBadgeAsCount(0);
+                }
+            }
+        }
+        
+        private async Task<bool> GetFavorites()
+        {
+            string Favorites = await RequestSender.FavoritesList();
+            if (!Favorites.StartsWith("404:"))
+            {
+                try
+                {
+                    var likes = JsonConvert.DeserializeObject<Dictionary<string, object>>(Favorites);
+                    var LikeList = JsonConvert.DeserializeObject<JArray>(likes["data"].ToString());
+                    if (LikeList != null)
+                    {
+                        if (LikeList.Count > 0)
+                        {
+                            //‰∏¥Êó∂Â≠òÂÇ®Êî∂ËóèÂ§πÂàóË°®
+                            string FavoJson = JsonConvert.SerializeObject(LikeList);
+                            Set.Values["Favorites"] = FavoJson;
+                            return true;
+                        }
+                        else
+                        {
+                            Flower.PlayAnimation("\uE783", "ÊöÇÊó†Êî∂ËóèÂ§π");
+                            return false;
                         }
                     }
                     else
                     {
-                        Auth();
+                        Flower.PlayAnimation("\uEA39", "ÂêåÊ≠•Êî∂ËóèÂ§πÂ§±Ë¥•");
+                        return false;
                     }
                 }
-                else
+                catch (Exception ex)
                 {
-                    Auth();
-                }
-            }
-            else//√ª”–≥ı ºªØ£¨ ◊¥Œµ«¬º
-            {
-                //de.Text = "Œ¥≥ı ºªØ";
-                Auth();
-            }
-
-        }
-
-        private  async void Auth()
-        {
-            
-            if (Set.Values.ContainsKey("Refresh"))
-            {
-                if (Set.Values["Refresh"] != null)
-                {
-                    string refresh = Set.Values["Refresh"] as string;
-                    if (!string.IsNullOrEmpty(refresh)&&refresh!="0")
-                    {
-                        string token = await CCloginservice.RefreshToken(refresh);
-                        Set.Values["Access"] = token;
-                        Set.Values["IsActive"] = "1";
-                        CCloginservice.client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-                        
-                    }
-                    else
-                    {
-                        Set.Values["IsActive"] = "0";
-                    }
-                }
-                else
-                {
-                    Set.Values["IsActive"] = "0";
-                }
-            }
-            else
-            {
-                Set.Values["IsActive"] = "0";
-            }
-            
-        }
-        private async Task<bool> GetFavorites()
-        {
-            var Favorites = await RequestSender.FavoritesList();
-            if (Favorites != null)
-            {
-                if (Favorites.Count > 0)
-                {
-                    //¡Ÿ ±¥Ê¥¢ ’≤ÿº–¡–±Ì
-                    string FavoJson = JsonConvert.SerializeObject(Favorites);
-                    Set.Values["Favorites"] = FavoJson;
-                    return true;
-                }
-                else
-                {
-                    Flower.PlayAnimation("\uE783", "‘›Œﬁ ’≤ÿº–");
-                    
                     return false;
                 }
+
             }
-            else
-            {
-                Flower.PlayAnimation("\uEA39", "Õ¨≤Ω ’≤ÿº– ß∞‹");
-                return false;
-            }
-        }
-        private void LoadFavorites()
-        {
-            if (ValidationHelper.IsTokenExist(Set, "Favorites"))
-            {
-                var LikeList = JsonConvert.DeserializeObject<JArray>(Set.Values["Favorites"].ToString());
-                foreach (var like in LikeList)
-                {
-                    var likeinfo = JsonConvert.DeserializeObject<Dictionary<string, object>>(like.ToString());
-                    string collection = likeinfo["name"].ToString();
-                    string sortid = "f" + like["id"].ToString();
-                    likecollection.MenuItems.Add(new NavigationViewItem { Content = collection, Tag = sortid, Icon = new FluentIcons.WinUI.SymbolIcon { Symbol = FluentIcons.Common.Symbol.Tag } });  
-                }
-            }
-        }
-        public int UnreadCount { get; set; }
-        private void Navi_SelectionChanged(NavigationView sender, NavigationViewSelectionChangedEventArgs args)
-        {
-            if(args.SelectedItem as NavigationViewItem != null)
-            {
-                switch((args.SelectedItem as NavigationViewItem).Tag as string)
-                {
-                    case "0":
-                        contentframe.Navigate(typeof(Index));
-                        break;
-                    case "1":
-                        var param = new Dictionary<string, string>()
-                        {
-                            {"Mode","Me" },
-                            {"UserId","1" }//◊‘º∫ «1£¨”Îƒ‰√˚ƒ£ Ω0«¯∑÷ø™°£
-                        };
-                        contentframe.Navigate(typeof(Profile),param);
-                        break;
-                    case "2":
-                        contentframe.Navigate(typeof(Post), "Recommend");
-                        break;
-                    case "3":
-                        contentframe.Navigate(typeof(Section));
-                        break;
-                    case "4":
-                        contentframe.Navigate(typeof(Discover));
-                        break;
-                    case "5":
-                        contentframe.Navigate(typeof(Board), "68");
-                        break;
-                    case "6":
-                        contentframe.Navigate(typeof(Board), "81");
-                        break;
-                    case "7":
-                        contentframe.Navigate(typeof(Board), "80");
-                        break;
-                    case "8":
-                        contentframe.Navigate(typeof(Board), "235");
-                        break;
-                    case "9":
-                        
-                        contentframe.Navigate(typeof(Setting), "0");
-                        break;
-                    case "10":
-                        
-                        break;
-                    case "11":
-                        contentframe.Navigate(typeof(Focus));
-                        break;
-                    default:
-                        var selection = args.SelectedItem as NavigationViewItem;
-                        if ((selection.Tag as string).Contains("f"))
-                        {
-                            string GroupId = (selection.Tag as string).Replace("f", "");
-                            string GroupName = selection.Content as string;
-                            var param2 = new Dictionary<string, string>()
-                            { 
-                                {"mode","favorite" },
-                                { "gid", GroupId},
-                                { "name",GroupName}
-                            }
-                        ;
-                        contentframe.Navigate(typeof(Repeater), param2);
-                }
-                        break;
-                }
-                
-            }
-            
+            return false;
         }
         
-        private void Navi_BackRequested(NavigationView sender, NavigationViewBackRequestedEventArgs args)
-        {
-            if (contentframe.CanGoBack)
-            {
-                contentframe.GoBack();
-            }
-        }
+        public int UnreadCount { get; set; }
+        
+        
+        
 
         private void msgflyout_Click(object sender, RoutedEventArgs e)
         {
@@ -397,13 +546,13 @@ namespace App3
                 string input=a.Text;
                 if (input != "")
                 {
-                    List<string> suggestions = new List<string>() { "À—À˜÷˜Ã‚ #" + input + "#", "À—À˜”√ªß #" + input + "#" };
+                    List<string> suggestions = new List<string>() { "ÊêúÁ¥¢‰∏ªÈ¢ò #" + input + "#", "ÊêúÁ¥¢Áî®Êà∑ #" + input + "#" };
                     sender.ItemsSource = suggestions;
-                    string pattern = @"^CC\d{7}$";
+                    string pattern = @"^\d{7}$";
                     bool isTopic = Regex.IsMatch(input, pattern);
                     if (isTopic)
                     {
-                        suggestions.Add("‰Ø¿¿÷˜Ã‚:" + input);
+                        suggestions.Add("ÊµèËßà‰∏ªÈ¢ò:" + input);
                     }
                 }
                 
@@ -411,16 +560,16 @@ namespace App3
 
         }
         public int SearchMode = -1;
-        private async void search_SuggestionChosen(AutoSuggestBox sender, AutoSuggestBoxSuggestionChosenEventArgs args)
+        private  void search_SuggestionChosen(AutoSuggestBox sender, AutoSuggestBoxSuggestionChosenEventArgs args)
         {
             if (args.SelectedItem != null)
             {
                 string temp = args.SelectedItem.ToString();
                 List<string> type = new List<string>()
                 {
-                    "À—À˜÷˜Ã‚ #" + sender.Text + "#",
-                    "À—À˜”√ªß #" + sender.Text + "#",
-                    "‰Ø¿¿÷˜Ã‚:" + sender.Text
+                    "ÊêúÁ¥¢‰∏ªÈ¢ò #" + sender.Text + "#",
+                    "ÊêúÁ¥¢Áî®Êà∑ #" + sender.Text + "#",
+                    "ÊµèËßà‰∏ªÈ¢ò:" + sender.Text
                 };
                 
                 for (int i=0;i<type.Count;i++)
@@ -441,8 +590,8 @@ namespace App3
         }
 
         
-        //∫Û∆⁄£¨À—À˜¿˙ ∑Ω´ª·±ªº«¬ºµΩ±æµÿª∫¥Ê°£÷ª±£¡Ù«∞100Ãıº«¬º£¨œ»Ω¯œ»≥ˆ°£
-        //µ±”√ªß ‰»ÎŒƒ±æ ±£¨◊‘∂Øƒ£∫˝πÿ¡™¿˙ ∑º«¬º°£
+        //ÂêéÊúüÔºåÊêúÁ¥¢ÂéÜÂè≤Â∞Ü‰ºöË¢´ËÆ∞ÂΩïÂà∞Êú¨Âú∞ÁºìÂ≠ò„ÄÇÂè™‰øùÁïôÂâç100Êù°ËÆ∞ÂΩïÔºåÂÖàËøõÂÖàÂá∫„ÄÇ
+        //ÂΩìÁî®Êà∑ËæìÂÖ•ÊñáÊú¨Êó∂ÔºåËá™Âä®Ê®°Á≥äÂÖ≥ËÅîÂéÜÂè≤ËÆ∞ÂΩï„ÄÇ
         private void SemanticSearch(string key)
         {
             var p = new Dictionary<string, string>();
@@ -457,38 +606,258 @@ namespace App3
                     contentframe.Navigate(typeof(Search), p);
                     break;
                 case 1:
-                    p = new Dictionary<string, string>()
-                            {
-                                {"type","user" },
-                                {"key",key}
-                            };
-                    contentframe.Navigate(typeof(Search), p);
+                    SearchUser(key);
                     break;
                 case 2:
-                    contentframe.Navigate(typeof(Topic), key.Replace("CC",""));
+                    contentframe.Navigate(typeof(Topic), key.Replace("cc",""));
                     break;
                 default:
                     break;
             }
         }
-
-        private void PaneFlyout_Click(object sender, RoutedEventArgs e)
+        private async void SearchUser(string key)
         {
-            var f=sender as MenuFlyoutItem;
-            if(f!=null)
+            string url = $"https://api.cc98.org/user/name/{key}";
+            string infotext = await RequestSender.SimpleRequest(url);
+            if (!infotext.StartsWith("404:"))
             {
-                string tag = f.Tag as string;
-                if(tag!=null)
+                var Info = Deserializer.ToDictionary(infotext);
+                if (Info != null)
                 {
-                    switch (tag)
+                    string uid = ValidationHelper.GetKey(Info, "id");
+                    if (uid != null&&uid!="0")
                     {
-                        case "0":
-                            FetchIndex();
-                            contentframe.Navigate(typeof(Index));
-                            break;
+                        if (uid.All(char.IsDigit))
+                        {
+                            var param = new Dictionary<string, string>()
+                                        {
+                                            {"Mode","Others" },
+                                            {"UserId",uid }
+                                        };
+                            contentframe.Navigate(typeof(Profile), param);
+                            return;
+                        }
                     }
                 }
             }
+            else
+            {
+                Flower.PlayAnimation("\uEA39", "Êú™ÊêúÁ¥¢Âà∞ÁªìÊûú");
+                return;
+            }
+            
+        }
+
+        private void Back_PointerEntered(object sender, PointerRoutedEventArgs e)
+        {
+            AnimatedIcon.SetState(BackIcon, "PointerOver");
+        }
+
+        private void Back_PointerExited(object sender, PointerRoutedEventArgs e)
+        {
+            AnimatedIcon.SetState(BackIcon, "Normal");
+            
+        }
+
+        private void Back_Click(object sender, RoutedEventArgs e)
+        {
+            if (contentframe.CanGoBack)
+            {
+                contentframe.GoBack();
+            }
+        }
+
+        private void Navi_ItemInvoked(NavigationView sender, NavigationViewItemInvokedEventArgs args)
+        {
+            if(args.InvokedItemContainer?.Tag is string tag)
+            {
+                var item = args.InvokedItem as NavigationViewItem;
+                switch (tag)
+                {
+                    case "Index":
+                        contentframe.Navigate(typeof(Index));
+                        break;
+                    case "Section":
+                        contentframe.Navigate(typeof(Section));
+                        break;
+                    case "Discover":
+                        contentframe.Navigate(typeof(Discover));
+                        break;
+                    case "Favorite":
+                        var param_1 = new Dictionary<string, string>()
+                        {
+                            {"name","ÈªòËÆ§Êî∂ËóèÂ§π" },
+                            { "gid","0"},
+                            {"mode","favorite"}
+                        };
+                        contentframe.Navigate(typeof(Favorite), param_1);
+                        break;
+                    case "Setting":
+                        contentframe.Navigate(typeof(Setting));
+                        break;
+                    case "Message":
+                        var param_2 = new Dictionary<string, string>()
+                        {
+                            {"Type","0"},
+                        };
+                        contentframe.Navigate(typeof(Message), param_2);
+                        break;
+                    case "Focus":
+                        contentframe.Navigate(typeof(Focus));
+                        break;
+                    default:
+                        if (tag.All(char.IsDigit))
+                        {
+                            try
+                            {
+                                contentframe.Navigate(typeof(Board),tag);
+                            }
+                            catch
+                            {
+
+                            }
+                        }
+                        
+                        break;
+                }
+            }
+        }
+
+        private void PaneExpand_Click(object sender, RoutedEventArgs e)
+        {
+            Navi.IsPaneOpen=!Navi.IsPaneOpen;
+        }
+
+        private void PaneExpand_PointerEntered(object sender, PointerRoutedEventArgs e)
+        {
+            AnimatedIcon.SetState(NaviIcon, "PointerOver");
+        }
+
+        private void PaneExpand_PointerExited(object sender, PointerRoutedEventArgs e)
+        {
+            AnimatedIcon.SetState(NaviIcon, "Normal");
+        }
+      
+
+        private void Me_PointerEntered(object sender, PointerRoutedEventArgs e)
+        {
+            AnimateButton(PortScaleTransform, 0.95, 0.95);
+        }
+
+        private void Me_PointerExited(object sender, PointerRoutedEventArgs e)
+        {
+            AnimateButton(PortScaleTransform, 1, 1);
+        }
+        private void AnimateButton(ScaleTransform transform, double X, double Y)
+        {
+            var storyboard = new Storyboard();
+
+            var animationX = new DoubleAnimation
+            {
+                To = X,
+                Duration = TimeSpan.FromSeconds(0.2),
+                EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
+            };
+            Storyboard.SetTarget(animationX, transform);
+            Storyboard.SetTargetProperty(animationX, "ScaleX");
+
+            var animationY = new DoubleAnimation
+            {
+                To = Y,
+                Duration = TimeSpan.FromSeconds(0.2),
+                EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
+            };
+            Storyboard.SetTarget(animationY, transform);
+            Storyboard.SetTargetProperty(animationY, "ScaleY");
+
+            storyboard.Children.Add(animationX);
+            storyboard.Children.Add(animationY);
+            storyboard.Begin();
+        }
+
+        private void Me_PointerPressed(object sender, PointerRoutedEventArgs e)
+        {
+            AnimateButton(PortScaleTransform, 0.85, 0.85);
+        }
+
+        private void Me_PointerReleased(object sender, PointerRoutedEventArgs e)
+        {
+            AnimateButton(PortScaleTransform, 1, 1);
+        }
+
+        private void Me_PointerCanceled(object sender, PointerRoutedEventArgs e)
+        {
+            AnimateButton(PortScaleTransform, 1, 1);
+        }
+
+        private void Me_Click(object sender, RoutedEventArgs e)
+        {
+            LoadProfile();
+            
+            var param = new Dictionary<string, string>()
+                        {
+                            {"Mode","Me" },
+                            {"UserId","1" }//Ëá™Â∑±ÊòØ1Ôºå‰∏éÂåøÂêçÊ®°Âºè0Âå∫ÂàÜÂºÄ„ÄÇ
+                        };
+            contentframe.Navigate(typeof(Profile), param);
+        }
+
+        private void CCZone_Click(object sender, RoutedEventArgs e)
+        {
+            contentframe.Navigate(typeof(Game));
         }
     }
+    public class CategoryBase { }
+
+    public class NavigationItem : CategoryBase,INotifyPropertyChanged
+    {
+        public string Name { get; set; }
+        public FluentIcons.Common.Symbol IconSymbol { get; set; }
+        public string Tag { get; set; }
+        public bool IsPinned { get; set; } // ÊòØÂê¶Âõ∫ÂÆö
+
+        public bool IsEditable {  get; set; }
+        
+
+        
+        public event PropertyChangedEventHandler PropertyChanged;
+        protected void OnPropertyChanged([CallerMemberName] string propertyName = null)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        }
+    }
+    
+    public class NavigationGroup:CategoryBase
+    {
+        public string Name { get; set; } 
+        public bool IsEditable { get; set; } 
+    }
+    public class Separator : CategoryBase { }
+
+    public class NavigationTemplateSelector : DataTemplateSelector
+    {
+        public DataTemplate GroupTemplate { get; set; }
+        public DataTemplate PinnedItemTemplate { get; set; }
+        public DataTemplate ItemTemplate { get; set; }
+
+        protected override DataTemplate SelectTemplateCore(object item)
+        {
+            if(item is NavigationItem n)
+            {
+                if (n.IsEditable ==true)
+                {
+                    return PinnedItemTemplate;
+                }
+                else
+                {
+                    return ItemTemplate;
+                }
+            }
+            else
+            {
+                return GroupTemplate;
+            }
+        }
+    }
+    
 }

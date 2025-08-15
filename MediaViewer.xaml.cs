@@ -23,6 +23,7 @@ using Windows.Storage.Streams;
 using static System.Net.Mime.MediaTypeNames;
 using Windows.Storage;
 using Windows.Media.Core;
+using CCUserModel;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -41,6 +42,7 @@ namespace App3
         {
             this.InitializeComponent();
             _url = param["url"];
+            MediaInfo.Text = _url;
             _type=param["type"];
             this.Title = "资源预览";
             this.ExtendsContentIntoTitleBar = true;
@@ -59,7 +61,7 @@ namespace App3
                 ImageControl.Visibility = Visibility.Collapsed;
                 zoomer.Visibility = Visibility.Collapsed;
                 VideoPlayer.Visibility = Visibility.Visible;
-                Grid.SetRow(VideoPlayer,0);
+                Grid.SetRow(VideoPlayer,1);
                 Grid.SetRowSpan(VideoPlayer, 2);
                 VideoPlayer.Source = MediaSource.CreateFromUri(new Uri(_url));
             }
@@ -68,8 +70,7 @@ namespace App3
                 ImageControl.Visibility = Visibility.Visible;
                 zoomer.Visibility = Visibility.Visible;
                 VideoPlayer.Visibility = Visibility.Collapsed;
-                var bitmap = new BitmapImage(new Uri(_url));
-                PicViewer.Source = bitmap;
+                PicViewer.Source=_url;
                 zoomer.ZoomToFactor(0.6f);
             }
                 
@@ -114,7 +115,7 @@ namespace App3
         }
         private async Task<string> ProcessImage(bool mode)
         {
-            if (PicViewer.Source is BitmapSource bitmapSource)
+            if (PicViewer.ImageSource is BitmapSource bitmapSource)
             {
                 try
                 {
@@ -227,6 +228,25 @@ namespace App3
             
             
 
+        }
+
+        private void AddAsEmoji_Click(object sender, RoutedEventArgs e)
+        {
+            if (_type == "image" && !_url.StartsWith("ms-appx"))
+            {
+                CustomEmoji.SaveEmoji(_url);
+                msg.Target = sender as Button;
+                msg.Title = "提示";
+                msg.Content = "已添加到自定义表情";
+                msg.IsOpen = true;
+            }
+            else
+            {
+                msg.Target = sender as Button;
+                msg.Title = "提示";
+                msg.Content = "错误的媒体类型" ;
+                msg.IsOpen = true;
+            }
         }
     }
 }
