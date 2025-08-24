@@ -149,7 +149,7 @@
                     <ToggleSwitch x:Name="IsImageVisible" Toggled="IsImageVisible_Toggled"></ToggleSwitch>
                 </tool:SettingsCard>
                 <TextBlock  Text="关于" FontSize="16" Margin="5,2,0,5"></TextBlock>
-                <tool:SettingsExpander Header="CC98 Desktop" Description="2025.发布构建。">
+                <tool:SettingsExpander Header="CC98 Desktop" Description="2025.发布构建">
                     <tool:SettingsExpander.HeaderIcon>
                         <ic:SymbolIcon Symbol="Info" ></ic:SymbolIcon>
                     </tool:SettingsExpander.HeaderIcon>
@@ -175,7 +175,7 @@
                         
                     </tool:SettingsExpander.Items>
                 </tool:SettingsExpander>
-                <tool:SettingsCard Header="新功能与改进">
+                <tool:SettingsCard Header="新功能与改进" Description="跟踪最新的功能特性，或者提供反馈和建议">
                     <tool:SettingsCard.HeaderIcon>
                         <ic:SymbolIcon Symbol="ArrowTrendingSparkle"></ic:SymbolIcon>
                     </tool:SettingsCard.HeaderIcon>

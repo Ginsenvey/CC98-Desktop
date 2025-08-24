@@ -1,4 +1,3 @@
-using ABI.System;
 using CCkernel;
 using CCUserModel;
 using CommunityToolkit.WinUI.Controls;
@@ -51,15 +50,17 @@ namespace App3
     {
         public ObservableCollection<STile> stiles=new ObservableCollection<STile>();
         public ApplicationDataContainer Set = ApplicationData.Current.LocalSettings;
-        
+        public Info profile=new Info() { 
+            Id="0",
+            Name="未知用户",
+            Port="",
+            IsFollowing=false,
+        };
         public Profile()
         {
             this.InitializeComponent();
             
-            SimpleTile.ItemsSource = stiles;
-            
-            
-            
+            SimpleTile.ItemsSource = stiles; 
         }
         protected override void OnNavigatedTo(Microsoft.UI.Xaml.Navigation.NavigationEventArgs e)
         {
@@ -67,39 +68,45 @@ namespace App3
 
             // 获取传递的参数
             var param = e.Parameter as Dictionary<string,string>;
-            string uid = param["UserId"];
-            string mode=param["Mode"];
-            if (mode=="Others")
+            if (param != null)
             {
-                CurrentPerson = uid;
-                CurrentMode=mode;
-                LoadProfile(mode,uid);
-                LoadMyTopic("0",uid,mode);   
+                string uid = param["UserId"];
+                string mode = param["Mode"];
+                if (mode == "Others")
+                {
+                    CurrentPerson = uid;
+                    CurrentMode = mode;
+                    LoadProfile(mode, uid);
+                    LoadMyTopic("0", uid, mode);
+                }
+                else
+                {
+                    LoadProfile(mode, uid);
+                    LoadMyTopic("0", uid, mode);
+                    SignIn();
+                }
             }
-            else
-            {
-                LoadProfile(mode,uid);
-                LoadMyTopic("0",uid,mode);
-                SignIn(); 
-            }
+            
         }
-        public string CurrentPerson = "1";
+        public string CurrentPerson = "0";
         public string CurrentMode = "Me";
         private async void SignIn()
         {
             string SignInResult = await RequestSender.SignIn();
             if(SignInResult=="0")
             {
-                WealthInfo.Text = "财富值(签到失败)";
-                
+                SignStatus.Text = "签到失败";
+                SignStatusIcon.IconVariant = IconVariant.Regular;
             }
             else if (SignInResult == "1")
             {
-                WealthInfo.Text = "财富值(签到中)";
+                SignStatus.Text = "签到中";
+                SignStatusIcon.IconVariant = IconVariant.Filled;
             }
             else
             {
-                WealthInfo.Text = "财富值(已签到)";
+                SignStatus.Text = "已签到";
+                SignStatusIcon.IconVariant = IconVariant.Filled;
             }
         }
         //用户个人页面检查跳转参数
@@ -113,29 +120,38 @@ namespace App3
             string ProfileText = await RequestSender.SimpleRequest(ProfileUrl);
             if (!ProfileText.StartsWith("404:"))
             {
-                var js = JsonConvert.DeserializeObject<Dictionary<string, object>>(ProfileText);
-                Set.Values["Uid"] = js["id"].ToString();
+                var js = Deserializer.ToDictionary(ProfileText);
+                if (js == null) return;
                 bool isme = false;
                 if (mode == "Me")
                 {
                     isme = true;
-                    Set.Values["Me"] = js["name"].ToString();
-                    Set.Values["Portrait"] = js["portraitUrl"].ToString();
+                    Set.Values["Uid"] = ValidationHelper.GetKey(js, "id");
+                    Set.Values["Me"] = ValidationHelper.GetKey(js, "name");
+                    Set.Values["Portrait"] = ValidationHelper.GetKey(js, "portraitUrl");
                 }
-                var profile = new Info()
+                //针对从其他页面进入Profile
+                //如果还没有打开过个人空间，从其他地方进入自己的主页时，前者返回0，isme仍为false.
+                //因此可以确保不能关注自己
+                if(ValidationHelper.IsTokenExist(Set,"Uid") ==ValidationHelper.GetKey(js, "id"))
                 {
-                    Name = js["name"].ToString(),
-                    Id = js["id"].ToString(),
-                    Popularity = js["popularity"].ToString(),
-                    Fan = js["fanCount"].ToString(),
-                    Follow = js["followCount"].ToString(),
-                    Logtime = js["lastLogOnTime"].ToString(),
+                    isme=true;
+                }
+                profile = new Info()
+                {
+                    Name = ValidationHelper.GetKey(js, "name"),
+                    Id = ValidationHelper.GetKey(js, "id"),
+                    Popularity = ValidationHelper.GetKey(js, "popularity"),
+                    Fan = ValidationHelper.GetKey(js, "fanCount"),
+                    Follow = ValidationHelper.GetKey(js, "followCount"),  
+                    Logtime = ValidationHelper.GetKey(js, "lastLogOnTime"),
                     Port = ValidationHelper.GetKey(js, "portraitUrl"),
-                    Signature = UBBConverter.Convert(js["signatureCode"].ToString(), true),
-                    Posts = js["postCount"].ToString(),
-                    Wealth = js["wealth"].ToString(),
-                    IsMe = isme
-
+                    Signature = UBBConverter.Convert(ValidationHelper.GetKey(js, "signatureCode"), true),
+                    Posts = ValidationHelper.GetKey(js, "postCount"),
+                    Wealth = ValidationHelper.GetKey(js,"wealth"),
+                    IsOthers = !isme,
+                    Regtime = ValidationHelper.GetKey(js,"registerTime"),
+                    IsFollowing=ValidationHelper.GetKey(js, "isFollowing")=="True",//注意大写
                 };
                 MyProfile.ProfilePicture = await ImageResolver.LoadWebImage(profile.Port);
                 InfoContent.DataContext = profile;
@@ -316,7 +332,7 @@ namespace App3
             }
         }
 
-        private void Follow_Click(object sender, RoutedEventArgs e)
+        private void FollowList_Click(object sender, RoutedEventArgs e)
         {
             var h = sender as HyperlinkButton;
 
@@ -325,7 +341,7 @@ namespace App3
                 var i = h.DataContext as Info;
                 if (i != null)
                 {
-                    if (i.IsMe)
+                    if (!i.IsOthers)
                     {
                         string tag = h.Tag as string;
                         if (!string.IsNullOrEmpty(tag))
@@ -350,8 +366,11 @@ namespace App3
             public string Popularity {  get; set; }
             public string Fan {  get; set; }
             public string Follow { get; set; }
-           
-            public bool IsMe { get; set; }
+
+            public string Regtime { get; set; }
+
+            public bool IsOthers { get; set; }
+            public bool IsFollowing {  get; set; }
         }
         public class STile : INotifyPropertyChanged
         {
@@ -474,7 +493,108 @@ namespace App3
             }
         }
 
-        
-    }
+        private void StartChat_Click(object sender, RoutedEventArgs e)
+        {
+            var c = new Contact { mid = profile.Id, name = profile.Name, url = profile.Port };
+            var p = new Dictionary<string, object>()
+                    {
+                        {"Type","1" },
+                        {"Info",c }
+                    };
+            if (profile.Id != "0")
+            {
+                Frame.Navigate(typeof(Message), p);
+            }
+            
+        }
 
+        private async void Follow_Click(object sender, RoutedEventArgs e)
+        {
+            bool flag = profile.IsFollowing;
+            string mode=  flag?"0":"1";
+            string restext = await RequestSender.Follow(mode, profile.Id);
+            if (restext == "1")
+            {
+                LoadProfile(CurrentMode, CurrentPerson);
+                Flower.PlayAnimation("\uE930", flag?"已取消关注":"已关注");
+            }
+            else
+            {
+                Flower.PlayAnimation("\uEA39", "操作失败");
+            }
+        }
+    }
+    public partial class BooltoVisibilityConverter : IValueConverter
+    {
+        object IValueConverter.Convert(object value, Type targetType, object parameter, string language)
+        {
+            if (value is bool flag)
+            {
+                return flag?Visibility.Visible:Visibility.Collapsed;
+            }
+            else
+            {
+                return Visibility.Collapsed;
+            }
+        }
+
+        object IValueConverter.ConvertBack(object value, Type targetType, object parameter, string language)
+        {
+            throw new NotImplementedException();
+        }
+    }
+    public partial class BooltoVariantConverter : IValueConverter
+    {
+        object IValueConverter.Convert(object value, Type targetType, object parameter, string language)
+        {
+            if (value is bool flag)
+            {
+                return flag ? IconVariant.Filled:IconVariant.Regular;
+            }
+            else
+            {
+                return IconVariant.Regular;
+            }
+        }
+
+        object IValueConverter.ConvertBack(object value, Type targetType, object parameter, string language)
+        {
+            throw new NotImplementedException();
+        }
+    }
+    public partial class RBooltoVisibilityConverter : IValueConverter
+    {
+        object IValueConverter.Convert(object value, Type targetType, object parameter, string language)
+        {
+            if (value is bool flag)
+            {
+                return flag ? Visibility.Collapsed : Visibility.Visible;
+            }
+            else
+            {
+                return Visibility.Collapsed;
+            }
+        }
+
+        object IValueConverter.ConvertBack(object value, Type targetType, object parameter, string language)
+        {
+            throw new NotImplementedException();
+        }
+    }
+    public partial class BoolToFollowTextConverter : IValueConverter
+    {
+        public object Convert(object value, Type targetType, object parameter, string language)
+        {
+            if (value is bool isFollowing)
+            {
+                return isFollowing ? "取消关注" : "关注";
+            }
+            return "关注";
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, string language)
+        {
+            throw new NotImplementedException();
+        }
+    }
 }

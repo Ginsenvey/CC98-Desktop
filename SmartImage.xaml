@@ -10,7 +10,7 @@
 
     <Grid>
         <Image x:Name="InnerImage"
-               Stretch="{x:Bind Stretch, Mode=OneWay}"/>
+               Stretch="{x:Bind Stretch, Mode=OneWay}" Unloaded="InnerImage_Unloaded"/>
         <ProgressRing x:Name="LoadingIndicator"
                       IsActive="False"
                       Width="16"

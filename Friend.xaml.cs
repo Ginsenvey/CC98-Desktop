@@ -178,23 +178,18 @@ namespace App3
                 var _tag = m.Tag;
                 if(_tag is string tag)
                 {
-                    string url = $"https://api.cc98.org/me/followee/{tag}";
-                    var res = await CCloginservice.vpn.DeleteAsync(url);
-                    try
+                    string restext = await RequestSender.Follow("0", tag);
+                    if (restext == "1")
                     {
-                        if (res.StatusCode == HttpStatusCode.OK)
-                        {
-                            friends.Clear();
-                            LoadFriend(Set.Values["CurrentFriendType"] as string, "0");
-                            history = 0;
-                            Flower.PlayAnimation("\uE930", "已取消关注");
-                        }
-                        else
-                        {
-                            Flower.PlayAnimation("\uEA39", "取消关注失败");
-                        }
+                        friends.Clear();
+                        LoadFriend(ValidationHelper.IsTokenExist(Set, "CurrentFriendType"), "0");
+                        history = 0;
+                        Flower.PlayAnimation("\uE930", "已取消关注");
                     }
-                    catch { }
+                    else
+                    {
+                        Flower.PlayAnimation("\uEA39", "取消关注失败");
+                    }
                 }
             }
         }
@@ -210,7 +205,7 @@ namespace App3
                     var c=new Contact { mid=f.uid,name=f.name ,url=f.url};
                     var p = new Dictionary<string, object>()
                     {
-                        {"Type","2" },
+                        {"Type","1" },
                         {"Info",c }
                     };
                     Frame.Navigate(typeof(Message), p);

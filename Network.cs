@@ -20,7 +20,11 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Xml;
 using Windows.Devices.PointOfService;
+using Windows.Media;
+using Windows.Media.Core;
+using Windows.Media.Playback;
 using Windows.Storage;
+using Windows.Storage.Streams;
 using Windows.UI.Core;
 using static System.Net.WebRequestMethods;
 
@@ -31,7 +35,7 @@ public class VpnService : IDisposable
     private const string LoginAuthUrl = "https://webvpn.zju.edu.cn/por/login_auth.csp?apiversion=1";
     private const string LoginPswUrl = "https://webvpn.zju.edu.cn/por/login_psw.csp?anti_replay=1&encrypt=1&apiversion=1";
     public bool IsVpnEnabled=false;
-    public  HttpClient client;
+    public HttpClient client;
     public CookieContainer Jar;
     private bool _disposed = false;
     public bool Logined = false;
@@ -176,6 +180,52 @@ public class VpnService : IDisposable
             return $"404:{ex.Message}";
         }
         
+
+    }
+    public async Task<MediaSource> GetSourceAsync(string url)
+    {
+        try
+        {
+            string targeturl = CCloginservice.vpn.IsVpnEnabled ? VpnService.ConvertUrl(url) : url;
+            using (var res = await CCloginservice.vpn.client.GetAsync(targeturl, HttpCompletionOption.ResponseHeadersRead))
+            {
+                if (res.IsSuccessStatusCode)
+                {
+                    var memory_stream = new InMemoryRandomAccessStream();
+                    using (var content_stream = await res.Content.ReadAsStreamAsync())
+                    {
+                        await ValidationHelper.CopyStreamToRandomAccessStream(content_stream, memory_stream);
+                    }
+                    var source = MediaSource.CreateFromStream(memory_stream, res.Content.Headers.ContentType?.MediaType);
+                    return source;
+                }
+                else if (res.StatusCode == HttpStatusCode.Unauthorized)
+                {
+                    var r = await Coordinator.SafeSlientAuth();
+                    if (r)
+                    {
+                        using (var res1 = await CCloginservice.vpn.client.GetAsync(targeturl, HttpCompletionOption.ResponseHeadersRead))
+                        {
+                            if (res1.IsSuccessStatusCode)
+                            {
+                                var memory_stream = new InMemoryRandomAccessStream();
+                                using (var content_stream = await res1.Content.ReadAsStreamAsync())
+                                {
+                                    await ValidationHelper.CopyStreamToRandomAccessStream(content_stream, memory_stream);
+                                }
+                                var source = MediaSource.CreateFromStream(memory_stream, res1.Content.Headers.ContentType?.MediaType);
+                                return source;
+                            }
+                        }
+                    }
+                }
+                
+            }
+
+
+        }
+        catch{}
+        return null;
 
     }
     public async Task<byte[]> GetByteArrayAsync(string url)

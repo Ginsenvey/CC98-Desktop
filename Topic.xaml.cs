@@ -66,7 +66,7 @@ namespace App3
         public ObservableCollection<Reply> replies;
         public MetaData metadata;
         public ApplicationDataContainer Set = ApplicationData.Current.LocalSettings;
-
+        public bool IsVote = false;
 
 
         public Topic()
@@ -161,39 +161,7 @@ namespace App3
                 Flower.PlayAnimation("\uEA39", "出错。反馈此问题。");
             }
         }
-        private void Stats(string board)
-        //统计板块访问次数，作为用户体验模型的一部分。
-        {
-            if (ValidationHelper.IsTokenExist(Set,"Stats")=="0")
-            {
-                Dictionary<string, int> stats = new Dictionary<string, int>();
-                stats[board] = 1;
-                string statsjson = JsonConvert.SerializeObject(stats);
-                Set.Values["Stats"] = statsjson;
-            }
-            else
-            {
-                string _statsjson = Set.Values["Stats"].ToString();
-                if (_statsjson != null)
-                {
-                    var stats = JsonConvert.DeserializeObject<Dictionary<string, int>>(_statsjson);
-                    if (stats != null)
-                    {
-                        if (stats.ContainsKey(board))
-                        {
-                            stats[board]++;
-                        }
-                        else
-                        {
-                            stats[board] = 1;
-                        }
-                        string statsjson = JsonConvert.SerializeObject(stats);
-                        Set.Values["Stats"] = statsjson;
-                    }
-
-                }
-            }
-        }
+        
         private async void LoadMetaData(string pid)
         {
             string MetaDataUrl = "https://api.cc98.org/topic/" + pid;
@@ -217,11 +185,7 @@ namespace App3
                     metadata.variant = IconVariant.Regular;
                 }
                 string boardid = js["boardId"].ToString();
-                if (boardid != null)
-                {
-                    Stats(boardid);
-                }
-
+              
                 if (metadata.reply != null)
                 {
                     Pager.NumberOfPages = (Convert.ToInt32(metadata.reply) / 10) + 1;
@@ -231,6 +195,11 @@ namespace App3
                 {
                     Pager.NumberOfPages = 1;
                     Pager.NextButtonVisibility = DevWinUI.PagerControlButtonVisibility.Hidden;
+                }
+                IsVote = ValidationHelper.GetKey(js, "isVote") == "True";
+                if (IsVote)
+                {
+                    StartVote.Visibility = Visibility.Visible;
                 }
             }
             else
@@ -509,7 +478,6 @@ namespace App3
                             }
                             else
                             {
-
                                 Pager.SelectedPageIndex = page - 1;
                                 GoTo(floor - 1);
                             }
@@ -546,19 +514,17 @@ namespace App3
                         AudioPlayer.Visibility = Visibility.Visible;
                         InitializeMediaPlayer();
                         AudioName.Text = url;
-                        try
+                        var source = await CCloginservice.vpn.GetSourceAsync(url);
+                        if (source != null)
                         {
-                            var mediaSource = MediaSource.CreateFromUri(new Uri(url));
-                            // 设置媒体源
-                            _mediaPlayer.Source = mediaSource;
-                            // 开始播放
+                            _mediaPlayer.Source = source;
                             _mediaPlayer.Play();
                             Play.Visibility = Visibility.Collapsed;
                             Pause.Visibility = Visibility.Visible;
                         }
-                        catch (Exception ex)
+                        else
                         {
-                            AudioName.Text = ex.Message;
+                            Flower.PlayAnimation("\uEA39", "音频下载出错");
                         }
                     }
                     else if (result.Value == "video")
@@ -592,29 +558,27 @@ namespace App3
                                 DownloadLocation = System.IO.Path.Combine(DownloadsFolder, "CC98_Download_" + DateTime.Now.ToString("yyyyMMdd_HHmmss") + ".pdf");
                             }
                             ShowTips("开始下载附件到:", DownloadLocation);
-                            if (!System.IO.File.Exists(DownloadsFolder))
+                            try
                             {
-
-                                try
+                                string target_url = CCloginservice.vpn.IsVpnEnabled ? VpnService.ConvertUrl(url) : url;
+                                var fileres = await CCloginservice.vpn.client.GetAsync(target_url, HttpCompletionOption.ResponseHeadersRead);
+                                if (fileres.StatusCode == HttpStatusCode.OK)
                                 {
-                                    string target_url=CCloginservice.vpn.IsVpnEnabled?VpnService.ConvertUrl(url) : url;
-                                    var fileres = await CCloginservice.vpn.client.GetAsync(target_url, HttpCompletionOption.ResponseHeadersRead);
-                                    if (fileres.StatusCode == HttpStatusCode.OK)
+                                    using (Stream contentStream = await fileres.Content.ReadAsStreamAsync(),
+                                    fileStream = new FileStream(DownloadLocation, FileMode.Create, FileAccess.Write, FileShare.None))
                                     {
-                                        using (Stream contentStream = await fileres.Content.ReadAsStreamAsync(),
-                                        fileStream = new FileStream(DownloadLocation, FileMode.Create, FileAccess.Write, FileShare.None))
-                                        {
-                                            await contentStream.CopyToAsync(fileStream);
-                                            Flower.PlayAnimation("\uE930", "下载文件成功");
-                                        }
+                                        await contentStream.CopyToAsync(fileStream);
+                                        Flower.PlayAnimation("\uE930", "下载文件成功");
                                     }
                                 }
-                                catch (Exception ex)
+                                else
                                 {
-                                    Flower.PlayAnimation("\uEA39", "下载文件失败");
+                                    Flower.PlayAnimation("\uEA39", $"下载失败，状态码为{fileres.StatusCode.ToString()}");
                                 }
-
-
+                            }
+                            catch (Exception ex)
+                            {
+                                Flower.PlayAnimation("\uEA39", ex.Message);
                             }
                         }
 
@@ -635,7 +599,7 @@ namespace App3
             }
 
         }
-
+        
         private void ShowTips(string title, string content)
         {
             if (msg.IsOpen == true)
@@ -651,7 +615,7 @@ namespace App3
             var param = new Dictionary<string, string>()
             {
                 {"Mode","0"},//回复主题为0，回帖为1，发主题、投票为2
-                {"Pid",Set.Values["CurrentTopicId"] as string },
+                {"Pid",ValidationHelper.IsTokenExist(Set,"CurrentTopicId") },
 
             };
             Frame.Navigate(typeof(Post), param);
@@ -832,7 +796,13 @@ namespace App3
             }
 
         }
+        public class VoteItem
+        {
+            public required string id { get; set; }
+            public int count { get; set; }
+            public required string description { get; set; }
 
+        }
         public class Reply : INotifyPropertyChanged
         {
             private string _text;
@@ -1427,8 +1397,127 @@ namespace App3
                 p.ProfilePicture = null;
             }
         }
+
+        private void Drawer_Unloaded(object sender, RoutedEventArgs e)
+        {
+            var mt = sender as MarkdownTextBlock;
+            if (mt != null)
+            {
+                mt.Text = string.Empty;
+            }
+        }
+        private async Task InitializeVote()
+        {
+            if (IsVote)
+            {
+
+                string vote_url = $"https://api.cc98.org/topic/{ValidationHelper.IsTokenExist(Set, "CurrentTopicId")}/vote";
+                var restext = await RequestSender.SimpleRequest(vote_url);
+                if (!restext.StartsWith("404:"))
+                {
+                    var info = Deserializer.ToDictionary(restext);
+                    if (info != null)
+                    {
+                        var vote_items = Deserializer.ToArray(ValidationHelper.GetKey(info, "voteItems"));
+                        var record_text = ValidationHelper.GetKey(info, "myRecord");
+                        var record = new List<int>();
+                        if (record_text != "0")
+                        {
+                            var js = Deserializer.ToDictionary(record_text);
+                            var array = ValidationHelper.GetKey(js, "items");
+                            record = Deserializer.ToArray(array).Select(g => Convert.ToInt32(g)).ToList();
+                        }
+
+                        if (vote_items != null)
+                        {
+                            var list = vote_items.Select(g => JsonConvert.DeserializeObject<VoteItem>(g.ToString())).ToList();
+                            VoteList.ItemsSource = list;
+                            if (record != null)
+                            {
+                                if (record.Count > 0)
+                                {
+                                    foreach (int g in record)
+                                    {
+                                        VoteList.SelectedItems.Add(VoteList.Items[g - 1]);
+                                    }
+                                }
+                            }
+                            bool can_vote = ValidationHelper.GetKey(info, "canVote") == "True";
+                            bool is_active = ValidationHelper.GetKey(info, "isAvailable") == "True";
+                            if (can_vote && is_active)
+                            {
+                                SendVote.IsEnabled = true;
+                                VoteTitle.Text = "投票(开放中)";
+                            }
+                            else
+                            {
+                                SendVote.IsEnabled = false;
+                                VoteList.IsEnabled = false;
+                                if (is_active)
+                                {
+                                    VoteTitle.Text = "投票(已投票)";
+                                }
+                                else
+                                {
+                                    VoteTitle.Text = "投票(已过期)";
+                                }
+                            }
+                            int max_count = Convert.ToInt32(ValidationHelper.GetKey(info, "maxVoteCount"));
+                            VoteList.SelectionChanged += (s, e) =>
+                            {
+                                if (VoteList.SelectedItems.Count > max_count)
+                                {
+                                    SendVote.IsEnabled = false;
+                                }
+                                else
+                                {
+                                    SendVote.IsEnabled = true;
+                                }
+                            };
+                            votetime.Text = "过期时间:" + ValidationHelper.GetKey(info, "expiredTime");
+                            voteinfo.Text = "参与人数:" + ValidationHelper.GetKey(info, "voteUserCount") + ";票数限制:" + ValidationHelper.GetKey(info, "maxVoteCount");
+                        }
+                    }
+
+                }
+            }
+        }
+        private async void StartVote_Click(object sender, RoutedEventArgs e)
+        {
+            await InitializeVote();
+            VotePanel.IsOpen = true;
+        }
+
+        
+
+        private void VotePanel_Closed(TeachingTip sender, TeachingTipClosedEventArgs args)
+        {
+            VoteList.ItemsSource = null;
+        }
+
+        private async void SendVote_Click(object sender, RoutedEventArgs e)
+        {
+            if (VoteList.SelectedItems.Count > 0)
+            {
+                var list = VoteList.SelectedItems.Select(g=>VoteList.Items.IndexOf(g)+1).ToList();
+                var r = await RequestSender.SendVoteResult(ValidationHelper.IsTokenExist(Set, "CurrentTopicId"), list);
+                if (r == "1")
+                {
+                    Flower.PlayAnimation("\uE930", "投票完成");
+                    await InitializeVote();
+                }
+                else
+                {
+                    Flower.PlayAnimation("\uEA39", "投票失败");
+                }
+            }
+            else
+            {
+                Flower.PlayAnimation("\uEA39", "选择至少一项");
+            }
+        }
     }
-    public class UBBTextConverter : IValueConverter
+    public partial class UBBTextConverter : IValueConverter
     {
         public ApplicationDataContainer Set = ApplicationData.Current.LocalSettings;
         object IValueConverter.Convert(object value, Type targetType, object parameter, string language)

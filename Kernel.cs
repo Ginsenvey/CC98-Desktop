@@ -1,4 +1,5 @@
 ﻿using App3;
+using CommunityToolkit.WinUI.UI.Controls.TextToolbarSymbols;
 using FluentIcons.Common;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Hosting;
@@ -21,6 +22,7 @@ using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Net.Mime;
 using System.Text;
+using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
@@ -30,6 +32,7 @@ using Windows.Media.Core;
 using Windows.Media.Protection.PlayReady;
 using Windows.Security.Credentials;
 using Windows.Storage;
+using Windows.Storage.Streams;
 using Windows.UI.WebUI;
 using static App3.Profile;
 using static App3.Topic;
@@ -127,7 +130,6 @@ namespace CCkernel
         {
 
             string rft = PasswordManager.RetrievePassword("Refresh");
-            //ValidationHelper.Log("使用令牌进行刷新", rft);
             if (!string.IsNullOrEmpty(rft))
             {
                 var token = await CCloginservice.GetNewToken(rft);
@@ -135,20 +137,16 @@ namespace CCkernel
                 {
                     PasswordManager.SavePassword(token.Access, "Access");
                     PasswordManager.SavePassword(token.Refresh, "Refresh");
-                    //ValidationHelper.Log("成功获取到新令牌", token.Refresh);
-                    //ValidationHelper.Log("存储令牌", PasswordManager.RetrievePassword("Refresh"));
                     CCloginservice.vpn.client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token.Access);
                     return "1";
                     
                 }
                 else if (token.StatusCode == "2")//返回了错误而不是令牌，一般是失效
                 {
-                    //ValidationHelper.Log("使用此令牌刷新时失效",rft);
                     return $"2:{token.Message}";//检测到此问题时，必须弹出登录
                 }
                 else
                 {
-                    //ValidationHelper.Log("由于网络等原因刷新令牌失败", token.Message);
                     return $"0:{token.Message}";
                 }
             }
@@ -364,10 +362,10 @@ namespace CCkernel
             }
 
         }
-        public static async Task<string> SystemNotice(string start)
+        public static async Task<string> SystemNotice(string type,string start)
         {
-            string url = "https://api.cc98.org/notification/system?from=" + start+"&size=10";
-            var res=await CCloginservice.vpn.GetAsync(url);
+            string url = $"https://api.cc98.org/notification/{type}?from={start}&size=10";
+            var res = await CCloginservice.vpn.GetAsync(url);
             return await ValidationHelper.AutoResponse(res);
         }
         public static async Task<bool> Like(string mode,string postid)
@@ -492,6 +490,45 @@ namespace CCkernel
                 return "400:"+ex.Message;
             }
         }
+        public static async Task<string> SendPrivateMsg(int receiver_id, string content)
+        {
+            string url = "https://api.cc98.org/message";
+            var post = new Dictionary<string, object>()
+            {
+                {"receiverId",receiver_id},
+                {"content",content}
+            };
+            string post_text = JsonConvert.SerializeObject(post);
+            var request_body = new StringContent(post_text, Encoding.UTF8, "application/json");
+            var r = await CCloginservice.vpn.PostAsync(url, request_body);
+            if (r.IsSuccessStatusCode)
+            {
+                return "1";
+            }
+            else
+            {
+                return "0";
+            }
+        }
+        public static async Task<string> SendVoteResult(string id,List<int> list)
+        {
+            string url = $"https://api.cc98.org/topic/{id}/vote";
+            var post = new Dictionary<string, object>()
+            {
+                {"items",list}
+            };
+            string post_text = JsonConvert.SerializeObject(post);
+            var request_body = new StringContent(post_text, Encoding.UTF8, "application/json");
+            var r = await CCloginservice.vpn.PostAsync(url, request_body);
+            if (r.IsSuccessStatusCode)
+            {
+                return "1";
+            }
+            else
+            {
+                return "0";
+            }
+        }
         public static async Task<string> EditFocusList(string mode,string group_id)
         {
             string url = $"https://api.cc98.org/me/custom-board/{group_id}";
@@ -537,6 +574,36 @@ namespace CCkernel
                 }
             }
                 
+        }
+
+        public static async Task<string> Follow(string mode,string id)
+        {
+            HttpResponseMessage res;
+            try
+            {
+                string url = $"https://api.cc98.org/me/followee/{id}";
+                if (mode == "0")//取消关注
+                {
+                    res = await CCloginservice.vpn.DeleteAsync(url);
+                }
+                else
+                {
+                    res = await CCloginservice.vpn.PutAsync(url,null);
+                }
+
+                if (res.StatusCode == HttpStatusCode.OK)
+                {
+                    return "1";
+                }
+                else
+                {
+                    return "0";
+                }
+            }
+            catch(Exception ex)
+            {
+                return $"2:{ex.Message}";
+            }
         }
     }
 
@@ -690,9 +757,26 @@ namespace CCkernel
             }
         }
     }
-    //约定：检验HttpResponse的字符串内容是否为空。检验输入合法性。
     public static class ValidationHelper
     {
+        public static async Task CopyStreamToRandomAccessStream(Stream input, IRandomAccessStream output)
+        {
+            var buffer = new byte[16 * 1024];
+            int bytesRead;
+
+            // 获取输出流的写入器
+            using (var outputStream = output.GetOutputStreamAt(0))
+            using (var writer = new DataWriter(outputStream))
+            {
+                while ((bytesRead = await input.ReadAsync(buffer, 0, buffer.Length)) > 0)
+                {
+                    writer.WriteBytes(buffer.AsSpan(0, bytesRead).ToArray());
+                    await writer.StoreAsync();
+                    await outputStream.FlushAsync();
+                }
+                await writer.FlushAsync();
+            }
+        }
         public static bool IsValidResponse(string response)
         {
             if(string.IsNullOrEmpty(response))
@@ -779,6 +863,7 @@ namespace CCkernel
             }
 
         }
+        
         public static void JsonWritter(string json,string filename)
         { 
             StorageFolder cacheFolder = ApplicationData.Current.LocalCacheFolder;
@@ -803,6 +888,7 @@ namespace CCkernel
         }
         public static string GetKey(Dictionary<string,object> dic, string key)//值不可为"0".
         {
+            if (dic == null) return "0";
             if(dic.TryGetValue(key,out var value))
             {
                 if (value != null)
@@ -827,6 +913,30 @@ namespace CCkernel
                 }
             }
             return "0";
+        }
+        public static string GetPropertyAsString(JsonElement root, string key)
+        {
+            string defaultValue = "0";
+            if (root.TryGetProperty(key, out JsonElement element) &&
+            element.ValueKind != JsonValueKind.Null)
+            {
+                return element.ValueKind == JsonValueKind.String
+                    ? element.GetString() ?? defaultValue
+                    : defaultValue;
+            }
+            return defaultValue;
+        }
+        public static int GetPropertyAsInt(JsonElement root, string key)
+        {
+            int defaultValue= 0;
+            if (root.TryGetProperty(key, out JsonElement element) &&
+            element.ValueKind != JsonValueKind.Null)
+            {
+                return element.ValueKind == JsonValueKind.Number
+                    ? element.GetInt32()
+                    : defaultValue;
+            }
+            return defaultValue;
         }
     }
     public static class PasswordManager

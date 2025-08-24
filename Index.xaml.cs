@@ -1,5 +1,6 @@
 using CCkernel;
 using CommunityToolkit.WinUI;
+using DevWinUI;
 using Microsoft.UI;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -25,6 +26,7 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Runtime.InteropServices;
 using System.Runtime.InteropServices.WindowsRuntime;
+using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using Windows.Foundation;
@@ -65,44 +67,39 @@ namespace App3
                 ThemePresenter.ImageSource = new BitmapImage(new Uri(_Theme));
             }
         }
-        private  void GetTopic()
+        private async void GetTopic()
         {
             //只从缓存中读取。
-           
-            StorageFolder cacheFolder = ApplicationData.Current.LocalCacheFolder;
-            string path = cacheFolder.Path+"/"+"IndexCache.json";
-            
-            string IndexText = ValidationHelper.JsonReader(path);
-          
-            var AllTopics = Deserializer.ToDictionary(IndexText);
-            
-            List<string> SectionNames = new List<string>() {"hotTopic","schoolEvent", "academics", "study", "emotion", "fleaMarket", "fullTimeJob", "partTimeJob" };
-            List<string> _SectionNames = new List<string>() { "十大话题", "校园活动","学术通知", "学习天地","感性·情感", "跳蚤市场" ,"求职广场","实习兼职"};
-            if(AllTopics != null)
+            List<string> SectionNames = new List<string>() { "hotTopic", "schoolEvent", "academics", "study", "emotion", "fleaMarket", "fullTimeJob", "partTimeJob" };
+            List<string> _SectionNames = new List<string>() { "十大话题", "校园活动", "学术通知", "学习天地", "感性·情感", "跳蚤市场", "求职广场", "实习兼职" };
+            string jpath = Path.Combine(ApplicationData.Current.LocalCacheFolder.Path, "IndexCache.json");
+            var json = ValidationHelper.JsonReader(jpath);
+            if (!json.StartsWith("10"))
             {
-                
-                for(int i = 0; i < 8; i++)
+                var AllTopics = Deserializer.ToDictionary(json);
+                if (AllTopics != null)
                 {
-                    string key = SectionNames[i];
-                    if (AllTopics.TryGetValue(key, out object Topics))
+                    for (int i = 0; i < 8; i++)
                     {
-                        if (Topics != null)
+                        string key = SectionNames[i];
+                        string content = ValidationHelper.GetKey(AllTopics, key);
+                        if (content != "0")
                         {
-                            var TopicList = JsonConvert.DeserializeObject<JArray>(Topics.ToString());
+                            var TopicList = Deserializer.ToArray(content);
                             if (TopicList != null && TopicList.Count > 0)
                             {
                                 var tiles = new List<SimplePost>();
                                 foreach (var Topic in TopicList)
                                 {
                                     var TopicInfo = JsonConvert.DeserializeObject<Dictionary<string, object>>(Topic.ToString());
-                                    
+
                                     string Section = "";
                                     if (TopicInfo.ContainsKey("boardName"))
                                     {
                                         Section = TopicInfo["boardName"].ToString();
                                     }
 
-                                   
+
                                     string Title = string.Empty;
                                     if (TopicInfo["title"].ToString().Length > 21)
                                     {
@@ -119,34 +116,37 @@ namespace App3
                                     {
                                         hasboardname = true;
                                     }
-                                    tiles.Add(new SimplePost {  section = Section, title = Title, pid = Pid,hasboardname=hasboardname });
+                                    tiles.Add(new SimplePost { section = Section, title = Title, pid = Pid, hasboardname = hasboardname });
                                 }
-                                cards.Add(new SectionCard { SectionName = _SectionNames[i], Tiles = tiles ,HexColor=ColorPaint.GenerateMorandiColorHex()});
+                                cards.Add(new SectionCard { SectionName = _SectionNames[i], Tiles = tiles, HexColor = ColorPaint.GenerateMorandiColorHex() });
                             }
                         }
                     }
-                }
-                
-                if(AllTopics.TryGetValue("recommendationReading",out var recom))
-                {
-                    
-                    if (recom != null)
+                    string recom = ValidationHelper.GetKey(AllTopics, "recommendationReading");
+                    if (recom != "0")
                     {
-                        var recomlist = JsonConvert.DeserializeObject<JArray>(recom.ToString());
+                        var recomlist = Deserializer.ToArray(recom);
                         ftiles.Clear();
-                        foreach(var r in recomlist)
+                        if (recomlist != null)
                         {
-                            var js=JsonConvert.DeserializeObject<Dictionary<string,object>>(r.ToString());
-                            string title = js["title"].ToString();
-                            string content = js["content"].ToString();
-                            string pid = js["url"].ToString();
-                            string time = js["time"].ToString();
-                            ftiles.Add(new FlipPost { content = content, time = time, pid ="cc98:/"+pid, title = title });
+                            foreach (var r in recomlist)
+                            {
+                                var js = JsonConvert.DeserializeObject<Dictionary<string, object>>(r.ToString());
+                                string title = js["title"].ToString();
+                                string content = js["content"].ToString();
+                                string pid = js["url"].ToString();
+                                string time = js["time"].ToString();
+                                ftiles.Add(new FlipPost { content = content, time = time, pid = "cc98:/" + pid, title = title });
+                            }
+                            Pips.NumberOfPages = recomlist.Count;
                         }
-                        Pips.NumberOfPages = recomlist.Count;
+
+
                     }
                 }
+                
             }
+            
             
             
         }

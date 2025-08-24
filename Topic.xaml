@@ -14,6 +14,7 @@
     CacheMode="BitmapCache"
     Background="{ThemeResource AcrylicBackgroundFillColorDefaultBrush}">
     <Page.Resources>
+        <local:BooltoVisibilityConverter x:Key="BoolToVisibility"></local:BooltoVisibilityConverter>
         <local:UBBTextConverter x:Key="UBBTextConverter"></local:UBBTextConverter>
     </Page.Resources>
     <Grid x:Name="RootGrid" >
@@ -92,7 +93,7 @@
                                 </StackPanel>
                             </HyperlinkButton>
                             <Border  Grid.Row="1" Padding="10" CornerRadius="4" Background="{ThemeResource MarkdownBackgroudBrush}" >
-                                <tool:MarkdownTextBlock x:Name="Drawer"  Text="{Binding text,Converter={StaticResource UBBTextConverter}}" Background="Transparent" Foreground="{ThemeResource TextFillColorSecondaryBrush}" HorizontalAlignment="Stretch"  FontFamily="Noto Sans SC" VerticalAlignment="Stretch" LinkClicked="MarkdownTextBlock_LinkClicked"   ImageStretch="UniformToFill"  QuoteBorderBrush="{ThemeResource QuoteBorderBrush}" ImageClicked="Drawer_ImageClicked" ImageResolving="Drawer_ImageResolving" ImageMaxWidth="400"></tool:MarkdownTextBlock>
+                                <tool:MarkdownTextBlock x:Name="Drawer"  Text="{Binding text,Converter={StaticResource UBBTextConverter}}" Background="Transparent" Foreground="{ThemeResource TextFillColorSecondaryBrush}" HorizontalAlignment="Stretch"  FontFamily="Noto Sans SC" VerticalAlignment="Stretch" LinkClicked="MarkdownTextBlock_LinkClicked"   ImageStretch="UniformToFill"  QuoteBorderBrush="{ThemeResource QuoteBorderBrush}" ImageClicked="Drawer_ImageClicked" ImageResolving="Drawer_ImageResolving" ImageMaxWidth="400" Unloaded="Drawer_Unloaded"></tool:MarkdownTextBlock>
                             </Border>
 
                             <StackPanel Orientation="Vertical" Grid.Row="0" Margin="5,5,10,0" HorizontalAlignment="Right">
@@ -196,8 +197,53 @@
             </HyperlinkButton>
             <dev:PagerControl Grid.Column="1" DisplayMode="ButtonPanel" NumberOfPages="1"  HorizontalAlignment="Center" x:Name="Pager" SelectedPageIndex="0"  VerticalAlignment="Center"  SelectedIndexChanged="Pager_SelectedIndexChanged" ></dev:PagerControl>
             <TextBox Grid.Column="2" x:Name="de" Visibility="Collapsed"></TextBox>
-            <dev:GotoTop Grid.Column="2" HorizontalAlignment="Right" Margin="0,0,20,0" Background="Transparent" ToolTipService.ToolTip="回到顶部" BorderThickness="0" Animated="True" AutoHiding="True" Target="{x:Bind RootViewer}"></dev:GotoTop>
+            <StackPanel Orientation="Horizontal" Margin="0,0,20,0" Spacing="10" Grid.Column="2" HorizontalAlignment="Right" >
+                <Button Background="{ThemeResource pink-green}" CornerRadius="9999" Width="50" Height="50" ToolTipService.ToolTip="查看投票" x:Name="StartVote" Click="StartVote_Click" Visibility="Collapsed"  >
+                    <ic:SymbolIcon Symbol="Vote"></ic:SymbolIcon>
+                </Button>
+                <dev:GotoTop  Background="Transparent" ToolTipService.ToolTip="回到顶部" BorderThickness="0" Animated="True" AutoHiding="True" Target="{x:Bind RootViewer}"></dev:GotoTop>
+            </StackPanel>
+            
         </Grid>
+        <TeachingTip Target="{x:Bind MetaDataArea}" x:Name="VotePanel" TailVisibility="Collapsed" Closed="VotePanel_Closed" IsLightDismissEnabled="False">
+            <Grid Margin="0,5,0,0">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"></RowDefinition>
+                    <RowDefinition Height="Auto"></RowDefinition>
+                    <RowDefinition Height="Auto"></RowDefinition>
+                    <RowDefinition Height="Auto"></RowDefinition>
+                    <RowDefinition Height="50"></RowDefinition>
+                </Grid.RowDefinitions>
+                <TextBlock Grid.Row="0" Text="投票" x:Name="VoteTitle" FontWeight="Bold" Foreground="LightSeaGreen" FontSize="18"></TextBlock>
+                <ListView Grid.Row="1" x:Name="VoteList" SelectionMode="Multiple">
+                    <ListView.Header>
+                        <Grid Padding="10,0,5,0" ColumnSpacing="10">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"></ColumnDefinition>
+                                <ColumnDefinition Width="60"></ColumnDefinition>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Text="描述" ></TextBlock>
+                            <TextBlock Grid.Column="1" Text="得票数"></TextBlock>
+                        </Grid>
+                    </ListView.Header>
+                    <ListView.ItemTemplate>
+                        <DataTemplate>
+                            <Grid ColumnSpacing="10">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"></ColumnDefinition>
+                                    <ColumnDefinition Width="30"></ColumnDefinition>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Text="{Binding description}" Margin="0,3,0,3" TextWrapping="Wrap" Foreground="{ThemeResource TextFillColorSecondaryBrush}" FontSize="12" VerticalAlignment="Center"></TextBlock>
+                                <TextBlock Grid.Column="1" Text="{Binding count}" FontSize="12" VerticalAlignment="Center"></TextBlock>
+                            </Grid>
+                        </DataTemplate>
+                    </ListView.ItemTemplate>
+                </ListView>
+                <TextBlock Grid.Row="2" Text="过期时间:" x:Name="votetime" Margin="10,5,5,0"></TextBlock>
+                <TextBlock Grid.Row="3" x:Name="voteinfo" Margin="10,5,5,0"></TextBlock>
+                <Button Grid.Row="4" x:Name="SendVote" Content="确认" HorizontalAlignment="Right" IsEnabled="false" Click="SendVote_Click" Style="{StaticResource AccentButtonStyle}"></Button>
+            </Grid>
+        </TeachingTip>
         <TeachingTip  Target="{x:Bind}" x:Name="ProfileViewer" IsLightDismissEnabled="True" TailVisibility="Collapsed">
             <Grid RowSpacing="8" ColumnSpacing="15"  >
                 <Grid.RowDefinitions>
@@ -215,7 +261,7 @@
                 <PersonPicture Tag="{Binding Port}" Grid.Column="0" Grid.Row="0" Grid.RowSpan="2" Width="50" Height="50" x:Name="SmallProfile" Loaded="SmallProfile_Loaded" Unloaded="SmallProfile_Unloaded"></PersonPicture>
                 <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding Posts}" FontWeight="SemiBold" HorizontalAlignment="Center"></TextBlock>
                 <TextBlock Grid.Row="0" Grid.Column="2" Text="{Binding Fan}" FontWeight="SemiBold" HorizontalAlignment="Center"></TextBlock>
-                <TextBlock Grid.Row="0" Grid.Column="3" Text="1" FontWeight="SemiBold" HorizontalAlignment="Center" ></TextBlock>
+                <TextBlock Grid.Row="0" Grid.Column="3" Text="{Binding Popularity}" FontWeight="SemiBold" HorizontalAlignment="Center" ></TextBlock>
                 <TextBlock Grid.Row="1" Grid.Column="1" Text="主题数" FontFamily="Noto Sans SC" Foreground="{ThemeResource TextFillColorSecondaryBrush}" FontSize="12" HorizontalAlignment="Center"></TextBlock>
                 <TextBlock Grid.Row="1" Grid.Column="2" Text="粉丝" FontFamily="Noto Sans SC" Foreground="{ThemeResource TextFillColorSecondaryBrush}" FontSize="12" HorizontalAlignment="Center"></TextBlock>
                 <TextBlock Grid.Row="1" Grid.Column="3" Text="风评" FontFamily="Noto Sans SC" Foreground="{ThemeResource TextFillColorSecondaryBrush}" FontSize="12" HorizontalAlignment="Center"></TextBlock>

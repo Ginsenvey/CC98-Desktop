@@ -24,6 +24,7 @@ using static System.Net.Mime.MediaTypeNames;
 using Windows.Storage;
 using Windows.Media.Core;
 using CCUserModel;
+using CCkernel;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -54,7 +55,7 @@ namespace App3
             Activated += MediaViewer_Activated;
         }
 
-        private void MediaViewer_Activated(object sender, WindowActivatedEventArgs args)
+        private async void MediaViewer_Activated(object sender, WindowActivatedEventArgs args)
         {
             if (_type == "video")
             {
@@ -63,7 +64,11 @@ namespace App3
                 VideoPlayer.Visibility = Visibility.Visible;
                 Grid.SetRow(VideoPlayer,1);
                 Grid.SetRowSpan(VideoPlayer, 2);
-                VideoPlayer.Source = MediaSource.CreateFromUri(new Uri(_url));
+                var source =await CCloginservice.vpn.GetSourceAsync(_url);
+                if (source != null)
+                {
+                    VideoPlayer.Source = source;
+                }
             }
             else if (_type == "image")
             {

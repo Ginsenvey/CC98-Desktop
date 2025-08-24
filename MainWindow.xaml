@@ -20,7 +20,27 @@
             <RowDefinition Height="12*"></RowDefinition>
             
         </Grid.RowDefinitions>
-        
+        <TeachingTip x:Name="ForumStat" IsLightDismissEnabled="True" Target="{x:Bind Me}" TailVisibility="Collapsed"  Unloaded="ForumStat_Unloaded" >
+            <TeachingTip.HeroContent>
+                <TextBlock x:Name="welcome" Text="" Margin="10,10,10,0" HorizontalAlignment="Center" Foreground="LightSeaGreen"></TextBlock>
+            </TeachingTip.HeroContent>
+            <TeachingTip.Content>
+                <ListView x:Name="ForumStatList" >
+                    <ListView.ItemTemplate>
+                        <DataTemplate>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="2*"></ColumnDefinition>
+                                    <ColumnDefinition Width="*"></ColumnDefinition>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" FontSize="12" Text="{Binding StatItem}" Foreground="{ThemeResource TextFillColorSecondaryBrush}"></TextBlock>
+                                <TextBlock Grid.Column="1" FontSize="12" Text="{Binding Value}"></TextBlock>
+                            </Grid>
+                        </DataTemplate>
+                    </ListView.ItemTemplate>
+                </ListView>
+            </TeachingTip.Content>
+        </TeachingTip>
         <Grid Grid.Row="0" x:Name="GridTitleBar">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="45"></ColumnDefinition>
@@ -55,14 +75,14 @@
                 </AnimatedIcon>
             </Button>
             <Button Grid.Column="5" HorizontalAlignment="Right" Width="30" Height="30" BorderThickness="0" Background="Transparent"  VerticalAlignment="Center" x:Name="Me" CornerRadius="9999" Padding="0" RenderTransformOrigin="0.5,0.5" PointerEntered="Me_PointerEntered" PointerExited="Me_PointerExited" PointerPressed="Me_PointerPressed" PointerReleased="Me_PointerReleased" PointerCanceled="Me_PointerCanceled" Click="Me_Click" >
-                <PersonPicture  Width="28" Height="28" x:Name="MyPicture" BorderThickness="0" ></PersonPicture>
+                <PersonPicture  Width="28" Height="28" x:Name="MyPicture" BorderThickness="0"></PersonPicture>
                 <Button.RenderTransform >
                     <ScaleTransform ScaleX="1" ScaleY="1" x:Name="PortScaleTransform"></ScaleTransform>
                 </Button.RenderTransform>
                 <Button.ContextFlyout>
                     <MenuFlyout  Placement="LeftEdgeAlignedBottom"  SystemBackdrop="{ThemeResource AcrylicBackgroundFillColorDefaultBackdrop}" >
                         <MenuFlyoutItem Text="CC98抽卡" Icon="{ic:SymbolIcon Symbol=GiftOpen}"  Click="CCZone_Click" Tag="0"></MenuFlyoutItem>
-                        <MenuFlyoutItem Text="统计数据" Icon="{ic:SymbolIcon Symbol=MathFormula}" Tag="1"></MenuFlyoutItem>
+                        <MenuFlyoutItem Text="统计数据" Icon="{ic:SymbolIcon Symbol=MathFormula}" Tag="1" Click="CCZone_Click"></MenuFlyoutItem>
                         <MenuFlyoutSeparator ></MenuFlyoutSeparator>
                         <MenuFlyoutItem Text="稍后再看" Icon="{ic:SymbolIcon Symbol=History}" Tag="2"></MenuFlyoutItem>
                         <MenuFlyoutItem Text="浏览足迹" Icon="{ic:SymbolIcon Symbol=AnimalPawPrint}" Tag="3"></MenuFlyoutItem>

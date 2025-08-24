@@ -19,6 +19,8 @@ using System.Linq;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Runtime.InteropServices.WindowsRuntime;
+using System.Threading.Tasks;
+using Windows.ApplicationModel.DataTransfer;
 using Windows.Foundation;
 using Windows.Foundation.Collections;
 using Windows.Storage;
@@ -49,7 +51,7 @@ namespace App3
             
         }
         
-        private async void GetNewTopic(string start)
+        private async Task<bool> GetNewTopic(string start)
         {
             
             string NewTopicUrl = "https://api.cc98.org/topic/new?from=" + start + "&size=20";
@@ -77,10 +79,11 @@ namespace App3
 
                             }
                         }
+                        return true;
                     }
                 }
             }
-            
+            return false;
         }
 
         
@@ -153,7 +156,7 @@ namespace App3
         }
         public int current = 0;
 
-        private void NaviBar_Click(object sender, RoutedEventArgs e)
+        private async void NaviBar_Click(object sender, RoutedEventArgs e)
         {
             var b = sender as Button;
             if (b != null)
@@ -164,6 +167,11 @@ namespace App3
                     if (current > 0)
                     {
                         current -= 20;
+                        if (!await GetNewTopic(current.ToString()))
+                        {
+                            current += 20;
+                        }
+                        
                     }
                     else
                     {
@@ -174,9 +182,13 @@ namespace App3
                 else if (tag == "Forward")
                 {
                     current += 20;
+                    if (!await GetNewTopic(current.ToString()))
+                    {
+                        current -= 20;
+                    }
+                    
                 }
-                GetNewTopic(current.ToString());
-                PageIndex.Text = "第 "+(current/20+1).ToString()+" 页";
+                PageIndex.Text = "第 " + (current / 20 + 1).ToString() + " 页";
                 NewTopicViewer.ScrollToVerticalOffset(0);
             }
         }
@@ -221,6 +233,22 @@ namespace App3
                             {"UserId",tag }
                         };
                     Frame.Navigate(typeof(Profile), param);
+                }
+            }
+        }
+
+        private void CopyId_Click(object sender, RoutedEventArgs e)
+        {
+            var m = sender as MenuFlyoutItem;
+            if (m != null)
+            {
+                var _tag = m.Tag;
+                if(_tag is string tag)
+                {
+                    var package = new DataPackage();
+                    package.SetText(tag);
+                    Clipboard.SetContent(package);
+                    Flower.PlayAnimation("\uE930", "已复制帖子ID");
                 }
             }
         }

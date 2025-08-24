@@ -48,8 +48,8 @@
                         <ic:SymbolIcon Symbol="MoreHorizontal" FontSize="11"></ic:SymbolIcon>
                         <Button.Flyout>
                             <MenuFlyout>
-                                <MenuFlyoutItem Text="收藏" Icon="{ic:SymbolIcon Symbol=Star}"></MenuFlyoutItem>
-                                <MenuFlyoutItem Text="复制帖子ID" Icon="{ic:SymbolIcon Symbol=Link}"></MenuFlyoutItem>
+                                <MenuFlyoutItem Text="稍后再看" Icon="{ic:SymbolIcon Symbol=History}"></MenuFlyoutItem>
+                                <MenuFlyoutItem Text="复制帖子ID" Icon="{ic:SymbolIcon Symbol=Link}" Tag="{x:Bind pid}" x:Name="CopyId" Click="CopyId_Click"></MenuFlyoutItem>
                             </MenuFlyout>
                         </Button.Flyout>
                     </Button>
@@ -133,17 +133,17 @@
                 <ColumnDefinition Width="Auto"></ColumnDefinition>
                 <ColumnDefinition Width="*"></ColumnDefinition>
             </Grid.ColumnDefinitions>
-            <Button x:Name="NaviBar" Grid.Column="0" Tag="Back" Click="NaviBar_Click">
+            <Button x:Name="NaviBar" Grid.Column="0" Tag="Back" Click="NaviBar_Click" Padding="7" Background="{ThemeResource FancyButtonBackgroundBrush}" Foreground="{ThemeResource FancyButtonForegroundBrush}" BorderThickness="0">
                 <ic:SymbolIcon Symbol="ChevronLeft"></ic:SymbolIcon>
             </Button>
-            <Button Tag="Forward" Grid.Column="1" Click="NaviBar_Click">
+            <Button Tag="Forward" Grid.Column="1" Click="NaviBar_Click" Padding="7" Background="{ThemeResource FancyButtonBackgroundBrush}" Foreground="{ThemeResource FancyButtonForegroundBrush}" BorderThickness="0">
                 <ic:SymbolIcon Symbol="ChevronRight"></ic:SymbolIcon>
             </Button>
-            <Button Grid.Column="2" VerticalAlignment="Center" HorizontalAlignment="Right"  >
+            <Button Grid.Column="2" VerticalAlignment="Center" HorizontalAlignment="Right"  Background="{ThemeResource FancyButtonBackgroundBrush}" Foreground="{ThemeResource FancyButtonForegroundBrush}" BorderThickness="0">
                 <TextBlock Text="第 1 页" x:Name="PageIndex"  ></TextBlock>
             </Button>
         </Grid>
-        <Button Grid.Column="1" Grid.Row="0"  x:Name="RefRandomTiles" Click="RefRandomTiles_Click">
+        <Button Grid.Column="1" Grid.Row="0"  x:Name="RefRandomTiles" Click="RefRandomTiles_Click" Padding="7" Background="{ThemeResource FancyButtonBackgroundBrush}" Foreground="{ThemeResource FancyButtonForegroundBrush}" BorderThickness="0" >
             <ic:SymbolIcon Symbol="ArrowSync" ></ic:SymbolIcon>
         </Button>
 

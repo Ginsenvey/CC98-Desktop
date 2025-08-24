@@ -86,7 +86,11 @@ namespace App3
 
         private async void LoadImage()
         {
-            if (Source == null) return;
+            if (Source == null) 
+            {
+                InnerImage.Source = null;
+                return;
+            } 
 
             try
             {
@@ -133,7 +137,9 @@ namespace App3
             }
         }
 
-        
-        
+        private void InnerImage_Unloaded(object sender, RoutedEventArgs e)
+        {
+            InnerImage.Source = null;
+        }
     }
 }

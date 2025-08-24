@@ -27,7 +27,7 @@
             <ComboBox x:Name="FavoriteBox" Grid.Column="1" HorizontalAlignment="Right" Margin="0,0,20,0" PlaceholderText="切换收藏夹" Background="Transparent" ItemsSource="{x:Bind Favos}" DisplayMemberPath="GroupName" SelectionChanged="FavoriteBox_SelectionChanged" SelectedItem="{x:Bind SelectedFavo,Mode=TwoWay}" Height="35.5">
                 
             </ComboBox>
-            <Button Grid.Column="2"  HorizontalAlignment="Right" x:Name="ChangeSort" Click="ChangeSort_Click">
+            <Button Grid.Column="2"  HorizontalAlignment="Right" x:Name="ChangeSort" Click="ChangeSort_Click" Background="Transparent">
                 <StackPanel Orientation="Horizontal" Spacing="8">
                     <ic:SymbolIcon Symbol="StarAdd" FontSize="16"  x:Name="SortIcon"></ic:SymbolIcon>
                     <TextBlock Text="排序" x:Name="SortIndicator"></TextBlock>

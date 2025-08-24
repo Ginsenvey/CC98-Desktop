@@ -1,34 +1,16 @@
 using CCkernel;
-using ColorCode.Compilation.Languages;
 using DevWinUI;
-using HtmlAgilityPack;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml.Controls.Primitives;
-using Microsoft.UI.Xaml.Data;
 using Microsoft.UI.Xaml.Input;
-using Microsoft.UI.Xaml.Media;
-using Microsoft.UI.Xaml.Media.Imaging;
-using Microsoft.UI.Xaml.Navigation;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
-using System.IO;
-using System.Linq;
-using System.Net.Http;
-using System.Runtime.InteropServices.WindowsRuntime;
 using System.Threading.Tasks;
-using System.Xml.Linq;
-using Windows.Foundation;
-using Windows.Foundation.Collections;
-using Windows.Graphics.Imaging;
 using Windows.Security.Credentials;
 using Windows.Storage;
-using static App3.Profile;
-using static System.Net.Mime.MediaTypeNames;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.

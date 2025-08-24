@@ -32,6 +32,8 @@
                     <Color x:Key="Standard">#FFFFFF</Color>
                     <Color x:Key="AcrylicTintColor">#66ccff</Color>
                     <Color x:Key="PortaitBackgroundColor">#62b3ae</Color>
+                    <Color x:Key="FancyButtonBackgroudColor">#ebf0f5</Color>
+                    <Color x:Key="FancyButtonForegroudColor">#637a89</Color>
                 </ResourceDictionary>
                 <ResourceDictionary x:Key="Dark">
                     <Color x:Key="CustomBackgroundColor">#2f2f2f</Color>
@@ -48,11 +50,15 @@
                     <Color x:Key="Standard">#000000</Color>
                     <Color x:Key="AcrylicTintColor">#000000</Color>
                     <Color x:Key="PortaitBackgroundColor">#004d9891</Color>
+                    <Color x:Key="FancyButtonBackgroudColor">#363640</Color>
+                    <Color x:Key="FancyButtonForegroudColor">#637a79</Color>
                 </ResourceDictionary>
                 <ResourceDictionary x:Key="Tint"></ResourceDictionary>
 
             </ResourceDictionary.ThemeDictionaries>
             <SolidColorBrush x:Key="MarkdownBackgroudBrush" Color="{ThemeResource MarkdownBackgroudColor}"></SolidColorBrush>
+            <SolidColorBrush x:Key="FancyButtonBackgroundBrush" Color="{ThemeResource FancyButtonBackgroudColor}"></SolidColorBrush>
+            <SolidColorBrush x:Key="FancyButtonForegroundBrush" Color="{ThemeResource FancyButtonForegroudColor}"></SolidColorBrush>
             <SolidColorBrush x:Key="DividerBrush" Color="{ThemeResource DividerColor}"></SolidColorBrush>
             <SolidColorBrush x:Key="QuoteBorderBrush" Color="{ThemeResource QuoteBorderColor}"></SolidColorBrush>
             <SolidColorBrush x:Key="StandardBrush" Color="{ThemeResource Standard}"></SolidColorBrush>
