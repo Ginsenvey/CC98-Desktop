@@ -24,8 +24,12 @@
                 <ColumnDefinition Width="80"></ColumnDefinition>
             </Grid.ColumnDefinitions>
             <TextBlock Grid.Column="0" Text="收藏集" FontSize="20" FontWeight="Bold" x:Name="de"  Foreground="LightSeaGreen" VerticalAlignment="Center" HorizontalAlignment="Left" FontFamily="Noto Sans SC"></TextBlock>
-            <ComboBox x:Name="FavoriteBox" Grid.Column="1" HorizontalAlignment="Right" Margin="0,0,20,0" PlaceholderText="切换收藏夹" Background="Transparent" ItemsSource="{x:Bind Favos}" DisplayMemberPath="GroupName" SelectionChanged="FavoriteBox_SelectionChanged" SelectedItem="{x:Bind SelectedFavo,Mode=TwoWay}" Height="35.5">
-                
+            <ComboBox x:Name="FavoriteBox" Grid.Column="1" HorizontalAlignment="Right" Margin="0,0,20,0" PlaceholderText="切换收藏夹" Background="Transparent" ItemsSource="{x:Bind Favos}"  SelectionChanged="FavoriteBox_SelectionChanged" SelectedItem="{x:Bind SelectedFavo,Mode=TwoWay}" Height="35.5">
+                <ComboBox.ItemTemplate>
+                    <DataTemplate x:DataType="local:FavoriteGroup">
+                        <TextBlock Text="{x:Bind GroupName}"></TextBlock>
+                    </DataTemplate>
+                </ComboBox.ItemTemplate>
             </ComboBox>
             <Button Grid.Column="2"  HorizontalAlignment="Right" x:Name="ChangeSort" Click="ChangeSort_Click" Background="Transparent">
                 <StackPanel Orientation="Horizontal" Spacing="8">
@@ -38,8 +42,8 @@
         <ScrollViewer Grid.Row="1"  Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" CornerRadius="7" Margin="0,0,0,15" >
             <ItemsRepeater ItemsSource="{x:Bind tiles}" x:Name="Collection" Loaded="Collection_Loaded">
                 <ItemsRepeater.ItemTemplate>
-                    <DataTemplate>
-                        <HyperlinkButton HorizontalContentAlignment="Stretch" HorizontalAlignment="Stretch" CornerRadius="0" x:Name="Content" Click="Content_Click" BorderThickness="0.5" BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}">
+                    <DataTemplate x:DataType="local:StandardPost">
+                        <HyperlinkButton HorizontalContentAlignment="Stretch" HorizontalAlignment="Stretch" CornerRadius="0" x:Name="Content" Click="Content_Click" BorderThickness="0.5" BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}" DataContext="{x:Bind}">
                             <Grid Padding="3,0,3,0" >
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="60"></ColumnDefinition>
@@ -51,10 +55,10 @@
                                     <RowDefinition Height="*"></RowDefinition>
                                     <RowDefinition Height="*"></RowDefinition>
                                 </Grid.RowDefinitions>
-                                <TextBlock Text="{Binding sort}" Grid.Column="0" Grid.Row="0" Grid.RowSpan="2" Foreground="{ThemeResource TextFillColorSecondaryBrush}" VerticalAlignment="Center" HorizontalAlignment="Center" HorizontalTextAlignment="Center"></TextBlock>
-                                <TextBlock Text="{Binding section}" Grid.Column="3" Grid.Row="0"  VerticalAlignment="Top"></TextBlock>
-                                <TextBlock Text="{Binding title}" Grid.Column="1" Grid.Row="0" Grid.RowSpan="2" VerticalAlignment="Center" Foreground="{ThemeResource TextFillColorSecondaryBrush}" FontFamily="Noto Sans SC"></TextBlock>
-                                <TextBlock Text="{Binding time}" Grid.Column="3" Grid.Row="1"  VerticalAlignment="Bottom" Foreground="{ThemeResource TextFillColorSecondaryBrush}"></TextBlock>
+                                <TextBlock Text="{x:Bind sort}" Grid.Column="0" Grid.Row="0" Grid.RowSpan="2" Foreground="{ThemeResource TextFillColorSecondaryBrush}" VerticalAlignment="Center" HorizontalAlignment="Center" HorizontalTextAlignment="Center"></TextBlock>
+                                <TextBlock Text="{x:Bind section}" Grid.Column="3" Grid.Row="0"  VerticalAlignment="Top"></TextBlock>
+                                <TextBlock Text="{x:Bind title}" Grid.Column="1" Grid.Row="0" Grid.RowSpan="2" VerticalAlignment="Center" Foreground="{ThemeResource TextFillColorSecondaryBrush}" FontFamily="Noto Sans SC"></TextBlock>
+                                <TextBlock Text="{x:Bind time}" Grid.Column="3" Grid.Row="1"  VerticalAlignment="Bottom" Foreground="{ThemeResource TextFillColorSecondaryBrush}"></TextBlock>
                             </Grid>
                         </HyperlinkButton>
                     </DataTemplate>

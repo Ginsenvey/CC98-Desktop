@@ -1,7 +1,6 @@
 ﻿using CCkernel;
 using CCUserModel;
 using CommunityToolkit.WinUI.Converters;
-using CommunityToolkit.WinUI.Media;
 using DevWinUI;
 using FluentIcons.Common;
 using FluentIcons.WinUI;
@@ -23,6 +22,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -34,6 +34,7 @@ using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices.WindowsRuntime;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Windows.ApplicationModel.DataTransfer;
@@ -63,7 +64,6 @@ namespace App3
             this.InitializeComponent();
             this.ExtendsContentIntoTitleBar = true;
             this.SetTitleBar(UserArea);
-            this.AppWindow.SetTaskbarIcon("Assets/cc98.png");
             AppWindow.TitleBar.PreferredHeightOption = Microsoft.UI.Windowing.TitleBarHeightOption.Tall;
             LoadSettings();
             App.ThemeChanged += OnAppThemeChanged;
@@ -317,64 +317,48 @@ namespace App3
         }
         private  void LoadSettings()
         {
-            if (Set.Values.ContainsKey("Effect"))
+            string effect = ValidationHelper.IsTokenExist(Set, "Effect");
+            switch (effect)
             {
-                string effect = (string)Set.Values["Effect"];
-                switch (effect)
-                {
-                    case "0":
-                        
-                        this.SystemBackdrop = new MicaSystemBackdrop();
-                        break;
-                    case "1":
-                        
-                        this.SystemBackdrop = new MicaSystemBackdrop(MicaKind.BaseAlt);
-                        break;
-                    case "2":
-                        
-                        this.SystemBackdrop = new AcrylicSystemBackdrop();
-                        break;
-                    case "3":
-                        
-                        this.SystemBackdrop = new AcrylicSystemBackdrop(DesktopAcrylicKind.Thin);
-                        break;
-                    case "4":
-                        
-                        this.SystemBackdrop = null;
-                        break;
-                    default:
-                        
-                        this.SystemBackdrop = new MicaSystemBackdrop();
-                        break;
-                }
-            }
-            else
-            {
-                Set.Values["Effect"] = "0";
-                this.SystemBackdrop = new MicaSystemBackdrop();
+                case "0":
 
+                    this.SystemBackdrop = new MicaSystemBackdrop();
+                    break;
+                case "1":
+
+                    this.SystemBackdrop = new MicaSystemBackdrop(MicaKind.BaseAlt);
+                    break;
+                case "2":
+
+                    this.SystemBackdrop = new AcrylicSystemBackdrop();
+                    break;
+                case "3":
+
+                    this.SystemBackdrop = new AcrylicSystemBackdrop(DesktopAcrylicKind.Thin);
+                    break;
+                case "4":
+
+                    this.SystemBackdrop = null;
+                    break;
+                default:
+
+                    this.SystemBackdrop = new MicaSystemBackdrop();
+                    break;
             }
-            if (Set.Values.ContainsKey("Theme"))
+            string theme = ValidationHelper.IsTokenExist(Set, "Theme");
+            if (theme == "1")
             {
-                string theme = (string)Set.Values["Theme"];
-                if (theme == "0")
-                {
-                    RootGrid.RequestedTheme = ElementTheme.Light;
-                }
-                else if (theme == "1")
-                {
-                   RootGrid.RequestedTheme = ElementTheme.Dark;
-                }
-                else
-                {
-                   RootGrid.RequestedTheme = ElementTheme.Default;
-                }
+                RootGrid.RequestedTheme = ElementTheme.Light;
+            }
+            else if (theme == "2")
+            {
+                RootGrid.RequestedTheme = ElementTheme.Dark;
             }
             else
             {
-                Set.Values["Theme"] = "2";
                 RootGrid.RequestedTheme = ElementTheme.Default;
             }
+            
             if (ValidationHelper.IsTokenExist(Set,"ThemePic")=="0")
             {
                 string themesPath = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Themes");
@@ -382,7 +366,9 @@ namespace App3
                 var file = Files[0];
                 Set.Values["Themepic"]= file;
             }
-            
+            string color = ValidationHelper.IsTokenExist(Set, "BaseColor");
+            GridTitleBar.Background = (SolidColorBrush)Application.Current.Resources[color];
+            Navi.Background= (SolidColorBrush)Application.Current.Resources[color];
         }
         
         private DispatcherTimer SyncTimer { get; set; }
@@ -484,7 +470,8 @@ namespace App3
                 }
             }
         }
-        
+
+        [RequiresUnreferencedCode("Calls System.Text.Json.JsonSerializer.Deserialize<TValue>(String, JsonSerializerOptions)")]
         private async Task<bool> GetFavorites()
         {
             string Favorites = await RequestSender.FavoritesList();
@@ -816,7 +803,7 @@ namespace App3
                         case "1":
                             ForumStat.XamlRoot = RootGrid.XamlRoot;
                             ForumStat.IsOpen = true;
-                            LoadForumStat();
+                            await LoadForumStat();
                             break;
                     }
                         
@@ -825,7 +812,7 @@ namespace App3
             
         }
 
-        private async void LoadForumStat()
+        private async Task LoadForumStat()
         {
             //由于此方法只需要缓存文件中极小的一部分，使用jsonreader读取整个文件会浪费内存。
             string jpath = System.IO.Path.Combine(ApplicationData.Current.LocalCacheFolder.Path, "IndexCache.json");
@@ -893,9 +880,8 @@ namespace App3
         public string Name { get; set; } 
         public bool IsEditable { get; set; } 
     }
-    public class Separator : CategoryBase { }
 
-    public class NavigationTemplateSelector : DataTemplateSelector
+    public partial class NavigationTemplateSelector : DataTemplateSelector
     {
         public DataTemplate GroupTemplate { get; set; }
         public DataTemplate PinnedItemTemplate { get; set; }

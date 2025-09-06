@@ -83,9 +83,9 @@
                         <tool:SettingsCard ContentAlignment="Left">
                             <StackPanel HorizontalAlignment="Left" Margin="10,10,10,10">
                                 <RadioButtons >
-                                    <RadioButton Content="浅色"  x:Name="Light" Checked="Light_Checked" Tag="0" />
-                                    <RadioButton Content="深色"  x:Name="Dark"  Checked="Light_Checked" Tag="1"/>
-                                    <RadioButton Content="跟随系统"  x:Name="Follow" Checked="Light_Checked" Tag="2"/>
+                                    <RadioButton Content="浅色"  x:Name="Light" Checked="Light_Checked" Tag="1" />
+                                    <RadioButton Content="深色"  x:Name="Dark"  Checked="Light_Checked" Tag="2"/>
+                                    <RadioButton Content="跟随系统"  x:Name="Follow" Checked="Light_Checked" Tag="0"/>
                                 </RadioButtons>
                                 
                             </StackPanel>
@@ -139,6 +139,14 @@
                                 </SplitButton.Flyout>
                             </SplitButton>
                         </tool:SettingsCard>
+                        <tool:SettingsCard Header="配色" Description="选择应用导航区域的背景色,重启生效">
+                            <ComboBox Background="Transparent" SelectionChanged="BaseColorPiker_SelectionChanged_1" x:Name="BaseColorPiker">
+                                <ComboBoxItem Content="透明" Tag="0"></ComboBoxItem>
+                                <ComboBoxItem Content="粉-青" Tag="pinkgreen"></ComboBoxItem>
+                                <ComboBoxItem Content="天蓝" Tag="skyblue"></ComboBoxItem>
+                                <ComboBoxItem Content="鹅黄" Tag="yellow"></ComboBoxItem>
+                            </ComboBox>
+                        </tool:SettingsCard>
                     </tool:SettingsExpander.Items>
                 </tool:SettingsExpander>
                 <TextBlock  Text="浏览" FontSize="16" Margin="5,2,0,5"></TextBlock>
@@ -148,12 +156,18 @@
                     </tool:SettingsCard.HeaderIcon>
                     <ToggleSwitch x:Name="IsImageVisible" Toggled="IsImageVisible_Toggled"></ToggleSwitch>
                 </tool:SettingsCard>
+                <tool:SettingsCard Header="发帖展示小尾巴" Description="展示客户端平台标识">
+                    <tool:SettingsCard.HeaderIcon>
+                        <ic:SymbolIcon Symbol="DesktopCheckmark"></ic:SymbolIcon>
+                    </tool:SettingsCard.HeaderIcon>
+                    <ToggleSwitch x:Name="TailVisibility" Toggled="TailVisibility_Toggled"></ToggleSwitch>
+                </tool:SettingsCard>
                 <TextBlock  Text="关于" FontSize="16" Margin="5,2,0,5"></TextBlock>
                 <tool:SettingsExpander Header="CC98 Desktop" Description="2025.发布构建">
                     <tool:SettingsExpander.HeaderIcon>
                         <ic:SymbolIcon Symbol="Info" ></ic:SymbolIcon>
                     </tool:SettingsExpander.HeaderIcon>
-                    <TextBlock Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="Version 1.1.6" />
+                    <TextBlock Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="Version 1.2.0" />
                     <tool:SettingsExpander.ItemsHeader>
                         <TextBlock Text="开放源代码库" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Margin="20,10,10,10"></TextBlock>
                     </tool:SettingsExpander.ItemsHeader>

@@ -35,13 +35,11 @@ namespace App3
     public sealed partial class Friend : Page
     {
         public ApplicationDataContainer Set = ApplicationData.Current.LocalSettings;
-        public ObservableCollection<Friends> friends;
+        public ObservableCollection<Friends> friends = new ObservableCollection<Friends>();
         public Friend()
         {
             this.InitializeComponent();
-            friends = new ObservableCollection<Friends>();
-            
-            
+            Collection.ItemsSource = friends;
         }
 
         
@@ -120,7 +118,7 @@ namespace App3
                                         follower = personinfo[f].follower
                                     });
                                 }
-                                Collection.ItemsSource = friends;
+                                
                             }
                             
                         }

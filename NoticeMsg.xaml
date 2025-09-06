@@ -12,8 +12,8 @@
         <ScrollViewer x:Name="NoticeViewer">
             <ItemsRepeater x:Name="NoticeRepeater">
                 <ItemsRepeater.ItemTemplate>
-                    <DataTemplate>
-                        <HyperlinkButton HorizontalContentAlignment="Stretch" HorizontalAlignment="Stretch" CornerRadius="0" x:Name="NoticeCard" Click="NoticeCard_Click">
+                    <DataTemplate x:DataType="local:Notice">
+                        <HyperlinkButton HorizontalContentAlignment="Stretch" HorizontalAlignment="Stretch" CornerRadius="0" x:Name="NoticeCard" Click="NoticeCard_Click" DataContext="{x:Bind}">
                             <Grid Padding="3" RowSpacing="8">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="Auto"></ColumnDefinition>
@@ -23,9 +23,9 @@
                                     <RowDefinition Height="*"></RowDefinition>
                                     <RowDefinition Height="*"></RowDefinition>
                                 </Grid.RowDefinitions>
-                                <TextBlock Text="{Binding Title}" Grid.Column="0" Grid.Row="0" Grid.RowSpan="2" FontWeight="Bold"></TextBlock>
-                                <TextBlock Text="{Binding Time}" FontSize="12" Grid.Column="1" Grid.Row="0"  HorizontalAlignment="Right" Foreground="{ThemeResource TextFillColorSecondaryBrush}"></TextBlock>
-                                <TextBlock Text="{Binding Content}" FontSize="12" Grid.Column="0" Grid.ColumnSpan="2" Grid.Row="1" Foreground="{ThemeResource TextFillColorSecondaryBrush}"></TextBlock>
+                                <TextBlock Text="{x:Bind Title}" Grid.Column="0" Grid.Row="0" Grid.RowSpan="2" FontWeight="Bold"></TextBlock>
+                                <TextBlock Text="{x:Bind Time}" FontSize="12" Grid.Column="1" Grid.Row="0"  HorizontalAlignment="Right" Foreground="{ThemeResource TextFillColorSecondaryBrush}"></TextBlock>
+                                <TextBlock Text="{x:Bind Content}" FontSize="12" Grid.Column="0" Grid.ColumnSpan="2" Grid.Row="1" Foreground="{ThemeResource TextFillColorSecondaryBrush}"></TextBlock>
                             </Grid>
                         </HyperlinkButton>
                     </DataTemplate>

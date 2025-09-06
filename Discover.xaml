@@ -11,7 +11,6 @@
     xmlns:tool="using:CommunityToolkit.WinUI.UI.Controls"
     Background="{ThemeResource DesktopAcrylicTransparentBrush}">
     <Page.Resources>
-        <local:StringToImageConverter x:Key="ImageGenerator" ></local:StringToImageConverter>
         <DataTemplate x:Key="TextPost" x:DataType="local:StandardPost">
             
             <Grid Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1" CornerRadius="5" Padding="8" RowSpacing="5"> 
@@ -163,14 +162,14 @@
                 </ItemsRepeater.Layout>
                 <ItemsRepeater.ItemTemplate>
                     <DataTemplate x:DataType="local:RandomPost">
-                        <HyperlinkButton Padding="8" Foreground="{ThemeResource TextFillColorSecondaryBrush}" x:Name="RandomPost" Click="RandomPost_Click">
+                        <HyperlinkButton Padding="8" Foreground="{ThemeResource TextFillColorSecondaryBrush}" x:Name="RandomPost" Click="RandomPost_Click" DataContext="{x:Bind}">
                             <Grid>
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="45"></ColumnDefinition>
                                     <ColumnDefinition Width="*"></ColumnDefinition>
                                 </Grid.ColumnDefinitions>
                                 <ic:SymbolIcon Symbol="Chat" Grid.Column="0" ></ic:SymbolIcon>
-                                <TextBlock Text="{Binding title}" FontSize="13" Grid.Column="1" TextWrapping="Wrap"></TextBlock>
+                                <TextBlock Text="{x:Bind title}" FontSize="13" Grid.Column="1" TextWrapping="Wrap"></TextBlock>
                             </Grid>
                             
                         </HyperlinkButton>

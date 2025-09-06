@@ -8,7 +8,6 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d"
     xmlns:dev="using:DevWinUI"
-    xmlns:tool="using:CommunityToolkit.WinUI.UI.Controls"
     xmlns:ic="using:FluentIcons.WinUI"
     Background="{ThemeResource DesktopAcrylicTransparentBrush}">
 
@@ -24,9 +23,9 @@
         <ContentDialog x:Name="DestroyCardDialog" Title="分解所有卡牌" Content="确认分解全部多余卡牌？此操作不可撤销。" PrimaryButtonText="确认" CloseButtonText="取消"></ContentDialog>
         <StackPanel Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2" Orientation="Vertical" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" CornerRadius="5" Padding="10" Spacing="5">
             <TextBlock  FontSize="22" x:Name="de" Text="CC98抽卡" FontWeight="Bold" Foreground="#4d9891"  HorizontalAlignment="Left" Margin="5,0,0,0" TextWrapping="Wrap"></TextBlock>
-            <tool:MarkdownTextBlock Foreground="{ThemeResource TextFillColorSecondaryBrush}" Background="Transparent" Margin="5,0,0,0" Text="CC98 抽卡是由 `CC98` 和 `NexusHD` 共同推出的一款抽卡小游戏。卡牌内容包括 CC98、NexusHD，以及浙江大学相关的各种人事物，不同的卡片具有不同的等级，同时也具有不同的价值和抽取几率。
+            <TextBlock TextWrapping="Wrap" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}"  Margin="5,0,0,0" Text="CC98 抽卡是由CC98和NexusHD共同推出的一款抽卡小游戏。卡牌内容包括 CC98、NexusHD，以及浙江大学相关的各种人事物，不同的卡片具有不同的等级，同时也具有不同的价值和抽取几率。
 
-你可以使用 CC98 账号登录这个游戏，然后选择一种抽卡规则进行抽卡。抽卡得到的卡片可用于收藏展示，通过卡片带来的附加奖励值，还可以兑换其它更有价值的东西哦！"></tool:MarkdownTextBlock>
+你可以使用 CC98 账号登录这个游戏，然后选择一种抽卡规则进行抽卡。抽卡得到的卡片可用于收藏展示，通过卡片带来的附加奖励值，还可以兑换其它更有价值的东西哦！"></TextBlock>
         </StackPanel>
         <ScrollViewer  Grid.Row="1" Grid.Column="1" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" CornerRadius="5" Padding="10" VerticalScrollBarVisibility="Hidden">
             <StackPanel  Orientation="Vertical"  Spacing="10">
@@ -46,14 +45,36 @@
                 </Grid>
                 <Border BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}" Height="2" BorderThickness="2"></Border>
                 <ListView x:Name="StatList">
-                    <ListView.ItemTemplate>
-                        <DataTemplate>
-                            <Grid>
-                                <TextBlock Text="{Binding StatItem}" HorizontalAlignment="Left"></TextBlock>
-                                <TextBlock Text="{Binding Value}" HorizontalAlignment="Right" Foreground="{ThemeResource TextFillColorSecondaryBrush}"></TextBlock>
-                            </Grid>
-                        </DataTemplate>
-                    </ListView.ItemTemplate>
+                    <ListViewItem>
+                        <Grid>
+                            <TextBlock Text="财富值" FontSize="13"></TextBlock>
+                            <TextBlock HorizontalAlignment="Right" FontSize="13" Text="{x:Bind CardDrawStat.wealth,Mode=OneWay}" Foreground="{ThemeResource TextFillColorSecondaryBrush}"></TextBlock>
+                        </Grid>
+                    </ListViewItem>
+                    <ListViewItem>
+                        <Grid>
+                            <TextBlock Text="抽卡次数" FontSize="13"></TextBlock>
+                            <TextBlock HorizontalAlignment="Right" FontSize="13" Text="{x:Bind CardDrawStat.drawCount,Mode=OneWay}" Foreground="{ThemeResource TextFillColorSecondaryBrush}"></TextBlock>
+                        </Grid>
+                    </ListViewItem>
+                    <ListViewItem>
+                        <Grid>
+                            <TextBlock Text="花费" FontSize="13"></TextBlock>
+                            <TextBlock HorizontalAlignment="Right" FontSize="13" Text="{x:Bind CardDrawStat.totalCost,Mode=OneWay}" Foreground="{ThemeResource TextFillColorSecondaryBrush}"></TextBlock>
+                        </Grid>
+                    </ListViewItem>
+                    <ListViewItem>
+                        <Grid>
+                            <TextBlock Text="收益" FontSize="13"></TextBlock>
+                            <TextBlock HorizontalAlignment="Right" FontSize="13" Text="{x:Bind CardDrawStat.totalBonus,Mode=OneWay}" Foreground="{ThemeResource TextFillColorSecondaryBrush}"></TextBlock>
+                        </Grid>
+                    </ListViewItem>
+                    <ListViewItem>
+                        <Grid>
+                            <TextBlock Text="卡片总数" FontSize="13"></TextBlock>
+                            <TextBlock HorizontalAlignment="Right" FontSize="13" Text="{x:Bind CardDrawStat.cardCount,Mode=OneWay}" Foreground="{ThemeResource TextFillColorSecondaryBrush}"></TextBlock>
+                        </Grid>
+                    </ListViewItem>
                 </ListView>
                 <Grid>
                     <TextBlock Text="单抽" Foreground="{ThemeResource AccentAAFillColorDefaultBrush}" FontWeight="Bold" VerticalAlignment="Center"></TextBlock>
@@ -71,10 +92,10 @@
                 <Border BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}" Height="2" BorderThickness="2"></Border>
                 <ListView x:Name="SingleProperList">
                     <ListView.ItemTemplate>
-                        <DataTemplate>
+                        <DataTemplate x:DataType="local:Odd">
                             <Grid>
-                                <TextBlock Text="{Binding Rank}" HorizontalAlignment="Left"></TextBlock>
-                                <TextBlock Text="{Binding Probability}" HorizontalAlignment="Right" Foreground="{ThemeResource TextFillColorSecondaryBrush}"></TextBlock>
+                                <TextBlock Text="{x:Bind Rank}" HorizontalAlignment="Left" FontSize="13"></TextBlock>
+                                <TextBlock Text="{x:Bind Probability}" HorizontalAlignment="Right" Foreground="{ThemeResource TextFillColorSecondaryBrush}" FontSize="13"></TextBlock>
                             </Grid>
                         </DataTemplate>
                     </ListView.ItemTemplate>
@@ -95,10 +116,10 @@
                 <Border BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}" Height="2" BorderThickness="2"></Border>
                 <ListView x:Name="MultiProperList">
                     <ListView.ItemTemplate>
-                        <DataTemplate>
+                        <DataTemplate x:DataType="local:Odd">
                             <Grid>
-                                <TextBlock Text="{Binding Rank}" HorizontalAlignment="Left"></TextBlock>
-                                <TextBlock Text="{Binding Probability}" HorizontalAlignment="Right" Foreground="{ThemeResource TextFillColorSecondaryBrush}"></TextBlock>
+                                <TextBlock Text="{x:Bind Rank}" HorizontalAlignment="Left" FontSize="13"></TextBlock>
+                                <TextBlock Text="{x:Bind Probability}" HorizontalAlignment="Right" Foreground="{ThemeResource TextFillColorSecondaryBrush}" FontSize="13"></TextBlock>
                             </Grid>
                         </DataTemplate>
                     </ListView.ItemTemplate>
@@ -120,13 +141,13 @@
                     <LinedFlowLayout MinItemSpacing="15" LineSpacing="15" ItemsStretch="Fill" ItemsJustification="Center"></LinedFlowLayout>
                 </ItemsRepeater.Layout>
                 <ItemsRepeater.ItemTemplate>
-                    <DataTemplate>
-                        <dev:FlipSide  Tapped="FlipSide_Tapped" Tag="{Binding Order}" IsFlipped="{Binding IsFlipped,Mode=TwoWay}" Width="175" Height="280" >
+                    <DataTemplate x:DataType="local:Card">
+                        <dev:FlipSide  Tapped="FlipSide_Tapped" Tag="{x:Bind Order}" IsFlipped="{x:Bind IsFlipped,Mode=TwoWay}" Width="175" Height="280" >
                             <dev:FlipSide.Side1>
                                 <Image Source="/Assets/Card.jpg" Width="175" Height="280" Stretch="UniformToFill"></Image>
                             </dev:FlipSide.Side1>
                             <dev:FlipSide.Side2>
-                                <local:SmartImage Source="{Binding ImageUrl}"  Width="175" Height="280" ></local:SmartImage>
+                                <local:SmartImage Source="{x:Bind ImageUrl}"  Width="175" Height="280" ToolTipService.ToolTip="{x:Bind Name}"></local:SmartImage>
                             </dev:FlipSide.Side2>
                         </dev:FlipSide >
                     </DataTemplate>

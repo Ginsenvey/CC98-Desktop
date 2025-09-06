@@ -31,7 +31,7 @@ namespace App3
     public sealed partial class Favorite : Page
     {
         public ApplicationDataContainer Set = ApplicationData.Current.LocalSettings;
-        public ObservableCollection<StandardPost> tiles;
+        public ObservableCollection<StandardPost> tiles=new();
         public FavoriteGroup SelectedFavo { get; set; }
         public ObservableCollection<FavoriteGroup> Favos = new()
         {
@@ -41,7 +41,6 @@ namespace App3
         public Favorite()
         {
             this.InitializeComponent();
-            tiles = new();
         }
         public string mode = "0";
         public string groupid = "0";
@@ -63,10 +62,6 @@ namespace App3
                     Request(mode, "0", ((int)Current_Order).ToString(), groupid);
                 }
                 
-            }
-            else
-            {
-
             }
         }
         private void LoadFavorites()

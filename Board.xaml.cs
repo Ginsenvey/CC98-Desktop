@@ -1,5 +1,6 @@
 using CCkernel;
 using CCUserModel;
+using CommunityToolkit.Mvvm.ComponentModel;
 using DevWinUI;
 using FluentIcons.Common;
 using Microsoft.UI.Xaml;
@@ -18,6 +19,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
@@ -48,17 +50,13 @@ namespace App3
     /// </summary>
     public sealed partial class Board : Page
     {
-        public ObservableCollection<STile> stiles;
+        public ObservableCollection<STile> stiles=new();
         public ApplicationDataContainer Set;
-        public BoardData board_data = new();
+        public BoardData boardData { get; set; } = new() { name = "版面", todayCount = "今日发帖:9898", totalCount = "9898" };
         public Board()
         {
             this.InitializeComponent();
             Set = ApplicationData.Current.LocalSettings;
-            stiles= new ObservableCollection<STile>()
-            {
-
-            };
             STileList.ItemsSource = stiles;
             
 
@@ -115,18 +113,12 @@ namespace App3
                             string todaycount = js["todayCount"].ToString();
                             string totaltopic = js["topicCount"].ToString();
                             string bantext = js["bigPaper"].ToString() ;
-                            board_data = new BoardData()
-                            {
-                                Name = name,
-                                Description = description,
-                                Todaycount = "今日帖数:" + todaycount,
-                                Totalcount = "总话题数:" + totaltopic,
-                                Masters = "版主:" + masters,
-                                BanText = UBBConverter.Convert(bantext,true)
-                            };
-                            BoardBanner.DataContext = board_data;
-                            
-                            
+                            boardData.name = name;
+                            boardData.description = description;
+                            boardData.masters = masters;
+                            boardData.banText = UBBConverter.Convert(bantext, true);
+                            boardData.totalCount = "总话题数:" + totaltopic;
+                            boardData.todayCount = "今日帖数:" + todaycount;
                         }
                     }
                 }
@@ -169,15 +161,7 @@ namespace App3
 
             }
         }
-        public class BoardData
-        {
-            public string Name { get; set; }
-            public string Totalcount { get; set; }
-            public string Todaycount { get; set; }
-            public  string Masters { get; set; }
-            public string Description { get; set; }
-            public string BanText { get; set; }
-        }
+        
 
         private void TileContent_Click(object sender, RoutedEventArgs e)
         {
@@ -189,6 +173,10 @@ namespace App3
                 {
                     Frame.Navigate(typeof(Topic), t.pid);
                 }
+            }
+            else
+            {
+                Flower.PlayAnimation("\uE930", "null");
             }
         }
 
@@ -335,8 +323,8 @@ namespace App3
                                 
                                 var i = new NavigationItem
                                 {
-                                    IconSymbol = BoardIcon.GetSymbol(bid, board_data.Name),
-                                    Name = board_data.Name,
+                                    IconSymbol = BoardIcon.GetSymbol(bid, boardData.name),
+                                    Name = boardData.name,
                                     IsEditable = true,
                                     Tag = bid
                                 };
@@ -355,6 +343,46 @@ namespace App3
                 }
             }
             
+        }
+    }
+    public partial class BoardData :ObservableObject
+    {
+        
+        private string _name;
+        private string _totalCount;
+        private string _todayCount;
+        private string _masters;
+        private string _description;
+        private string _banText;
+        public string name
+        {
+            get => _name;
+            set=> SetProperty(ref _name, value);
+        }
+        public string totalCount
+        {
+            get => _totalCount;
+            set=>SetProperty(ref _totalCount, value);
+        }
+        public string masters
+        {
+            get => _masters;
+            set=>SetProperty(ref _masters, value);
+        }
+        public string description
+        {
+            get => _description;
+            set=>SetProperty(ref _description, value);
+        }
+        public string todayCount
+        {
+            get => _todayCount;
+            set=>SetProperty(ref _todayCount, value);
+        }
+        public string banText
+        {
+            get => _banText;
+            set => SetProperty(ref _banText, value);
         }
     }
 }

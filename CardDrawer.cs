@@ -35,11 +35,5 @@ namespace CCkernel
         }
     }
     
-    public class CardData
-    {
-        public required int id { get; set; }
-        public required string name { get; set; }
-        public required string description { get; set; }
-        public required string imageUri { get; set; }
-    }
+    
 }

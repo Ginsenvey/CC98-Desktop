@@ -23,6 +23,7 @@ using System.Net;
 using System.Net.Http;
 using System.Runtime.InteropServices.WindowsRuntime;
 using System.Threading.Tasks;
+using System.Xml.Linq;
 using Windows.ApplicationModel;
 using Windows.ApplicationModel.Activation;
 using Windows.Foundation;
@@ -62,11 +63,13 @@ namespace App3
                     //检测是否已初始化TWFID。若已初始化，使用并检查有效性。无效则重连。未初始化是出错的情况。
                     if (PasswordManager.PasswordExists("TWFID"))
                     {
-                        var token = JsonConvert.DeserializeObject<Cookie>(PasswordManager.RetrievePassword("TWFID"));
-                        if (token != null)
+                        //构造TWFID
+                        var token = PasswordManager.RetrievePassword("TWFID");
+                        var cookie = new Cookie("TWFID", token, "/", "webvpn.zju.edu.cn");
+                        if (!string.IsNullOrEmpty(token))
                         {
-                            CCloginservice.vpn.Jar.Add(token);
-                            if (await CCloginservice.vpn.CheckNetwork(true) == "1")//该函数不受IsVpnEnable和Logine影响
+                            CCloginservice.vpn.Jar.Add(cookie);
+                            if (await CCloginservice.vpn.CheckNetwork(true) == "1")//该函数不受IsVpnEnable和Logined影响
                             {
                                 CCloginservice.vpn.IsVpnEnabled = true;
                                 return "1";
@@ -82,8 +85,8 @@ namespace App3
                                     if (vpn_res == "1")//连接成功
                                     {
                                         CCloginservice.vpn.IsVpnEnabled = true;
-                                        var cookie = CCloginservice.vpn.TWFID;
-                                        string _token = JsonConvert.SerializeObject(cookie);
+                                        var new_cookie = CCloginservice.vpn.TWFID;
+                                        string _token = new_cookie.Value;
                                         if (!string.IsNullOrEmpty(_token))
                                         {
                                             PasswordManager.SavePassword(_token, "TWFID");
@@ -150,9 +153,9 @@ namespace App3
             }
             else
             {
-                if (Set.Values.ContainsKey("IsActive"))//已初始化
+                if (ValidationHelper.IsTokenExist(Set, "IsActive") == "1")//已登录
                 {
-                    if (Set.Values["IsActive"] as string == "1")//已登录
+                    try
                     {
                         var status = await InitializeNetwork();
                         switch (status)
@@ -165,22 +168,27 @@ namespace App3
                                 ActivateLogin(1);
                                 break;
                             default:
-                                AppNotification notification = new AppNotificationBuilder()
+                                AppNotification _notification = new AppNotificationBuilder()
                                 .AddText("启动失败")
-                                .AddText("详细信息:\n"+status)
+                                .AddText("详细信息:\n" + status)
                                 .BuildNotification();
-                                AppNotificationManager.Default.Show(notification);
+                                AppNotificationManager.Default.Show(_notification);
                                 break;
                         }
-                        
                     }
-                   
-                    else //未登录
+                    catch (Exception ex)
                     {
-                        ActivateLogin(0);
+                        AppNotification notification = new AppNotificationBuilder()
+                        .AddText("启动失败")
+                        .AddText(ex.Message)
+                        .BuildNotification();
+                        AppNotificationManager.Default.Show(notification);
                     }
+                    
+
                 }
-                else
+
+                else //未登录
                 {
                     ActivateLogin(0);
                 }
@@ -212,7 +220,7 @@ namespace App3
                 {
                     AppNotification notification = new AppNotificationBuilder()
                     .AddText("警告")
-                    .AddText("服务器返回验证参数不正确。当前网络环境可能有风险，或者存在代码问题。")
+                    .AddText("服务器返回验证参数不正确。当前网络环境可能有风险，或者存在其他问题。")
                     .BuildNotification();
                     AppNotificationManager.Default.Show(notification);
                 }

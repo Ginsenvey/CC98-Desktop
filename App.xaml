@@ -60,6 +60,10 @@
             <SolidColorBrush x:Key="FancyButtonBackgroundBrush" Color="{ThemeResource FancyButtonBackgroudColor}"></SolidColorBrush>
             <SolidColorBrush x:Key="FancyButtonForegroundBrush" Color="{ThemeResource FancyButtonForegroudColor}"></SolidColorBrush>
             <SolidColorBrush x:Key="DividerBrush" Color="{ThemeResource DividerColor}"></SolidColorBrush>
+            <SolidColorBrush x:Key="pinkgreen" Color="{ThemeResource pink-green}"></SolidColorBrush>
+            <SolidColorBrush x:Key="0" Color="{ThemeResource trans-plain}"></SolidColorBrush>
+            <SolidColorBrush x:Key="skyblue" Color="{ThemeResource sky-blue}"></SolidColorBrush>
+            <SolidColorBrush x:Key="yellow" Color="{ThemeResource yel-low}" ></SolidColorBrush>
             <SolidColorBrush x:Key="QuoteBorderBrush" Color="{ThemeResource QuoteBorderColor}"></SolidColorBrush>
             <SolidColorBrush x:Key="StandardBrush" Color="{ThemeResource Standard}"></SolidColorBrush>
             <AcrylicBrush x:Key="AcrylicCardBrush" TintOpacity="0.4" TintColor="{ThemeResource AcrylicTintColor}" AlwaysUseFallback="False"/>

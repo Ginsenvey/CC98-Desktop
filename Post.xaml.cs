@@ -82,8 +82,9 @@ namespace App3
                 {
                     status.Text = "回复帖子:" + parameter["QuoteText"];
                     Id = parameter["Pid"];
-                    Editor.Text = $"[quote]{parameter["QuoteText"]}[/quote]";
+                    Editor.Text = $"[quote]{parameter["Header"]}{parameter["QuoteText"]}[/quote]";
                     Previewer.Text = UBBConverter.Convert(Editor.Text.Replace("\r\n", "  \n").Replace("\r", "  \n"), false);
+                    Editor.SelectionStart = Editor.Text.Length;
                     Parent_Id = parameter["ParentId"];
                     replyselector.IsSelected = true;
                     SetTitle.IsEnabled = false;
@@ -241,6 +242,7 @@ namespace App3
             Previewer.Text = UBBConverter.Convert(Editor.Text.Replace("\r\n", "  \n").Replace("\r","  \n"),false);
             
         }
+        //以下方法用于创建Md的代码块,但是UBB编辑器不需要支持这个操作。
         private void InsertCodeBlock()
         {
             int cursorPos = Editor.SelectionStart;
@@ -262,7 +264,10 @@ namespace App3
             {
                 if (Mode == "0"||Mode=="1")
                 {
-                    string MyReplyId=await RequestSender.SendReplyToTopic(Id, Editor.Text.Replace("\r\n", "\n").Replace("\r","\n"), IsAnonymous,NotifyReplier ,Content_Type,Mode=="1",Parent_Id);
+                    string tail = "[align=right][size=3][color=gray]——来自「[b][color=purple]CC98 For Windows[/color][/b]」[/color][/size][/align]";
+                    string maintext = Editor.Text.Replace("\r\n", "\n").Replace("\r", "\n");
+                    string target=ValidationHelper.IsTokenExist(Set,"IsTailVisible")=="1"?maintext+"\n"+tail:maintext;
+                    string MyReplyId=await RequestSender.SendReplyToTopic(Id,target, IsAnonymous,NotifyReplier ,Content_Type,Mode=="1",Parent_Id);
                     //直接构造json字符串和使用jsonconvert序列化的换行符变化方式不同。这里的替换方式适用于序列化。
                     if(MyReplyId.StartsWith("101:"))
                     {
@@ -270,7 +275,7 @@ namespace App3
                     }
                     else if(MyReplyId.StartsWith("400:"))
                     {
-                        status.Text = "出错了。向开发者报告此问题。";
+                        status.Text = "发生错误。请向开发者报告此问题，日志已记录";
                         ValidationHelper.Log("向主题发送回复出错", MyReplyId.Split(":")[1]);
                     }
                     else

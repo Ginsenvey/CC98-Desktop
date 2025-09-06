@@ -16,6 +16,7 @@ using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices.WindowsRuntime;
 using System.Threading.Tasks;
+using Windows.ApplicationModel.Appointments;
 using Windows.Foundation;
 using Windows.Foundation.Collections;
 using Windows.UI;
@@ -37,7 +38,9 @@ namespace App3
         public Contact NewSession = new();
         public Chat()
         {
-            this.InitializeComponent(); 
+            this.InitializeComponent();
+            ContactRepeater.ItemsSource = contacts;
+            MessagesList.ItemsSource = Msgs;
         }
 
         protected override void OnNavigatedTo(Microsoft.UI.Xaml.Navigation.NavigationEventArgs e)
@@ -125,7 +128,7 @@ namespace App3
                                     }
 
                                 }
-                                ContactRepeater.ItemsSource = contacts;
+                                
                                 if (type == "1")
                                 {
                                     ContactRepeater.SelectedItem = contacts.First(c => c.mid == NewSession.mid);
@@ -163,16 +166,14 @@ namespace App3
                             bool isMe = js["receiverId"].ToString() == uid;
                             string text = UBBConverter.Convert(js["content"].ToString(), true);
                             string time = js["time"].ToString();
-                            Msgs.Add(new Msg
+                            Msgs.Insert(0,new Msg
                             {
                                 msgid = msgid,
                                 text = text,
                                 time = time,
-                                uid = isMe
+                                isme = isMe
                             });
                         }
-                        var reversedlist = Msgs.Reverse();
-                        MessagesList.ItemsSource = reversedlist;
                     }
                 }
             }
@@ -190,7 +191,6 @@ namespace App3
         private async void RefDialogs()
         {
             Msgs.Clear();
-            MessagesList.ItemsSource = null;
             await GetDialogs(currentuid, "0");
             if (MessagesList.Items.Count > 0)
             {
@@ -245,11 +245,11 @@ namespace App3
             RefDialogs();
         }
     }
-    public class Msg : INotifyPropertyChanged
+    public partial class Msg : INotifyPropertyChanged
     {
         private string _time;
         private string _text;
-        private bool _uid;
+        private bool _isme;
         private string _msgid;
         public string time
         {
@@ -277,15 +277,15 @@ namespace App3
             }
         }
 
-        public bool uid
+        public bool isme
         {
-            get { return _uid; }
+            get { return _isme; }
             set
             {
-                if (_uid != value)
+                if (_isme != value)
                 {
-                    _uid = value;
-                    OnPropertyChanged(nameof(uid));
+                    _isme = value;
+                    OnPropertyChanged(nameof(isme));
                 }
             }
         }
@@ -321,7 +321,7 @@ namespace App3
         public string Mid { get; set; }
     }
     
-    public class Contact : INotifyPropertyChanged
+    public partial class Contact : INotifyPropertyChanged
     {
         private string _text;
         private string _mid;//会话ID
@@ -402,9 +402,8 @@ namespace App3
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
     }
-    public class AlignmentConverter : IValueConverter
+    public partial class AlignmentConverter : IValueConverter
     {
-        // Convert（正向转换：数据源 -> 界面）
         public object Convert(object value, Type targetType, object parameter, string language)
         {
             return (bool)value ?
@@ -412,42 +411,13 @@ namespace App3
                 HorizontalAlignment.Left;
         }
 
-        // ConvertBack（逆向转换：界面 -> 数据源）
-        public object ConvertBack(object value, Type targetType, object parameter, string language)
-        {
-            // 如果不需要双向绑定，可以直接返回默认值
-            return DependencyProperty.UnsetValue;
-
-            // 或者抛出异常（推荐做法）
-            // throw new NotImplementedException();
-        }
-    }
-
-    public class BackgroundConverter : IValueConverter
-    {
-        public object Convert(object value, Type targetType, object parameter, string language)
-        {
-            return (bool)value ?
-                new SolidColorBrush(Color.FromArgb(255, 210, 179, 174)) :
-                new SolidColorBrush(Color.FromArgb(255, 212, 238, 253));
-        }
-
         public object ConvertBack(object value, Type targetType, object parameter, string language)
         {
             return DependencyProperty.UnsetValue;
         }
     }
 
-    public class DateTimeConverter : IValueConverter
-    {
-        public object Convert(object value, Type targetType, object parameter, string language)
-        {
-            return ((DateTime)value).ToString("HH:mm");
-        }
+    
 
-        public object ConvertBack(object value, Type targetType, object parameter, string language)
-        {
-            throw new NotImplementedException();
-        }
-    }
+    
 }

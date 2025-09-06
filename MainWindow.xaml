@@ -27,14 +27,14 @@
             <TeachingTip.Content>
                 <ListView x:Name="ForumStatList" >
                     <ListView.ItemTemplate>
-                        <DataTemplate>
+                        <DataTemplate x:DataType="local:StatInfoPair">
                             <Grid>
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="2*"></ColumnDefinition>
                                     <ColumnDefinition Width="*"></ColumnDefinition>
                                 </Grid.ColumnDefinitions>
-                                <TextBlock Grid.Column="0" FontSize="12" Text="{Binding StatItem}" Foreground="{ThemeResource TextFillColorSecondaryBrush}"></TextBlock>
-                                <TextBlock Grid.Column="1" FontSize="12" Text="{Binding Value}"></TextBlock>
+                                <TextBlock Grid.Column="0" FontSize="12" Text="{x:Bind StatItem}" Foreground="{ThemeResource TextFillColorSecondaryBrush}"></TextBlock>
+                                <TextBlock Grid.Column="1" FontSize="12" Text="{x:Bind Value}"></TextBlock>
                             </Grid>
                         </DataTemplate>
                     </ListView.ItemTemplate>
@@ -93,7 +93,7 @@
             <TextBlock Grid.Column="4"  Text="CC98 Desktop" x:Name="de" FontFamily="Noto Sans SC" Margin="10,0,5,0" HorizontalAlignment="Left" VerticalAlignment="Center" FontSize="15"></TextBlock>
             <Grid x:Name="UserArea" Grid.Column="3" Grid.ColumnSpan="2"></Grid>
         </Grid>
-        
+
 
 
         <NavigationView Grid.Row="1" Grid.RowSpan="2" HorizontalAlignment="Stretch" PaneDisplayMode="Auto"  IsPaneOpen="True" OpenPaneLength="240" IsPaneToggleButtonVisible="False"  IsBackEnabled="True" IsSettingsVisible="False" IsBackButtonVisible="Collapsed"  x:Name="Navi"  MenuItemsSource="{x:Bind MenuItems}" ItemInvoked="Navi_ItemInvoked" FooterMenuItemsSource="{x:Bind FooterMenuItems}" >

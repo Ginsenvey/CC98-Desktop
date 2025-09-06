@@ -56,19 +56,14 @@
             <RowDefinition Height="*" MinHeight="100" ></RowDefinition>
             <RowDefinition Height="6*"></RowDefinition>
         </Grid.RowDefinitions>
-        <Grid.ContextFlyout>
-            <MenuFlyout>
-                <MenuFlyoutItem Text="刷新"  Icon="{ic:SymbolIcon Symbol=ArrowSync}" ></MenuFlyoutItem>
-            </MenuFlyout>
-        </Grid.ContextFlyout>
-        
+
         <FlipView  Grid.Row="0"  x:Name="RecomList" VerticalAlignment="Top" CornerRadius="6">
             <FlipView.Background>
                 <ImageBrush x:Name="ThemePresenter" Opacity="0.4" Stretch="UniformToFill"></ImageBrush>
             </FlipView.Background>
             <FlipView.ItemTemplate>
-                <DataTemplate>
-                    <Grid   Padding="20" >
+                <DataTemplate x:DataType="local:FlipPost">
+                    <Grid Padding="20" >
                         <Grid.RowDefinitions>
                             <RowDefinition Height="*"></RowDefinition>
                             <RowDefinition Height="*"></RowDefinition>
@@ -78,10 +73,10 @@
                             <ColumnDefinition Width="*"></ColumnDefinition>
                         </Grid.ColumnDefinitions>
                         <ic:SymbolIcon Symbol="DesignIdeas" FontSize="26" Foreground="{ThemeResource AccentAAFillColorDefaultBrush}" Grid.Column="0" Grid.Row="0" Grid.RowSpan="2"></ic:SymbolIcon>
-                        <TextBlock Text="{Binding content}" Grid.Row="1" Grid.Column="1" Foreground="{ThemeResource TextFillColorSecondaryBrush}" ></TextBlock>
+                        <TextBlock Text="{x:Bind content}" Grid.Row="1" Grid.Column="1" Foreground="{ThemeResource TextFillColorSecondaryBrush}" ></TextBlock>
                         <TextBlock  Grid.Row="0" Grid.Column="1"  FontWeight="Bold" TextDecorations="Underline">
-                            <Hyperlink NavigateUri="{Binding pid}" Click="RecomHyperlink_Click" x:Name="RecomHyperlink">
-                                <Run Text="{Binding title}" ></Run>
+                            <Hyperlink NavigateUri="{x:Bind pid}" Click="RecomHyperlink_Click" x:Name="RecomHyperlink">
+                                <Run Text="{x:Bind title}" ></Run>
                             </Hyperlink>
                         </TextBlock>
                         

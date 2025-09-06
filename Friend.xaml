@@ -22,12 +22,12 @@
         <ScrollViewer Grid.Row="1"  Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" CornerRadius="7" Margin="0,0,0,30">
             <ItemsRepeater  x:Name="Collection" Loaded="Collection_Loaded">
                 <ItemsRepeater.ItemTemplate>
-                    <DataTemplate>
-                        <HyperlinkButton HorizontalContentAlignment="Stretch" HorizontalAlignment="Stretch" CornerRadius="0" x:Name="TileContent" Click="TileContent_Click" BorderThickness="0.5" BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}">
+                    <DataTemplate x:DataType="local:Friends">
+                        <HyperlinkButton HorizontalContentAlignment="Stretch" HorizontalAlignment="Stretch" CornerRadius="0" x:Name="TileContent" Click="TileContent_Click" BorderThickness="0.5" BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}" DataContext="{x:Bind}">
                             <HyperlinkButton.ContextFlyout>
                                 <MenuFlyout>
                                     <MenuFlyoutItem Text="私信" Icon="{ic:SymbolIcon Symbol=ChatAdd}"  Click="Chat_Click" ></MenuFlyoutItem>
-                                    <MenuFlyoutItem Text="取关" Icon="{ic:FluentIcon Icon=Dismiss}" Click="Follow_Click" Tag="{Binding uid}"></MenuFlyoutItem>
+                                    <MenuFlyoutItem Text="取关" Icon="{ic:FluentIcon Icon=Dismiss}" Click="Follow_Click" Tag="{x:Bind uid}"></MenuFlyoutItem>
                                 </MenuFlyout>
                             </HyperlinkButton.ContextFlyout>
                             <Grid Padding="3,0,3,0"  ColumnSpacing="10">
@@ -41,15 +41,15 @@
                                     <RowDefinition Height="*"></RowDefinition>
                                     <RowDefinition Height="*"></RowDefinition>
                                 </Grid.RowDefinitions>
-                                <Border Grid.Column="0" Grid.Row="0" Grid.RowSpan="2"   VerticalAlignment="Center" HorizontalAlignment="Center" CornerRadius="3">
-                                    <Image Source="{Binding url}" Stretch="UniformToFill"></Image>
+                                <Border Grid.Column="0" Grid.Row="0" Grid.RowSpan="2" Width="40" Height="40"  VerticalAlignment="Center" HorizontalAlignment="Center" CornerRadius="3">
+                                    <local:SmartImage Source="{x:Bind url}" Stretch="UniformToFill"></local:SmartImage>
                                 </Border>
                                 
-                                <TextBlock Text="{Binding name}" Grid.Column="1" Grid.Row="0" Grid.RowSpan="2"  VerticalAlignment="Center"></TextBlock>
+                                <TextBlock Text="{x:Bind name}" Grid.Column="1" Grid.Row="0" Grid.RowSpan="2"  VerticalAlignment="Center"></TextBlock>
                                 <TextBlock Text="帖数" Grid.Column="2" Grid.Row="0" Foreground="{ThemeResource TextFillColorSecondaryBrush}"></TextBlock>
                                 <TextBlock Text="粉丝" Grid.Column="2" Grid.Row="1" Foreground="{ThemeResource TextFillColorSecondaryBrush}"></TextBlock>
-                                <TextBlock Text="{Binding post}" Grid.Column="3" Grid.Row="0"  VerticalAlignment="Center" ></TextBlock>
-                                <TextBlock Text="{Binding follower}" Grid.Column="3" Grid.Row="1"  VerticalAlignment="Bottom" ></TextBlock>
+                                <TextBlock Text="{x:Bind post}" Grid.Column="3" Grid.Row="0"  VerticalAlignment="Center" ></TextBlock>
+                                <TextBlock Text="{x:Bind follower}" Grid.Column="3" Grid.Row="1"  VerticalAlignment="Bottom" ></TextBlock>
 
                             </Grid>
                         </HyperlinkButton>

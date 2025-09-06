@@ -1,5 +1,6 @@
 using CCkernel;
 using CCUserModel;
+using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.WinUI.Controls;
 using CommunityToolkit.WinUI.UI.Controls;
 using DevWinUI;
@@ -59,7 +60,6 @@ namespace App3
         public Profile()
         {
             this.InitializeComponent();
-            
             SimpleTile.ItemsSource = stiles; 
         }
         protected override void OnNavigatedTo(Microsoft.UI.Xaml.Navigation.NavigationEventArgs e)
@@ -137,22 +137,19 @@ namespace App3
                 {
                     isme=true;
                 }
-                profile = new Info()
-                {
-                    Name = ValidationHelper.GetKey(js, "name"),
-                    Id = ValidationHelper.GetKey(js, "id"),
-                    Popularity = ValidationHelper.GetKey(js, "popularity"),
-                    Fan = ValidationHelper.GetKey(js, "fanCount"),
-                    Follow = ValidationHelper.GetKey(js, "followCount"),  
-                    Logtime = ValidationHelper.GetKey(js, "lastLogOnTime"),
-                    Port = ValidationHelper.GetKey(js, "portraitUrl"),
-                    Signature = UBBConverter.Convert(ValidationHelper.GetKey(js, "signatureCode"), true),
-                    Posts = ValidationHelper.GetKey(js, "postCount"),
-                    Wealth = ValidationHelper.GetKey(js,"wealth"),
-                    IsOthers = !isme,
-                    Regtime = ValidationHelper.GetKey(js,"registerTime"),
-                    IsFollowing=ValidationHelper.GetKey(js, "isFollowing")=="True",//注意大写
-                };
+                profile.Name = ValidationHelper.GetKey(js, "name");
+                profile.Id = ValidationHelper.GetKey(js, "id");
+                profile.Popularity = ValidationHelper.GetKey(js, "popularity");
+                profile.Fan = ValidationHelper.GetKey(js, "fanCount");
+                profile.Follow = ValidationHelper.GetKey(js, "followCount");
+                profile.Logtime = ValidationHelper.GetKey(js, "lastLogOnTime");
+                profile.Port = ValidationHelper.GetKey(js, "portraitUrl");
+                profile.Signature = UBBConverter.Convert(ValidationHelper.GetKey(js, "signatureCode"), true);
+                profile.Posts = ValidationHelper.GetKey(js, "postCount");
+                profile.Wealth = ValidationHelper.GetKey(js, "wealth");
+                profile.IsOthers = !isme;
+                profile.Regtime = ValidationHelper.GetKey(js, "registerTime");
+                profile.IsFollowing = ValidationHelper.GetKey(js, "isFollowing") == "True";
                 MyProfile.ProfilePicture = await ImageResolver.LoadWebImage(profile.Port);
                 InfoContent.DataContext = profile;
                 SignBoard.DataContext = profile;
@@ -354,144 +351,8 @@ namespace App3
 
             }
         }
-        public class Info
-        {
-            public string Name { get; set; }
-            public string Signature { get; set; }
-            public string Id { get; set; }
-            public string Posts { get; set; }
-            public string Wealth { get; set; }
-            public string Logtime { get; set; }
-            public string Port { get; set; }
-            public string Popularity {  get; set; }
-            public string Fan {  get; set; }
-            public string Follow { get; set; }
-
-            public string Regtime { get; set; }
-
-            public bool IsOthers { get; set; }
-            public bool IsFollowing {  get; set; }
-        }
-        public class STile : INotifyPropertyChanged
-        {
-            private string _text;
-            private string _section;
-            
-            private string _pid;//主题ID
-            private string _author;
-            private string _hit;
-            private string _reply;
-            private string _time;
-            private FluentIcons.Common.Symbol _symbol;
-            public string text
-            {
-                get => _text;
-                set
-                {
-                    if (_text != value)
-                    {
-                        _text = value;
-                        OnPropertyChanged(nameof(text));
-                    }
-                }
-            }
-
-            public string section
-            {
-                get => _section;
-                set
-                {
-                    if (_section != value)
-                    {
-                        _section = value;
-                        OnPropertyChanged(nameof(section));
-                    }
-                }
-            }
-
-            
-            public string pid
-            {
-                get => _pid;
-                set
-                {
-                    if (_pid != value)
-                    {
-                        _pid = value;
-                        OnPropertyChanged(nameof(pid));
-                    }
-                }
-            }
-
-            public string author
-            {
-                get => _author;
-                set
-                {
-                    if (_author != value)
-                    {
-                        _author = value;
-                        OnPropertyChanged(nameof(author));
-                    }
-                }
-            }
-
-            public string hit
-            {
-                get => _hit;
-                set
-                {
-                    if (_hit != value)
-                    {
-                        _hit = value;
-                        OnPropertyChanged(nameof(hit));
-                    }
-                }
-            }
-            public string reply
-            {
-                get => _reply;
-                set
-                {
-                    if (_reply != value)
-                    {
-                        _reply = value;
-                        OnPropertyChanged(nameof(reply));
-                    }
-                }
-            }
-            public string time
-            {
-                get => _time;
-                set
-                {
-                    if (_time != value)
-                    {
-                        _time = value;
-                        OnPropertyChanged(nameof(time));
-                    }
-                }
-            }
-            public FluentIcons.Common.Symbol symbol
-            {
-                get => _symbol;
-                set
-                {
-                    if (_symbol != value)
-                    {
-                        _symbol = value;
-                        OnPropertyChanged(nameof(symbol));
-                    }
-                }
-            }
-
-            public event PropertyChangedEventHandler PropertyChanged;
-
-            protected virtual void OnPropertyChanged(string propertyName)
-            {
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-            }
-        }
+        
+        
 
         private void StartChat_Click(object sender, RoutedEventArgs e)
         {
@@ -524,13 +385,203 @@ namespace App3
             }
         }
     }
+    public partial class Info : ObservableObject
+    {
+        private string _name;
+        private string _signature;
+        private string _id;
+        private string _posts;
+        private string _wealth;
+        private string _logtime;
+        private string _port;
+        private string _popularity;
+        private string _fan;
+        private string _follow;
+        private string _regtime;
+        private bool _isothers;
+        private bool _isfollowing;
+        public string Name {
+            get => _name;
+            set=>SetProperty(ref _name, value);
+        }
+        public string Signature {
+            get => _signature;
+            set=>SetProperty(ref _signature, value);
+        }
+        public string Id { 
+            get => _id;
+            set => SetProperty(ref _id, value);
+        }
+        public string Posts {
+            get => _posts;
+            set => SetProperty(ref _posts, value);
+        }
+        public string Wealth {
+            get => _wealth;
+            set=>SetProperty(ref _wealth, value);
+        }
+        public string Logtime {
+            get => _logtime;
+            set=>SetProperty(ref _logtime, value);
+        }
+        public string Port {
+            get => _port;
+            set=>SetProperty(ref _port, value);
+        }
+        public string Popularity {
+            get => _popularity;
+            set=>SetProperty(ref _popularity, value);
+        }
+        public string Fan {
+            get => _fan;
+            set=>SetProperty(ref _fan, value);
+        }
+        public string Follow {
+            get => _follow;
+            set=>SetProperty(ref _follow, value);
+        }
+
+        public string Regtime {
+            get => _regtime;
+            set=>SetProperty(ref _regtime, value);
+        }
+
+        public bool IsOthers {
+            get => _isothers;
+            set=>SetProperty(ref _isothers, value);
+        }
+        public bool IsFollowing {
+            get => _isfollowing;
+            set=>SetProperty(ref _isfollowing, value);
+        }
+    }
+    public class STile : INotifyPropertyChanged
+    {
+        private string _text;
+        private string _section;
+
+        private string _pid;//主题ID
+        private string _author;
+        private string _hit;
+        private string _reply;
+        private string _time;
+        private FluentIcons.Common.Symbol _symbol;
+        public string text
+        {
+            get => _text;
+            set
+            {
+                if (_text != value)
+                {
+                    _text = value;
+                    OnPropertyChanged(nameof(text));
+                }
+            }
+        }
+
+        public string section
+        {
+            get => _section;
+            set
+            {
+                if (_section != value)
+                {
+                    _section = value;
+                    OnPropertyChanged(nameof(section));
+                }
+            }
+        }
+
+
+        public string pid
+        {
+            get => _pid;
+            set
+            {
+                if (_pid != value)
+                {
+                    _pid = value;
+                    OnPropertyChanged(nameof(pid));
+                }
+            }
+        }
+
+        public string author
+        {
+            get => _author;
+            set
+            {
+                if (_author != value)
+                {
+                    _author = value;
+                    OnPropertyChanged(nameof(author));
+                }
+            }
+        }
+
+        public string hit
+        {
+            get => _hit;
+            set
+            {
+                if (_hit != value)
+                {
+                    _hit = value;
+                    OnPropertyChanged(nameof(hit));
+                }
+            }
+        }
+        public string reply
+        {
+            get => _reply;
+            set
+            {
+                if (_reply != value)
+                {
+                    _reply = value;
+                    OnPropertyChanged(nameof(reply));
+                }
+            }
+        }
+        public string time
+        {
+            get => _time;
+            set
+            {
+                if (_time != value)
+                {
+                    _time = value;
+                    OnPropertyChanged(nameof(time));
+                }
+            }
+        }
+        public FluentIcons.Common.Symbol symbol
+        {
+            get => _symbol;
+            set
+            {
+                if (_symbol != value)
+                {
+                    _symbol = value;
+                    OnPropertyChanged(nameof(symbol));
+                }
+            }
+        }
+
+        public event PropertyChangedEventHandler PropertyChanged;
+
+        protected virtual void OnPropertyChanged(string propertyName)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        }
+    }
     public partial class BooltoVisibilityConverter : IValueConverter
     {
         object IValueConverter.Convert(object value, Type targetType, object parameter, string language)
         {
             if (value is bool flag)
             {
-                return flag?Visibility.Visible:Visibility.Collapsed;
+                return flag ? Visibility.Visible : Visibility.Collapsed;
             }
             else
             {
@@ -549,7 +600,7 @@ namespace App3
         {
             if (value is bool flag)
             {
-                return flag ? IconVariant.Filled:IconVariant.Regular;
+                return flag ? IconVariant.Filled : IconVariant.Regular;
             }
             else
             {
@@ -597,4 +648,5 @@ namespace App3
             throw new NotImplementedException();
         }
     }
+
 }

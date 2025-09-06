@@ -94,15 +94,15 @@ namespace App3
                 string theme = (string)Set.Values["Theme"];
                 if (theme == "0")
                 {
-                    Light.IsChecked = true;
+                    Follow.IsChecked = true;
                 }
                 else if (theme == "1")
                 {
-                    Dark.IsChecked = true;
+                    Light.IsChecked = true;
                 }
                 else
                 {
-                    Follow.IsChecked = true;
+                    Dark.IsChecked = true;
                 }
             }
             else
@@ -145,6 +145,25 @@ namespace App3
                     IsImageVisible.IsOn = false;//2
                 }
             }
+            string _IsTailVisible = ValidationHelper.IsTokenExist(Set, "IsTailVisible");
+            if (_IsTailVisible == "0")
+            {
+                Set.Values["IsTailVisible"] = "2";//初始化为不显示
+                TailVisibility.IsOn = false;
+            }
+            else
+            {
+                if (_IsTailVisible == "1")
+                {
+                    TailVisibility.IsOn = true;//1
+                }
+                else
+                {
+                    TailVisibility.IsOn = false;//2
+                }
+            }
+            string color = ValidationHelper.IsTokenExist(Set, "BaseColor");
+            BaseColorPiker.SelectedItem = BaseColorPiker.Items.First(i => (i as ComboBoxItem).Tag.ToString() == color);
         }
         public string EffectHistory = "";
         public ApplicationDataContainer Set=ApplicationData.Current.LocalSettings;
@@ -203,13 +222,13 @@ namespace App3
                 if (theme == "1")
                 {
                     
-                    App.RaiseThemeChanged(ElementTheme.Dark);
+                    App.RaiseThemeChanged(ElementTheme.Light);
 
                 }
-                else if (theme == "0")
+                else if (theme == "2")
                 {
                     
-                    App.RaiseThemeChanged(ElementTheme.Light);
+                    App.RaiseThemeChanged(ElementTheme.Dark);
 
                 }
                 else
@@ -517,6 +536,36 @@ namespace App3
                 }
             }
             
+        }
+
+      
+
+        private void BaseColorPiker_SelectionChanged_1(object sender, SelectionChangedEventArgs e)
+        {
+            if (sender is ComboBox c)
+            {
+                if(c.SelectedItem is ComboBoxItem i)
+                {
+                    if(i.Tag is string tag)
+                    {
+                        Set.Values["BaseColor"] = tag;
+                    }
+                    
+                }
+            }
+            
+        }
+
+        private void TailVisibility_Toggled(object sender, RoutedEventArgs e)
+        {
+            if (TailVisibility.IsOn)
+            {
+                Set.Values["IsTailVisible"] = 1;
+            }
+            else
+            {
+                Set.Values["IsTailVisible"] = 2;
+            }
         }
     }
     public class Pic

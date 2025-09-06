@@ -1,4 +1,5 @@
 using CCkernel;
+using CommunityToolkit.Mvvm.ComponentModel;
 using DevWinUI;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -23,9 +24,8 @@ namespace App3
     public sealed partial class Game : Page
     {
         public ApplicationDataContainer Set = ApplicationData.Current.LocalSettings;
-        private static PasswordVault vault = new PasswordVault();
         public ObservableCollection<Card> cards = new ObservableCollection<Card>();
-        public ObservableCollection<StatInfoPair> stats = new();
+        public CardDrawStat CardDrawStat { get; set; }=new CardDrawStat() { wealth=0,cardCount=0,drawCount=0,totalBonus=0,totalCost=0};
         public ObservableCollection<Odd> odds1 = new();
         public ObservableCollection<Odd> odds2 = new();
         public Game()
@@ -33,14 +33,11 @@ namespace App3
             this.InitializeComponent();
             DisplayOdd();
             RefreshStat();
-            StatList.ItemsSource = stats;
             CardList.ItemsSource = cards;
             
         }
         private async void RefreshStat()
         {
-            stats.Clear();
-            StatInfoPair wealth_info = new StatInfoPair { StatItem = "财富值", Value = 0 };
             string ProfileUrl = "https://api.cc98.org/me";
             string ProfileText = await RequestSender.SimpleRequest(ProfileUrl);
             if (!ProfileText.StartsWith("404:"))
@@ -49,20 +46,19 @@ namespace App3
                 if (js != null)
                 {
                     int wealth = Convert.ToInt32(ValidationHelper.GetKey(js, "wealth"));
-                    wealth_info.Value = wealth;
+                    CardDrawStat.wealth = wealth;
                 }
             }
-            stats.Add(wealth_info);
             string _stat = await CardDrawer.Stat();
             if (!_stat.StartsWith("404:"))
             {
-                var stat = JsonConvert.DeserializeObject<StatInfo>(_stat);
+                var stat = Deserializer.ToDictionary(_stat);
                 if (stat != null)
                 {
-                    stats.Add(new StatInfoPair { StatItem = "抽卡次数", Value = stat.drawCount });
-                    stats.Add(new StatInfoPair { StatItem = "花费", Value = stat.totalCost });
-                    stats.Add(new StatInfoPair { StatItem = "收益", Value = stat.totalBonus });
-                    stats.Add(new StatInfoPair { StatItem = "卡片总数", Value = stat.cardCount });
+                    CardDrawStat.drawCount = ValidationHelper.GetKeyAsInt(stat, "drawCount");
+                    CardDrawStat.totalCost = ValidationHelper.GetKeyAsInt(stat, "totalCost");
+                    CardDrawStat.totalBonus = ValidationHelper.GetKeyAsInt(stat, "totalBonus");
+                    CardDrawStat.cardCount = ValidationHelper.GetKeyAsInt(stat, "cardCount");
                 }
             }
             else
@@ -93,18 +89,24 @@ namespace App3
             string r = await CardDrawer.DrawACard(rule);
             if (!r.StartsWith("404:"))
             {
-                var card_list = JsonConvert.DeserializeObject<List<CardData>>(r);
+                var card_list = Deserializer.ToArray(r);
                 if (card_list != null)
                 {
                     for(int i=0;i<card_list.Count;i++)
                     {
-                        string url = card_list[i].imageUri;
-                        cards.Add(new Card
+                        var card = Deserializer.ToDictionary(card_list[i].ToString());
+                        if (card != null)
                         {
-                            Order = i.ToString(),
-                            ImageUrl = $"https://card.cc98.org{url.Substring(1,url.Length-1)}",
-                            IsFlipped = false
-                        });
+                            string url = ValidationHelper.GetKey(card,"imageUri");
+                            cards.Add(new Card
+                            {
+                                Name= ValidationHelper.GetKey(card, "name"),
+                                Order = i.ToString(),
+                                ImageUrl = $"https://card.cc98.org{url.Substring(1, url.Length - 1)}",
+                                IsFlipped = false
+                            });
+                        }
+                        
                     }
                     RefreshStat();
                 }
@@ -207,6 +209,7 @@ namespace App3
                             break;
                         case "ref-stat":
                             RefreshStat();
+                            Flower.PlayAnimation("\uE930", "正在刷新数据");
                             break;
                     }
                 }
@@ -216,28 +219,56 @@ namespace App3
         }
 
     }
-    public class StatInfoPair()
+    public class StatInfoPair
     {
         public required string StatItem { get; set; }
         public int Value { get; set; }
     }
-    public class StatInfo()
+    public partial class CardDrawStat:ObservableObject
     {
-        public int drawCount { get; set; }
-        public int totalCost { get; set; }
-        public int totalBonus { get;set; }
-        public int cardCount { get;set; }
+        private int _wealth;
+        private int _drawCount;
+        private int _totalCost;
+        private int _totalBonus;
+        private int _cardCount;
+
+        public int wealth
+        {
+            get => _wealth;
+            set=>SetProperty(ref _wealth, value);
+        }
+        public int drawCount
+        {
+            get => _drawCount;
+            set=>SetProperty(ref _drawCount, value);
+        }
+        public int totalCost
+        {
+            get => _totalCost;
+            set=>SetProperty(ref _totalCost, value);
+        }
+        public int totalBonus
+        {
+            get => _totalBonus; 
+            set => SetProperty(ref _totalBonus, value);
+        }
+        public int cardCount
+        {
+            get => _cardCount; 
+            set => SetProperty(ref _cardCount, value);
+        }
     }
-    public class Odd()
+    public class Odd
     {
         public string Rank { get; set; }
         public string Probability { get; set; }
     }
-    public class Card(): INotifyPropertyChanged
+    public partial class Card: INotifyPropertyChanged
     {
         private string _Order { get; set; }
         private string _ImageUrl { get; set; }
         private bool _IsFlipped { get; set; }
+        private string _Name {  get; set; }
         public string Order
         {
             get => _Order;
@@ -271,6 +302,18 @@ namespace App3
                 {
                     _IsFlipped = value;
                     OnPropertyChanged(nameof(IsFlipped));
+                }
+            }
+        }
+        public string Name
+        {
+            get => _Name;
+            set
+            {
+                if (_Name != value)
+                {
+                    _Name = value;
+                    OnPropertyChanged(nameof(Name));
                 }
             }
         }

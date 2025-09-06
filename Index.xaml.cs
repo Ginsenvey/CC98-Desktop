@@ -1,4 +1,5 @@
 using CCkernel;
+using CCUserModel;
 using CommunityToolkit.WinUI;
 using DevWinUI;
 using Microsoft.UI;
@@ -67,7 +68,7 @@ namespace App3
                 ThemePresenter.ImageSource = new BitmapImage(new Uri(_Theme));
             }
         }
-        private async void GetTopic()
+        private void GetTopic()
         {
             //只从缓存中读取。
             List<string> SectionNames = new List<string>() { "hotTopic", "schoolEvent", "academics", "study", "emotion", "fleaMarket", "fullTimeJob", "partTimeJob" };
@@ -92,7 +93,7 @@ namespace App3
                                 foreach (var Topic in TopicList)
                                 {
                                     var TopicInfo = JsonConvert.DeserializeObject<Dictionary<string, object>>(Topic.ToString());
-
+                                    if (TopicInfo == null) return;
                                     string Section = "";
                                     if (TopicInfo.ContainsKey("boardName"))
                                     {
@@ -194,9 +195,10 @@ namespace App3
 
         public bool IsOnlineMode = false;
         public string NaviCode = "";
-        private async void TopicItem_Click(object sender, RoutedEventArgs e)
+        private void TopicItem_Click(object sender, RoutedEventArgs e)
         {
             var button = sender as HyperlinkButton;
+            if (button == null) return;
             var tag = button.Tag as string;//当前绑定状态下，h没有DataContext.只能使用tag.
             if (!string.IsNullOrEmpty(tag))
             {
@@ -223,82 +225,7 @@ namespace App3
             }
         }
         
-        public class FlipPost : INotifyPropertyChanged
-        {
-            private string _title;//标题
-            
-            
-            private string _pid;//话题id
-            
-
-            private string _time;//时间
-            
-            private string _content;//楼主id
-            public string title
-            {
-                get => _title;
-                set
-                {
-                    if (_title != value)
-                    {
-                        _title = value;
-                        OnPropertyChanged(nameof(title));
-                    }
-                }
-            }
-
-            
-
-            
-
-            public string pid
-            {
-                get => _pid;
-                set
-                {
-                    if (_pid != value)
-                    {
-                        _pid = value;
-                        OnPropertyChanged(nameof(pid));
-                    }
-                }
-            }
-
-            
-
-            public string time
-            {
-                get => _time;
-                set
-                {
-                    if (_time != value)
-                    {
-                        _time = value;
-                        OnPropertyChanged(nameof(time));
-                    }
-                }
-            }
-
-           
-            public string content
-            {
-                get => _content;
-                set
-                {
-                    if (_content != value)
-                    {
-                        _content = value;
-                        OnPropertyChanged(nameof(content));
-                    }
-                }
-            }
-            public event PropertyChangedEventHandler PropertyChanged;
-
-            protected virtual void OnPropertyChanged(string propertyName)
-            {
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-            }
-        }
+        
 
         private void RecomHyperlink_Click(Microsoft.UI.Xaml.Documents.Hyperlink sender, Microsoft.UI.Xaml.Documents.HyperlinkClickEventArgs args)
         {
@@ -311,52 +238,89 @@ namespace App3
             
             
         }
+
+        private void Ref_Click(object sender, RoutedEventArgs e)
+        {
+
+        }
     }
-    public static class ColorPaint
+    public class FlipPost : INotifyPropertyChanged
     {
+        private string _title;//标题
 
-        public static string GenerateMorandiColorHex()
+
+        private string _pid;//话题id
+
+
+        private string _time;//时间
+
+        private string _content;//内容
+        public string title
         {
-            var random = new Random();
-            double hue = random.Next(0, 360);
-
-            // 低饱和度（10-30%）
-            double saturation = random.Next(40, 70) / 100.0;
-
-            // 中低明度（50-70%）
-            double lightness = random.Next(50, 70) / 100.0;
-            // 将 HSL 转换为 RGB
-            var (r, g, b) = HslToRgb(hue, saturation, lightness);
-            
-
-            // 转换为十六进制
-            return $"#{r:X2}{g:X2}{b:X2}";
+            get => _title;
+            set
+            {
+                if (_title != value)
+                {
+                    _title = value;
+                    OnPropertyChanged(nameof(title));
+                }
+            }
         }
 
-        // HSL 转 RGB 辅助函数
-        private static (byte r, byte g, byte b) HslToRgb(double h, double s, double l)
+
+
+
+
+        public string pid
         {
-            double c = (1 - Math.Abs(2 * l - 1)) * s;
-            double x = c * (1 - Math.Abs((h / 60) % 2 - 1));
-            double m = l - c / 2;
-
-            (double r, double g, double b) rgb = h switch
+            get => _pid;
+            set
             {
-                < 60 => (c, x, 0),
-                < 120 => (x, c, 0),
-                < 180 => (0, c, x),
-                < 240 => (0, x, c),
-                < 300 => (x, 0, c),
-                _ => (c, 0, x)
-            };
+                if (_pid != value)
+                {
+                    _pid = value;
+                    OnPropertyChanged(nameof(pid));
+                }
+            }
+        }
 
-            byte R = (byte)((rgb.r + m) * 255);
-            byte G = (byte)((rgb.g + m) * 255);
-            byte B = (byte)((rgb.b + m) * 255);
 
-            return (R, G, B);
+
+        public string time
+        {
+            get => _time;
+            set
+            {
+                if (_time != value)
+                {
+                    _time = value;
+                    OnPropertyChanged(nameof(time));
+                }
+            }
+        }
+
+
+        public string content
+        {
+            get => _content;
+            set
+            {
+                if (_content != value)
+                {
+                    _content = value;
+                    OnPropertyChanged(nameof(content));
+                }
+            }
+        }
+        public event PropertyChangedEventHandler PropertyChanged;
+
+        protected virtual void OnPropertyChanged(string propertyName)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
     }
+    
     public class SectionCard
     {
         public string SectionName { get; set; }
@@ -594,7 +558,7 @@ namespace App3
         public string MediaSource {  get; set; }
         
     }
-    public class HexToBrushConverter : IValueConverter
+    public partial class HexToBrushConverter : IValueConverter
     {
         public object Convert(object value, Type targetType, object parameter, string language)
         {

@@ -48,7 +48,6 @@ namespace App3
             RandomTiles.ItemsSource = randomtiles;
             GetNewTopic("0");
             GetRandomTile();
-            
         }
         
         private async Task<bool> GetNewTopic(string start)
@@ -261,7 +260,7 @@ namespace App3
         public string pid { get; set; }
         public string time { get; set; }
     }
-    public class PostTemplateSelector : DataTemplateSelector
+    public partial class PostTemplateSelector : DataTemplateSelector
     {
         // 定义不同模板属性
         public DataTemplate? ImageTemplate { get; set; }
@@ -284,31 +283,5 @@ namespace App3
         
         
     }
-    public class StringToImageConverter : IValueConverter
-    {
-        public object Convert(object value, Type targetType, object parameter, string language)
-        {
-            if (value is string path && !string.IsNullOrWhiteSpace(path))
-            {
-                try
-                {
-                    return new BitmapImage(new Uri(path));
-                }
-                catch
-                {
-                    return GetFallbackImage();
-                }
-            }
-            return GetFallbackImage(); // 处理空值
-        }
-
-        private static ImageSource GetFallbackImage()
-        {
-            // 返回默认图片或null
-            return new BitmapImage(new Uri("ms-appx:///Assets/DefaultImage.png"));
-        }
-
-        public object ConvertBack(object value, Type targetType, object parameter, string language)
-            => throw new NotImplementedException();
-    }
+    
 }

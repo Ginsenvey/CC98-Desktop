@@ -12,14 +12,13 @@
     Background="Transparent">
     <Page.Resources>
         <local:AlignmentConverter x:Key="AlignmentConverter"/>
-        <local:BackgroundConverter x:Key="BackGroudConverter"/>
     </Page.Resources>
     <SplitView IsPaneOpen="True" DisplayMode="Inline" PaneBackground="{ThemeResource DesktopAcrylicTransparentBrush}" x:Name="MessageViewer">
         <SplitView.Pane>
             <Border Background="Transparent" >
                 <ListView x:Name="ContactRepeater" SelectionChanged="ContactRepeater_SelectionChanged" >
                     <ListView.ItemTemplate>
-                        <DataTemplate>
+                        <DataTemplate x:DataType="local:Contact">
                             <Grid Padding="10" RowSpacing="5" ColumnSpacing="10">
                                 <Grid.RowDefinitions>
                                     <RowDefinition Height="*"></RowDefinition>
@@ -30,10 +29,10 @@
                                     <ColumnDefinition Width="*"></ColumnDefinition>
                                 </Grid.ColumnDefinitions>
                                 <Border Grid.Column="0" Grid.Row="0" Grid.RowSpan="2" CornerRadius="5" Height="50" Width="50">
-                                    <local:SmartImage Source="{Binding url}" Stretch="UniformToFill"></local:SmartImage>
+                                    <local:SmartImage Source="{x:Bind url}" Stretch="UniformToFill"></local:SmartImage>
                                 </Border>
-                                <TextBlock Text="{Binding name}" Grid.Column="1" Grid.Row="0" FontSize="15"></TextBlock>
-                                <TextBlock Text="{Binding text}" Grid.Column="1" Grid.Row="1" FontSize="13" Foreground="{ThemeResource TextFillColorSecondaryBrush}"></TextBlock>
+                                <TextBlock Text="{x:Bind name}" Grid.Column="1" Grid.Row="0" FontSize="15"></TextBlock>
+                                <TextBlock Text="{x:Bind text}" Grid.Column="1" Grid.Row="1" FontSize="13" Foreground="{ThemeResource TextFillColorSecondaryBrush}"></TextBlock>
                             </Grid>
                         </DataTemplate>
                     </ListView.ItemTemplate>
@@ -50,10 +49,10 @@
                 </Grid.RowDefinitions>
                 <Grid>
                     <StackPanel Margin="15,0,0,0" Orientation="Horizontal" Spacing="8">
-                        <Button  Click="More_Click" x:Name="More" Padding="7" BorderThickness="0" Background="LightGray">
+                        <Button  Click="More_Click" x:Name="More" Padding="7" BorderThickness="0" Background="LightGray" ToolTipService.ToolTip="查看更多">
                             <ic:SymbolIcon Symbol="ChevronUp"  FontSize="16"></ic:SymbolIcon>
                         </Button>
-                        <Button  Click="Ref_Click" x:Name="Ref" Padding="7" BorderThickness="0" Background="LightGray">
+                        <Button  Click="Ref_Click" x:Name="Ref" Padding="7" BorderThickness="0" Background="LightGray" ToolTipService.ToolTip="最新信息">
                             <ic:SymbolIcon Symbol="ArrowSync"  FontSize="16"></ic:SymbolIcon>
                         </Button>
                     </StackPanel>
@@ -61,17 +60,12 @@
                 <RefreshContainer x:Name="MoreMsg" RefreshRequested="MoreMsg_RefreshRequested" Grid.Row="1" VerticalAlignment="Stretch" CornerRadius="6">
                     <ListView x:Name="MessagesList"   SelectionMode="None" >
                         <ListView.ItemTemplate>
-                            <DataTemplate>
-                                <Grid Margin="0,10"
-HorizontalAlignment="{Binding uid,Converter={StaticResource AlignmentConverter}}">
+                            <DataTemplate x:DataType="local:Msg">
+                                <Grid Margin="0,10" HorizontalAlignment="{x:Bind isme ,Converter={StaticResource AlignmentConverter}}">
                                     <Border BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}" Background="{ThemeResource DesktopAcrylicTransparentBrush}" BorderThickness="1" CornerRadius="5" Padding="10" Height="Auto" MaxWidth="350" MinWidth="200">
                                         <StackPanel>
-                                            <tool:MarkdownTextBlock Text="{Binding text}" Background="Transparent" ImageClicked="Drawer_ImageClicked"
-                 TextWrapping="Wrap" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
-                                            <TextBlock Text="{Binding time}"
-                 Style="{ThemeResource CaptionTextBlockStyle}"
-                 HorizontalAlignment="Right"
-                         FontSize="10"/>
+                                            <tool:MarkdownTextBlock Text="{x:Bind text}" Background="Transparent" ImageClicked="Drawer_ImageClicked" TextWrapping="Wrap" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                                            <TextBlock Text="{x:Bind time}" Style="{ThemeResource CaptionTextBlockStyle}" HorizontalAlignment="Right" FontSize="10"/>
                                         </StackPanel>
                                     </Border>
                                 </Grid>

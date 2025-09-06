@@ -662,13 +662,13 @@ namespace CCkernel
                 }
             }
         }
-        public static Dictionary<string, object> ToDictionary(string index)//将本地缓存或者在线数据转化为字典。
+        public static Dictionary<string, object> ToDictionary(string text)//将本地缓存或者在线数据转化为字典。
         {
-            if (!index.StartsWith("10")&&(!index.StartsWith("404")))//10为文件系统错误类型。
+            if (!text.StartsWith("10")&&(!text.StartsWith("404")))//10为文件系统错误类型。
             {
                 try
                 {
-                    var IndexContent = JsonConvert.DeserializeObject<Dictionary<string, object>>(index);
+                    var IndexContent = JsonConvert.DeserializeObject<Dictionary<string, object>>(text);
                     if (IndexContent != null)
                     {
                         return IndexContent;
@@ -901,6 +901,30 @@ namespace CCkernel
                 }
             }
             return "0";
+        }
+        public static int GetKeyAsInt(Dictionary<string, object> dic, string key)//值不可为"0".
+        {
+            if (dic == null) return 0;
+            if (dic.TryGetValue(key, out var _value) && _value != null)
+            {
+                if (_value is int value)
+                {
+                    return value;
+                }
+                if (_value is long l)
+                {
+                    return (int)l;
+                }
+                if (_value is double d)
+                {
+                    return (int)d;
+                }
+                if (_value is string s && int.TryParse(s, out int result))
+                {
+                    return result;
+                }
+            }
+            return 0;
         }
         public static string GetValue(NameValueCollection collection, string key)
         {

@@ -26,8 +26,8 @@
         <ScrollViewer Grid.Row="1"   BorderThickness="1" BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}" CornerRadius="5" >
             <ItemsRepeater x:Name="STileList" Loaded="STileList_Loaded">
                 <ItemsRepeater.ItemTemplate>
-                    <DataTemplate>
-                        <HyperlinkButton HorizontalContentAlignment="Stretch" HorizontalAlignment="Stretch" CornerRadius="0" Click="Tile_Click">
+                    <DataTemplate x:DataType="local:StandardPost">
+                        <HyperlinkButton HorizontalContentAlignment="Stretch" HorizontalAlignment="Stretch" CornerRadius="0" Click="Tile_Click" DataContext="{x:Bind}">
                             <Grid Padding="0,10,0,10" ColumnSpacing="5" >
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="30"></ColumnDefinition>
@@ -37,19 +37,19 @@
                                     <ColumnDefinition Width="70"></ColumnDefinition>
                                 </Grid.ColumnDefinitions>
                                 <ic:SymbolIcon Symbol="LeafOne"></ic:SymbolIcon>
-                                <TextBlock Text="{Binding title}" Grid.Column="1" VerticalAlignment="Center" Foreground="{ThemeResource TextFillColorSecondaryBrush}"></TextBlock>
-                                <TextBlock Text="{Binding author}" Grid.Column="2" VerticalAlignment="Center" Foreground="{ThemeResource TextFillColorSecondaryBrush}"></TextBlock>
+                                <TextBlock Text="{x:Bind title}" Grid.Column="1" VerticalAlignment="Center" Foreground="{ThemeResource TextFillColorSecondaryBrush}"></TextBlock>
+                                <TextBlock Text="{x:Bind author}" Grid.Column="2" VerticalAlignment="Center" Foreground="{ThemeResource TextFillColorSecondaryBrush}"></TextBlock>
                                 <Border Grid.Column="3" Background="Transparent"  HorizontalAlignment="Left" >
                                     <StackPanel Orientation="Horizontal" Spacing="5" >
                                         <ic:SymbolIcon Symbol="Chat" FontSize="11"></ic:SymbolIcon>
-                                        <TextBlock Text="{Binding reply}" Grid.Row="2"  HorizontalAlignment="Right" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}"></TextBlock>
+                                        <TextBlock Text="{x:Bind reply}" Grid.Row="2"  HorizontalAlignment="Right" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}"></TextBlock>
                                     </StackPanel>
                                 </Border>
 
                                 <Border Grid.Column="4" Background="Transparent"  HorizontalAlignment="Left" >
                                     <StackPanel Orientation="Horizontal" Spacing="5" >
                                         <ic:SymbolIcon Symbol="Fire" FontSize="11"></ic:SymbolIcon>
-                                        <TextBlock Text="{Binding hit}"   HorizontalAlignment="Right" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}"></TextBlock>
+                                        <TextBlock Text="{x:Bind hit}"   HorizontalAlignment="Right" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}"></TextBlock>
                                     </StackPanel>
                                 </Border>
                             </Grid>

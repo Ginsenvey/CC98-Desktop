@@ -27,14 +27,9 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
-using System.Net.Http.Headers;
-using System.Reflection.Metadata.Ecma335;
-using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices.WindowsRuntime;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using Windows.ApplicationModel.Contacts;
 using Windows.ApplicationModel.DataTransfer;
 using Windows.Devices.SmartCards;
 using Windows.Foundation;
@@ -64,24 +59,18 @@ namespace App3
     public sealed partial class Topic : Page
     {
         public ObservableCollection<Reply> replies;
-        public MetaData metadata;
+        public MetaData metadata { get; set; } = new MetaData() { hit="0",favorite="0",time=""};
+        public Info profile = new() {Popularity="0",Posts="0",Fan="0"}; 
         public ApplicationDataContainer Set = ApplicationData.Current.LocalSettings;
         public bool IsVote = false;
-
-
+        public bool IsJumping=false;
+        public int JumpToFloor = -1;
         public Topic()
         {
             this.InitializeComponent();
 
             replies = new ObservableCollection<Reply>() { };
-            metadata = new MetaData()
-            {
-                reply = "0",
-                favorite = "0",
-                hit = "0",
-
-            };
-            MetaDataArea.DataContext = metadata;
+            
             LoadSet();
             TileList.ItemsSource = replies;
         }
@@ -100,10 +89,8 @@ namespace App3
             TileList.ItemsSource = null;
             replies.Clear();
             TileList = null;
-
-            MetaDataArea.DataContext = null;
         }
-        protected override void OnNavigatedTo(Microsoft.UI.Xaml.Navigation.NavigationEventArgs e)
+        protected override async void OnNavigatedTo(Microsoft.UI.Xaml.Navigation.NavigationEventArgs e)
         {
             base.OnNavigatedTo(e);
 
@@ -113,8 +100,8 @@ namespace App3
             if (parameter != null)
             {
                 Set.Values["CurrentTopicId"] = parameter;
-                LoadMetaData(parameter);
-                LoadReply(parameter, "0");
+                await LoadMetaData(parameter);
+                await LoadReply(parameter, "0");
                 LoadFavorites();
             }
             else
@@ -162,7 +149,7 @@ namespace App3
             }
         }
         
-        private async void LoadMetaData(string pid)
+        private async Task LoadMetaData(string pid)
         {
             string MetaDataUrl = "https://api.cc98.org/topic/" + pid;
             string MetaData = await RequestSender.SimpleRequest(MetaDataUrl);
@@ -214,7 +201,7 @@ namespace App3
         List<Reply> ReplyList = new List<Reply>();
         JArray Posts = new JArray();
         List<string> users = new();
-        private async void LoadReply(string pid, string start)
+        private async Task LoadReply(string pid, string start)
         {
             Reply_Retry++;
             replies.Clear();
@@ -232,7 +219,7 @@ namespace App3
                 {
                     if (Reply_Retry < 3)
                     {
-                        LoadReply(pid, start);
+                        await LoadReply(pid, start);
                     }
                     else
                     {
@@ -365,11 +352,11 @@ namespace App3
         public int CurrentPage = 0;
         public int CurrentTracingPage = 0;
         public string TracingPostId = "";
-        private void Pager_SelectedIndexChanged(DevWinUI.PagerControl sender, DevWinUI.PagerControlSelectedIndexChangedEventArgs args)
+        private async void Pager_SelectedIndexChanged(DevWinUI.PagerControl sender, DevWinUI.PagerControlSelectedIndexChangedEventArgs args)
         {
             //此方法在页面加载完成后会被调用一次，Pager的SelectedIndex会被设置为0。
             //所以页面构造函数处不需要单独调用LoadReply方法。
-            //限定了只有页面主动加载和用户点击翻页，index从-1到0不触发数据加载。这似乎是pager的bug.
+            //限定了只有页面主动加载和用户点击翻页，index从-1到0不触发数据加载。
             PagerFix();
             if (args.PreviousPageIndex != -1)
             {
@@ -382,8 +369,13 @@ namespace App3
                     {
                         
                         int startindex = 10 * (index);
-                        LoadReply(Set.Values["CurrentTopicId"] as string, startindex.ToString());
-                        
+                        await LoadReply(ValidationHelper.IsTokenExist(Set,"CurrentTopicId"), startindex.ToString());
+                        if (IsJumping&&JumpToFloor!=-1)
+                        {
+                            GoTo(JumpToFloor);
+                            IsJumping = false;
+                            JumpToFloor = -1;
+                        }
                     }
                 }
                 else
@@ -392,10 +384,14 @@ namespace App3
                     CurrentTracingPage = index;
                     if (index >= 0)
                     {
-                        
                         int startindex = 10 * (index);
-                        LoadTrace(TracingPostId, startindex.ToString());
-
+                        await LoadTrace(TracingPostId, startindex.ToString());
+                        if (IsJumping && JumpToFloor != -1)
+                        {
+                            GoTo(JumpToFloor);
+                            IsJumping = false;
+                            JumpToFloor = -1;
+                        }
                     }
                 }
             }
@@ -423,8 +419,8 @@ namespace App3
             {
                 case "topic":
                     Set.Values["CurrentTopicId"]=result.Value;
-                    LoadMetaData(result.Value);
-                    LoadReply(result.Value, "0");
+                    await LoadMetaData(result.Value);
+                    await LoadReply(result.Value, "0");
                     break;
                 case "user":
                     {
@@ -479,7 +475,9 @@ namespace App3
                             else
                             {
                                 Pager.SelectedPageIndex = page - 1;
-                                GoTo(floor - 1);
+                                //应在页码变化函数中进行跳转，否则不等待。
+                                IsJumping = true;
+                                JumpToFloor = floor-1;
                             }
                         }
                         catch (Exception ex)
@@ -587,6 +585,9 @@ namespace App3
                 case "backlink":
                     if (result.Value == "bili")
                     {
+                        var _datapackage = new DataPackage();
+                        _datapackage.SetText(url);
+                        Clipboard.SetContent(_datapackage);
                         Flower.PlayAnimation("\uE930", "已复制Bili外链");
                     }
                     break ;
@@ -629,7 +630,7 @@ namespace App3
                 var tag = m.Tag as string;
                 if (tag == "0")
                 {
-                    LoadMetaData(Set.Values["CurrentTopicId"] as string);
+                    await LoadMetaData(ValidationHelper.IsTokenExist(Set, "CurrentTopicId"));
                     Flower.PlayAnimation("\uE930", "刷新标题栏成功");
                 }
                 else if (tag == "1")
@@ -655,7 +656,7 @@ namespace App3
                     {
                         Set.Values["IsImageVisible"] = "1";
                     }
-                    LoadReply(Set.Values["CurrentTopicId"] as string, (Pager.SelectedPageIndex * 10).ToString());
+                    await LoadReply(ValidationHelper.IsTokenExist(Set, "CurrentTopicId"), (Pager.SelectedPageIndex * 10).ToString());
                 }
 
             }
@@ -678,7 +679,7 @@ namespace App3
                     if (status)
                     {
                         metadata.variant = IconVariant.Color;
-                        LoadMetaData(Set.Values["CurrentTopicId"] as string);
+                        await LoadMetaData(Set.Values["CurrentTopicId"] as string);
                         Flower.PlayAnimation("\uE930", "已收藏");
                     }
                     else
@@ -738,7 +739,6 @@ namespace App3
 
         private void GoTo(int index)
         {
-
             var element = TileList.GetOrCreateElement(index);
             var options = new BringIntoViewOptions
             {
@@ -774,17 +774,13 @@ namespace App3
                     if (!ProfileText.StartsWith("404:"))
                     {
                         var js = JsonConvert.DeserializeObject<Dictionary<string, object>>(ProfileText);
-                        var profile = new Info()
-                        {
-                            Name = js["name"].ToString(),
-                            Id = js["id"].ToString(),
-                            Popularity = js["popularity"].ToString(),
-                            Fan = js["fanCount"].ToString(),
-                            Port = js["portraitUrl"].ToString(),
-                            Signature = UBBConverter.Convert(js["signatureCode"].ToString(), true),
-                            Posts = js["postCount"].ToString(),
-                        };
-                        ProfileViewer.DataContext = profile;
+                        profile.Name = js["name"].ToString();
+                        profile.Id = js["id"].ToString();
+                        profile.Popularity = js["popularity"].ToString();
+                        profile.Fan = js["fanCount"].ToString();
+                        profile.Port = js["portraitUrl"].ToString();
+                        profile.Signature = UBBConverter.Convert(js["signatureCode"].ToString(), true);
+                        profile.Posts = js["postCount"].ToString();
                         ProfileViewer.IsOpen = true;
                     }
                     else
@@ -796,351 +792,10 @@ namespace App3
             }
 
         }
-        public class VoteItem
-        {
-            public required string id { get; set; }
-            public int count { get; set; }
-            public required string description { get; set; }
-
-        }
-        public class Reply : INotifyPropertyChanged
-        {
-            private string _text;
-            private string _like;
-            private string _author;
-            private string _rid;//回复Id,即PostId
-            private string _dislike;
-            private string _time;
-            private string _uid;
-            private string _url;
-            private string _floor;//楼层数
-            private IconVariant _likestate;//是否已点赞
-            private IconVariant _dislikestate;//是否已点踩
-            public string text
-            {
-                get => _text;
-                set
-                {
-                    if (_text != value)
-                    {
-                        _text = value;
-                        OnPropertyChanged(nameof(text));
-                    }
-                }
-            }
-
-            public string like
-            {
-                get => _like;
-                set
-                {
-                    if (_like != value)
-                    {
-                        _like = value;
-                        OnPropertyChanged(nameof(like));
-                    }
-                }
-            }
-
-            public string author
-
-            {
-                get => _author;
-                set
-                {
-                    if (_author != value)
-                    {
-                        _author = value;
-                        OnPropertyChanged(nameof(author));
-                    }
-                }
-            }
-
-            public string rid
-            {
-                get => _rid;
-                set
-                {
-                    if (_rid != value)
-                    {
-                        _rid = value;
-                        OnPropertyChanged(nameof(rid));
-                    }
-                }
-            }
-
-            public string dislike
-            {
-                get => _dislike;
-                set
-                {
-                    if (_dislike != value)
-                    {
-                        _dislike = value;
-                        OnPropertyChanged(nameof(dislike));
-                    }
-                }
-            }
-
-            public string time
-            {
-                get => _time;
-                set
-                {
-                    if (_time != value)
-                    {
-                        _time = value;
-                        OnPropertyChanged(nameof(time));
-                    }
-                }
-            }
-
-            public string uid
-            {
-                get => _uid;
-                set
-                {
-                    if (_uid != value)
-                    {
-                        _uid = value;
-                        OnPropertyChanged(nameof(uid));
-                    }
-                }
-            }
-            public string url
-            {
-                get => _url;
-                set
-                {
-                    if (_url != value)
-                    {
-                        _url = value;
-                        OnPropertyChanged(nameof(url));
-                    }
-                }
-            }
-            public string floor
-            {
-                get => _floor;
-                set
-                {
-                    if (_floor != value)
-                    {
-                        _floor = value;
-                        OnPropertyChanged(nameof(floor));
-                    }
-                }
-            }
-            public IconVariant likestate
-            {
-                get => _likestate;
-                set
-                {
-                    if (_likestate != value)
-                    {
-                        _likestate = value;
-                        OnPropertyChanged(nameof(likestate));
-                    }
-                }
-            }
-            public IconVariant dislikestate
-            {
-                get => _dislikestate;
-                set
-                {
-                    if (_dislikestate != value)
-                    {
-                        _dislikestate = value;
-                        OnPropertyChanged(nameof(dislikestate));
-                    }
-                }
-            }
-            public event PropertyChangedEventHandler PropertyChanged;
-
-            protected virtual void OnPropertyChanged(string propertyName)
-            {
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-            }
-        }
-        public class MetaData : INotifyPropertyChanged
-        {
-            private string _text;//标题
-            private string _like;//赞
-            private string _author;//楼主名
-            private string _rid;//主题id
-            private string _reply;//回帖数
-            private string _favorite;//收藏数
-            private string _time;//发帖时间
-            private string _uid;//楼主id
-            private string _dislike;//踩
-            private string _isrealidvisible;//匿名与否
-            private string _hit;//热度，点击量
-            private IconVariant _variant;
-            public string text
-            {
-                get => _text;
-                set
-                {
-                    if (_text != value)
-                    {
-                        _text = value;
-                        OnPropertyChanged(nameof(text));
-                    }
-                }
-            }
-
-            public string like
-            {
-                get => _like;
-                set
-                {
-                    if (_like != value)
-                    {
-                        _like = value;
-                        OnPropertyChanged(nameof(like));
-                    }
-                }
-            }
-
-            public string author
-
-            {
-                get => _author;
-                set
-                {
-                    if (_author != value)
-                    {
-                        _author = value;
-                        OnPropertyChanged(nameof(author));
-                    }
-                }
-            }
-
-            public string rid
-            {
-                get => _rid;
-                set
-                {
-                    if (_rid != value)
-                    {
-                        _rid = value;
-                        OnPropertyChanged(nameof(rid));
-                    }
-                }
-            }
-
-            public string reply
-            {
-                get => _reply;
-                set
-                {
-                    if (_reply != value)
-                    {
-                        _reply = value;
-                        OnPropertyChanged(nameof(reply));
-                    }
-                }
-            }
-            public string favorite
-            {
-                get => _favorite;
-                set
-                {
-                    if (_favorite != value)
-                    {
-                        _favorite = value;
-                        OnPropertyChanged(nameof(favorite));
-                    }
-                }
-            }
-
-            public string time
-            {
-                get => _time;
-                set
-                {
-                    if (_time != value)
-                    {
-                        _time = value;
-                        OnPropertyChanged(nameof(time));
-                    }
-                }
-            }
-
-            public string uid
-            {
-                get => _uid;
-                set
-                {
-                    if (_uid != value)
-                    {
-                        _uid = value;
-                        OnPropertyChanged(nameof(uid));
-                    }
-                }
-            }
-
-            public string dislike
-            {
-                get => _dislike;
-                set
-                {
-                    if (_dislike != value)
-                    {
-                        _dislike = value;
-                        OnPropertyChanged(nameof(dislike));
-                    }
-                }
-            }
-
-            public string isrealidvisible
-            {
-                get => _isrealidvisible;
-                set
-                {
-                    if (_isrealidvisible != value)
-                    {
-                        _isrealidvisible = value;
-                        OnPropertyChanged(nameof(isrealidvisible));
-                    }
-                }
-            }
-
-            public string hit
-            {
-                get => _hit;
-                set
-                {
-                    if (_hit != value)
-                    {
-                        _hit = value;
-                        OnPropertyChanged(nameof(hit));
-                    }
-                }
-            }
-            public IconVariant variant
-            {
-                get => _variant;
-                set
-                {
-                    if (_variant != value)
-                    {
-                        _variant = value;
-                        OnPropertyChanged(nameof(variant));
-                    }
-                }
-            }
-            public event PropertyChangedEventHandler PropertyChanged;
-
-            protected virtual void OnPropertyChanged(string propertyName)
-            {
-                PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-            }
-        }
+        
 
 
-
-        private void PostOperation_Click(object sender, RoutedEventArgs e)
+        private async void PostOperation_Click(object sender, RoutedEventArgs e)
         {
             var operation = sender as MenuFlyoutItem;
             if (operation != null)
@@ -1169,7 +824,7 @@ namespace App3
                         TracingPostId = _tag;
                         Pager.SelectedPageIndex = -1;
                         IsTracing= true;
-                        LoadTrace(TracingPostId, "0");
+                        await LoadTrace(TracingPostId, "0");
                         StopTrace.Visibility = Visibility.Visible;
                     }
                     else if (_tag == "QUOTE")
@@ -1177,12 +832,17 @@ namespace App3
                         
                         if (reply.text != null)
                         {
+                            int floor = Convert.ToInt32(reply.floor.Replace("L",""));
+                            int page = 1+floor / 10;
+                            int loc=floor % 10;
+                            string header = $"[b]以下是引用{floor}楼：用户{reply.author}在{reply.time}的发言：[url=/topic/{ValidationHelper.IsTokenExist(Set,"CurrentTopicId")}/{page}#{loc}]>>查看原帖<<[/url][/b]\r\n";
                             var param = new Dictionary<string, string>()
                         {
                             {"Mode","1"},//回复主题为0，回帖为1，发主题、投票为2
-                            {"Pid",Set.Values["CurrentTopicId"] as string },
+                            {"Pid",ValidationHelper.IsTokenExist(Set, "CurrentTopicId")},
                             {"QuoteText", reply.text},
-                            {"ParentId", reply.rid}
+                            {"ParentId", reply.rid},
+                            {"Header",header}
 
                         };
                             Frame.Navigate(typeof(Post), param);
@@ -1204,7 +864,7 @@ namespace App3
                 Pager.NextButtonVisibility = DevWinUI.PagerControlButtonVisibility.Visible;
             }
         }
-        private async void LoadTrace(string post_id,string start)
+        private async Task LoadTrace(string post_id,string start)
         {
             string url = $"https://api.cc98.org/post/topic/specific-user?topicid={ValidationHelper.IsTokenExist(Set, "CurrentTopicId")}&postid={post_id}&from={start}&size=10";
             string trace = await RequestSender.SimpleRequest(url);
@@ -1334,16 +994,21 @@ namespace App3
                         }
 
                     }
+                    else
+                    {
+                        Flower.PlayAnimation("\uEA39","操作失败");
+                    }
                 }
             }
 
 
         }
 
-        private void StopTrace_Click(object sender, RoutedEventArgs e)
+        private async void StopTrace_Click(object sender, RoutedEventArgs e)
         {
             IsTracing = false;
-            LoadReply(ValidationHelper.IsTokenExist(Set, "CurrentTopicId"), (CurrentPage * 10).ToString());
+            await LoadReply(ValidationHelper.IsTokenExist(Set, "CurrentTopicId"), (CurrentPage * 10).ToString());
+            await LoadMetaData(ValidationHelper.IsTokenExist(Set, "CurrentTopicId"));
            StopTrace.Visibility = Visibility.Collapsed;
         }
 
@@ -1515,6 +1180,349 @@ namespace App3
             {
                 Flower.PlayAnimation("\uEA39", "选择至少一项");
             }
+        }
+
+        
+    }
+    public class VoteItem
+    {
+        public required string id { get; set; }
+        public int count { get; set; }
+        public required string description { get; set; }
+
+    }
+    public partial class MetaData : INotifyPropertyChanged
+    {
+        private string _text;//标题
+        private string _like;//赞
+        private string _author;//楼主名
+        private string _rid;//主题id
+        private string _reply;//回帖数
+        private string _favorite;//收藏数
+        private string _time;//发帖时间
+        private string _uid;//楼主id
+        private string _dislike;//踩
+        private string _isrealidvisible;//匿名与否
+        private string _hit;//热度，点击量
+        private IconVariant _variant;
+        public string text
+        {
+            get => _text;
+            set
+            {
+                if (_text != value)
+                {
+                    _text = value;
+                    OnPropertyChanged(nameof(text));
+                }
+            }
+        }
+
+        public string like
+        {
+            get => _like;
+            set
+            {
+                if (_like != value)
+                {
+                    _like = value;
+                    OnPropertyChanged(nameof(like));
+                }
+            }
+        }
+
+        public string author
+
+        {
+            get => _author;
+            set
+            {
+                if (_author != value)
+                {
+                    _author = value;
+                    OnPropertyChanged(nameof(author));
+                }
+            }
+        }
+
+        public string rid
+        {
+            get => _rid;
+            set
+            {
+                if (_rid != value)
+                {
+                    _rid = value;
+                    OnPropertyChanged(nameof(rid));
+                }
+            }
+        }
+
+        public string reply
+        {
+            get => _reply;
+            set
+            {
+                if (_reply != value)
+                {
+                    _reply = value;
+                    OnPropertyChanged(nameof(reply));
+                }
+            }
+        }
+        public string favorite
+        {
+            get => _favorite;
+            set
+            {
+                if (_favorite != value)
+                {
+                    _favorite = value;
+                    OnPropertyChanged(nameof(favorite));
+                }
+            }
+        }
+
+        public string time
+        {
+            get => _time;
+            set
+            {
+                if (_time != value)
+                {
+                    _time = value;
+                    OnPropertyChanged(nameof(time));
+                }
+            }
+        }
+
+        public string uid
+        {
+            get => _uid;
+            set
+            {
+                if (_uid != value)
+                {
+                    _uid = value;
+                    OnPropertyChanged(nameof(uid));
+                }
+            }
+        }
+
+        public string dislike
+        {
+            get => _dislike;
+            set
+            {
+                if (_dislike != value)
+                {
+                    _dislike = value;
+                    OnPropertyChanged(nameof(dislike));
+                }
+            }
+        }
+
+        public string isrealidvisible
+        {
+            get => _isrealidvisible;
+            set
+            {
+                if (_isrealidvisible != value)
+                {
+                    _isrealidvisible = value;
+                    OnPropertyChanged(nameof(isrealidvisible));
+                }
+            }
+        }
+
+        public string hit
+        {
+            get => _hit;
+            set
+            {
+                if (_hit != value)
+                {
+                    _hit = value;
+                    OnPropertyChanged(nameof(hit));
+                }
+            }
+        }
+        public IconVariant variant
+        {
+            get => _variant;
+            set
+            {
+                if (_variant != value)
+                {
+                    _variant = value;
+                    OnPropertyChanged(nameof(variant));
+                }
+            }
+        }
+        public event PropertyChangedEventHandler PropertyChanged;
+
+        protected virtual void OnPropertyChanged(string propertyName)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        }
+    }
+    public partial class Reply : INotifyPropertyChanged
+    {
+        private string _text;
+        private string _like;
+        private string _author;
+        private string _rid;//回复Id,即PostId
+        private string _dislike;
+        private string _time;
+        private string _uid;
+        private string _url;
+        private string _floor;//楼层数
+        private IconVariant _likestate;//是否已点赞
+        private IconVariant _dislikestate;//是否已点踩
+        public string text
+        {
+            get => _text;
+            set
+            {
+                if (_text != value)
+                {
+                    _text = value;
+                    OnPropertyChanged(nameof(text));
+                }
+            }
+        }
+
+        public string like
+        {
+            get => _like;
+            set
+            {
+                if (_like != value)
+                {
+                    _like = value;
+                    OnPropertyChanged(nameof(like));
+                }
+            }
+        }
+
+        public string author
+
+        {
+            get => _author;
+            set
+            {
+                if (_author != value)
+                {
+                    _author = value;
+                    OnPropertyChanged(nameof(author));
+                }
+            }
+        }
+
+        public string rid
+        {
+            get => _rid;
+            set
+            {
+                if (_rid != value)
+                {
+                    _rid = value;
+                    OnPropertyChanged(nameof(rid));
+                }
+            }
+        }
+
+        public string dislike
+        {
+            get => _dislike;
+            set
+            {
+                if (_dislike != value)
+                {
+                    _dislike = value;
+                    OnPropertyChanged(nameof(dislike));
+                }
+            }
+        }
+
+        public string time
+        {
+            get => _time;
+            set
+            {
+                if (_time != value)
+                {
+                    _time = value;
+                    OnPropertyChanged(nameof(time));
+                }
+            }
+        }
+
+        public string uid
+        {
+            get => _uid;
+            set
+            {
+                if (_uid != value)
+                {
+                    _uid = value;
+                    OnPropertyChanged(nameof(uid));
+                }
+            }
+        }
+        public string url
+        {
+            get => _url;
+            set
+            {
+                if (_url != value)
+                {
+                    _url = value;
+                    OnPropertyChanged(nameof(url));
+                }
+            }
+        }
+        public string floor
+        {
+            get => _floor;
+            set
+            {
+                if (_floor != value)
+                {
+                    _floor = value;
+                    OnPropertyChanged(nameof(floor));
+                }
+            }
+        }
+        public IconVariant likestate
+        {
+            get => _likestate;
+            set
+            {
+                if (_likestate != value)
+                {
+                    _likestate = value;
+                    OnPropertyChanged(nameof(likestate));
+                }
+            }
+        }
+        public IconVariant dislikestate
+        {
+            get => _dislikestate;
+            set
+            {
+                if (_dislikestate != value)
+                {
+                    _dislikestate = value;
+                    OnPropertyChanged(nameof(dislikestate));
+                }
+            }
+        }
+        public event PropertyChangedEventHandler PropertyChanged;
+
+        protected virtual void OnPropertyChanged(string propertyName)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
     }
     public partial class UBBTextConverter : IValueConverter

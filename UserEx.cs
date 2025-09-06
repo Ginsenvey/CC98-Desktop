@@ -228,6 +228,51 @@ namespace CCUserModel//用户体验模型，包括:版面图标；语义搜索�
             return bitmapImage;
         }
     }
+    public static class ColorPaint
+    {
+
+        public static string GenerateMorandiColorHex()
+        {
+            var random = new Random();
+            double hue = random.Next(0, 360);
+
+            // 低饱和度（10-30%）
+            double saturation = random.Next(20, 60) / 100.0;
+
+            // 中低明度（50-70%）
+            double lightness = random.Next(50, 70) / 100.0;
+            // 将 HSL 转换为 RGB
+            var (r, g, b) = HslToRgb(hue, saturation, lightness);
+
+
+            // 转换为十六进制
+            return $"#{r:X2}{g:X2}{b:X2}";
+        }
+
+        // HSL 转 RGB 辅助函数
+        private static (byte r, byte g, byte b) HslToRgb(double h, double s, double l)
+        {
+            double c = (1 - Math.Abs(2 * l - 1)) * s;
+            double x = c * (1 - Math.Abs((h / 60) % 2 - 1));
+            double m = l - c / 2;
+
+            (double r, double g, double b) rgb = h switch
+            {
+                < 60 => (c, x, 0),
+                < 120 => (x, c, 0),
+                < 180 => (0, c, x),
+                < 240 => (0, x, c),
+                < 300 => (x, 0, c),
+                _ => (c, 0, x)
+            };
+
+            byte R = (byte)((rgb.r + m) * 255);
+            byte G = (byte)((rgb.g + m) * 255);
+            byte B = (byte)((rgb.b + m) * 255);
+
+            return (R, G, B);
+        }
+    }
     public static class CustomEmoji
     {
         public static void SaveEmoji(string url)

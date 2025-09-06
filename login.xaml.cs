@@ -46,6 +46,7 @@ namespace App3
             this.InitializeComponent();
             this.ExtendsContentIntoTitleBar= true;
             this.SetTitleBar(GridTitleBar);
+            this.RootGrid.RequestedTheme = ElementTheme.Light;
             AppWindow.TitleBar.PreferredHeightOption = Microsoft.UI.Windowing.TitleBarHeightOption.Standard;
             OverlappedPresenter presenter = OverlappedPresenter.Create();
             presenter.IsResizable = false;
@@ -54,6 +55,7 @@ namespace App3
             presenter.SetBorderAndTitleBar(true, true);
             AppWindow.SetPresenter(presenter);
             CenterWindow();
+            tip.Text = "如果尚未连接浙江大学内网，请在此处登录WebVPN,或者使用[ZJU Connect](https://github.com/Mythologyli/ZJU-Connect-for-Windows/releases).";
             Set = ApplicationData.Current.LocalSettings;
             LoadParams(mode);
         }
@@ -62,7 +64,7 @@ namespace App3
         {
             this.mode = mode;
             if (mode == 0) { }//普通登录
-            else if(mode==1)//只需要验证VPN
+            else if(mode==1)//用户已经登录过，只需要添加VPN凭据
             {
                 LoginPane.Visibility = Visibility.Collapsed;
                 VpnPane.Visibility = Visibility.Visible;
@@ -86,10 +88,11 @@ namespace App3
                     //检测是否已初始化TWFID。若已初始化，使用并检查有效性。无效则重连。未初始化是出错的情况。
                     if (PasswordManager.PasswordExists("TWFID"))
                     {
-                        var token = JsonConvert.DeserializeObject<Cookie>(PasswordManager.RetrievePassword("TWFID"));
-                        if (token != null)
+                        var token = PasswordManager.RetrievePassword("TWFID");
+                        var cookie = new Cookie("TWFID", token, "/", "https://webvpn.zju.edu.cn/");
+                        if (!string.IsNullOrEmpty(token))
                         {
-                            CCloginservice.vpn.Jar.Add(token);
+                            CCloginservice.vpn.Jar.Add(cookie);
                             if (await CCloginservice.vpn.CheckNetwork(true) == "1")//该函数不受IsVpnEnable和Logine影响
                             {
                                 CCloginservice.vpn.IsVpnEnabled = true;
@@ -106,8 +109,8 @@ namespace App3
                                     if (vpn_res == "1")//连接成功
                                     {
                                         CCloginservice.vpn.IsVpnEnabled = true;
-                                        var cookie = CCloginservice.vpn.TWFID;
-                                        string _token = JsonConvert.SerializeObject(cookie);
+                                        var new_cookie = CCloginservice.vpn.TWFID;
+                                        string _token = new_cookie.Value;
                                         if (!string.IsNullOrEmpty(_token))
                                         {
                                             PasswordManager.SavePassword(_token, "TWFID");
@@ -167,7 +170,7 @@ namespace App3
             LoginPane.Visibility = Visibility.Collapsed;
             GuidePane.Visibility = Visibility.Visible;
             VpnPane.Visibility = Visibility.Collapsed;
-            string guidance = "> 登录之前，请确保处于ZJU内网环境，或者使用[ZJU Connect](https://github.com/Mythologyli/ZJU-Connect-for-Windows/releases)，打开RVPN，并设置系统代理。\r\n\r\n **忘记密码/无账号？**\r\n\r\n进入[CC98](https://www.cc98.org/logon)官网操作。\r\n\r\n**遇到问题/想要新功能?**\r\n\r\n你可以在开发者的Github Issue处，或[CC98桌面客户端开发进度记录楼](https://www.cc98.org/topic/6173309))反馈此问题。通常，前端bug修复比较快。\r\n\r\n你也可以克隆本应用仓库，自由修改和编译新的分支。不过，在分发时，应当告知所有的改动。\r\n\r\n**成为开发者**\r\n\r\n本应用使用`Windows App SDK`,`C#`,`XAML`构建。欢迎所有对.NET生态感兴趣的uu加入本应用的开发，欢迎所有使用者对本应用UI、功能和代码提供建议。";
+            string guidance = "> 登录之前，请确保处于ZJU内网环境，或者使用[ZJU Connect](https://github.com/Mythologyli/ZJU-Connect-for-Windows/releases)，打开RVPN，并设置系统代理。\r\n\r\n **忘记密码/无账号？**\r\n\r\n进入[CC98](https://www.cc98.org/logon)官网操作。\r\n\r\n**遇到问题/想要新功能?**\r\n\r\n你可以在微软商店或[开发进度记录楼](https://www.cc98.org/topic/6173309)反馈此问题。\r\n\r\n你也可以克隆本应用仓库，自由修改和编译新的分支。不过，在分发时，应当告知所有的改动。\r\n\r\n**成为开发者**\r\n\r\n本应用使用`Windows App SDK`,`C#`,`XAML`构建。欢迎所有对.NET生态感兴趣的uu加入本应用的开发，欢迎所有使用者对本应用UI、功能和代码提供建议。";
             GuidePresenter.Text= guidance;
         }
 
@@ -233,7 +236,7 @@ namespace App3
         {
             if (!string.IsNullOrEmpty(idbox.Text) && !string.IsNullOrEmpty(passbox.Password))
             {
-                var r=await SetupVPN(idbox.Text,passbox.Password);
+                var r = await SetupVPN(idbox.Text, passbox.Password);
                 if (r == "1")
                 {
                     Flower.PlayAnimation("\uE930", "已保存VPN凭据");
@@ -245,17 +248,20 @@ namespace App3
                     }
                     else
                     {
-                        this.Close();
-                        var window=new MainWindow();
+                        var window = new MainWindow();
                         window.Activate();
+                        this.DispatcherQueue.TryEnqueue(() =>
+                        {
+                            this.Close();
+                        });//尝试修复竞争条件
                     }
-                    
-                    
+
                 }
                 else
                 {
                     Flower.PlayAnimation("\uEA39", r);
                 }
+
             }
             else
             {
@@ -269,7 +275,7 @@ namespace App3
             {
                 Set.Values["IsVpnUsable"] = "1";
                 var cookie = CCloginservice.vpn.TWFID;
-                string token = JsonConvert.SerializeObject(cookie);
+                string token = cookie.Value;
                 CCloginservice.vpn.IsVpnEnabled = true;
                 PasswordManager.SavePassword(idbox.Text, "VpnUserName");
                 PasswordManager.SavePassword(passbox.Password, "VpnPassWord");
