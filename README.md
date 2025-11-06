@@ -5,20 +5,11 @@
 <a title="从 Microsoft 获取" href="https://apps.microsoft.com/detail/9NJ1LFJ8CDQ0?hl=zh-cn&gl=CN&ocid=pdpshare">  
     <img src="https://get.microsoft.com/images/zh-CN%20dark.svg" />
 </a>
+
 > CC98 Desktop是一个基于Windows App SDK开发的论坛客户端，采用FluentDesign绘制UI,旨在桌面端提供更加易于交互、触控友好、流畅快速的论坛浏览体验。  
 >   
 > 本应用适用于搭载Windows10/11、X64和ARM64架构的计算机。Android/IOS/Mac/Linux的跨平台版本正在早期开发阶段，将会使用新的UI风格。  
-  
-![](https://file.cc98.org/v4-upload/d/2025/0926/teboi3yd.webp)  
-  
-![](https://file.cc98.org/v4-upload/d/2025/0925/nfjeriey.webp)  
-  
-  
-![](https://file.cc98.org/v4-upload/d/2025/0721/0bh5snzu.webp)  
-  
-  
-![](https://file.cc98.org/v4-upload/d/2025/0925/ruaxg2r0.webp)  
-  
+ 
 **此版本中的新功能**  
 - 密码登录：现在支持Open-ID和账号密码登录。这样，你可以在校外无需RVPN访问论坛。  
   
