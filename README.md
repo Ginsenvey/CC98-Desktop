@@ -1,6 +1,6 @@
  # CC98 Desktop
 
-`CC98 桌面版` 是CC98跨平台计划的1一部分。 
+`CC98 桌面版` 是CC98跨平台计划的一部分。 
 
 <a title="从 Microsoft 获取" href="https://apps.microsoft.com/detail/9NJ1LFJ8CDQ0?hl=zh-cn&gl=CN&ocid=pdpshare">  
     <img src="https://get.microsoft.com/images/zh-CN%20dark.svg" />
