@@ -2,12 +2,10 @@
 ## CC98 Desktop   
 09-25  
 在微软商店下载最近的更新：  
-  
-  <a title="从 Microsoft 获取" href="https://apps.microsoft.com/detail/9NJ1LFJ8CDQ0?hl=zh-cn&gl=CN&ocid=pdpshare">  
-      [#**图片**#](https://get.microsoft.com/images/zh-CN%20dark.svg)  
-  </a>  
-  
-  
+<a title="从 Microsoft 获取" href="https://apps.microsoft.com/detail/9NJ1LFJ8CDQ0?hl=zh-cn&gl=CN&ocid=pdpshare">  
+    <img src="https://get.microsoft.com/images/zh-CN%20dark.svg" />
+</a>     
+    
 > CC98 Desktop是一个基于Windows App SDK开发的论坛客户端，采用FluentDesign绘制UI,旨在桌面端提供更加易于交互、触控友好、流畅快速的论坛浏览体验。  
 >   
 > 本应用适用于搭载Windows10/11、X64和ARM64架构的计算机。Android/IOS/Mac/Linux的跨平台版本正在早期开发阶段，将会使用新的UI风格。  
