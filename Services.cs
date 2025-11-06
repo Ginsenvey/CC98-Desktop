@@ -4,8 +4,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-
-namespace App3
+using CC98;
+namespace CC98.Services
 {
     public class Messenger
     {

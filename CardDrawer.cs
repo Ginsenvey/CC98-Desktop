@@ -1,4 +1,6 @@
-﻿using System.Threading.Tasks;
+﻿
+using CC98.Kernel;
+using System.Threading.Tasks;
 using static System.Net.WebRequestMethods;
 
 namespace CCkernel

@@ -1,4 +1,5 @@
-﻿using CCkernel;
+﻿
+using CC98.Kernel;
 using FluentIcons.Common;
 using Microsoft.UI.Xaml.Media.Imaging;
 using Newtonsoft.Json;
@@ -9,11 +10,12 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Runtime.InteropServices.WindowsRuntime;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 using Windows.Storage;
 using Windows.Storage.Streams;
 
-namespace CCUserModel//用户体验模型，包括:版面图标；语义搜索；图像解析；历史记录；稍后再看。
+namespace CC98.UserExperience//用户体验模型，包括:版面图标；语义搜索；图像解析。
 {
     public static class BoardIcon
     {
@@ -321,6 +323,9 @@ namespace CCUserModel//用户体验模型，包括:版面图标；语义搜索�
             ValidationHelper.JsonWritter(content, path);
         }
     }
+
+    
+    
     public static class Win32Interop
     {
         [DllImport("user32.dll", SetLastError = true)]

@@ -1,4 +1,5 @@
-using CCkernel;
+
+using CC98.Kernel;
 using CommunityToolkit.Labs.WinUI;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -22,12 +23,10 @@ using Windows.Foundation;
 using Windows.Foundation.Collections;
 using Windows.Storage;
 using Windows.System;
-using static App3.Profile;
-using static App3.Section;
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
 
-namespace App3
+namespace CC98
 {
     /// <summary>
     /// An empty page that can be used on its own or navigated to within a Frame.

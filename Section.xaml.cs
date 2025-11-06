@@ -18,13 +18,13 @@ using Newtonsoft.Json.Linq;
 using Microsoft.UI.Xaml.Media.Imaging;
 using Windows.Storage;
 using System.Runtime.CompilerServices;
-using CCkernel;
 using System.Threading.Tasks;
+using CC98.Kernel;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
 
-namespace App3
+namespace CC98
 {
     /// <summary>
     /// An empty page that can be used on its own or navigated to within a Frame.

@@ -18,16 +18,16 @@ using System.Net.Http;
 using System.Net;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using static App3.Message;
 using System.ComponentModel;
 using System.Collections.ObjectModel;
-using CCkernel;
 using System.Threading.Tasks;
+
+using CC98.Kernel;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
 
-namespace App3
+namespace CC98
 {
     /// <summary>
     /// An empty page that can be used on its own or navigated to within a Frame.

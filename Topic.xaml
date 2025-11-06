@@ -1,17 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Page
-    x:Class="App3.Topic"
+    x:Class="CC98.Topic"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:local="using:App3"
+    xmlns:local="using:CC98"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d"
     xmlns:lab="using:CommunityToolkit.Labs.WinUI"
     xmlns:ic="using:FluentIcons.WinUI"
     xmlns:dev="using:DevWinUI"
+    xmlns:image="using:CC98.Controls"
     xmlns:tool="using:CommunityToolkit.WinUI.UI.Controls"
-    CacheMode="BitmapCache"
     Background="{ThemeResource AcrylicBackgroundFillColorDefaultBrush}">
     <Page.Resources>
         <local:BooltoVisibilityConverter x:Key="BoolToVisibility"></local:BooltoVisibilityConverter>
@@ -72,7 +72,7 @@
         
         <ScrollViewer Grid.Row="1"   HorizontalScrollMode="Enabled" x:Name="RootViewer" >
             
-            <ItemsRepeater x:Name="TileList"   VerticalCacheLength="48">
+            <ItemsRepeater x:Name="TileList" VerticalCacheLength="48" >
                 
                 <ItemsRepeater.ItemTemplate>
                     <DataTemplate x:DataType="local:Reply">
@@ -87,18 +87,18 @@
                             <HyperlinkButton Grid.Row="0" Margin="0,0,0,5"  x:Name="Person" Click="Person_Click" DataContext="{x:Bind}" ContextRequested="Person_ContextRequested">
                                 <StackPanel Grid.Row="0"  Orientation="Horizontal" Spacing="10">
                                     <Border Width="30" Height="30" CornerRadius="5" Background="{ThemeResource PortaitBackgroundColor}">
-                                        <local:SmartImage  x:Name="portrait" Source="{x:Bind url}" ></local:SmartImage>
+                                        <image:SmartImage  x:Name="portrait" Source="{x:Bind Url}" ></image:SmartImage>
                                     </Border>
-                                    <TextBlock Text="{x:Bind author}" FontFamily="Noto Sans SC" VerticalAlignment="Center" ></TextBlock>
+                                    <TextBlock Text="{x:Bind Author}" FontFamily="Noto Sans SC" VerticalAlignment="Center" ></TextBlock>
                                 </StackPanel>
                             </HyperlinkButton>
                             <Border  Grid.Row="1" Padding="10" CornerRadius="4" Background="{ThemeResource MarkdownBackgroudBrush}" >
-                                <tool:MarkdownTextBlock x:Name="Drawer"  Text="{x:Bind text,Converter={StaticResource UBBTextConverter}}" Background="Transparent" Foreground="{ThemeResource TextFillColorSecondaryBrush}" HorizontalAlignment="Stretch"  FontFamily="Noto Sans SC" VerticalAlignment="Stretch" LinkClicked="MarkdownTextBlock_LinkClicked"   ImageStretch="UniformToFill"  QuoteBorderBrush="{ThemeResource QuoteBorderBrush}" ImageClicked="Drawer_ImageClicked" ImageResolving="Drawer_ImageResolving" ImageMaxWidth="400" Unloaded="Drawer_Unloaded"></tool:MarkdownTextBlock>
+                                <tool:MarkdownTextBlock x:Name="Drawer"  Text="{x:Bind Text,Converter={StaticResource UBBTextConverter}}" Background="Transparent" Foreground="{ThemeResource TextFillColorSecondaryBrush}" HorizontalAlignment="Stretch"  FontFamily="Noto Sans SC" VerticalAlignment="Stretch" LinkClicked="MarkdownTextBlock_LinkClicked"   ImageStretch="UniformToFill"  QuoteBorderBrush="{ThemeResource QuoteBorderBrush}" ImageClicked="Drawer_ImageClicked" ImageResolving="Drawer_ImageResolving" ImageMaxWidth="400" Unloaded="Drawer_Unloaded"></tool:MarkdownTextBlock>
                             </Border>
 
                             <StackPanel Orientation="Vertical" Grid.Row="0" Margin="5,5,10,0" HorizontalAlignment="Right">
-                                <TextBlock Text="{x:Bind  time}"  FontSize="10"   Foreground="{ThemeResource TextFillColorSecondaryBrush}"></TextBlock>
-                                <TextBlock Text="{x:Bind floor}" FontSize="10" TextAlignment="Right" Foreground="{ThemeResource TextFillColorSecondaryBrush}"></TextBlock>
+                                <TextBlock Text="{x:Bind  Time}"  FontSize="10"   Foreground="{ThemeResource TextFillColorSecondaryBrush}"></TextBlock>
+                                <TextBlock Text="{x:Bind Floor}" FontSize="10" TextAlignment="Right" Foreground="{ThemeResource TextFillColorSecondaryBrush}"></TextBlock>
                             </StackPanel>
 
 
@@ -106,15 +106,15 @@
                             <StackPanel Orientation="Horizontal" Grid.Row="3" Spacing="10">
                                 <Button Background="Transparent"  Tag="1"  HorizontalAlignment="Left" Margin="0,10,0,0" x:Name="Like" Click="Like_Click" DataContext="{x:Bind}">
                                     <StackPanel Orientation="Horizontal" Spacing="5" >
-                                        <ic:SymbolIcon Symbol="ThumbLike" FontSize="10" Foreground="{ThemeResource TextFillColorSecondaryBrush}"  IconVariant="{x:Bind likestate,Mode=OneWay}"></ic:SymbolIcon>
-                                        <TextBlock Text="{x:Bind like,Mode=OneWay}" Grid.Row="2"  HorizontalAlignment="Right" FontSize="11" Foreground="{ThemeResource TextFillColorSecondaryBrush}"></TextBlock>
+                                        <ic:SymbolIcon Symbol="ThumbLike" FontSize="10" Foreground="{ThemeResource TextFillColorSecondaryBrush}"  IconVariant="{x:Bind Likestate,Mode=OneWay}"></ic:SymbolIcon>
+                                        <TextBlock Text="{x:Bind Like,Mode=OneWay}" Grid.Row="2"  HorizontalAlignment="Right" FontSize="11" Foreground="{ThemeResource TextFillColorSecondaryBrush}"></TextBlock>
                                     </StackPanel>
                                 </Button>
 
                                 <Button Background="Transparent" Tag="2" HorizontalAlignment="Left" Margin="0,10,0,0" Click="Like_Click" DataContext="{x:Bind}">
                                     <StackPanel Orientation="Horizontal" Spacing="5" >
-                                        <ic:SymbolIcon Symbol="ThumbDislike" FontSize="10" Foreground="{ThemeResource TextFillColorSecondaryBrush}" IconVariant="{x:Bind dislikestate,Mode=OneWay}"></ic:SymbolIcon>
-                                        <TextBlock Text="{x:Bind dislike,Mode=OneWay}"  HorizontalAlignment="Right" FontSize="11" Foreground="{ThemeResource TextFillColorSecondaryBrush}"></TextBlock>
+                                        <ic:SymbolIcon Symbol="ThumbDislike" FontSize="10" Foreground="{ThemeResource TextFillColorSecondaryBrush}" IconVariant="{x:Bind Dislikestate,Mode=OneWay}"></ic:SymbolIcon>
+                                        <TextBlock Text="{x:Bind Dislike,Mode=OneWay}"  HorizontalAlignment="Right" FontSize="11" Foreground="{ThemeResource TextFillColorSecondaryBrush}"></TextBlock>
                                     </StackPanel>
                                 </Button>
 
@@ -124,9 +124,9 @@
                                 <Button.Flyout>
                                     <MenuFlyout>
                                         <MenuFlyoutItem Icon="{ic:SymbolIcon Symbol=CommentQuote}" Text="引用" Click="PostOperation_Click" Tag="QUOTE" DataContext="{x:Bind}"></MenuFlyoutItem>
+                                        <MenuFlyoutItem Icon="{ic:SymbolIcon Symbol=Edit}" Text="编辑" Click="PostOperation_Click" Tag="EDIT" DataContext="{x:Bind}" Visibility="{x:Bind Isme,Converter={StaticResource BoolToVisibility}}"></MenuFlyoutItem>
                                         <MenuFlyoutItem Icon="{ic:SymbolIcon Symbol=Code}" Text="复制为原代码" Click="PostOperation_Click" Tag="UBB" DataContext="{x:Bind}"></MenuFlyoutItem>
                                         <MenuFlyoutItem Icon="{ic:SymbolIcon Symbol=Markdown}" Text="复制为Md" Tag="MD" Click="PostOperation_Click" DataContext="{x:Bind}"></MenuFlyoutItem>
-                                        <MenuFlyoutItem Text="追踪" Icon="{ic:SymbolIcon Symbol=ChatArrowBack}" Tag="{x:Bind rid}"   Click="PostOperation_Click" DataContext="{x:Bind}"></MenuFlyoutItem>
                                     </MenuFlyout>
                                 </Button.Flyout>
                             </Button>
@@ -189,12 +189,7 @@
 
 
             </Grid>
-            <HyperlinkButton Margin="10,0,0,0"  Click="StopTrace_Click" x:Name="StopTrace" Visibility="Collapsed">
-                <StackPanel  Orientation="Horizontal" Spacing="8" >
-                    <ic:SymbolIcon Symbol="ArrowStepBack"></ic:SymbolIcon>
-                    <TextBlock Text="离开追踪"></TextBlock>
-                </StackPanel>
-            </HyperlinkButton>
+           
             <dev:PagerControl Grid.Column="1" DisplayMode="ButtonPanel" NumberOfPages="1"  HorizontalAlignment="Center" x:Name="Pager" SelectedPageIndex="0"  VerticalAlignment="Center"  SelectedIndexChanged="Pager_SelectedIndexChanged" ></dev:PagerControl>
             <TextBox Grid.Column="2" x:Name="de" Visibility="Collapsed"></TextBox>
             <StackPanel Orientation="Horizontal" Margin="0,0,20,0" Spacing="10" Grid.Column="2" HorizontalAlignment="Right" >

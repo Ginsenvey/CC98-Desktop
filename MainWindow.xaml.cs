@@ -1,5 +1,4 @@
-﻿using CCkernel;
-using CCUserModel;
+﻿
 using CommunityToolkit.WinUI.Converters;
 using DevWinUI;
 using FluentIcons.Common;
@@ -45,12 +44,14 @@ using Windows.Security.Credentials;
 using Windows.Security.Cryptography.Certificates;
 using Windows.Storage;
 using Windows.Storage.Streams;
-
+using CC98.Services;
+using CC98.Kernel;
+using CC98.UserExperience;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
 
-namespace App3
+namespace CC98
 {
     /// <summary>
     /// An empty window that can be used on its own or navigated to within a Frame.
@@ -59,6 +60,7 @@ namespace App3
     {
         public ObservableCollection<CategoryBase> MenuItems { get; } = new ObservableCollection<CategoryBase>();
         public ObservableCollection<CategoryBase> FooterMenuItems { get; } = new ObservableCollection<CategoryBase>();
+        public Frame RootFrame => contentframe;//用于在嵌套的Frame中导航
         public MainWindow()
         {
             this.InitializeComponent();
@@ -377,7 +379,6 @@ namespace App3
             // 更新 RootGrid 的主题
             RootGrid.RequestedTheme = theme;
         }
-        private PasswordVault Vault;
         
         public ApplicationDataContainer Set= ApplicationData.Current.LocalSettings;
         public ObservableCollection<string> collections;
@@ -798,6 +799,11 @@ namespace App3
                     switch (tag)
                     {
                         case "0":
+                            if (ValidationHelper.IsTokenExist(Set, "IsActive") != "1")
+                            {
+                                Flower.PlayAnimation("\uEA39", "当前登录方式不支持抽卡");
+                                return;
+                            }
                             contentframe.Navigate(typeof(Game));
                             break;
                         case "1":
@@ -805,6 +811,7 @@ namespace App3
                             ForumStat.IsOpen = true;
                             await LoadForumStat();
                             break;
+                        
                     }
                         
                 }

@@ -1,5 +1,6 @@
-using CCkernel;
-using CCUserModel;
+
+using CC98.Kernel;
+using CC98.UserExperience;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.WinUI.Controls;
 using CommunityToolkit.WinUI.UI.Controls;
@@ -37,12 +38,11 @@ using Windows.Media.Core;
 using Windows.Media.Playback;
 using Windows.Storage;
 using Windows.System;
-using static App3.Topic;
 using static System.Net.WebRequestMethods;
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
 
-namespace App3
+namespace CC98
 {
     /// <summary>
     /// An empty page that can be used on its own or navigated to within a Frame.

@@ -1,5 +1,6 @@
-﻿using CCkernel;
-using CCUserModel;
+﻿
+using CC98.Kernel;
+using CC98.UserExperience;
 using DevWinUI;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -32,7 +33,7 @@ using Windows.Storage;
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
 
-namespace App3
+namespace CC98
 {
     /// <summary>
     /// Provides application-specific behavior to supplement the default Application class.
@@ -60,23 +61,27 @@ namespace App3
             {
                 if (ValidationHelper.IsTokenExist(Set, "IsVpnUsable") == "1")
                 {
-                    //检测是否已初始化TWFID。若已初始化，使用并检查有效性。无效则重连。未初始化是出错的情况。
-                    if (PasswordManager.PasswordExists("TWFID"))
+                    //检测是否已初始化Ticket。若已初始化，使用并检查有效性。无效则重连。未初始化是出错的情况。
+                    if (PasswordManager.PasswordExists("Ticket")&& PasswordManager.PasswordExists("Route"))
                     {
-                        //构造TWFID
-                        var token = PasswordManager.RetrievePassword("TWFID");
-                        var cookie = new Cookie("TWFID", token, "/", "webvpn.zju.edu.cn");
-                        if (!string.IsNullOrEmpty(token))
+                        //构造Ticket
+                        var ticket_value = PasswordManager.RetrievePassword("Ticket");
+                        var route_value= PasswordManager.RetrievePassword("Route");
+                        var ticket = new Cookie("wengine_vpn_ticketwebvpn_zju_edu_cn", ticket_value, "/", "webvpn.zju.edu.cn");
+                        var route= new Cookie("wengine_vpn_ticketwebvpn_zju_edu_cn", route_value, "/", "webvpn.zju.edu.cn");
+                        ticket.HttpOnly = true;
+                        if (!string.IsNullOrEmpty(ticket_value)&&(!string.IsNullOrEmpty(route_value)))
                         {
-                            CCloginservice.vpn.Jar.Add(cookie);
+                            CCloginservice.vpn.Jar.Add(ticket);
+                            CCloginservice.vpn.Jar.Add(route);
                             if (await CCloginservice.vpn.CheckNetwork(true) == "1")//该函数不受IsVpnEnable和Logined影响
                             {
                                 CCloginservice.vpn.IsVpnEnabled = true;
                                 return "1";
                             }
-                            else//过期，尝试使用凭据重新获取TWFID
+                            else//过期，尝试使用凭据重新获取Ticket
                             {
-                                CCloginservice.vpn.IsVpnEnabled = false; 
+                                CCloginservice.vpn.IsVpnEnabled = false;
                                 if (PasswordManager.PasswordExists("VpnUserName") && PasswordManager.PasswordExists("VpnPassWord"))
                                 {
                                     string id = PasswordManager.RetrievePassword("VpnUserName");
@@ -85,17 +90,20 @@ namespace App3
                                     if (vpn_res == "1")//连接成功
                                     {
                                         CCloginservice.vpn.IsVpnEnabled = true;
-                                        var new_cookie = CCloginservice.vpn.TWFID;
-                                        string _token = new_cookie.Value;
-                                        if (!string.IsNullOrEmpty(_token))
+                                        var new_ticket = CCloginservice.vpn.Ticket;
+                                        var new_route=CCloginservice.vpn.Route;
+                                        string _ticket = new_ticket.Value;
+                                        string _route = new_route.Value;
+                                        if (!string.IsNullOrEmpty(_ticket)&&(!string.IsNullOrEmpty(_route)))
                                         {
-                                            PasswordManager.SavePassword(_token, "TWFID");
+                                            PasswordManager.SavePassword(_ticket, "Ticket");
+                                            PasswordManager.SavePassword("_route", "Route");
                                             return "1";
                                         }//保存失败或者token为空时，会出现VPN启用但找不到令牌的情况。
                                         else
                                         {
                                             //通常不会有此情况
-                                            return "2:未获取到TWFID";
+                                            return "2:未获取到Ticket";
                                         }
                                         //此时vpn应该可用
                                     }
@@ -114,13 +122,12 @@ namespace App3
                         else
                         {
                             //存在这个凭据，但是解析为Cookie失败
-                            return "5:TWFID令牌解析失败。反馈此问题。";
+                            return "5:Ticket令牌解析失败。反馈此问题。";
                         }
                     }
                     else
                     {
-                        return "5:TWFID令牌意外地未被保存。反馈此问题。";
-                        //("出错", "TWFID令牌意外地消失了。");
+                        return "5:Ticket令牌意外地未被保存。反馈此问题。";
                     }
                 }
                 else//vpn未启用，这可能是代码逻辑问题
@@ -153,7 +160,8 @@ namespace App3
             }
             else
             {
-                if (ValidationHelper.IsTokenExist(Set, "IsActive") == "1")//已登录
+                string IsActive = ValidationHelper.IsTokenExist(Set, "IsActive");
+                if (IsActive == "1"||IsActive=="2")//已登录
                 {
                     try
                     {
@@ -169,7 +177,7 @@ namespace App3
                                 break;
                             default:
                                 AppNotification _notification = new AppNotificationBuilder()
-                                .AddText("启动失败")
+                                .AddText("网络异常")
                                 .AddText("详细信息:\n" + status)
                                 .BuildNotification();
                                 AppNotificationManager.Default.Show(_notification);

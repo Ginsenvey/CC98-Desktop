@@ -1,14 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Page
-    x:Class="App3.Discover"
+    x:Class="CC98.Discover"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:local="using:App3"
+    xmlns:local="using:CC98"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d"
     xmlns:ic="using:FluentIcons.WinUI"
-    xmlns:tool="using:CommunityToolkit.WinUI.UI.Controls"
+    xmlns:image="using:CC98.Controls"
+    xmlns:tool="using:CommunityToolkit.WinUI.UI.Controls" xmlns:local1="using:CC98.Controls"
     Background="{ThemeResource DesktopAcrylicTransparentBrush}">
     <Page.Resources>
         <DataTemplate x:Key="TextPost" x:DataType="local:StandardPost">
@@ -46,9 +47,8 @@
                     <Button Grid.Row="2" HorizontalAlignment="Right" Background="Transparent" Margin="0,10,0,0">
                         <ic:SymbolIcon Symbol="MoreHorizontal" FontSize="11"></ic:SymbolIcon>
                         <Button.Flyout>
-                            <MenuFlyout>
-                                <MenuFlyoutItem Text="稍后再看" Icon="{ic:SymbolIcon Symbol=History}"></MenuFlyoutItem>
-                                <MenuFlyoutItem Text="复制帖子ID" Icon="{ic:SymbolIcon Symbol=Link}" Tag="{x:Bind pid}" x:Name="CopyId" Click="CopyId_Click"></MenuFlyoutItem>
+                        <MenuFlyout>
+                            <MenuFlyoutItem Text="复制帖子ID" Icon="{ic:SymbolIcon Symbol=Link}" Tag="{x:Bind pid}" x:Name="CopyId" Click="CopyId_Click"></MenuFlyoutItem>
                             </MenuFlyout>
                         </Button.Flyout>
                     </Button>
@@ -79,7 +79,7 @@
                         <ItemsView.ItemTemplate>
                             <DataTemplate x:DataType="local:MediaContent">
                                 <ItemContainer CacheMode="BitmapCache" >
-                                    <local:SmartImage Source="{x:Bind MediaSource}" Tag="{x:Bind MediaSource}" Stretch="UniformToFill" MaxWidth="300" Tapped="Image_Tapped" ></local:SmartImage>
+                                    <image:SmartImage Source="{x:Bind MediaSource}" Tag="{x:Bind MediaSource}" Stretch="UniformToFill" MaxWidth="300" Tapped="Image_Tapped" ></image:SmartImage>
                                 </ItemContainer>
                             </DataTemplate>
                         </ItemsView.ItemTemplate>
@@ -132,17 +132,17 @@
                 <ColumnDefinition Width="Auto"></ColumnDefinition>
                 <ColumnDefinition Width="*"></ColumnDefinition>
             </Grid.ColumnDefinitions>
-            <Button x:Name="NaviBar" Grid.Column="0" Tag="Back" Click="NaviBar_Click" Padding="7" Background="{ThemeResource FancyButtonBackgroundBrush}" Foreground="{ThemeResource FancyButtonForegroundBrush}" BorderThickness="0">
+            <Button x:Name="NaviBar" Grid.Column="0" Tag="Back" Click="NaviBar_Click" Padding="7"  BorderThickness="0">
                 <ic:SymbolIcon Symbol="ChevronLeft"></ic:SymbolIcon>
             </Button>
-            <Button Tag="Forward" Grid.Column="1" Click="NaviBar_Click" Padding="7" Background="{ThemeResource FancyButtonBackgroundBrush}" Foreground="{ThemeResource FancyButtonForegroundBrush}" BorderThickness="0">
+            <Button Tag="Forward" Grid.Column="1" Click="NaviBar_Click" Padding="7"  >
                 <ic:SymbolIcon Symbol="ChevronRight"></ic:SymbolIcon>
             </Button>
-            <Button Grid.Column="2" VerticalAlignment="Center" HorizontalAlignment="Right"  Background="{ThemeResource FancyButtonBackgroundBrush}" Foreground="{ThemeResource FancyButtonForegroundBrush}" BorderThickness="0">
+            <Button Grid.Column="2" VerticalAlignment="Center" HorizontalAlignment="Right"  >
                 <TextBlock Text="第 1 页" x:Name="PageIndex"  ></TextBlock>
             </Button>
         </Grid>
-        <Button Grid.Column="1" Grid.Row="0"  x:Name="RefRandomTiles" Click="RefRandomTiles_Click" Padding="7" Background="{ThemeResource FancyButtonBackgroundBrush}" Foreground="{ThemeResource FancyButtonForegroundBrush}" BorderThickness="0" >
+        <Button Grid.Column="1" Grid.Row="0"  x:Name="RefRandomTiles" Click="RefRandomTiles_Click" Padding="7"  BorderThickness="0" >
             <ic:SymbolIcon Symbol="ArrowSync" ></ic:SymbolIcon>
         </Button>
 

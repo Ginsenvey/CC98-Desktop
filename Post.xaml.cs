@@ -1,5 +1,6 @@
-using CCkernel;
-using CCUserModel;
+
+using CC98.Kernel;
+using CC98.UserExperience;
 using ColorCode.Compilation.Languages;
 using CommunityToolkit.WinUI.Controls;
 using CommunityToolkit.WinUI.UI.Controls;
@@ -28,12 +29,10 @@ using Windows.Foundation.Collections;
 using Windows.Storage;
 using Windows.Storage.Pickers;
 using WinRT.Interop;
-using static App3.Topic;
-using static System.Net.Mime.MediaTypeNames;
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
 
-namespace App3
+namespace CC98
 {
     /// <summary>
     /// An empty page that can be used on its own or navigated to within a Frame.
@@ -80,9 +79,9 @@ namespace App3
                 }
                 else if(mode == "1")//引用回复
                 {
-                    status.Text = "回复帖子:" + parameter["QuoteText"];
+                    status.Text = "回复帖子:" + parameter["ParentId"];
                     Id = parameter["Pid"];
-                    Editor.Text = $"[quote]{parameter["Header"]}{parameter["QuoteText"]}[/quote]";
+                    Editor.Text = parameter["BaseText"];
                     Previewer.Text = UBBConverter.Convert(Editor.Text.Replace("\r\n", "  \n").Replace("\r", "  \n"), false);
                     Editor.SelectionStart = Editor.Text.Length;
                     Parent_Id = parameter["ParentId"];
@@ -96,6 +95,19 @@ namespace App3
                     Id = parameter["BoardId"];
                     SetTitle.IsEnabled = true;
                     topicselector.IsSelected= true;
+                }
+                else if (mode == "3")
+                {
+                    status.Text = "编辑帖子:" + parameter["Rid"];
+                    Parent_Id = parameter["Rid"];//使用ParentId暂存所编辑帖的Id
+                    Id = parameter["Pid"];//当前主题Pid
+                    Editor.Text = parameter["BaseText"];
+                    SetTitle.Text= parameter["Title"];
+                    Previewer.Text = UBBConverter.Convert(Editor.Text.Replace("\r\n", "  \n").Replace("\r", "  \n"), false);
+                    Editor.SelectionStart = Editor.Text.Length;
+                    replyselector.IsSelected = true;
+                    SetTitle.IsEnabled = false;
+                    SetContentType.IsEnabled = false;
                 }
             }
             else
@@ -306,7 +318,20 @@ namespace App3
                         }
                     }
                 }
-
+                else if (Mode == "3")
+                {
+                    string maintext = Editor.Text.Replace("\r\n", "\n").Replace("\r", "\n");
+                    bool res = await RequestSender.EditReply(Parent_Id, maintext,SetTitle.Text,Content_Type,NotifyPoster);
+                    if (res)
+                    {
+                        Frame.Navigate(typeof(Topic), Id);
+                    }
+                    else
+                    {
+                        Flower.PlayAnimation("\uEA39", "编辑失败");
+                        status.Text = "编辑失败";
+                    }
+                }
             }
         }
         private async Task<string> UploadFileAsync(string Url, string filePath)
@@ -622,5 +647,10 @@ namespace App3
     {
         public string EmojiName {  get; set; }
         public string EmojiPath { get; set; }
+    }
+    public class PostTag
+    {
+        public string Name { get; set; }
+        public int Id { get; set; }
     }
 }

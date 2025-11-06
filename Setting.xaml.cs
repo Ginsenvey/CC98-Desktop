@@ -1,5 +1,5 @@
-using CCkernel;
-using CCUserModel;
+using CC98.Kernel;
+using CC98.UserExperience;
 using DevWinUI;
 using HtmlAgilityPack;
 using Microsoft.Security.Authentication.OAuth;
@@ -36,7 +36,7 @@ using Windows.Storage;
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
 
-namespace App3
+namespace CC98
 {
     /// <summary>
     /// An empty page that can be used on its own or navigated to within a Frame.
@@ -274,11 +274,13 @@ namespace App3
 
         private void LocalSetManager_Expanded(object sender, EventArgs e)
         {
-            string settings = "配置项:\n";
+            string settings = "";
             foreach (var item in Set.Values)
             {
-                settings += $"{item.Key}: {item.Value}\n";
+                settings += $"{item.Key}:{item.Value}\n";
             }
+            string vpn_auth_cookie = PasswordManager.RetrievePassword("Ticket");
+            settings += $"VPN会话: {vpn_auth_cookie}";
             LocalSet.Text = settings;
 
             LocalSetManager.IsExpanded = true;
@@ -292,78 +294,9 @@ namespace App3
         }
         
       
-        private async void DeepAuth_Click(object sender, RoutedEventArgs e)
-        {
-            AuthDialog.XamlRoot = this.XamlRoot;
-            bool isDeepAuthEnabled = false;
-            var d = ValidationHelper.IsTokenExist(Set, "DeepAuth");
-            if (d!= "0")
-            {
-                isDeepAuthEnabled = true;//只要值不存在，或者存在但值为0，都返回0.
-            }
-            if (isDeepAuthEnabled == false)
-            {
-                var r = await AuthDialog.ShowAsync();
-                if (r == ContentDialogResult.Primary)
-                {
-                    if (IdBox.Text != "" && PassBox.Password != "")
-                    {
-                        string DeepAuthRes = await CCloginservice.DeepAuthService(IdBox.Text, PassBox.Password);
-                        if (DeepAuthRes == "0")
-                        {
-                            ContentDialog dialog = new ContentDialog
-                            {
-                                Title = "登录失败",
-                                Content = "发生错误。检查凭据或者报告此问题",
-                                CloseButtonText = "退出"
-                            };
-                            dialog.XamlRoot = this.XamlRoot;
-                            await dialog.ShowAsync();
-                        }
-                        else
-                        {
-
-                            PasswordManager.SavePassword(PassBox.Password,"DeepAuth",IdBox.Text);//此密码的用户名为真名，而不是"CC98"
-                            Set.Values["DeepAuth"] = "1";//深度认证已启用
-                            AppNotification notification = new AppNotificationBuilder()
-        .AddText("登录成功！")
-        .AddText("现在，可以使用抽卡等实验性功能。")
-        .BuildNotification();
-
-                            AppNotificationManager.Default.Show(notification);
-                        }
-                    }
-                }
-                else
-                {
-                    //关闭对话框
-                }
-            }
-            else
-            {
-                AuthDialog.Content= "深度认证已启用，无需进行其他操作。";
-                await AuthDialog.ShowAsync();
-            }
-            
-
-            
-        }
         
-        private  void DrawACard_Click(object sender, RoutedEventArgs e)
-        {
-            bool IsEnabled = false;
-            var d = ValidationHelper.IsTokenExist(Set, "DeepAuth");
-            if (d!= "0")
-            {
-                IsEnabled = true;
-                Frame.Navigate(typeof(Game));
-            }
-
-            if (IsEnabled == false)
-            {
-                Flower.PlayAnimation("\uEA39","未深度授权");
-            }
-        }
+        
+        
         private async void Emoji_Click(object sender, RoutedEventArgs e)
         {
             var h = sender as HyperlinkButton;
@@ -432,41 +365,7 @@ namespace App3
                 }
             }
         }
-        private async void Emoji0_Click(object sender, RoutedEventArgs e)
-        {
-            List<string> list = new List<string>();
-            for(int i= 0; i < 92; i++)
-            {
-                string param = "";
-                if (i < 10)
-                {
-                    param="0"+i.ToString();
-                }
-                else
-                {
-                    param=i.ToString();
-                }
-                list.Add(param);
-
-                
-            }
-            
-            foreach (string param in list)
-            {
-                string url = "https://www.cc98.org/static/images/em/em"+param + ".gif";
-                string path = "C:\\Users\\Ansherly\\Documents\\Emoji\\" + "em" + param+".gif";
-                var fileres = await CCloginservice.vpn.client.GetAsync(url, HttpCompletionOption.ResponseHeadersRead);
-                if (fileres.StatusCode == HttpStatusCode.OK)
-                {
-                    using (Stream contentStream = await fileres.Content.ReadAsStreamAsync(),
-                    fileStream = new FileStream(path, FileMode.Create, FileAccess.Write, FileShare.None))
-                    {
-                        await contentStream.CopyToAsync(fileStream);
-
-                    }
-                }
-            }
-        }
+        
 
         private void TitlePage_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
@@ -490,53 +389,7 @@ namespace App3
             }
         }
 
-        private async void VpnSetup_Click(object sender, RoutedEventArgs e)
-        {
-            if(ValidationHelper.IsTokenExist(Set, "IsVpnUsable") == "1")
-            {
-                Flower.PlayAnimation("\uE946", "VPN已配置,无需其他操作");
-            }
-            else
-            {
-                AuthDialog.XamlRoot = this.XamlRoot;
-                var r = await AuthDialog.ShowAsync();
-                if (r == ContentDialogResult.Primary)
-                {
-                    if (!string.IsNullOrEmpty(IdBox.Text) && !string.IsNullOrEmpty(PassBox.Password))
-                    {
-                        string vpn_res = await CCloginservice.vpn.LoginAsync(IdBox.Text, PassBox.Password);
-                        if (vpn_res == "1")
-                        {
-                            Set.Values["IsVpnUsable"] = "1";
-                            var cookie = CCloginservice.vpn.TWFID;
-                            string token = JsonConvert.SerializeObject(cookie);
-                            if (!string.IsNullOrEmpty(token))
-                            {
-                                PasswordManager.SavePassword(token, "TWFID");
-                                Flower.PlayAnimation("\uE930", "Cookie已自动保存。");
-                            }//保存失败或者token为空时，会出现VPN启用但找不到令牌的情况。
-                            else
-                            {
-                                Flower.PlayAnimation("\uEA39", "Cookie保存失败");
-                            }
-                            PasswordManager.SavePassword(IdBox.Text, "VpnUserName");
-                            PasswordManager.SavePassword(PassBox.Password, "VpnPassWord");
-
-
-                        }
-                        else
-                        {
-                            Flower.PlayAnimation("\uEA39", vpn_res);
-                        }
-                    }
-                    else
-                    {
-                        Flower.PlayAnimation("\uEA39", "凭据不完整");
-                    }
-                }
-            }
-            
-        }
+        
 
       
 

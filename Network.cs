@@ -1,4 +1,5 @@
-﻿using CCkernel;
+﻿
+using CC98.Kernel;
 using Duende.IdentityModel.Client;
 using HtmlAgilityPack;
 using Microsoft.UI.Xaml;
@@ -17,6 +18,7 @@ using System.Numerics;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Xml;
 using Windows.Devices.PointOfService;
@@ -28,129 +30,149 @@ using Windows.Storage.Streams;
 using Windows.UI.Core;
 using static System.Net.WebRequestMethods;
 
+namespace CC98.Kernel.Network;
 
 public class VpnService : IDisposable
 {
-    
-    private const string LoginAuthUrl = "https://webvpn.zju.edu.cn/por/login_auth.csp?apiversion=1";
-    private const string LoginPswUrl = "https://webvpn.zju.edu.cn/por/login_psw.csp?anti_replay=1&encrypt=1&apiversion=1";
-    public bool IsVpnEnabled=false;
+    private const string LoginAuthUrl = "https://webvpn.zju.edu.cn/login";
+    private const string LoginPswUrl = "https://webvpn.zju.edu.cn/do-login";
+    private const string LogoutUrl = "https://webvpn.zju.edu.cn/logout";
     public HttpClient client;
     public CookieContainer Jar;
+    public bool Logined = false;//可以强行修改这个值来避开检验。
+    public bool IsVpnEnabled = false;
     private bool _disposed = false;
-    public bool Logined = false;
-    public bool AutoDirect = true;
-   
-    public Cookie TWFID => Jar.GetCookies(new Uri("https://webvpn.zju.edu.cn"))["TWFID"]??new Cookie();
-
+    public Cookie Ticket => Jar.GetCookies(new Uri("https://webvpn.zju.edu.cn"))["wengine_vpn_ticketwebvpn_zju_edu_cn"] ?? new Cookie();
+    public Cookie Route => Jar.GetCookies(new Uri("https://webvpn.zju.edu.cn"))["route"] ?? new Cookie();
     public VpnService()
     {
         Jar = new CookieContainer();
+        //在此处启用Proxy以开始调试，否则流量不通过外部代理
         var handler = new HttpClientHandler
         {
-            AllowAutoRedirect = AutoDirect,
+            AllowAutoRedirect = true,
             CookieContainer = Jar,
             UseCookies = true,
             AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate
-            
         };
-
+        
         client = new HttpClient(handler);
-        client.DefaultRequestHeaders.Add("Referer", "https://webvpn.zju.edu.cn/portal/");
+        client.DefaultRequestHeaders.Add("Referer", "https://webvpn.zju.edu.cn/");
         client.DefaultRequestHeaders.Connection.ParseAdd("keep-alive");
         client.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36 Edg/138.0.0.0");
     }
-
-    public async Task<string> LoginAsync(string username, string password)
+    public async Task<string> LoginAsync(string username, string password, CancellationToken cts = default)
     {
-        var authResponse = await client.GetAsync(LoginAuthUrl);
-        authResponse.EnsureSuccessStatusCode();
-        var authXml = await authResponse.Content.ReadAsStringAsync();
-        var (csrfRandCode, encryptKey, encryptExp) = ParseAuthXml(authXml);
-        string encryptedPassword = EncryptPassword($"{password}_{csrfRandCode}", encryptKey, encryptExp);
-        var formData = new Dictionary<string, string>
+        try
         {
-            {"mitm_result", ""},
-            {"svpn_req_randcode", csrfRandCode},
-            {"svpn_name", username},
-            {"svpn_password", encryptedPassword},
-            {"svpn_rand_code", ""}
+            var res = await client.GetAsync(LoginAuthUrl);
+            if (res.StatusCode == HttpStatusCode.OK)
+            {
+                var html = await res.Content.ReadAsStringAsync();
+                var param = GetRandCode(html);
+                string encrpted_password = BuildPassword("wrdvpnisawesome!", password);
+                var formData = new Dictionary<string, string>
+            {
+                {"_csrf", param.csrf},
+                {"auth_type", param.auth_type},
+                {"sms_code", ""},
+                {"captcha","" },
+                {"needCaptcha", "false"},
+                {"captcha_id", param.captcha},
+                {"username",username},
+                {"password",encrpted_password }
+            };
+                var content = new FormUrlEncodedContent(formData);
+                var login_res = await client.PostAsync(LoginPswUrl, content);
+                if (login_res.StatusCode != HttpStatusCode.OK) return $"{login_res.StatusCode}:登录请求失败";
+                string text = await login_res.Content.ReadAsStringAsync();
+                if (ParseLoginResult(text))
+                {
+                    Logined = true;
+                    return "1";
+                }
+                else
+                {
+                    return text;
+                }
+            }
+            else
+            {
+                return "404:获取CSRF失败";
+            }
+        }
+        catch (Exception ex)
+        {
+            return $"404:{ex.Message}";
+        }
+    }
+
+    /// <summary>
+    /// 注销会话
+    /// </summary>
+    /// <returns></returns>
+    public async Task Logout()
+    {
+        try
+        {
+            var res = await client.GetAsync(LogoutUrl);
+        }
+        catch { }
+    }
+    /// <summary>
+    /// 标准URL转换函数
+    /// </summary>
+    /// <param name="origin"></param>
+    /// <returns></returns>
+    public static string ConvertUrl(string origin)
+    {
+        var uri = new Uri(origin);
+        string scheme = uri.Scheme;
+        //处理协议和端口
+        int port = uri.Port;
+        string host = uri.Host;
+        bool is_special_port = port > 0 &&
+            !(uri.Scheme == "http" && port == 80) &&
+            !(uri.Scheme == "https" && port == 443);
+        string property = is_special_port ? $"{scheme}-{port}" : scheme;
+        //处理路径和查询字符
+        string suffix = uri.PathAndQuery;
+        int qm = suffix.IndexOf('?');
+        string path = qm >= 0 ? suffix[..qm] : suffix;
+        string query = qm >= 0 ? suffix[qm..] : "";
+        var pathSb = new System.Text.StringBuilder("/");
+        foreach (var seg in path.Split('/', StringSplitOptions.RemoveEmptyEntries))
+            pathSb.Append(Uri.EscapeDataString(seg)).Append('/');
+        if (pathSb.Length > 1) pathSb.Length--;   // 去掉末尾多余 /
+        string newPathAndQuery = pathSb.ToString() + query;
+
+        string vpn_scheme = "https";
+        string vpn_host = "webvpn.zju.edu.cn";
+        string[] pathSegments = new[]
+        {
+            property,
+            BuildPassword("wrdvpnisthebest!",host),
         };
-
-        var content = new FormUrlEncodedContent(formData);
-        var loginResponse = await client.PostAsync(LoginPswUrl, content);
-        var loginXml = await loginResponse.Content.ReadAsStringAsync();
-        if (VerifyLoginResult(loginXml) == "1")
-        {
-            Logined=true;
-        }
-        return VerifyLoginResult(loginXml);
-       
+        var builder = new UriBuilder(vpn_scheme, vpn_host);
+        var sb = new System.Text.StringBuilder();
+        foreach (var seg in pathSegments)
+            sb.Append('/').Append(Uri.EscapeDataString(seg));
+        builder.Path = sb.ToString();
+        Uri fullUri = builder.Uri;
+        string prifix = fullUri.ToString();
+        return prifix + newPathAndQuery;
     }
 
-    private (string csrf, string key, string exp) ParseAuthXml(string xml)
-    {
-        var doc = new XmlDocument();
-        doc.LoadXml(xml);
-        var csrf = doc.SelectSingleNode("//CSRF_RAND_CODE")?.InnerText
-            ?? throw new Exception("CSRF_RAND_CODE not found");
-        var key = doc.SelectSingleNode("//RSA_ENCRYPT_KEY")?.InnerText
-            ?? throw new Exception("RSA_ENCRYPT_KEY not found");
-        var exp = doc.SelectSingleNode("//RSA_ENCRYPT_EXP")?.InnerText
-            ?? throw new Exception("RSA_ENCRYPT_EXP not found");
-
-        return (csrf, key, exp);
-    }
-
-    private string EncryptPassword(string plainText, string modulusHex, string exponentDec)
-    {
-        // 将十六进制字符串转换为字节数组
-        byte[] modulus = HexStringToByteArray(modulusHex);
-        byte[] exponent = DecimalToByteArray(exponentDec);//注意，webvpn返回十进制指数，而非10001.
-
-        // 创建RSA参数
-        var rsaParams = new RSAParameters
-        {
-            Modulus = modulus,
-            Exponent = exponent
-        };
-
-        // 使用RSA加密
-        using var rsa = new RSACryptoServiceProvider();
-        rsa.ImportParameters(rsaParams);
-
-        byte[] data = Encoding.UTF8.GetBytes(plainText);
-        byte[] encrypted = rsa.Encrypt(data, false);
-
-        // 返回十六进制小写字符串
-        return BitConverter.ToString(encrypted).Replace("-", "").ToLower();
-    }
-
-    private string VerifyLoginResult(string xml)
-    {
-        var doc = new XmlDocument();
-        doc.LoadXml(xml);
-
-        var result = doc.SelectSingleNode("//Result")?.InnerText;
-        var message = doc.SelectSingleNode("//Message")?.InnerText ?? "Unknown error";
-
-        if (result == "1")
-        {
-            Logined = true;
-            return "1";
-        }
-        else
-        {
-            Logined = false;
-            return $"400:{message}";
-        }
-           
-        
-    }
+    /// <summary>
+    /// 检查是否内网环境。
+    /// </summary>
+    /// <param name="UseVpn"></param>
+    /// <returns></returns>
     public async Task<string> CheckNetwork(bool UseVpn)
     {
-        string Mirror_Url =  "https://mirrors.zju.edu.cn/api/is_campus_network";
+        string Mirror_Url = "https://mirrors.zju.edu.cn/api/is_campus_network";
         string target_uri = UseVpn ? ConvertUrl(Mirror_Url) : Mirror_Url;
+        
         try
         {
             var response = await client.GetAsync(Mirror_Url);
@@ -179,8 +201,112 @@ public class VpnService : IDisposable
         {
             return $"404:{ex.Message}";
         }
-        
 
+
+    }
+    public static bool ParseLoginResult(string json)
+    {
+        if (string.IsNullOrEmpty(json)) return false;
+        var dic = JsonConvert.DeserializeObject<Dictionary<string, object>>(json);
+        if (dic == null) return false;
+        if (dic.TryGetValue("success", out var r))
+        {
+            if (r is bool _r)
+            {
+                return _r;
+            }
+        }
+        return false;
+    }
+    public static (string csrf, string captcha, string auth_type) GetRandCode(string html)
+    {
+        var doc = new HtmlDocument();
+        doc.LoadHtml(html);
+        var csrf_node = doc.DocumentNode.SelectSingleNode("//input[@type='hidden' and @name='_csrf']");
+        var captcha_node = doc.DocumentNode.SelectSingleNode("//input[@type='hidden' and @name='captcha_id']");
+        var auth_type_node = doc.DocumentNode.SelectSingleNode("//input[@type='hidden' and @name='auth_type']");
+        string csrf = csrf_node?.GetAttributeValue("value", string.Empty) ?? string.Empty;
+        string captcha = captcha_node?.GetAttributeValue("value", string.Empty) ?? string.Empty;
+        string auth_type = auth_type_node?.GetAttributeValue("value", string.Empty) ?? string.Empty;
+        return (csrf, captcha, auth_type);
+    }
+    /// <summary>
+    /// 拼接密钥。需要指明截取长度，并默认IV,Key和前缀一致。
+    /// </summary>
+    /// <param name="Prefix"></param>
+    /// <param name="PlainText"></param>
+    /// <returns></returns>
+    public static string BuildPassword(string Prefix, string PlainText)
+    {
+        //裁剪长度为2倍明文长度
+        int SliceLength = 2 * PlainText.Length;
+        string prifix_hex = StringToAscll(Prefix);
+        string full_core = EncryptStringToHex(PlainText, Prefix, Prefix);
+        string core = full_core[..Math.Min(full_core.Length, SliceLength)];
+        return $"{prifix_hex}{core}";
+    }
+    /// <summary>
+    /// 核心加密实现。
+    /// </summary>
+    /// <param name="PlainText"></param>
+    /// <param name="Key"></param>
+    /// <param name="IV"></param>
+    /// <returns></returns>
+    public static string EncryptStringToHex(string PlainText, string Key, string IV)
+    {
+        byte[] iv = Encoding.UTF8.GetBytes(IV.PadRight(16, ' ')[..16]);
+        byte[] key = Encoding.UTF8.GetBytes(Key.PadRight(16, ' ')[..16]);
+        using (Aes aes = Aes.Create())
+        {
+            aes.Key = key;
+            aes.IV = iv;
+            aes.Mode = CipherMode.CFB;   // CFB 模式
+            aes.Padding = PaddingMode.None; // 允许任意长度明文
+            aes.FeedbackSize = 128;
+            using (ICryptoTransform encryptor = aes.CreateEncryptor())
+            using (MemoryStream ms = new MemoryStream())
+            using (CryptoStream cs = new CryptoStream(ms, encryptor, CryptoStreamMode.Write))
+            {
+                //使用提前填充
+                byte[] plainBytes = PadWithZeros(PlainText);
+                cs.Write(plainBytes, 0, plainBytes.Length);
+                cs.FlushFinalBlock();
+                return Convert.ToHexString(ms.ToArray()).ToLower();
+            }
+        }
+    }
+    /// <summary>
+    /// 将输入字符串按 UTF-8 编码后补足到 16 字节整数倍，不足部分补 0x00。
+    /// </summary>
+    public static byte[] PadWithZeros(string plainText)
+    {
+        if (plainText == null) throw new ArgumentNullException(nameof(plainText));
+
+        byte[] raw = Encoding.UTF8.GetBytes(plainText);
+        int len = raw.Length;
+        int pad = 16 - (len & 15);          // 计算需要补多少字节
+        if (pad == 16) pad = 0;             // 刚好 16 的倍数时不补
+
+        byte[] padded = new byte[len + pad];
+        Array.Copy(raw, 0, padded, 0, len); // 原始数据
+                                            // 剩余部分默认为 0，无需再写
+        return padded;
+    }
+    /// <summary>
+    /// 将字符串分别转化为ACSLL码。
+    /// </summary>
+    /// <param name="Origin"></param>
+    /// <returns></returns>
+    public static string StringToAscll(string Origin)
+    {
+
+        byte[] asciiBytes = Encoding.ASCII.GetBytes(Origin);
+        var sb = new StringBuilder(asciiBytes.Length * 2);
+        foreach (byte b in asciiBytes)
+        {
+            sb.Append(b.ToString("x2"));
+        }
+        return sb.ToString();
     }
     public async Task<MediaSource> GetSourceAsync(string url)
     {
@@ -383,59 +509,14 @@ public class VpnService : IDisposable
         }
 
         // 复制属性
-        foreach (var property in original.Properties)
+        foreach (var property in original.Options)
         {
-            clone.Properties.Add(property);
+            clone.Options.TryAdd(property.Key,property.Value);
         }
 
         return clone;
     }
-    public static string ConvertUrl(string originalUrl)
-    {
-        var uri = new Uri(originalUrl);
-        string hostname = uri.Host.Replace('.', '-');
-
-        // 处理HTTPS
-        if (uri.Scheme.Equals("https", StringComparison.OrdinalIgnoreCase))
-            hostname += "-s";
-
-        // 处理非标准端口
-        if (uri.Port > 0 &&
-            !(uri.Scheme == "http" && uri.Port == 80) &&
-            !(uri.Scheme == "https" && uri.Port == 443))
-            hostname += $"-{uri.Port}-p";
-
-        // 构建WebVPN URL
-        return $"http://{hostname}.webvpn.zju.edu.cn:8001{uri.PathAndQuery}";
-    }
     
-    private static byte[] HexStringToByteArray(string hex)
-    {
-        // 确保十六进制字符串长度为偶数
-        if (hex.Length % 2 != 0)
-        {
-            hex = "0" + hex; // 在开头添加0使长度变为偶数
-        }
-
-        int length = hex.Length;
-        byte[] bytes = new byte[length / 2];
-
-        for (int i = 0; i < length; i += 2)
-        {
-            bytes[i / 2] = Convert.ToByte(hex.Substring(i, 2), 16);
-        }
-
-        return bytes;
-    }
-    public static byte[] DecimalToByteArray(string decimalNumber)
-    {
-        // 使用 BigInteger 处理大数
-        BigInteger bigInt = BigInteger.Parse(decimalNumber);
-
-        // 转换为字节数组
-        byte[] byteArray = bigInt.ToByteArray();
-        return byteArray;
-    }
 
     public void Dispose()
     {

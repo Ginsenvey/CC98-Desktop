@@ -1,5 +1,4 @@
-﻿using CCkernel;
-using Duende.IdentityModel;
+﻿using Duende.IdentityModel;
 using Duende.IdentityModel.Client;
 using Newtonsoft.Json.Serialization;
 using System;
@@ -9,6 +8,7 @@ using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 using System.Web;
+namespace CC98.Kernel.OpenID;
 
 public class OpenID()
 {

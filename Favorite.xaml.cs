@@ -14,16 +14,16 @@ using System.Linq;
 using System.Runtime.InteropServices.WindowsRuntime;
 using Windows.Foundation;
 using Windows.Foundation.Collections;
-using static App3.Index;
 using System.Collections.ObjectModel;
-using CCkernel;
 using FluentIcons.Common;
 using Windows.Storage;
+using System.Threading.Tasks;
+using CC98.Kernel;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
 
-namespace App3
+namespace CC98
 {
     /// <summary>
     /// An empty page that can be used on its own or navigated to within a Frame.
@@ -197,6 +197,31 @@ namespace App3
                 groupid = SelectedFavo.Id;
                 de.Text = SelectedFavo.GroupName;
                 Request(mode, "0", ((int)Current_Order).ToString(), groupid);
+            }
+        }
+
+        private async void Remove_Click(object sender, RoutedEventArgs e)
+        {
+            var m=sender as MenuFlyoutItem;
+            if(m != null)
+            {
+                var t = m?.DataContext as StandardPost;
+                if(t != null)
+                {
+                    bool res=await RequestSender.RemoveFavorite(t.pid);
+                    if(res)
+                    {
+                        tiles.Clear();
+                        history = 0;
+                        SortId = 0;
+                        Request(mode, "0", ((int)Current_Order).ToString(), groupid);
+                        Flower.PlayAnimation("\uE930", "已取消收藏");
+                    }
+                    else
+                    {
+                        Flower.PlayAnimation("\uEA39", "取消收藏失败");
+                    }
+                }
             }
         }
     }

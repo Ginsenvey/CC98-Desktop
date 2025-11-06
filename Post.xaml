@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Page
-    x:Class="App3.Post"
+    x:Class="CC98.Post"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:local="using:App3"
+    xmlns:local="using:CC98"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d"
@@ -11,6 +11,7 @@
     xmlns:controls="using:CommunityToolkit.WinUI.Controls"
     xmlns:tool="using:CommunityToolkit.WinUI.UI.Controls"
     xmlns:dev="using:DevWinUI"
+    xmlns:image="using:CC98.Controls"
     Background="{ThemeResource DesktopAcrylicTransparentBrush}">
 
    
@@ -81,7 +82,7 @@
                 <GridView.ItemTemplate>
                     <DataTemplate x:DataType="local:Emoji">
                         <Border  CornerRadius="3">
-                            <local:SmartImage Source="{x:Bind EmojiPath}" Width="80" Height="80"   Tag="{x:Bind EmojiName}" x:Name="EmojiCell" ></local:SmartImage>
+                            <image:SmartImage Source="{x:Bind EmojiPath}" Width="80" Height="80"   Tag="{x:Bind EmojiName}" x:Name="EmojiCell" ></image:SmartImage>
                         </Border>
                     </DataTemplate>
                 </GridView.ItemTemplate>
@@ -91,16 +92,21 @@
         </ContentDialog>
         <ContentDialog x:Name="SendDialog" CloseButtonText="取消" PrimaryButtonText="发表" >
             <ContentDialog.Content>
-                <StackPanel Orientation="Vertical" Spacing="15" Background="Transparent" Padding="10" MinWidth="360">
+                <StackPanel Orientation="Vertical" Spacing="15" Background="Transparent" Padding="15,10,15,10" MinWidth="360">
                     <SelectorBar HorizontalAlignment="Center" IsEnabled="False"  Foreground="{ThemeResource BackButtonForegroundThemeBrush}">
                         <SelectorBarItem Text="主题" Tag="0" x:Name="topicselector"></SelectorBarItem>
                         <SelectorBarItem Text="回帖" Tag="1" x:Name="replyselector"></SelectorBarItem>
                         <SelectorBarItem Text="投票" Tag="2" x:Name="voteselector"></SelectorBarItem>
                     </SelectorBar>
 
-                    <TextBox Header="标题"  AcceptsReturn="True" Margin="5,0,5,0" x:Name="SetTitle"></TextBox>
-                    <CheckBox Content="接收消息提醒" IsChecked="True" Margin="5,0,5,0" Checked="ReceiveNotice_Checked" Unchecked="ReceiveNotice_Unchecked" x:Name="ReceiveNotice"></CheckBox>
-                    <RadioButtons Header="发帖类型" Margin="5,0,5,0" x:Name="SetContentType">
+
+                    <ComboBox PlaceholderText="标签">
+                        <ComboBoxItem Content="讨论"></ComboBoxItem>
+                        <ComboBoxItem Content="资源"></ComboBoxItem>
+                    </ComboBox>
+                    <TextBox AcceptsReturn="True"  x:Name="SetTitle"></TextBox>
+                    <CheckBox Content="接收消息提醒" IsChecked="True"  Checked="ReceiveNotice_Checked" Unchecked="ReceiveNotice_Unchecked" x:Name="ReceiveNotice"></CheckBox>
+                    <RadioButtons Header="发帖类型"  x:Name="SetContentType">
                         <RadioButton Content="普通" IsChecked="True" x:Name="PostType" Checked="PostType_Checked" Tag="0"></RadioButton>
                         <RadioButton Content="学术通知" Checked="PostType_Checked" Tag="1"></RadioButton>
                     </RadioButtons>

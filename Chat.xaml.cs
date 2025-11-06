@@ -1,4 +1,6 @@
-using CCkernel;
+using CC98.Kernel;
+using CC98.UserExperience;
+using CommunityToolkit.WinUI.UI.Controls;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Controls.Primitives;
@@ -15,17 +17,23 @@ using System.ComponentModel;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices.WindowsRuntime;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Windows.ApplicationModel.Appointments;
+using Windows.ApplicationModel.DataTransfer;
+using Windows.Devices.Enumeration;
 using Windows.Foundation;
 using Windows.Foundation.Collections;
+using Windows.Media;
+using Windows.Media.Playback;
 using Windows.UI;
-using static App3.Message;
+using static CC98.Chat;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
 
-namespace App3
+namespace CC98
+
 {
     /// <summary>
     /// An empty page that can be used on its own or navigated to within a Frame.
@@ -219,6 +227,34 @@ namespace App3
             picviewer.Activate();
 
         }
+
+        private async void Drawer_ImageResolving(object sender, ImageResolvingEventArgs e)
+        {
+            var defr = e.GetDeferral();
+            var Source = e.Url;
+            if (Source == null) return;
+
+            try
+            {
+                switch (Source)
+                {
+                    case string url when ImageResolver.IsWebUrl(url):
+                        e.Image = await ImageResolver.LoadWebImage(url);
+                        break;
+
+                    case string path when ImageResolver.IsLocalPath(path):
+                        e.Image = await ImageResolver.LoadLocalImage(path);
+                        break;
+                }
+            }
+            catch
+            {
+                e.Image = null;
+            }
+            e.Handled = true;
+            defr.Complete();
+
+        }
         private async void Send_Click(object sender, RoutedEventArgs e)
         {
             if (!string.IsNullOrEmpty(ReplyBody.Text))
@@ -243,6 +279,69 @@ namespace App3
         private void Ref_Click(object sender, RoutedEventArgs e)
         {
             RefDialogs();
+        }
+
+        private async void Drawer_LinkClicked(object sender, LinkClickedEventArgs e)
+        {
+            var url = e.Link.ToString();
+            var result = LinkAnalyzer.LinkDefinite(url);
+            switch (result.Key)
+            {
+                case "topic":
+                    if((App.Current as App).m_window is MainWindow mainwindow)
+                    mainwindow.RootFrame.Navigate(typeof(Topic), result.Value);
+                    break;
+                case "user":
+                    {
+                        string _url = "https://api.cc98.org/user/name/" + result.Value;
+                        string infotext = await RequestSender.SimpleRequest(_url);
+
+                        if (!infotext.StartsWith("404:"))
+                        {
+                            var Info = Deserializer.ToDictionary(infotext);
+                            if (Info != null)
+                            {
+                                string uid = Info["id"].ToString();
+                                if (uid != null)
+                                {
+                                    if (uid.All(char.IsDigit))
+                                    {
+                                        var param = new Dictionary<string, string>()
+                                        {
+                                            {"Mode","Others" },
+                                            {"UserId",uid }
+                                        };
+                                        if ((App.Current as App).m_window is MainWindow _mainwindow)
+                                        {
+                                            _mainwindow.RootFrame.Navigate(typeof(Profile), param);
+                                        }
+                                            
+                                    }
+                                }
+                            }
+
+                        }
+
+                        break;
+                    }
+                //using语句不能在switch语句中直接出现。因此，使用大括号包围这个case.
+                   
+                case "backlink":
+                    if (result.Value == "bili")
+                    {
+                        var _datapackage = new DataPackage();
+                        _datapackage.SetText(url);
+                        Clipboard.SetContent(_datapackage);
+                        Flower.PlayAnimation("\uE930", "已复制Bili外链");
+                    }
+                    break;
+                default://自动复制到用户剪切板
+                    var datapackage = new DataPackage();
+                    datapackage.SetText(url);
+                    Clipboard.SetContent(datapackage);
+                    Flower.PlayAnimation("\uE930", "已复制外部链接");
+                    break;
+            }
         }
     }
     public partial class Msg : INotifyPropertyChanged

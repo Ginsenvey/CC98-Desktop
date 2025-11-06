@@ -23,13 +23,14 @@ using Windows.Storage.Streams;
 using static System.Net.Mime.MediaTypeNames;
 using Windows.Storage;
 using Windows.Media.Core;
-using CCUserModel;
-using CCkernel;
+
+using CC98.Kernel;
+using CC98.UserExperience;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
 
-namespace App3
+namespace CC98
 {
     /// <summary>
     /// An empty window that can be used on its own or navigated to within a Frame.
@@ -53,6 +54,7 @@ namespace App3
             this.SystemBackdrop=new AcrylicSystemBackdrop();
 
             Activated += MediaViewer_Activated;
+            this.Closed += MediaViewer_Closed;
         }
 
         private async void MediaViewer_Activated(object sender, WindowActivatedEventArgs args)
@@ -252,6 +254,11 @@ namespace App3
                 msg.Content = "错误的媒体类型" ;
                 msg.IsOpen = true;
             }
+        }
+        private void MediaViewer_Closed(object sender, WindowEventArgs e)
+        {
+            // 释放资源示例
+            VideoPlayer.Source = null;
         }
     }
 }

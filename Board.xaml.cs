@@ -1,5 +1,4 @@
-using CCkernel;
-using CCUserModel;
+
 using CommunityToolkit.Mvvm.ComponentModel;
 using DevWinUI;
 using FluentIcons.Common;
@@ -38,12 +37,13 @@ using Windows.Media.Core;
 using Windows.Media.Playback;
 using Windows.Storage;
 using Windows.UI.Core.Preview;
-using static App3.Profile;
-using static App3.Topic;
+using CC98.Services;
+using CC98.Kernel;
+using CC98.UserExperience;
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
 
-namespace App3
+namespace CC98
 {
     /// <summary>
     /// An empty page that can be used on its own or navigated to within a Frame.
@@ -52,6 +52,7 @@ namespace App3
     {
         public ObservableCollection<STile> stiles=new();
         public ApplicationDataContainer Set;
+        public bool isBest = false;
         public BoardData boardData { get; set; } = new() { name = "版面", todayCount = "今日发帖:9898", totalCount = "9898" };
         public Board()
         {
@@ -129,14 +130,34 @@ namespace App3
             }
         }
 
-        private async void LoadTopics(string bid,string start)
-        {       
-            string url = "https://api.cc98.org/board/" + bid + "/topic?from=" + start + "&size=20";
+        private async Task LoadTopics(string bid,string start)
+        {
+            string _url =$"https://api.cc98.org/topic/best/board/{bid}?from={start}&size=20";
+            string url = $"https://api.cc98.org/board/{bid}/topic?from={start}&size=20";
             var list = new JArray();
-            string res=await RequestSender.SimpleRequest(url);
+            string res=await RequestSender.SimpleRequest(isBest?_url:url);
             if (!res.StartsWith("404"))
             {
-                list = Deserializer.ToArray(res);
+                if (isBest)
+                {
+                    var js=Deserializer.ToDictionary(res);
+                    if (js != null)
+                    {
+                        string topics = ValidationHelper.GetKey(js,"topics");
+                        if (topics != "0")
+                        {
+                            list= Deserializer.ToArray(topics);
+                        }
+                    }
+                    else
+                    {
+                        Flower.PlayAnimation("\uEA39", res);
+                    }
+                }
+                else
+                {
+                    list = Deserializer.ToArray(res);
+                }        
             }
             else
             {
@@ -147,16 +168,16 @@ namespace App3
                 foreach (var topic in list)
                 {
                     var info = JsonConvert.DeserializeObject<Dictionary<string, object>>(topic.ToString());
-                    string hit = info["hitCount"].ToString();
-                    string pid = info["id"].ToString();
+                    string hit = ValidationHelper.GetKey(info,"hitCount");
+                    string pid = ValidationHelper.GetKey(info,"id");
                     string author = "匿名";
-                    string text = info["title"].ToString();
+                    string text = ValidationHelper.GetKey(info,"title");
                     if (info["userName"] != null)
                     {
-                        author = info["userName"].ToString();
+                        author = ValidationHelper.GetKey(info,"userName");
                     }
-                    string reply = info["replyCount"].ToString();
-                    stiles.Add(new STile { author = author, hit = hit, reply = reply, pid = pid, text = text, symbol = FluentIcons.Common.Symbol.Note });
+                    string reply = ValidationHelper.GetKey(info, "replyCount");
+                    stiles.Add(new STile { author = author, hit = hit, reply = reply, pid = pid, text = text, symbol =isBest?FluentIcons.Common.Symbol.Star:FluentIcons.Common.Symbol.Note });
                 }
 
             }
@@ -282,7 +303,7 @@ namespace App3
         public int history;
         private void STileList_Loaded(object sender, RoutedEventArgs e)
         {
-            STileList.ElementPrepared += (s, e) =>
+            STileList.ElementPrepared += async (s, e) =>
             {
                 if (STileList.ItemsSource != null)
                 {
@@ -291,7 +312,7 @@ namespace App3
                     if (current > 0 && (current + 1) % 20 == 0 && current > history)
                     {
                         history = current;
-                        LoadTopics(bid, (current + 1).ToString());
+                        await LoadTopics(bid, (current + 1).ToString());
                     }
                 }
             };
@@ -299,7 +320,6 @@ namespace App3
 
         private async void Gooey_Click(object sender, RoutedEventArgs e)
         {
-            GooeyGroup.Distance += 10;
             var s = sender as GooeyButtonItem;
             if (s != null)
             {
@@ -336,13 +356,37 @@ namespace App3
                             }
 
                             break;
-                        case "Vote":
+                        case "Best":
+                            GooeyGroup.Visibility = Visibility.Collapsed;
+                            BackFromBest.Visibility = Visibility.Visible;
+                            history = 0;
+                            stiles.Clear();
+                            isBest = true;
+                            try
+                            {
+                                await LoadTopics(bid, "0");
+                                
+                            }
+                            catch (Exception ex)
+                            {
+                                Flower.PlayAnimation("\uEA39", ex.Message);
+                            }
                             break;
                     }
                         
                 }
             }
             
+        }
+
+        private async void BackFromBest_Click(object sender, RoutedEventArgs e)
+        {
+            BackFromBest.Visibility = Visibility.Collapsed;
+            GooeyGroup.Visibility = Visibility.Visible;
+            isBest= false;
+            history = 0;
+            stiles.Clear();
+            await LoadTopics(bid, "0");
         }
     }
     public partial class BoardData :ObservableObject

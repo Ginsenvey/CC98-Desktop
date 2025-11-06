@@ -1,4 +1,4 @@
-﻿using App3;
+﻿using CC98.Kernel.Network;
 using CommunityToolkit.WinUI.UI.Controls.TextToolbarSymbols;
 using FluentIcons.Common;
 using Microsoft.UI.Xaml.Controls;
@@ -33,19 +33,14 @@ using Windows.Media.Protection.PlayReady;
 using Windows.Security.Credentials;
 using Windows.Storage;
 using Windows.Storage.Streams;
-using Windows.UI.WebUI;
-using static App3.Profile;
-using static App3.Topic;
-namespace CCkernel
+namespace CC98.Kernel
 {
     //管理登录状态
     
     public static class CCloginservice
-    {
-        
-        
+    { 
         public static VpnService vpn=new VpnService();
-        static CCloginservice(){ }
+        static CCloginservice(){}
        
         public static async Task<string> LoginAsync(string username, string password)
         {
@@ -61,14 +56,7 @@ namespace CCkernel
             };
             var PostData = new FormUrlEncodedContent(data);
             var response = await vpn.PostAsync(LoginUrl, PostData);
-            if (response.StatusCode == HttpStatusCode.OK)
-            {
-                return await response.Content.ReadAsStringAsync();
-            }
-            else
-            {
-                return "0";
-            }
+            return await ValidationHelper.AutoResponse(response);
         }
         public static async Task<string> OAuth(string verify,string code)
         {
@@ -85,15 +73,31 @@ namespace CCkernel
             var res= await vpn.PostAsync(url, post_data);
             return await ValidationHelper.AutoResponse(res);
         }
-        public static async Task<AuthentificateResult> GetNewToken(string RefreshToken)
+        //IsPassWordLogin:是否由密码登录
+        public static async Task<AuthentificateResult> GetNewToken(string RefreshToken,bool IsPassWordLogin)
         {
             string LoginUrl = "https://openid.cc98.org/connect/token";
-            var data = new Dictionary<string, string>()
+            Dictionary<string, string> data;
+            if (IsPassWordLogin)
+            {
+                data = new Dictionary<string, string>()
+                {
+                    {"client_id","9a1fd200-8687-44b1-4c20-08d50a96e5cd" },
+                    {"client_secret","8b53f727-08e2-4509-8857-e34bf92b27f2"},
+                    {"grant_type" ,"refresh_token"},
+                    {"refresh_token",RefreshToken }
+                };
+            }
+            else
+            {
+                data = new Dictionary<string, string>()
                 {
                     {"client_id","d47a2448-779f-42f3-164f-08dd8896bbe5" },
                     {"grant_type" ,"refresh_token"},
                     {"refresh_token",RefreshToken },
                 };
+            }
+                
             //这里省去了scope,服务器应按照授权码的范围发放ACT.
             var PostData = new FormUrlEncodedContent(data);
             try
@@ -106,7 +110,7 @@ namespace CCkernel
                     if (js != null)
                     {
                         string access = ValidationHelper.GetKey(js, "access_token");
-                        string refresh = ValidationHelper.GetKey(js, "refresh_token");
+                        string refresh = ValidationHelper.GetKey(js, "refresh_token");//密码登陆时返回“0”
                         return new AuthentificateResult { StatusCode = "1", Access = access, Refresh = refresh, Message = "刷新令牌成功" };
                     }
                     else
@@ -114,7 +118,7 @@ namespace CCkernel
                         return new AuthentificateResult { StatusCode = "0", Access = "", Refresh = "", Message = NewAccessText };//返回值不是字典;
                     }
                 }
-                else
+                else//令牌过期或者次数超限时状态码不是OK
                 {
                     return new AuthentificateResult { StatusCode = "2", Access = "", Refresh = "", Message = NewAccessText };//令牌作废
                 }
@@ -128,15 +132,21 @@ namespace CCkernel
 
         public static async Task<string> RefreshToken()
         {
-
+            //刷新函数检查登录方式，在不同的模式下使用不同的刷新方法。
+            string IsActive = ValidationHelper.IsTokenExist(ApplicationData.Current.LocalSettings, "IsActive");
+            bool mode = IsActive == "2";
             string rft = PasswordManager.RetrievePassword("Refresh");
             if (!string.IsNullOrEmpty(rft))
             {
-                var token = await CCloginservice.GetNewToken(rft);
+                var token = await CCloginservice.GetNewToken(rft,mode);
                 if (token.StatusCode == "1")
                 {
                     PasswordManager.SavePassword(token.Access, "Access");
-                    PasswordManager.SavePassword(token.Refresh, "Refresh");
+                    if (!mode)
+                    {
+                        //密码登录使用不变刷新令牌
+                        PasswordManager.SavePassword(token.Refresh, "Refresh");
+                    }
                     CCloginservice.vpn.client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token.Access);
                     return "1";
                     
@@ -157,59 +167,7 @@ namespace CCkernel
             
             
         }
-        public static async Task<string> DeepAuthService(string id, string pass)
-        {
-            string url = "https://openid.cc98.org/Account/LogOn?returnUrl=%2F";
-            var res = await vpn.GetAsync(url);
-            if (res.StatusCode == HttpStatusCode.OK)
-            {
-                HtmlAgilityPack.HtmlDocument doc = new HtmlAgilityPack.HtmlDocument();
-                var content = await res.Content.ReadAsStringAsync();
-                doc.LoadHtml(content);
-                var input = doc.DocumentNode.SelectSingleNode("//input[@name='__RequestVerificationToken']");
-                if (input != null)
-                {
-                    string token = input.GetAttributeValue("value", "");
-                    var data = new Dictionary<string, string>()
-                    {
-                        {"__RequestVerificationToken",token},
-                        {"UserName",id },
-                        {"Password",pass},
-                        {"ValidTime",""}
-                    };
-                    var PostData = new FormUrlEncodedContent(data);
-                    var response = await vpn.PostAsync(url, PostData);
-                    if (response.StatusCode == HttpStatusCode.Redirect)
-                    {
-                        List<string> keys = new();
-                        foreach (Cookie c in CCloginservice.vpn.Jar.GetAllCookies())
-                        {
-                            keys.Add(c.Name);
-                        }
-                        if (keys.Contains("idsrv"))
-                        {
-                            return "1";
-                        }
-                        else
-                        {
-                            return "0";
-                        }
-                    }
-                    else
-                    {
-                        return "0";
-                    }
-                }
-                else
-                {
-                    return "0";
-                }
-            }
-            else
-            {
-                return "0";
-            }
-        }
+        
         
 
     }
@@ -332,6 +290,12 @@ namespace CCkernel
                 return true;
             }
         }
+        public static async Task<bool> RemoveFavorite(string Pid)
+        {
+            string url = $"https://api.cc98.org/me/favorite/{Pid}";
+            var res = await CCloginservice.vpn.DeleteAsync(url);
+            return res.IsSuccessStatusCode;
+        }
         public static async Task<string> SignIn()
         {
             string SignInUrl = "https://api.cc98.org/me/signin";
@@ -452,8 +416,8 @@ namespace CCkernel
                 {"clientType",1 },
                 {"content",content },
                 {"contentType",content_type },
-                {"isAnonymous",false },
-                {"notifyAllReplier",false },
+                {"isAnonymous",is_anonymous },
+                {"notifyAllReplier",notify_replier },
                 {"title","" },
                 {"parentId",parent_id }
 
@@ -466,8 +430,8 @@ namespace CCkernel
                 {"clientType",1 },
                 {"content",content },
                 {"contentType",content_type },
-                {"isAnonymous",false },
-                {"notifyAllReplier",false },
+                {"isAnonymous",is_anonymous },
+                {"notifyAllReplier",notify_replier },
                 {"title","" }
             };
             }
@@ -488,6 +452,30 @@ namespace CCkernel
             catch(Exception ex)
             {
                 return "400:"+ex.Message;
+            }
+        }
+        public static async Task<bool> EditReply(string replyid, string content,string title, int content_type,bool notifyPoster)
+        {
+            string url = $"https://api.cc98.org/post/{replyid}";
+            var reply = new Dictionary<string, object>()
+            {
+                {"type",0 },
+                {"content",content },
+                {"contentType",content_type },
+                {"notifyPoster",notifyPoster },//常为true
+                {"title",title }
+            };
+            string reply_text = JsonConvert.SerializeObject(reply);
+            var request_body = new StringContent(reply_text, Encoding.UTF8, "application/json");
+            try
+            {
+                var r = await CCloginservice.vpn.PutAsync(url, request_body);
+                return r.IsSuccessStatusCode;
+            }
+            catch
+            {
+                ValidationHelper.Log("编辑回复失败", $"请求地址：{url}\r\n请求内容：{reply_text}");
+                return false;
             }
         }
         public static async Task<string> SendPrivateMsg(int receiver_id, string content)
@@ -605,7 +593,14 @@ namespace CCkernel
                 return $"2:{ex.Message}";
             }
         }
+        public static async Task<string> GetBoardTags(string bid)
+        {
+            List<string> tags = new();
+            string url = $"https://api.cc98.org/board/{bid}/tag";
+            return await SimpleRequest(url);
+        }
     }
+
 
     //将json字符串解析为目标对象,总是返回对象或者null。
     //要获取错误信息，请接收并检验RequestSender的返回值。解析器不会处理错误，所以输入解析器的字符串必须有效。
@@ -962,6 +957,12 @@ namespace CCkernel
             }
             return defaultValue;
         }
+        public static bool StringToBool(string input)
+        {
+            if (string.IsNullOrEmpty(input)) return false;
+            if(input!="0")return true;
+            return false;
+        }
     }
     public static class PasswordManager
     {
@@ -1113,7 +1114,7 @@ namespace CCkernel
         {
             PasswordManager.ClearAllPasswords("Access");
             PasswordManager.ClearAllPasswords("Refresh");
-            PasswordManager.ClearAllPasswords("TWFID");
+            PasswordManager.ClearAllPasswords("Ticket");
             PasswordManager.ClearAllPasswords("VpnUserName");
             PasswordManager.ClearAllPasswords("VpnPassWord");
         }
@@ -1121,10 +1122,10 @@ namespace CCkernel
 
     public static class UBBConverter
     {
-        public static string Convert(string ubbText, bool IsImageVisible, bool escapeMarkdown = false)
+        
+    public static string Convert(string ubbText, bool IsImageVisible, bool escapeMarkdown = false)
         {
             var text = Preprocess(ubbText);
-
             // 处理块级元素（优先级从高到低）
             text = ConvertCodeBlocks(text);
             text=ConvertUBBTable(text);
@@ -1398,6 +1399,7 @@ namespace CCkernel
 
             
         }
+        
         private static string ConvertTextStyles(string input)
         {
             var replacements = new[]

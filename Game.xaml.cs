@@ -1,3 +1,5 @@
+
+using CC98.Kernel;
 using CCkernel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using DevWinUI;
@@ -16,7 +18,7 @@ using Windows.Storage;
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
 
-namespace App3
+namespace CC98
 {
     /// <summary>
     /// An empty page that can be used on its own or navigated to within a Frame.

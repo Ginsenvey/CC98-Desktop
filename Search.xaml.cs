@@ -1,5 +1,5 @@
 using ABI.System;
-using CCkernel;
+using CC98.Kernel;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Controls.Primitives;
@@ -17,17 +17,16 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Runtime.InteropServices.WindowsRuntime;
+using System.Threading.Tasks;
 using System.Web;
 using Windows.Foundation;
 using Windows.Foundation.Collections;
 using Windows.Security.Authentication.OnlineId;
 using Windows.Storage;
-using static App3.Index;
-using static App3.Profile;
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
 
-namespace App3
+namespace CC98
 {
     /// <summary>
     /// An empty page that can be used on its own or navigated to within a Frame.
@@ -96,7 +95,7 @@ namespace App3
             }
         }
 
-        private async void SearchTopic(string key,string start)
+        private async Task<bool> SearchTopic(string key,string start)
         {
             string searchurl = $"https://api.cc98.org/topic/search?keyword={key}&size=20&from={start}";
             var r = await CCloginservice.vpn.GetAsync(searchurl);
@@ -104,9 +103,10 @@ namespace App3
             {
                 string SText = await r.Content.ReadAsStringAsync();
 
-                var Posts = JsonConvert.DeserializeObject<JArray>(SText);
+                var Posts = Deserializer.ToArray(SText);
                 if (Posts != null)
                 {
+                    if(Posts.Count==0)return false;
                     Tiles.Clear();
                     foreach (var post in Posts)
                     {
@@ -125,7 +125,7 @@ namespace App3
                         string reply = js["replyCount"].ToString();
                         Tiles.Add(new StandardPost { author ="@ "+ author, pid = pid, time = time, title = title, hit = hit, reply = reply,  rid= uid});
                     }
-                    
+                    return true;
                     
                 }
             }
@@ -133,9 +133,10 @@ namespace App3
             {
                 Tiles.Add(new StandardPost { author = "ËÑË÷Ê§°Ü",pid = "0", time = "0", title = "0", hit = "0", reply = "0" });
             }
+            return false;
         }
         public int current = 0;
-        private void NaviBar_Click(object sender, RoutedEventArgs e)
+        private async void NaviBar_Click(object sender, RoutedEventArgs e)
         {
             var b = sender as Button;
             if (b != null)
@@ -146,6 +147,10 @@ namespace App3
                     if (current > 0)
                     {
                         current -= 20;
+                        if(!await SearchTopic(key, current.ToString()))
+                        {
+                            current += 20;
+                        }
                     }
                     else
                     {
@@ -156,8 +161,12 @@ namespace App3
                 else if (tag == "Forward")
                 {
                     current += 20;
+                    if(!await SearchTopic(key, current.ToString()))
+                    {
+                        current -= 20;
+                    }
                 }
-                SearchTopic(key,current.ToString());
+                
                 PageIndex.Text = "µÚ " + (current / 20 + 1).ToString() + " Ò³";
                 RootViewer.ScrollToVerticalOffset(0);
             }

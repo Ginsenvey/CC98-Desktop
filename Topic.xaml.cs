@@ -1,5 +1,8 @@
-using CCkernel;
-using CCUserModel;
+
+using CC98.Kernel;
+using CC98.Kernel.Network;
+using CC98.UserExperience;
+using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.WinUI.UI.Controls;
 using DevWinUI;
 using FluentIcons.Common;
@@ -39,11 +42,7 @@ using Windows.Media.Playback;
 using Windows.Media.Protection.PlayReady;
 using Windows.Storage;
 using Windows.Storage.Streams;
-using static App3.Index;
-using static App3.Message;
-using static App3.Profile;
-using static App3.Topic;
-using static System.Net.WebRequestMethods;
+
 
 
 
@@ -51,7 +50,7 @@ using static System.Net.WebRequestMethods;
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
 
-namespace App3
+namespace CC98
 {
     /// <summary>
     /// An empty page that can be used on its own or navigated to within a Frame.
@@ -62,17 +61,16 @@ namespace App3
         public MetaData metadata { get; set; } = new MetaData() { hit="0",favorite="0",time=""};
         public Info profile = new() {Popularity="0",Posts="0",Fan="0"}; 
         public ApplicationDataContainer Set = ApplicationData.Current.LocalSettings;
-        public bool IsVote = false;
-        public bool IsJumping=false;
+        public bool IsVote = false;//是否为投票贴
+        public bool IsJumping=false;//是否正在进行跳转
         public int JumpToFloor = -1;
         public Topic()
         {
             this.InitializeComponent();
-
             replies = new ObservableCollection<Reply>() { };
-            
             LoadSet();
             TileList.ItemsSource = replies;
+
         }
 
 
@@ -188,6 +186,8 @@ namespace App3
                 {
                     StartVote.Visibility = Visibility.Visible;
                 }
+
+               
             }
             else
             {
@@ -195,138 +195,132 @@ namespace App3
             }
             
         }
-        public bool IsImageVisible = false;
-        public bool IsTracing=false;
         int Reply_Retry = 0;
         List<Reply> ReplyList = new List<Reply>();
-        JArray Posts = new JArray();
+        
         List<string> users = new();
         private async Task LoadReply(string pid, string start)
         {
             Reply_Retry++;
-            replies.Clear();
+            replies.Clear();  
             ReplyList.Clear();
-            Posts.Clear();
             users.Clear();
-            string PostText = await RequestSender.TopicReply(pid, start);
-            if (ValidationHelper.IsValidResponse(PostText))//回复有效
+            string url = $"https://api.cc98.org/Topic/{pid}/post?from={start}&size=10";
+            string PostText = await RequestSender.SimpleRequest(url);
+            if (!PostText.StartsWith("404:"))//回复有效
             {
-                Posts = Deserializer.ToArray(PostText);
-            }
-            else//回复无效，重试一次。
-            {
-                if (PostText.StartsWith("404:"))
+                var Posts = Deserializer.ToArray(PostText);
+                if (Posts != null)
                 {
-                    if (Reply_Retry < 3)
+                    if (Posts.Count > 0)
                     {
-                        await LoadReply(pid, start);
-                    }
-                    else
-                    {
-                        return;
+                        //清除绑定，防止重复数据。此处必须在TileList.ItemsSource赋值之前调用，否则会导致数据重复绑定。  
+                        string hideurl = "ms-appx:///Assets/hide.gif";
+                        foreach (var Tile in Posts)
+                        {
+                            string TileText = Tile.ToString();
+                            var TilePair = JsonConvert.DeserializeObject<Dictionary<string, object>>(TileText);
+                            string content = ValidationHelper.GetKey(TilePair, "content");
+                            string author = "匿名";
+                            string time = ValidationHelper.GetKey(TilePair, "time");
+                            string rid = ValidationHelper.GetKey(TilePair, "id");
+                            string id = "0";//如果是匿名模式，id值为0
+                            bool isme=ValidationHelper.GetKey(TilePair, "isMe") == "True";
+                            if (TilePair["userId"] != null)
+                            {
+                                id = ValidationHelper.GetKey(TilePair,"userId");
+                                author = ValidationHelper.GetKey(TilePair, "userName");
+                            }
+                            else//在删帖的情况下，cc98deleter的id和name都是null
+                            {
+                                string user_name = ValidationHelper.GetKey(TilePair, "userName");
+                                if (user_name != "0")
+                                {
+                                    author = "匿名 " + user_name.ToUpper();
+                                }
+                                else
+                                {
+                                    author = "CC98 Deleter";
+                                    content = "<--该回复已被管理员或发布者删除-->";
+                                }
+
+                            }
+                            string floor = ValidationHelper.GetKey(TilePair, "floor");
+                            string like = ValidationHelper.GetKey(TilePair, "likeCount");
+                            string dislike = ValidationHelper.GetKey(TilePair, "dislikeCount");
+                            string likestate = ValidationHelper.GetKey(TilePair, "likeState");
+                            IconVariant variant1 = IconVariant.Regular;
+                            IconVariant variant2 = IconVariant.Regular;
+                            if (likestate == "1")
+                            {
+                                variant1 = IconVariant.Filled;
+                                variant2 = IconVariant.Regular;
+                            }
+                            else if (likestate == "2")
+                            {
+                                variant1 = IconVariant.Regular;
+                                variant2 = IconVariant.Filled;
+                            }
+                            else
+                            {
+                                variant1 = IconVariant.Regular;
+                                variant2 = IconVariant.Regular;
+                            }
+                            if (author != "null" && author != null && id != "0")
+                            {
+                                users.Add("id=" + id);
+                            }
+                            ReplyList.Add(new Reply { Author = author, Text = content, Like = like, Dislike = dislike, Rid = rid, Time = time, Uid = id, Floor = floor + "L", Url = hideurl, Likestate = variant1, Dislikestate = variant2,Isme=isme });
+                        }
+                        if (users.Count > 0)
+                        {
+                            string _SimpleUseInfo = await RequestSender.SimpleUserInfo(users);
+                            Dictionary<string, string> PortDict = Deserializer.UserInfoList(_SimpleUseInfo);
+                            //此处有一个玄学问题，上方已经运行过一次Clear方法，为什么还会有重复数据？原因是TileList.ItemsSource的绑定没有被清除掉，导致TileList.ItemsSource在下一次加载时仍然保留了上一次的引用。解决方法是每次加载前先清空replies集合，然后重新绑定。
+                            if (PortDict != null)
+                            {
+                                foreach (Reply r in ReplyList)
+                                {
+                                    if (PortDict.ContainsKey(r.Uid))
+                                    {
+                                        r.Url = PortDict[r.Uid];
+                                    }
+                                    
+                                    replies.Add(r);
+                                }
+                            }
+                        }
+                        else
+                        {
+
+                            foreach (Reply r in ReplyList)
+                            {
+                                replies.Add(r);
+                            }
+                        }
+                        
+                        RootViewer.ScrollToVerticalOffset(0);//滚动到一页的最上方。这个方法必须在帖子load结束之后调用，否则ui切换逻辑错误。
                     }
                 }
                 else
                 {
-                    return;//边缘情况，理论上不存在此分支
+                    return;//posts被赋值null，获取失败
                 }
             }
-
-            if (Posts != null)
+            else//回复无效，重试一次。
             {
-                if (Posts.Count > 0)
+                if (Reply_Retry < 3)
                 {
-                    
-                   //清除绑定，防止重复数据。此处必须在TileList.ItemsSource赋值之前调用，否则会导致数据重复绑定。  
-                    string hideurl = "ms-appx:///Assets/hide.gif";
-                    foreach (var Tile in Posts)
-                    {
-                        string TileText = Tile.ToString();
-                        var TilePair = JsonConvert.DeserializeObject<Dictionary<string, object>>(TileText);
-                        string content = TilePair["content"].ToString();
-                        string author = "匿名";
-                        string time = TilePair["time"].ToString();
-                        string rid = TilePair["id"].ToString();
-                        string id = "0";//如果是匿名模式，id值为0
-                        if (TilePair["userId"] != null)
-                        {
-                            id = TilePair["userId"].ToString();
-                            author = TilePair["userName"].ToString();
-                        }
-                        else//在删帖的情况下，cc98deleter的id和name都是null
-                        {
-                            string user_name = ValidationHelper.GetKey(TilePair, "userName");
-                            if ( user_name!= "0")
-                            {
-                                author = "匿名 " + user_name.ToUpper();
-                            }
-                            else
-                            {
-                                author = "CC98 Deleter";
-                                content = "<--该回复已被管理员或发布者删除-->";
-                            }
-                            
-                        }
-                        string floor = TilePair["floor"].ToString();
-                        string like = TilePair["likeCount"].ToString();
-                        string dislike = TilePair["dislikeCount"].ToString();
-                        string likestate = TilePair["likeState"].ToString();
-                        IconVariant variant1 = IconVariant.Regular;
-                        IconVariant variant2 = IconVariant.Regular;
-                        if (likestate == "1")
-                        {
-                            variant1 = IconVariant.Filled;
-                            variant2 = IconVariant.Regular;
-                        }
-                        else if (likestate == "2")
-                        {
-                            variant1 = IconVariant.Regular;
-                            variant2 = IconVariant.Filled;
-                        }
-                        else
-                        {
-                            variant1 = IconVariant.Regular;
-                            variant2 = IconVariant.Regular;
-                        }
-                        if (author != "null" && author != null && id != "0")
-                        {
-                            users.Add("id=" + id);
-                        }
-                        ReplyList.Add(new Reply { author = author, text = content, like = like, dislike = dislike, rid = rid, time = time, uid = id, floor = floor + "L", url = hideurl, likestate = variant1, dislikestate = variant2 });
-                    }
-                    if (users.Count > 0)
-                    {
-                        string _SimpleUseInfo = await RequestSender.SimpleUserInfo(users);
-                        Dictionary<string, string> PortDict = Deserializer.UserInfoList(_SimpleUseInfo);
-                        //此处有一个玄学问题，上方已经运行过一次Clear方法，为什么还会有重复数据？原因是TileList.ItemsSource的绑定没有被清除掉，导致TileList.ItemsSource在下一次加载时仍然保留了上一次的引用。解决方法是每次加载前先清空replies集合，然后重新绑定。
-                        if (PortDict != null)
-                        {
-                            foreach (Reply r in ReplyList)
-                            {
-                                if (PortDict.ContainsKey(r.uid))
-                                {
-                                    r.url = PortDict[r.uid];
-                                }
-
-                                replies.Add(r);
-                            }
-                        }
-                    }
-                    else
-                    {
-
-                        foreach (Reply r in ReplyList)
-                        {
-                            replies.Add(r);
-                        }
-                    }
-                    RootViewer.ScrollToVerticalOffset(0);//滚动到一页的最上方。这个方法必须在帖子load结束之后调用，否则ui切换逻辑错误。
+                    await LoadReply(pid, start);
+                }
+                else
+                {
+                    Flower.PlayAnimation("\uEA39", PostText);
+                    return;
                 }
             }
-            else
-            {
-                return;//posts被赋值null，获取失败
-            }
+
+            
 
         }
 
@@ -337,12 +331,12 @@ namespace App3
             var t = h?.DataContext as Reply;
             if (t != null)
             {
-                if (t.uid != "0")//非匿名才会跳转
+                if (t.Uid != "0")//非匿名才会跳转
                 {
                     var param = new Dictionary<string, string>()
                         {
                             {"Mode","Others" },
-                            {"UserId",t.uid }
+                            {"UserId",t.Uid }
                         };
                     Frame.Navigate(typeof(Profile), param);
                 }
@@ -350,53 +344,31 @@ namespace App3
             }
         }
         public int CurrentPage = 0;
-        public int CurrentTracingPage = 0;
-        public string TracingPostId = "";
         private async void Pager_SelectedIndexChanged(DevWinUI.PagerControl sender, DevWinUI.PagerControlSelectedIndexChangedEventArgs args)
         {
             //此方法在页面加载完成后会被调用一次，Pager的SelectedIndex会被设置为0。
             //所以页面构造函数处不需要单独调用LoadReply方法。
             //限定了只有页面主动加载和用户点击翻页，index从-1到0不触发数据加载。
+            
             PagerFix();
             if (args.PreviousPageIndex != -1)
             {
-                if (!IsTracing)
+                de.Text += "trigged";
+                int index = Pager.SelectedPageIndex;
+                CurrentPage = index;
+                if (index >= 0)
                 {
-                    int index = Pager.SelectedPageIndex;
-                    CurrentPage = index;
-
-                    if (index >= 0)
+                    int startindex = 10 * (index);
+                    await LoadReply(ValidationHelper.IsTokenExist(Set, "CurrentTopicId"), startindex.ToString());
+                    if (IsJumping && JumpToFloor != -1)
                     {
-                        
-                        int startindex = 10 * (index);
-                        await LoadReply(ValidationHelper.IsTokenExist(Set,"CurrentTopicId"), startindex.ToString());
-                        if (IsJumping&&JumpToFloor!=-1)
-                        {
-                            GoTo(JumpToFloor);
-                            IsJumping = false;
-                            JumpToFloor = -1;
-                        }
-                    }
-                }
-                else
-                {
-                    int index = Pager.SelectedPageIndex;
-                    CurrentTracingPage = index;
-                    if (index >= 0)
-                    {
-                        int startindex = 10 * (index);
-                        await LoadTrace(TracingPostId, startindex.ToString());
-                        if (IsJumping && JumpToFloor != -1)
-                        {
-                            GoTo(JumpToFloor);
-                            IsJumping = false;
-                            JumpToFloor = -1;
-                        }
+                        GoTo(JumpToFloor);
+                        IsJumping = false;
+                        JumpToFloor = -1;
                     }
                 }
             }
-
-
+           
         }
 
         private MediaPlayer _mediaPlayer;
@@ -454,6 +426,7 @@ namespace App3
                 //using语句不能在switch语句中直接出现。因此，使用大括号包围这个case.
                 case "anchor":
                     string pattern = @"/topic/(\d{7})/(\d+)#(\d+)";
+                    //暂时不考虑跨页引用。如果考虑，我们需要改进跳转参数，让其包含一个跳转信息。
                     Regex regex = new Regex(pattern);
 
                     // 使用正则表达式进行匹配
@@ -462,10 +435,10 @@ namespace App3
                     if (match.Success)
                     {
                         // 输出匹配的内容
-                        string beforeHash = match.Groups[2].Value;  // #前面的数字
-                        string afterHash = match.Groups[3].Value;   // #后面的数字
-                        int page = Convert.ToInt32(beforeHash);
-                        int floor = Convert.ToInt32(afterHash);
+                        string before = match.Groups[2].Value;  // #页码
+                        string after = match.Groups[3].Value;   // #楼层
+                        int page = Convert.ToInt32(before);
+                        int floor = Convert.ToInt32(after);
                         try
                         {
                             if (Pager.SelectedPageIndex + 1 == page && floor > 0)
@@ -480,7 +453,7 @@ namespace App3
                                 JumpToFloor = floor-1;
                             }
                         }
-                        catch (Exception ex)
+                        catch
                         {
 
                         }
@@ -767,9 +740,9 @@ namespace App3
             var t = h?.DataContext as Reply;
             if (t != null)
             {
-                if (t.uid != "0")//非匿名才会跳转
+                if (t.Uid != "0")//非匿名才会跳转
                 {
-                    string ProfileUrl = "https://api.cc98.org/user/" + t.uid;
+                    string ProfileUrl = "https://api.cc98.org/user/" + t.Uid;
                     string ProfileText = await RequestSender.SimpleRequest(ProfileUrl);
                     if (!ProfileText.StartsWith("404:"))
                     {
@@ -804,51 +777,51 @@ namespace App3
                 var reply = operation.DataContext as Reply;
                 if (reply != null&&tag is string _tag )
                 {
-
-                    if (_tag == "UBB")//复制为UBB
+                    switch (_tag)
                     {
-                        var pack = new DataPackage();
-                        pack.SetText(reply.text);
-                        Clipboard.SetContent(pack);
-                        Flower.PlayAnimation("\uE930", "已复制为UBB代码");
-                    }
-                    else if (_tag == "MD")
-                    {
-                        var pack = new DataPackage();
-                        pack.SetText(UBBConverter.Convert(reply.text,true));
-                        Clipboard.SetContent(pack);
-                        Flower.PlayAnimation("\uE930", "已复制为Markdown文本");
-                    }
-                    else if (_tag.All(char.IsDigit))//追踪
-                    {
-                        TracingPostId = _tag;
-                        Pager.SelectedPageIndex = -1;
-                        IsTracing= true;
-                        await LoadTrace(TracingPostId, "0");
-                        StopTrace.Visibility = Visibility.Visible;
-                    }
-                    else if (_tag == "QUOTE")
-                    {
-                        
-                        if (reply.text != null)
-                        {
-                            int floor = Convert.ToInt32(reply.floor.Replace("L",""));
-                            int page = 1+floor / 10;
-                            int loc=floor % 10;
-                            string header = $"[b]以下是引用{floor}楼：用户{reply.author}在{reply.time}的发言：[url=/topic/{ValidationHelper.IsTokenExist(Set,"CurrentTopicId")}/{page}#{loc}]>>查看原帖<<[/url][/b]\r\n";
-                            var param = new Dictionary<string, string>()
+                        case "UBB":
+                            var pack = new DataPackage();
+                            pack.SetText(reply.Text);
+                            Clipboard.SetContent(pack);
+                            Flower.PlayAnimation("\uE930", "已复制为UBB代码");
+                            break;
+                        case "MD":
+                            var _pack = new DataPackage();
+                            _pack.SetText(UBBConverter.Convert(reply.Text, true));
+                            Clipboard.SetContent(_pack);
+                            Flower.PlayAnimation("\uE930", "已复制为Markdown文本");
+                            break;
+                        case "QUOTE":
+                            if (reply.Text != null)
+                            {
+                                int floor = Convert.ToInt32(reply.Floor.Replace("L", ""));
+                                int page = 1 + floor / 10;
+                                int loc = floor % 10;
+                                string header = $"[b]以下是引用{floor}楼：用户{reply.Author}在{reply.Time}的发言：[url=/topic/{ValidationHelper.IsTokenExist(Set, "CurrentTopicId")}/{page}#{loc}]>>查看原帖<<[/url][/b]\r\n";
+                                var param = new Dictionary<string, string>()
                         {
                             {"Mode","1"},//回复主题为0，回帖为1，发主题、投票为2
                             {"Pid",ValidationHelper.IsTokenExist(Set, "CurrentTopicId")},
-                            {"QuoteText", reply.text},
-                            {"ParentId", reply.rid},
-                            {"Header",header}
+                            {"BaseText", $"[quote]{header}{reply.Text}[/quote]"},
+                            {"ParentId", reply.Rid},
 
                         };
-                            Frame.Navigate(typeof(Post), param);
-                        }
-                        
+                                Frame.Navigate(typeof(Post), param);
+                            }
+                            break;
+                        case "EDIT":
+                            var _param = new Dictionary<string, string>()
+                            {
+                                {"Mode","3"},
+                                {"Pid",ValidationHelper.IsTokenExist(Set, "CurrentTopicId")},
+                                {"BaseText", reply.Text},
+                                {"Rid", reply.Rid},//回帖id
+                                {"Title",metadata.text},//主题标题
+                            };
+                            Frame.Navigate(typeof(Post), _param);
+                            break;
                     }
+                    
                 }
                 
             }
@@ -864,97 +837,7 @@ namespace App3
                 Pager.NextButtonVisibility = DevWinUI.PagerControlButtonVisibility.Visible;
             }
         }
-        private async Task LoadTrace(string post_id,string start)
-        {
-            string url = $"https://api.cc98.org/post/topic/specific-user?topicid={ValidationHelper.IsTokenExist(Set, "CurrentTopicId")}&postid={post_id}&from={start}&size=10";
-            string trace = await RequestSender.SimpleRequest(url);
-            if (!trace.StartsWith("404:"))
-            {
-                var Posts=Deserializer.ToArray(trace);
-                if (Posts != null)
-                {
-                    replies.Clear();
-                    List<string> users = new();
-                    List<Reply> ReplyList = new List<Reply>();
-                    string hideurl = "/Assets/hide.gif";
-                    foreach (var Tile in Posts)
-                    {
-                        string TileText = Tile.ToString();
-                        var TilePair = JsonConvert.DeserializeObject<Dictionary<string, object>>(TileText);
-                        int count = Convert.ToInt32(TilePair["count"]);
-                        Pager.NumberOfPages= count/10+1;
-                        PagerFix();
-                        string content = TilePair["content"].ToString();
-                        string author = "匿名";
-                        string time = TilePair["time"].ToString();
-                        string rid = TilePair["id"].ToString();
-                        string id = "0";//如果是匿名模式，id值为0
-                        if (TilePair["userId"] != null)
-                        {
-                            id = TilePair["userId"].ToString();
-                            author = TilePair["userName"].ToString();
-                        }
-                        else
-                        {
-                            author = "匿名 " + TilePair["userName"].ToString().ToUpper();
-                        }
-                        string floor = TilePair["floor"].ToString();
-                        string like = TilePair["likeCount"].ToString();
-                        string dislike = TilePair["dislikeCount"].ToString();
-                        string likestate = TilePair["likeState"].ToString();
-                        IconVariant variant1 = IconVariant.Regular;
-                        IconVariant variant2 = IconVariant.Regular;
-                        if (likestate == "1")
-                        {
-                            variant1 = IconVariant.Filled;
-                            variant2 = IconVariant.Regular;
-                        }
-                        else if (likestate == "2")
-                        {
-                            variant1 = IconVariant.Regular;
-                            variant2 = IconVariant.Filled;
-                        }
-                        else
-                        {
-                            variant1 = IconVariant.Regular;
-                            variant2 = IconVariant.Regular;
-                        }
-                        if (author != "null" && author != null && id != "0")
-                        {
-                            users.Add("id=" + id);
-                        }
-                        ReplyList.Add(new Reply { author = author, text = content, like = like, dislike = dislike, rid = rid, time = time, uid = id, floor = floor + "L", url = hideurl, likestate = variant1, dislikestate = variant2 });
-                    }
-                    if (users.Count > 0)
-                    {
-                        string _SimpleUseInfo = await RequestSender.SimpleUserInfo(users);
-                        Dictionary<string, string> PortDict = Deserializer.UserInfoList(_SimpleUseInfo);
-                        if (PortDict != null)
-                        {
-                            foreach (Reply r in ReplyList)
-                            {
-                                if (PortDict.ContainsKey(r.uid))
-                                {
-                                    r.url = PortDict[r.uid];
-                                }
-
-                                replies.Add(r);
-                            }
-                        }
-                    }
-                    else
-                    {
-
-                        foreach (Reply r in ReplyList)
-                        {
-                            replies.Add(r);
-                        }
-                    }
-                    RootViewer.ScrollToVerticalOffset(0);//滚动到一页的最上方。这个方法必须在帖子load结束之后调用，否则ui切换逻辑错误。
-                }
-            
-            }
-        }
+        
 
 
         private async void Like_Click(object sender, RoutedEventArgs e)
@@ -966,30 +849,30 @@ namespace App3
                 var tag = b.Tag as string;
                 if (reply != null && tag != null)
                 {
-                    bool res = await RequestSender.Like(tag, reply.rid);
+                    bool res = await RequestSender.Like(tag, reply.Rid);
                     if (res)
                     {
                         
-                        var NewState = await RequestSender.LikeState(reply.rid);
+                        var NewState = await RequestSender.LikeState(reply.Rid);
                         if (NewState != null)
                         {
 
-                            reply.like = NewState["like"];
-                            reply.dislike = NewState["dislike"];
+                            reply.Like = NewState["like"];
+                            reply.Dislike = NewState["dislike"];
                             if (NewState["likestate"] == "1")
                             {
-                                reply.likestate = IconVariant.Filled;
-                                reply.dislikestate = IconVariant.Regular;
+                                reply.Likestate = IconVariant.Filled;
+                                reply.Dislikestate = IconVariant.Regular;
                             }
                             else if (NewState["likestate"]=="2")
                             {
-                                reply.likestate= IconVariant.Regular;
-                                reply.dislikestate = IconVariant.Filled;
+                                reply.Likestate= IconVariant.Regular;
+                                reply.Dislikestate = IconVariant.Filled;
                             }
                             else
                             {
-                                reply.likestate = IconVariant.Regular;
-                                reply.dislikestate = IconVariant.Regular;
+                                reply.Likestate = IconVariant.Regular;
+                                reply.Dislikestate = IconVariant.Regular;
                             }
                         }
 
@@ -1004,13 +887,7 @@ namespace App3
 
         }
 
-        private async void StopTrace_Click(object sender, RoutedEventArgs e)
-        {
-            IsTracing = false;
-            await LoadReply(ValidationHelper.IsTokenExist(Set, "CurrentTopicId"), (CurrentPage * 10).ToString());
-            await LoadMetaData(ValidationHelper.IsTokenExist(Set, "CurrentTopicId"));
-           StopTrace.Visibility = Visibility.Collapsed;
-        }
+       
 
         private async void Drawer_ImageResolving(object sender, ImageResolvingEventArgs e)
         {
@@ -1366,164 +1243,44 @@ namespace App3
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
     }
-    public partial class Reply : INotifyPropertyChanged
+    public partial class Reply : ObservableObject
     {
+        [ObservableProperty]
         private string _text;
+
+        [ObservableProperty]
         private string _like;
+
+        [ObservableProperty]
         private string _author;
+
+        [ObservableProperty]
         private string _rid;//回复Id,即PostId
+
+        [ObservableProperty]
         private string _dislike;
+
+        [ObservableProperty]
         private string _time;
+
+        [ObservableProperty]
         private string _uid;
+
+        [ObservableProperty]
         private string _url;
+
+        [ObservableProperty]
         private string _floor;//楼层数
+
+        [ObservableProperty]
         private IconVariant _likestate;//是否已点赞
+
+        [ObservableProperty]
         private IconVariant _dislikestate;//是否已点踩
-        public string text
-        {
-            get => _text;
-            set
-            {
-                if (_text != value)
-                {
-                    _text = value;
-                    OnPropertyChanged(nameof(text));
-                }
-            }
-        }
 
-        public string like
-        {
-            get => _like;
-            set
-            {
-                if (_like != value)
-                {
-                    _like = value;
-                    OnPropertyChanged(nameof(like));
-                }
-            }
-        }
-
-        public string author
-
-        {
-            get => _author;
-            set
-            {
-                if (_author != value)
-                {
-                    _author = value;
-                    OnPropertyChanged(nameof(author));
-                }
-            }
-        }
-
-        public string rid
-        {
-            get => _rid;
-            set
-            {
-                if (_rid != value)
-                {
-                    _rid = value;
-                    OnPropertyChanged(nameof(rid));
-                }
-            }
-        }
-
-        public string dislike
-        {
-            get => _dislike;
-            set
-            {
-                if (_dislike != value)
-                {
-                    _dislike = value;
-                    OnPropertyChanged(nameof(dislike));
-                }
-            }
-        }
-
-        public string time
-        {
-            get => _time;
-            set
-            {
-                if (_time != value)
-                {
-                    _time = value;
-                    OnPropertyChanged(nameof(time));
-                }
-            }
-        }
-
-        public string uid
-        {
-            get => _uid;
-            set
-            {
-                if (_uid != value)
-                {
-                    _uid = value;
-                    OnPropertyChanged(nameof(uid));
-                }
-            }
-        }
-        public string url
-        {
-            get => _url;
-            set
-            {
-                if (_url != value)
-                {
-                    _url = value;
-                    OnPropertyChanged(nameof(url));
-                }
-            }
-        }
-        public string floor
-        {
-            get => _floor;
-            set
-            {
-                if (_floor != value)
-                {
-                    _floor = value;
-                    OnPropertyChanged(nameof(floor));
-                }
-            }
-        }
-        public IconVariant likestate
-        {
-            get => _likestate;
-            set
-            {
-                if (_likestate != value)
-                {
-                    _likestate = value;
-                    OnPropertyChanged(nameof(likestate));
-                }
-            }
-        }
-        public IconVariant dislikestate
-        {
-            get => _dislikestate;
-            set
-            {
-                if (_dislikestate != value)
-                {
-                    _dislikestate = value;
-                    OnPropertyChanged(nameof(dislikestate));
-                }
-            }
-        }
-        public event PropertyChangedEventHandler PropertyChanged;
-
-        protected virtual void OnPropertyChanged(string propertyName)
-        {
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-        }
+        [ObservableProperty]
+        private bool _isme;//是否本人发帖
+        
     }
     public partial class UBBTextConverter : IValueConverter
     {

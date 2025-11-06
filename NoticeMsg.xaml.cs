@@ -1,30 +1,15 @@
-using CCkernel;
+using CC98.Kernel;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml.Controls.Primitives;
-using Microsoft.UI.Xaml.Data;
-using Microsoft.UI.Xaml.Input;
-using Microsoft.UI.Xaml.Media;
-using Microsoft.UI.Xaml.Navigation;
 using Newtonsoft.Json;
-using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.IO;
-using System.Linq;
-using System.Runtime.InteropServices.WindowsRuntime;
-using Windows.Foundation;
-using Windows.Foundation.Collections;
-using static App3.Message;
 
-// To learn more about WinUI, the WinUI project structure,
-// and more about our project templates, see: http://aka.ms/winui-project-info.
 
-namespace App3
+
+namespace CC98
 {
-    /// <summary>
-    /// An empty page that can be used on its own or navigated to within a Frame.
-    /// </summary>
+
     public sealed partial class NoticeMsg : Page
     {
         public ObservableCollection<Notice> notices = new();
@@ -126,7 +111,10 @@ namespace App3
                     {
                         if (n.TopicId != "0")
                         {
-                            Frame.Navigate(typeof(Topic), n.TopicId);
+                            if ((App.Current as App).m_window is MainWindow mainwindow)
+                            {
+                                mainwindow.RootFrame.Navigate(typeof(Topic), n.TopicId);
+                            }               
                         }
                         
                     }
