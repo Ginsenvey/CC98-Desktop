@@ -54,7 +54,7 @@ public class VpnService : IDisposable
             CookieContainer = Jar,
             UseCookies = true,
             AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate,
-            Proxy=new WebProxy("127.0.0.1:9000"), //启用系统代理
+            //Proxy=new WebProxy("127.0.0.1:9000"), //启用系统代理
         };
         
         client = new HttpClient(handler);
