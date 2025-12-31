@@ -39,7 +39,7 @@ public class VpnService : IDisposable
     private const string LogoutUrl = "https://webvpn.zju.edu.cn/logout";
     public HttpClient client;
     public CookieContainer Jar;
-    public bool Logined = false;//可以强行修改这个值来避开检验。
+    public bool Logined = false;//可以强行修改这个值来避开检验。由于从缓存中读取凭据不经过Login函数，需要在读取时手动修改这个值。
     public bool IsVpnEnabled = false;
     private bool _disposed = false;
     public Cookie Ticket => Jar.GetCookies(new Uri("https://webvpn.zju.edu.cn"))["wengine_vpn_ticketwebvpn_zju_edu_cn"] ?? new Cookie();
@@ -53,7 +53,8 @@ public class VpnService : IDisposable
             AllowAutoRedirect = true,
             CookieContainer = Jar,
             UseCookies = true,
-            AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate
+            AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate,
+            Proxy=new WebProxy("127.0.0.1:9000"), //启用系统代理
         };
         
         client = new HttpClient(handler);
@@ -175,7 +176,7 @@ public class VpnService : IDisposable
         
         try
         {
-            var response = await client.GetAsync(Mirror_Url);
+            var response = await client.GetAsync(target_uri);
             if (response.IsSuccessStatusCode)
             {
                 string res_text = await response.Content.ReadAsStringAsync();
@@ -189,6 +190,7 @@ public class VpnService : IDisposable
                 }
                 else
                 {
+                    ValidationHelper.Log("网络检查出错", $"非法返回内容：{res_text}");
                     return "404:非法返回";
                 }
             }
@@ -357,7 +359,7 @@ public class VpnService : IDisposable
     public async Task<byte[]> GetByteArrayAsync(string url)
     {
         if (!Logined)
-            throw new InvalidOperationException("Not logged in");
+            throw new InvalidOperationException("VPN未登录");
 
         string targetUrl = IsVpnEnabled ? ConvertUrl(url) : url;
         try

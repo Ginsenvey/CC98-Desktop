@@ -435,7 +435,7 @@ namespace CC98
                     GetFocusBoards();
 
                 }
-                catch (HttpRequestException ex)
+                catch (Exception ex)
                 {
                     ShowTips("网络问题:", ex.Message);
                 }

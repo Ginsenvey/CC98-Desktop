@@ -75,19 +75,22 @@ namespace CC98
                         var ticket_value = PasswordManager.RetrievePassword("Ticket");
                         var route_value = PasswordManager.RetrievePassword("Route");
                         var ticket = new Cookie("wengine_vpn_ticketwebvpn_zju_edu_cn", ticket_value, "/", "webvpn.zju.edu.cn");
-                        var route = new Cookie("wengine_vpn_ticketwebvpn_zju_edu_cn", route_value, "/", "webvpn.zju.edu.cn");
+                        var route = new Cookie("route", route_value, "/", "webvpn.zju.edu.cn");
                         ticket.HttpOnly = true;
                         if (!string.IsNullOrEmpty(ticket_value) && (!string.IsNullOrEmpty(route_value)))
                         {
                             CCloginservice.vpn.Jar.Add(ticket);
                             CCloginservice.vpn.Jar.Add(route);
-                            if (await CCloginservice.vpn.CheckNetwork(true) == "1")//该函数不受IsVpnEnable和Logined影响
+                            string new_status = await CCloginservice.vpn.CheckNetwork(true);
+                            if (new_status == "1")//该函数不受IsVpnEnable和Logined影响
                             {
+                                CCloginservice.vpn.Logined = true;
                                 CCloginservice.vpn.IsVpnEnabled = true;
                                 return "1";
                             }
                             else//过期，尝试使用凭据重新获取Ticket
                             {
+                                CCloginservice.vpn.Logined = false;
                                 CCloginservice.vpn.IsVpnEnabled = false;
                                 if (PasswordManager.PasswordExists("VpnUserName") && PasswordManager.PasswordExists("VpnPassWord"))
                                 {
@@ -96,6 +99,7 @@ namespace CC98
                                     string vpn_res = await CCloginservice.vpn.LoginAsync(id, pass);
                                     if (vpn_res == "1")//连接成功
                                     {
+                                        //这里不需要再额外修改Logined,因为LoginAsync中已经修改
                                         CCloginservice.vpn.IsVpnEnabled = true;
                                         var new_ticket = CCloginservice.vpn.Ticket;
                                         var new_route = CCloginservice.vpn.Route;
@@ -104,7 +108,7 @@ namespace CC98
                                         if (!string.IsNullOrEmpty(_ticket) && (!string.IsNullOrEmpty(_route)))
                                         {
                                             PasswordManager.SavePassword(_ticket, "Ticket");
-                                            PasswordManager.SavePassword("_route", "Route");
+                                            PasswordManager.SavePassword(_route, "Route");
                                             return "1";
                                         }//保存失败或者token为空时，会出现VPN启用但找不到令牌的情况。
                                         else

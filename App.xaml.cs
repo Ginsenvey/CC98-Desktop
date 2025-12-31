@@ -64,23 +64,27 @@ namespace CC98
                     //检测是否已初始化Ticket。若已初始化，使用并检查有效性。无效则重连。未初始化是出错的情况。
                     if (PasswordManager.PasswordExists("Ticket")&& PasswordManager.PasswordExists("Route"))
                     {
-                        //构造Ticket
+                        //提取环节
                         var ticket_value = PasswordManager.RetrievePassword("Ticket");
                         var route_value= PasswordManager.RetrievePassword("Route");
                         var ticket = new Cookie("wengine_vpn_ticketwebvpn_zju_edu_cn", ticket_value, "/", "webvpn.zju.edu.cn");
-                        var route= new Cookie("wengine_vpn_ticketwebvpn_zju_edu_cn", route_value, "/", "webvpn.zju.edu.cn");
+                        var route= new Cookie("route", route_value, "/", "webvpn.zju.edu.cn");
                         ticket.HttpOnly = true;
+                        //注入环节
                         if (!string.IsNullOrEmpty(ticket_value)&&(!string.IsNullOrEmpty(route_value)))
                         {
                             CCloginservice.vpn.Jar.Add(ticket);
                             CCloginservice.vpn.Jar.Add(route);
-                            if (await CCloginservice.vpn.CheckNetwork(true) == "1")//该函数不受IsVpnEnable和Logined影响
+                            string new_status = await CCloginservice.vpn.CheckNetwork(true);
+                            if (new_status== "1")//该函数不受IsVpnEnable和Logined影响
                             {
+                                CCloginservice.vpn.Logined = true;
                                 CCloginservice.vpn.IsVpnEnabled = true;
                                 return "1";
                             }
                             else//过期，尝试使用凭据重新获取Ticket
                             {
+                                CCloginservice.vpn.Logined = false;
                                 CCloginservice.vpn.IsVpnEnabled = false;
                                 if (PasswordManager.PasswordExists("VpnUserName") && PasswordManager.PasswordExists("VpnPassWord"))
                                 {
@@ -96,8 +100,9 @@ namespace CC98
                                         string _route = new_route.Value;
                                         if (!string.IsNullOrEmpty(_ticket)&&(!string.IsNullOrEmpty(_route)))
                                         {
+                                            //更新环节
                                             PasswordManager.SavePassword(_ticket, "Ticket");
-                                            PasswordManager.SavePassword("_route", "Route");
+                                            PasswordManager.SavePassword(_route, "Route");
                                             return "1";
                                         }//保存失败或者token为空时，会出现VPN启用但找不到令牌的情况。
                                         else
@@ -107,7 +112,7 @@ namespace CC98
                                         }
                                         //此时vpn应该可用
                                     }
-                                    else//登录失败，可能是因为凭据错误
+                                    else//登录失败，可能是因为凭据错误，或者需要确认顶号
                                     {
                                         return "3:凭据错误或者VPN欠费";
                                     }
@@ -148,7 +153,6 @@ namespace CC98
         
 
 
-        //登录检查.对于IsActive=1的情况，检查是否在内网。若否，检查vpn是否可用。可用则检查vpn token是否过期。不可用则激活login(mode=1)。
         protected override async void OnLaunched(Microsoft.UI.Xaml.LaunchActivatedEventArgs args)
         {
             var e= AppInstance.GetActivatedEventArgs();
