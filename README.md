@@ -70,7 +70,11 @@
 你可以在开发者的Github Issue处，或[CC98 桌面客户端的开发进度记录楼](https://www.cc98.org/topic/6173309)反馈问题。  
   
 你也可以克隆本应用仓库，自由修改和编译新的分支。不过，在分发时，应当告知所有的改动。  
-  
+
+##### 设置开发环境
+1. 确保您安装了Windows SDK 10.0.0.19041
+2. 本应用使用了[CommunityToolKit中的实验性功能](https://github.com/CommunityToolkit/Labs-Windows)，请参考[Toolkit Labs](https://github.com/CommunityToolkit/Windows/wiki/Preview-Packages)的wiki将Toolkit Labs添加至Nuget的Package Sources。
+
 **开放源代码库**  
   
 除了应用已列出的代码源外，个人空间页面、部分列表样式参考了网易云第三方`LyricEase`；用户信息的右键预览、卡片样式、信息提示框和标题栏参考了[Richasy](https://github.com/Richasy)的哔哩助理。
