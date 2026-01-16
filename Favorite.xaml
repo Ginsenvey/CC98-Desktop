@@ -62,7 +62,11 @@
                             </Grid>
                             <HyperlinkButton.ContextFlyout>
                                 <MenuFlyout>
-                                    <MenuFlyoutItem Icon="{ic:SymbolIcon Symbol=Delete}" Text="移除" x:Name="Remove" Click="Remove_Click" DataContext="{x:Bind}"></MenuFlyoutItem>
+                                    <MenuFlyoutItem  Text="移除" x:Name="Remove" Click="Remove_Click" DataContext="{x:Bind}">
+                                        <MenuFlyoutItem.Icon>
+                                            <ic:SymbolIcon Symbol="Delete" ></ic:SymbolIcon>
+                                        </MenuFlyoutItem.Icon>
+                                    </MenuFlyoutItem>
                                 </MenuFlyout>
                             </HyperlinkButton.ContextFlyout>
                         </HyperlinkButton>

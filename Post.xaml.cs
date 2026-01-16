@@ -1,6 +1,6 @@
 
 using CC98.Kernel;
-using CC98.UserExperience;
+using CC98.Kernel.UserExperience;
 using ColorCode.Compilation.Languages;
 using CommunityToolkit.WinUI.Controls;
 using CommunityToolkit.WinUI.UI.Controls;
@@ -12,6 +12,7 @@ using Microsoft.UI.Xaml.Data;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Navigation;
+using Microsoft.Windows.Storage.Pickers;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using System;
@@ -27,7 +28,7 @@ using System.Threading.Tasks;
 using Windows.Foundation;
 using Windows.Foundation.Collections;
 using Windows.Storage;
-using Windows.Storage.Pickers;
+
 using WinRT.Interop;
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -82,7 +83,7 @@ namespace CC98
                     status.Text = "回复帖子:" + parameter["ParentId"];
                     Id = parameter["Pid"];
                     Editor.Text = parameter["BaseText"];
-                    Previewer.Text = UBBConverter.Convert(Editor.Text.Replace("\r\n", "  \n").Replace("\r", "  \n"), false);
+                    //Previewer.Text = UBBConverter.Convert(Editor.Text.Replace("\r\n", "  \n").Replace("\r", "  \n"), false);
                     Editor.SelectionStart = Editor.Text.Length;
                     Parent_Id = parameter["ParentId"];
                     replyselector.IsSelected = true;
@@ -103,7 +104,7 @@ namespace CC98
                     Id = parameter["Pid"];//当前主题Pid
                     Editor.Text = parameter["BaseText"];
                     SetTitle.Text= parameter["Title"];
-                    Previewer.Text = UBBConverter.Convert(Editor.Text.Replace("\r\n", "  \n").Replace("\r", "  \n"), false);
+                    //Previewer.Text = UBBConverter.Convert(Editor.Text.Replace("\r\n", "  \n").Replace("\r", "  \n"), false);
                     Editor.SelectionStart = Editor.Text.Length;
                     replyselector.IsSelected = true;
                     SetTitle.IsEnabled = false;
@@ -207,26 +208,32 @@ namespace CC98
             }
             
         }
-        private async Task<string> FileSender(string type,IList<string> filter,string title,Windows.Storage.Pickers.PickerLocationId location)
+        private async Task<string> FileSender(string type,IList<string> filter,string title,Microsoft.Windows.Storage.Pickers.PickerLocationId location)
         {
-            var picker = new SavePicker(WindowNative.GetWindowHandle((App.Current as App).m_window))
+            try
             {
-               
-            };
-            picker.Title = title;
-            picker.FileTypeChoices.Add(type,filter);
-            picker.CommitButtonText = "上传";
-            picker.SuggestedStartLocation= location;
-            var file = await picker.PickSaveFileAsync();
-            if (file != null)
-            {
-                status.Text = "正在上传文件。请稍作等待";
-                string url = await UploadFileAsync("https://api.cc98.org/file", file.Path);
-                if (url != "0" && url.Contains("file"))
+
+                var picker = new FileOpenPicker(this.XamlRoot.ContentIslandEnvironment.AppWindowId);       
+                picker.CommitButtonText = "上传";
+                picker.SuggestedStartLocation = location;
+                //picker.FileTypeFilter.AddRange(filter);
+                //picker.ViewMode = PickerViewMode.Thumbnail;
+                var file = await picker.PickSingleFileAsync();
+                if (file != null)
                 {
-                    status.Text = "上传成功:" + file.Path;
-                    return url;
+                    status.Text = "正在上传文件。请稍作等待";
+                    string url = await UploadFileAsync("https://api.cc98.org/file", file.Path);
+                    if (url != "0" && url.Contains("file"))
+                    {
+                        status.Text = "上传成功:" + file.Path;
+                        return url;
+                    }
                 }
+            }
+            catch (Exception ex)
+            {
+                ValidationHelper.Log("文件上传出错", ex.Message);
+                status.Text = "上传失败:" + ex.Message;
             }
             return "0";
         }
@@ -251,8 +258,8 @@ namespace CC98
         }
         private void Editor_TextChanged(object sender, TextChangedEventArgs e)
         {
-            Previewer.Text = UBBConverter.Convert(Editor.Text.Replace("\r\n", "  \n").Replace("\r","  \n"),false);
-            
+            // Previewer.Text = UBBConverter.Convert(Editor.Text.Replace("\r\n", "  \n").Replace("\r","  \n"),false);
+            UbbViewer.UbbText = Editor.Text;
         }
         //以下方法用于创建Md的代码块,但是UBB编辑器不需要支持这个操作。
         private void InsertCodeBlock()
@@ -419,7 +426,7 @@ namespace CC98
                         if (CurrentLabel == "img")
                         {
                             var imagefilter = new List<string> { "*.png", "*.jpg", "*.jpeg", "*.bmp", "*.gif", "*.webp" };
-                            string imageurl = await FileSender("图像", imagefilter, "选择一张图片", Windows.Storage.Pickers.PickerLocationId.PicturesLibrary);
+                            string imageurl = await FileSender("图像", imagefilter, "选择一张图片", Microsoft.Windows.Storage.Pickers.PickerLocationId.PicturesLibrary);
                             if (imageurl != "0")
                             {
                                 InsertTag("img", "img", imageurl);
@@ -435,7 +442,7 @@ namespace CC98
                         else if (CurrentLabel == "video")
                         {
                             var videofilter = new List<string> { "*.mp4", "*.mkv", "*.avi", "*.mov", "*.wmv" };
-                            string videourl = await FileSender("视频", videofilter, "选择视频文件", Windows.Storage.Pickers.PickerLocationId.VideosLibrary);
+                            string videourl = await FileSender("视频", videofilter, "选择视频文件", Microsoft.Windows.Storage.Pickers.PickerLocationId.VideosLibrary);
                             if (videourl != "0")
                             {
                                 InsertTag("video", "video", videourl);
@@ -450,7 +457,7 @@ namespace CC98
                         else if (CurrentLabel == "audio")
                         {
                             var audiofilter = new List<string> { "*.mp3", "*.wav", "*.m4a", "*.flac", "*.aac" };
-                            string audiourl = await FileSender("音频", audiofilter, "选择y音频文件", Windows.Storage.Pickers.PickerLocationId.MusicLibrary);
+                            string audiourl = await FileSender("音频", audiofilter, "选择y音频文件", Microsoft.Windows.Storage.Pickers.PickerLocationId.MusicLibrary);
                             if (audiourl != "0")
                             {
                                 InsertTag("audio", "audio", audiourl);
@@ -465,7 +472,7 @@ namespace CC98
                         else if (CurrentLabel == "upload")
                         {
                             var docfilter = new List<string> { "*" };
-                            string docurl = await FileSender("任意文件", docfilter, "选择文件", Windows.Storage.Pickers.PickerLocationId.Desktop);
+                            string docurl = await FileSender("任意文件", docfilter, "选择文件",Microsoft.Windows.Storage.Pickers.PickerLocationId.Desktop);
                             if (docurl != "0")
                             {
                                 InsertTag("upload", "upload", docurl);

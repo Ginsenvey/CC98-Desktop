@@ -31,12 +31,26 @@
         <Border Background="Transparent"  BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}" BorderThickness="0,0,0,1" Grid.Row="0" MinHeight="90" Height="Auto" CornerRadius="5" x:Name="MetaDataArea" >
             <Border.ContextFlyout>
                 <MenuFlyout>
-                    <MenuFlyoutItem Text="刷新" Icon="{ic:SymbolIcon Symbol=ArrowSync}" x:Name="TileFlyout" Tag="0" Click="TileFlyout_Click"></MenuFlyoutItem>
-                    <MenuFlyoutItem Text="分享链接" Icon="{ic:SymbolIcon Symbol=Share}" Tag="1" Click="TileFlyout_Click"></MenuFlyoutItem>
-                    <MenuFlyoutSubItem Text="收藏" Icon="{ic:SymbolIcon Symbol=StarAdd}" Tag="2" x:Name="CollectionMenu"  >
-                        
+                    <MenuFlyoutItem Text="刷新"  x:Name="TileFlyout" Tag="0" Click="TileFlyout_Click">
+                        <MenuFlyoutItem.Icon>
+                            <ic:FluentIcon Icon="ArrowSync"></ic:FluentIcon>
+                        </MenuFlyoutItem.Icon>
+                    </MenuFlyoutItem>
+                    <MenuFlyoutItem Text="分享链接"  Tag="1" Click="TileFlyout_Click">
+                        <MenuFlyoutItem.Icon>
+                            <ic:FluentIcon Icon="Share"></ic:FluentIcon>
+                        </MenuFlyoutItem.Icon>
+                    </MenuFlyoutItem>
+                    <MenuFlyoutSubItem Text="收藏" Tag="2" x:Name="CollectionMenu">
+                        <MenuFlyoutSubItem.Icon>
+                            <ic:FluentIcon Icon="StarAdd"></ic:FluentIcon>
+                        </MenuFlyoutSubItem.Icon>
                     </MenuFlyoutSubItem>
-                    <MenuFlyoutItem Text="图片可见性" Icon="{ic:SymbolIcon Symbol=Image}" Tag="3" Click="TileFlyout_Click" ></MenuFlyoutItem>
+                    <MenuFlyoutItem Text="图片可见性" Tag="3" Click="TileFlyout_Click" >
+                        <MenuFlyoutItem.Icon>
+                            <ic:FluentIcon Icon="Image"></ic:FluentIcon>
+                        </MenuFlyoutItem.Icon>
+                    </MenuFlyoutItem>
                 </MenuFlyout>
             </Border.ContextFlyout>
             
@@ -123,10 +137,26 @@
                                 <ic:SymbolIcon Symbol="MoreHorizontal" FontSize="12"></ic:SymbolIcon>
                                 <Button.Flyout>
                                     <MenuFlyout>
-                                        <MenuFlyoutItem Icon="{ic:SymbolIcon Symbol=CommentQuote}" Text="引用" Click="PostOperation_Click" Tag="QUOTE" DataContext="{x:Bind}"></MenuFlyoutItem>
-                                        <MenuFlyoutItem Icon="{ic:SymbolIcon Symbol=Edit}" Text="编辑" Click="PostOperation_Click" Tag="EDIT" DataContext="{x:Bind}" Visibility="{x:Bind Isme,Converter={StaticResource BoolToVisibility}}"></MenuFlyoutItem>
-                                        <MenuFlyoutItem Icon="{ic:SymbolIcon Symbol=Code}" Text="复制为原代码" Click="PostOperation_Click" Tag="UBB" DataContext="{x:Bind}"></MenuFlyoutItem>
-                                        <MenuFlyoutItem Icon="{ic:SymbolIcon Symbol=Markdown}" Text="复制为Md" Tag="MD" Click="PostOperation_Click" DataContext="{x:Bind}"></MenuFlyoutItem>
+                                        <MenuFlyoutItem  Text="引用" Click="PostOperation_Click" Tag="QUOTE" DataContext="{x:Bind}">
+                                            <MenuFlyoutItem.Icon>
+                                                <ic:FluentIcon Icon="CommentQuote"></ic:FluentIcon>
+                                            </MenuFlyoutItem.Icon>
+                                        </MenuFlyoutItem>
+                                        <MenuFlyoutItem  Text="编辑" Click="PostOperation_Click" Tag="EDIT" DataContext="{x:Bind}" Visibility="{x:Bind Isme,Converter={StaticResource BoolToVisibility}}">
+                                            <MenuFlyoutItem.Icon>
+                                                <ic:FluentIcon Icon="Edit"></ic:FluentIcon>
+                                            </MenuFlyoutItem.Icon>
+                                        </MenuFlyoutItem>
+                                        <MenuFlyoutItem Text="复制为原代码" Click="PostOperation_Click" Tag="UBB" DataContext="{x:Bind}">
+                                            <MenuFlyoutItem.Icon>
+                                                <ic:FluentIcon Icon="Code"></ic:FluentIcon>
+                                            </MenuFlyoutItem.Icon>
+                                        </MenuFlyoutItem>
+                                        <MenuFlyoutItem Text="复制为Md" Tag="MD" Click="PostOperation_Click" DataContext="{x:Bind}">
+                                            <MenuFlyoutItem.Icon>
+                                                <ic:FluentIcon Icon="Markdown"></ic:FluentIcon>
+                                            </MenuFlyoutItem.Icon>
+                                        </MenuFlyoutItem>
                                     </MenuFlyout>
                                 </Button.Flyout>
                             </Button>
@@ -158,7 +188,11 @@
                 </Grid.RowDefinitions>
                 <Grid.ContextFlyout>
                     <MenuBarItemFlyout>
-                        <MenuFlyoutItem Text="下载" Icon="{ic:SymbolIcon Symbol=ArrowDownload}"></MenuFlyoutItem>
+                        <MenuFlyoutItem Text="下载" >
+                            <MenuFlyoutItem.Icon>
+                                <ic:FluentIcon Icon="ArrowDownload"></ic:FluentIcon>
+                            </MenuFlyoutItem.Icon>
+                        </MenuFlyoutItem>
                     </MenuBarItemFlyout>
                     
                     

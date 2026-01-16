@@ -81,11 +81,16 @@
                 </Button.RenderTransform>
                 <Button.ContextFlyout>
                     <MenuFlyout  Placement="LeftEdgeAlignedBottom"  SystemBackdrop="{ThemeResource AcrylicBackgroundFillColorDefaultBackdrop}" >
-                        <MenuFlyoutItem Text="CC98抽卡" Icon="{ic:SymbolIcon Symbol=GiftOpen}"  Click="CCZone_Click" Tag="0"></MenuFlyoutItem>
-                        <MenuFlyoutItem Text="统计数据" Icon="{ic:SymbolIcon Symbol=MathFormula}" Tag="1" Click="CCZone_Click"></MenuFlyoutItem>
-                        
-                        
-                        
+                        <MenuFlyoutItem Text="CC98抽卡"  Click="CCZone_Click" Tag="0">
+                            <MenuFlyoutItem.Icon>
+                                <ic:SymbolIcon Symbol="GiftOpen"></ic:SymbolIcon>
+                            </MenuFlyoutItem.Icon>
+                        </MenuFlyoutItem>
+                        <MenuFlyoutItem Text="统计数据" Tag="1" Click="CCZone_Click">
+                            <MenuFlyoutItem.Icon>
+                                <ic:SymbolIcon Symbol="MathFormula"></ic:SymbolIcon>
+                            </MenuFlyoutItem.Icon>
+                        </MenuFlyoutItem>
                     </MenuFlyout>
                 </Button.ContextFlyout>
             </Button>
@@ -105,7 +110,11 @@
                     <NavigationViewItem  Tag="{x:Bind Tag}" >
                         <NavigationViewItem.ContextFlyout>
                             <MenuFlyout>
-                                <MenuFlyoutItem Text="取消固定" Tag="{x:Bind Tag}"  Icon="{ic:SymbolIcon Symbol=PinOff}"  x:Name="PinOff" Click="PinOff_Click"></MenuFlyoutItem>
+                                <MenuFlyoutItem Text="取消固定" Tag="{x:Bind Tag}"    x:Name="PinOff" Click="PinOff_Click">
+                                    <MenuFlyoutItem.Icon>
+                                        <ic:SymbolIcon Symbol="PinOff"></ic:SymbolIcon>
+                                    </MenuFlyoutItem.Icon>
+                                </MenuFlyoutItem>
                             </MenuFlyout>
                         </NavigationViewItem.ContextFlyout>
                         <StackPanel Orientation="Horizontal" >
@@ -130,9 +139,9 @@
             ItemTemplate="{StaticResource ItemTemplate}"/>
             </NavigationView.Resources>
             <NavigationView.AutoSuggestBox>
-                <AutoSuggestBox PlaceholderText="CC98,My home" AutomationProperties.Name="Search" TextChanged="search_TextChanged" UpdateTextOnSelect="False" SuggestionChosen="search_SuggestionChosen" >
+                <AutoSuggestBox PlaceholderText="CC98,My home" AutomationProperties.Name="Search" TextChanged="search_TextChanged" UpdateTextOnSelect="False" SuggestionChosen="search_SuggestionChosen">
                     <AutoSuggestBox.QueryIcon>
-                        <ic:SymbolIcon Symbol="Search" ></ic:SymbolIcon>
+                        <ic:SymbolIcon Symbol="Search"></ic:SymbolIcon>
                     </AutoSuggestBox.QueryIcon>
                 </AutoSuggestBox>
             </NavigationView.AutoSuggestBox>

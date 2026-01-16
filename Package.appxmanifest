@@ -7,6 +7,7 @@
   xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities"
   xmlns:uap3="http://schemas.microsoft.com/appx/manifest/uap/windows10/3"
   xmlns:uap6="http://schemas.microsoft.com/appx/manifest/uap/windows10/6"
+  xmlns:uap5="http://schemas.microsoft.com/appx/manifest/uap/windows10/5"
   xmlns:uap18="http://schemas.microsoft.com/appx/manifest/uap/windows10/18"
   IgnorableNamespaces="uap rescap uap3 uap6 uap18">
 
@@ -54,7 +55,7 @@
           <uap:Rotation Preference="landscapeFlipped"/>
           <uap:Rotation Preference="portraitFlipped"/></uap:InitialRotationPreference>
         <uap:LockScreen Notification="badge" BadgeLogo="Assets\cc98.png"/>
-        <uap:SplashScreen Image="Assets\SplashScreen.png"/>
+        <uap:SplashScreen Image="Assets\SplashScreen.png" BackgroundColor="transparent" uap5:Optional="false"/>
 	
       </uap:VisualElements>
       <Extensions>

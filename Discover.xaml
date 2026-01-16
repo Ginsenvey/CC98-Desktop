@@ -48,7 +48,11 @@
                         <ic:SymbolIcon Symbol="MoreHorizontal" FontSize="11"></ic:SymbolIcon>
                         <Button.Flyout>
                         <MenuFlyout>
-                            <MenuFlyoutItem Text="复制帖子ID" Icon="{ic:SymbolIcon Symbol=Link}" Tag="{x:Bind pid}" x:Name="CopyId" Click="CopyId_Click"></MenuFlyoutItem>
+                            <MenuFlyoutItem Text="复制帖子ID"  Tag="{x:Bind pid}" x:Name="CopyId" Click="CopyId_Click">
+                                <MenuFlyoutItem.Icon>
+                                    <ic:SymbolIcon Symbol="Link"></ic:SymbolIcon>
+                                </MenuFlyoutItem.Icon>
+                            </MenuFlyoutItem>
                             </MenuFlyout>
                         </Button.Flyout>
                     </Button>
@@ -104,8 +108,16 @@
                     <ic:SymbolIcon Symbol="MoreHorizontal" FontSize="11"></ic:SymbolIcon>
                     <Button.Flyout>
                         <MenuFlyout>
-                            <MenuFlyoutItem Text="收藏" Icon="{ic:SymbolIcon Symbol=Star}"></MenuFlyoutItem>
-                            <MenuFlyoutItem Text="复制帖子ID" Icon="{ic:SymbolIcon Symbol=Link}"></MenuFlyoutItem>
+                            <MenuFlyoutItem Text="收藏" >
+                                <MenuFlyoutItem.Icon>
+                                    <ic:SymbolIcon Symbol="Star"></ic:SymbolIcon>
+                                </MenuFlyoutItem.Icon>
+                            </MenuFlyoutItem>
+                            <MenuFlyoutItem Text="复制帖子ID" >
+                                <MenuFlyoutItem.Icon>
+                                    <ic:SymbolIcon Symbol="Link"></ic:SymbolIcon>
+                                </MenuFlyoutItem.Icon>
+                            </MenuFlyoutItem>
                         </MenuFlyout>
                     </Button.Flyout>
                 </Button>
@@ -132,7 +144,7 @@
                 <ColumnDefinition Width="Auto"></ColumnDefinition>
                 <ColumnDefinition Width="*"></ColumnDefinition>
             </Grid.ColumnDefinitions>
-            <Button x:Name="NaviBar" Grid.Column="0" Tag="Back" Click="NaviBar_Click" Padding="7"  BorderThickness="0">
+            <Button x:Name="Backward" Grid.Column="0" Tag="Back" Click="NaviBar_Click" Padding="7">
                 <ic:SymbolIcon Symbol="ChevronLeft"></ic:SymbolIcon>
             </Button>
             <Button Tag="Forward" Grid.Column="1" Click="NaviBar_Click" Padding="7"  >

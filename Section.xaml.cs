@@ -50,7 +50,7 @@ namespace CC98
             var _Theme = ValidationHelper.IsTokenExist(Set, "ThemePic");
             if (_Theme != "0")
             {
-                ThemePresenter.Source = new BitmapImage(new Uri(_Theme));
+                //ThemePresenter.Source = new BitmapImage(new Uri(_Theme));
             }
         }
         private async Task<bool> FetchSection()

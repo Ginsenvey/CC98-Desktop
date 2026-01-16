@@ -1,9 +1,12 @@
-﻿
+﻿using CC98.Kernel;
+using CC98.Kernel.UserExperience;
+using CC98.Services;
 using CommunityToolkit.WinUI.Converters;
 using DevWinUI;
 using FluentIcons.Common;
 using FluentIcons.WinUI;
 using Microsoft.UI.Composition.SystemBackdrops;
+using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Controls.Primitives;
@@ -44,9 +47,6 @@ using Windows.Security.Credentials;
 using Windows.Security.Cryptography.Certificates;
 using Windows.Storage;
 using Windows.Storage.Streams;
-using CC98.Services;
-using CC98.Kernel;
-using CC98.UserExperience;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -67,13 +67,29 @@ namespace CC98
             this.ExtendsContentIntoTitleBar = true;
             this.SetTitleBar(UserArea);
             AppWindow.TitleBar.PreferredHeightOption = Microsoft.UI.Windowing.TitleBarHeightOption.Tall;
+            var iconPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "cc98.ico");
+            AppWindow.SetIcon(iconPath);
+            AppWindow.SetTaskbarIcon(iconPath);
+            this.AppWindow.Changed += AppWindow_Changed; ;
             LoadSettings();
             App.ThemeChanged += OnAppThemeChanged;
             Messenger.Instance.NavigationItemAdded += OnNavigationItemAdded;
             Surfing();
         }
 
-        
+        private void AppWindow_Changed(Microsoft.UI.Windowing.AppWindow sender, Microsoft.UI.Windowing.AppWindowChangedEventArgs args)
+        {
+            if (args.DidPresenterChange && this.AppWindow.Presenter is OverlappedPresenter presenter)
+            {
+                // 检查窗口是否最小化
+                if (presenter.State == OverlappedPresenterState.Minimized)
+                {
+                    // 取消最小化到任务栏，改为隐藏到托盘
+                    this.AppWindow.Hide();
+                }
+            }
+        }
+
         private void ShowTips(string title,string content)
         {
             StatusReport.Title = title;
@@ -576,8 +592,7 @@ namespace CC98
         }
 
         
-        //后期，搜索历史将会被记录到本地缓存。只保留前100条记录，先进先出。
-        //当用户输入文本时，自动模糊关联历史记录。
+      
         private void SemanticSearch(string key)
         {
             var p = new Dictionary<string, string>();

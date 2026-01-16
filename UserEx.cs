@@ -15,7 +15,7 @@ using System.Threading.Tasks;
 using Windows.Storage;
 using Windows.Storage.Streams;
 
-namespace CC98.UserExperience//用户体验模型，包括:版面图标；语义搜索；图像解析。
+namespace CC98.Kernel.UserExperience//用户体验模型，包括:版面图标；语义搜索；图像解析。
 {
     public static class BoardIcon
     {

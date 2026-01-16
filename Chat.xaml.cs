@@ -1,5 +1,5 @@
 using CC98.Kernel;
-using CC98.UserExperience;
+using CC98.Kernel.UserExperience;
 using CommunityToolkit.WinUI.UI.Controls;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;

@@ -1,6 +1,5 @@
 
 using CC98.Kernel;
-using CCkernel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using DevWinUI;
 using Microsoft.UI.Xaml;

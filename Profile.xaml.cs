@@ -1,6 +1,6 @@
 
 using CC98.Kernel;
-using CC98.UserExperience;
+using CC98.Kernel.UserExperience;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.WinUI.Controls;
 using CommunityToolkit.WinUI.UI.Controls;

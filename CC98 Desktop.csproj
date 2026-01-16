@@ -1,10 +1,10 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
-    <TargetFramework>net8.0-windows10.0.19041.0</TargetFramework>
+    <TargetFramework>net8.0-windows10.0.26100.0</TargetFramework>
 	<LangVersion>preview</LangVersion>
     <TargetPlatformMinVersion>10.0.17763.0</TargetPlatformMinVersion>
-    <RootNamespace>App3</RootNamespace>
+    <RootNamespace>CC98</RootNamespace>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <Platforms>x86;x64;ARM64</Platforms>
     <RuntimeIdentifiers>win-x86;win-x64;win-arm64</RuntimeIdentifiers>
@@ -12,7 +12,7 @@
     <UseWinUI>true</UseWinUI>
     <EnableMsixTooling>true</EnableMsixTooling>
     <Nullable>enable</Nullable>
-	  <WindowsSdkPackageVersion>10.0.19041.38</WindowsSdkPackageVersion>
+	  <WindowsSdkPackageVersion>10.0.26100.81</WindowsSdkPackageVersion>
   </PropertyGroup>
   <ItemGroup>
     <Content Remove="Assets\cc98.altform-lightunplated_targetsize-16.png" />
@@ -94,6 +94,7 @@
     <Content Remove="Assets\SquareLogo.scale-125.png" />
     <Content Remove="Assets\SquareLogo.scale-150.png" />
     <Content Remove="Assets\SquareLogo.scale-200.png" />
+    <Content Remove="Assets\SquareLogo.scale-400.png" />
     <Content Remove="Assets\SquareLogo.targetsize-16.png" />
     <Content Remove="Assets\SquareLogo.targetsize-24.png" />
     <Content Remove="Assets\SquareLogo.targetsize-256.png" />
@@ -110,6 +111,7 @@
     <Content Remove="Assets\Wide310x150Logo.scale-400.png" />
   </ItemGroup>
   <ItemGroup>
+    <None Remove="Assets\cc98.png" />
     <None Remove="Assets\LargeTile.scale-100.png" />
     <None Remove="Assets\LargeTile.scale-125.png" />
     <None Remove="Assets\LargeTile.scale-150.png" />
@@ -120,7 +122,6 @@
     <None Remove="Assets\Square44x44Logo.scale-125.png" />
     <None Remove="Assets\Square44x44Logo.scale-150.png" />
     <None Remove="Assets\Square44x44Logo.scale-400.png" />
-    <None Remove="Assets\SquareLogo.scale-400.png" />
     <None Remove="Board.xaml" />
     <None Remove="CC98 Desktop_1.0.5.0_x64_Debug.cer" />
     <None Remove="CC98 Desktop_1.0.5预览体验（x64）.zip" />
@@ -139,11 +140,9 @@
     <None Remove="Search.xaml" />
     <None Remove="Section.xaml" />
     <None Remove="Setting.xaml" />
+    <None Remove="Themes\Generic.xaml" />
     <None Remove="Topic.xaml" />
     <None Remove="UBBRichTextBlock.xaml" />
-  </ItemGroup>
-  <ItemGroup>
-    <Page Remove="Themes\Generic.xaml" />
   </ItemGroup>
 
   <ItemGroup>
@@ -169,20 +168,20 @@
     <PackageReference Include="CommunityToolkit.Labs.WinUI.Ribbon" Version="0.1.250721-build.2183" />
     <PackageReference Include="CommunityToolkit.Labs.WinUI.TokenView" Version="0.1.250721-build.2183" />
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
-    <PackageReference Include="CommunityToolkit.WinUI.Controls.ColorPicker" Version="8.2.250402" />
-    <PackageReference Include="CommunityToolkit.WinUI.Controls.Primitives" Version="8.2.250402" />
-    <PackageReference Include="CommunityToolkit.WinUI.Controls.SettingsControls" Version="8.2.250402" />
-    <PackageReference Include="CommunityToolkit.WinUI.Controls.TokenizingTextBox" Version="8.2.250402" />
+    <PackageReference Include="CommunityToolkit.WinUI.Controls.ColorPicker" Version="8.2.251219" />
+    <PackageReference Include="CommunityToolkit.WinUI.Controls.Primitives" Version="8.2.251219" />
+    <PackageReference Include="CommunityToolkit.WinUI.Controls.SettingsControls" Version="8.2.251219" />
+    <PackageReference Include="CommunityToolkit.WinUI.Controls.TokenizingTextBox" Version="8.2.251219" />
     <PackageReference Include="CommunityToolkit.WinUI.UI.Controls.Markdown" Version="7.1.2" />
-    <PackageReference Include="DevWinUI" Version="8.6.0" />
-    <PackageReference Include="DevWinUI.Controls" Version="8.6.0" />
-    <PackageReference Include="Duende.IdentityModel.OidcClient" Version="6.0.1" />
-    <PackageReference Include="FluentIcons.WinUI" Version="1.1.307-ci" />
-    <PackageReference Include="HtmlAgilityPack" Version="1.12.2" />
+    <PackageReference Include="DevWinUI" Version="9.8.1" />
+    <PackageReference Include="DevWinUI.Controls" Version="9.8.1" />
+    <PackageReference Include="Duende.IdentityModel.OidcClient" Version="7.0.0" />
+    <PackageReference Include="FluentIcons.WinUI" Version="2.0.316" />
+    <PackageReference Include="HtmlAgilityPack" Version="1.12.4" />
     <PackageReference Include="Microsoft.Windows.CsWinRT" Version="2.2.0" />
-    <PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.26100.4188" />
-    <PackageReference Include="Microsoft.WindowsAppSDK" Version="1.7.250606001" />
-    <PackageReference Include="Newtonsoft.Json" Version="13.0.4-beta1" />
+    <PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.26100.7175" />
+    <PackageReference Include="Microsoft.WindowsAppSDK" Version="1.8.251106002" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.5-beta1" />
   </ItemGroup>
 	
   <ItemGroup>
@@ -290,9 +289,9 @@
     <Page Update="Notice.xaml">
       <Generator>MSBuild:Compile</Generator>
     </Page>
-    <None Update="Themes\Generic.xaml">
+    <Page Update="Themes\Generic.xaml">
       <Generator>MSBuild:Compile</Generator>
-    </None>
+    </Page>
     <Page Update="SmartImage.xaml">
       <Generator>MSBuild:Compile</Generator>
     </Page>

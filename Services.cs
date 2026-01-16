@@ -5,6 +5,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using CC98;
+/// <summary>
+/// 用于在各个组件间传递消息的服务，如导航栏项目的添加。
+/// </summary> 
 namespace CC98.Services
 {
     public class Messenger

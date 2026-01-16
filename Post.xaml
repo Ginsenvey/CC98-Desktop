@@ -11,7 +11,7 @@
     xmlns:controls="using:CommunityToolkit.WinUI.Controls"
     xmlns:tool="using:CommunityToolkit.WinUI.UI.Controls"
     xmlns:dev="using:DevWinUI"
-    xmlns:image="using:CC98.Controls"
+    xmlns:c="using:CC98.Controls"
     Background="{ThemeResource DesktopAcrylicTransparentBrush}">
 
    
@@ -82,7 +82,7 @@
                 <GridView.ItemTemplate>
                     <DataTemplate x:DataType="local:Emoji">
                         <Border  CornerRadius="3">
-                            <image:SmartImage Source="{x:Bind EmojiPath}" Width="80" Height="80"   Tag="{x:Bind EmojiName}" x:Name="EmojiCell" ></image:SmartImage>
+                            <c:SmartImage Source="{x:Bind EmojiPath}" Width="80" Height="80"   Tag="{x:Bind EmojiName}" x:Name="EmojiCell" ></c:SmartImage>
                         </Border>
                     </DataTemplate>
                 </GridView.ItemTemplate>
@@ -135,21 +135,37 @@
                             <RowDefinition Height="*" />
                         </Grid.RowDefinitions>
 
-                        <AppBarButton Icon="{ic:SymbolIcon Symbol=TextAlignLeft}" Label="左对齐" Click="AppBarButton_Click"/>
-                        <AppBarButton Grid.Column="1"
-                                  Icon="{ic:SymbolIcon Symbol=TextAlignCenter}" Label="居中" Click="AppBarButton_Click"/>
+                    <AppBarButton Label="左对齐" Click="AppBarButton_Click">
+                        <AppBarButton.Icon>
+                            <ic:SymbolIcon Symbol="TextAlignLeft" />
+                        </AppBarButton.Icon>
+                    </AppBarButton>
+                    <AppBarButton Grid.Column="1" Label="居中" Click="AppBarButton_Click">
+                        <AppBarButton.Icon>
+                            <ic:SymbolIcon Symbol="TextAlignCenter" />
+                        </AppBarButton.Icon>
+                    </AppBarButton>
 
-                        <AppBarButton Grid.Row="1"
-                                  Icon="{ic:SymbolIcon Symbol=CommentQuote}" Label="引用" Click="AppBarButton_Click" />
-                        <AppBarButton Grid.Row="1"
-                                  Grid.Column="1"
-                                  Icon="{ic:SymbolIcon Symbol=Code}" Label="代码" Click="AppBarButton_Click"/>
-                        <AppBarButton Grid.RowSpan="2"
-                                  Grid.Column="2"
-                                  Icon="{ic:SymbolIcon Symbol=TextAlignRight}" Label="右对齐" Click="AppBarButton_Click"/>
-                        <AppBarButton Grid.Row="1"
-          Grid.Column="2"
-          Icon="{ic:SymbolIcon Symbol=Link}" Label="链接" Click="AppBarButton_Click"/>
+                    <AppBarButton Grid.Row="1" Label="引用" Click="AppBarButton_Click" >
+                        <AppBarButton.Icon>
+                            <ic:SymbolIcon Symbol="CommentQuote" />
+                        </AppBarButton.Icon>
+                    </AppBarButton>
+                    <AppBarButton Grid.Row="1" Grid.Column="1" Label="代码" Click="AppBarButton_Click">
+                        <AppBarButton.Icon>
+                            <ic:SymbolIcon Symbol="Code" />
+                        </AppBarButton.Icon>
+                    </AppBarButton>
+                    <AppBarButton Grid.RowSpan="2" Grid.Column="2" Label="右对齐" Click="AppBarButton_Click">
+                        <AppBarButton.Icon>
+                            <ic:SymbolIcon Symbol="TextAlignRight" />
+                        </AppBarButton.Icon>
+                    </AppBarButton>
+                    <AppBarButton Grid.Row="1" Grid.Column="2" Label="链接" Click="AppBarButton_Click">
+                        <AppBarButton.Icon>
+                            <ic:SymbolIcon Symbol="Link" />
+                        </AppBarButton.Icon>
+                    </AppBarButton>
                     </Grid>
                 </controls:RibbonCollapsibleGroup>
 
@@ -177,11 +193,12 @@
                                   Icon="Italic" Label="斜体" Click="AppBarButton_Click"/>
                         <AppBarButton Grid.Column="0" Grid.Row="1"
                                   Icon="Underline" Label="下划线" Click="AppBarButton_Click"/>
-                       
-                        <AppBarButton Grid.Row="1"
-                                  Grid.Column="3"
-                                  Icon="{ic:SymbolIcon Symbol=TextStrikethrough}"
-                                      Label="删除线" Click="AppBarButton_Click"/>
+
+                    <AppBarButton Grid.Row="1" Grid.Column="3"  Label="删除线" Click="AppBarButton_Click">
+                        <AppBarButton.Icon>
+                            <ic:SymbolIcon Symbol="TextStrikethrough" />
+                        </AppBarButton.Icon>
+                    </AppBarButton>
                     </Grid>
                 </controls:RibbonCollapsibleGroup>
 
@@ -249,23 +266,49 @@
                             <RowDefinition Height="*" />
                         </Grid.RowDefinitions>
 
-                        <AppBarButton Icon="{ic:SymbolIcon Symbol=Image}" Label="图片" Click="AppBarButton_Click"/>
-                        <AppBarButton Grid.Column="1"
-                                  Icon="{ic:SymbolIcon Symbol=LineDashes}" Label="分割线" Click="AppBarButton_Click"/>
-                        <AppBarButton Grid.Column="2"
-                                  Icon="{ic:SymbolIcon Symbol=MoviesAndTv}" Label="视频" Click="AppBarButton_Click"/>
-                        
+                    <AppBarButton  Label="图片" Click="AppBarButton_Click">
+                        <AppBarButton.Icon>
+                            <ic:SymbolIcon Symbol="Image" />
+                        </AppBarButton.Icon>
+                    </AppBarButton>
+                    <AppBarButton Grid.Column="1"  Label="分割线" Click="AppBarButton_Click">
+                        <AppBarButton.Icon>
+                            <ic:SymbolIcon Symbol="LineDashes" />
+                        </AppBarButton.Icon>
+                    </AppBarButton>
+                    <AppBarButton Grid.Column="2" Label="视频" Click="AppBarButton_Click">
+                        <AppBarButton.Icon>
+                            <ic:SymbolIcon Symbol="MoviesAndTv" />
+                        </AppBarButton.Icon>
+                    </AppBarButton>
 
-                        <AppBarButton Grid.Row="1"
-                                  Icon="{ic:SymbolIcon Symbol=Document}" Label="文档" Click="AppBarButton_Click"/>
-                        <AppBarButton Grid.Row="1"
-                                  Grid.Column="1"
-                                  Icon="{ic:SymbolIcon Symbol=Stream}" Label="哔哩" Click="AppBarButton_Click"/>
-                        <AppBarButton Grid.Row="1"
-                                  Grid.Column="2" Icon="{ic:SymbolIcon Symbol=MusicNote2}" Label="音频" Click="AppBarButton_Click"
-                                  />
-                        <AppBarButton Icon="{ic:SymbolIcon Symbol=Color}" Grid.Row="0" Grid.Column="3" Background="Transparent" Label="颜色" Click="AppBarButton_Click"/>
-                        <AppBarButton Icon="{ic:SymbolIcon Symbol=PaintBrush}" Grid.Row="1" Grid.Column="3" Background="Transparent" Label="贴图" Click="AppBarButton_Click"/>
+
+                    <AppBarButton Grid.Row="1" Label="文档" Click="AppBarButton_Click">
+                        <AppBarButton.Icon>
+                            <ic:SymbolIcon Symbol="Document" />
+                        </AppBarButton.Icon>
+                    </AppBarButton>
+                    <AppBarButton Grid.Row="1" Grid.Column="1"  Label="哔哩" Click="AppBarButton_Click">
+                        <AppBarButton.Icon>
+                            <ic:SymbolIcon Symbol="Stream" />
+                        </AppBarButton.Icon>
+                    </AppBarButton>
+                    <AppBarButton Grid.Row="1"
+                                  Grid.Column="2"  Label="音频" Click="AppBarButton_Click">
+                        <AppBarButton.Icon>
+                            <ic:SymbolIcon Symbol="MusicNote2" />
+                        </AppBarButton.Icon>
+                    </AppBarButton>
+                    <AppBarButton Grid.Row="0" Grid.Column="3" Background="Transparent" Label="颜色" Click="AppBarButton_Click">
+                        <AppBarButton.Icon>
+                            <ic:SymbolIcon Symbol="Color" />
+                        </AppBarButton.Icon>
+                    </AppBarButton>
+                    <AppBarButton  Grid.Row="1" Grid.Column="3" Background="Transparent" Label="贴图" Click="AppBarButton_Click">
+                        <AppBarButton.Icon>
+                            <ic:SymbolIcon Symbol="PaintBrush" />
+                        </AppBarButton.Icon>
+                    </AppBarButton>
                 </Grid>
                 </controls:RibbonCollapsibleGroup>
                 <controls:RibbonGroup Label="预览"
@@ -284,8 +327,8 @@
 
             <SplitView Grid.Row="1" PanePlacement="Right" DisplayMode="Inline" IsPaneOpen="True" x:Name="EditArea" PaneBackground="{ThemeResource CardBackgroundFillColorDefaultBrush}">
                 <SplitView.Pane>
-                    <ScrollViewer>
-                    <tool:MarkdownTextBlock  x:Name="Previewer" CornerRadius="5" BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}" BorderThickness="1"  Background="Transparent" ImageMaxWidth="50" ImageMaxHeight="50" QuoteBorderBrush="{ThemeResource QuoteBorderBrush}" ImageResolving="Drawer_ImageResolving"></tool:MarkdownTextBlock>
+                <ScrollViewer>
+                    <c:UbbTextBlock UbbText="" x:Name="UbbViewer"></c:UbbTextBlock>
                 </ScrollViewer>
                    
                 </SplitView.Pane>

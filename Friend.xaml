@@ -27,8 +27,16 @@
                         <HyperlinkButton HorizontalContentAlignment="Stretch" HorizontalAlignment="Stretch" CornerRadius="0" x:Name="TileContent" Click="TileContent_Click" BorderThickness="0.5" BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}" DataContext="{x:Bind}">
                             <HyperlinkButton.ContextFlyout>
                                 <MenuFlyout>
-                                    <MenuFlyoutItem Text="私信" Icon="{ic:SymbolIcon Symbol=ChatAdd}"  Click="Chat_Click" ></MenuFlyoutItem>
-                                    <MenuFlyoutItem Text="取关" Icon="{ic:FluentIcon Icon=Dismiss}" Click="Follow_Click" Tag="{x:Bind uid}"></MenuFlyoutItem>
+                                    <MenuFlyoutItem Text="私信"   Click="Chat_Click" >
+                                        <MenuFlyoutItem.Icon>
+                                            <ic:FluentIcon Icon="ChatAdd" ></ic:FluentIcon>
+                                        </MenuFlyoutItem.Icon>
+                                    </MenuFlyoutItem>
+                                    <MenuFlyoutItem Text="取关"  Click="Follow_Click" Tag="{x:Bind uid}">
+                                        <MenuFlyoutItem.Icon>
+                                            <ic:FluentIcon Icon="PersonDelete" ></ic:FluentIcon>
+                                        </MenuFlyoutItem.Icon>
+                                    </MenuFlyoutItem>
                                 </MenuFlyout>
                             </HyperlinkButton.ContextFlyout>
                             <Grid Padding="3,0,3,0"  ColumnSpacing="10">

@@ -27,8 +27,7 @@ using Windows.Media.Core;
 using Windows.Media.Playback;
 using Windows.Storage;
 using Windows.Storage.Streams;
-using Windows.UI.Core;
-using static System.Net.WebRequestMethods;
+
 
 namespace CC98.Kernel.Network;
 

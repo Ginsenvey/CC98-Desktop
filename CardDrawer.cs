@@ -1,9 +1,8 @@
 ﻿
-using CC98.Kernel;
 using System.Threading.Tasks;
 using static System.Net.WebRequestMethods;
 
-namespace CCkernel
+namespace CC98.Kernel
 {
     public static class CardDrawer
     {

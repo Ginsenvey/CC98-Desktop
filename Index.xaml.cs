@@ -1,6 +1,6 @@
 
 using CC98.Kernel;
-using CC98.UserExperience;
+using CC98.Kernel.UserExperience;
 using CommunityToolkit.WinUI;
 using DevWinUI;
 using Microsoft.UI;

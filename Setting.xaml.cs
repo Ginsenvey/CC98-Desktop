@@ -1,5 +1,5 @@
 using CC98.Kernel;
-using CC98.UserExperience;
+using CC98.Kernel.UserExperience;
 using DevWinUI;
 using HtmlAgilityPack;
 using Microsoft.Security.Authentication.OAuth;
