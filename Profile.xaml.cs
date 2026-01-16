@@ -144,7 +144,7 @@ namespace CC98
                 profile.Follow = ValidationHelper.GetKey(js, "followCount");
                 profile.Logtime = ValidationHelper.GetKey(js, "lastLogOnTime");
                 profile.Port = ValidationHelper.GetKey(js, "portraitUrl");
-                profile.Signature = UBBConverter.Convert(ValidationHelper.GetKey(js, "signatureCode"), true);
+                profile.Signature = ValidationHelper.GetKey(js, "signatureCode");
                 profile.Posts = ValidationHelper.GetKey(js, "postCount");
                 profile.Wealth = ValidationHelper.GetKey(js, "wealth");
                 profile.IsOthers = !isme;

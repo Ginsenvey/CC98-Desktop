@@ -11,6 +11,7 @@
     xmlns:tool="using:CommunityToolkit.WinUI.UI.Controls"
     xmlns:dev="using:DevWinUI"
     xmlns:ic="using:FluentIcons.WinUI"
+    xmlns:c="using:CC98.Controls"
     Background="{ThemeResource DesktopAcrylicTransparentBrush}">
     <Page.Resources>
         <local:BooltoVisibilityConverter x:Key="BoolToVisibility"></local:BooltoVisibilityConverter>
@@ -100,8 +101,8 @@
                 <TextBlock Text="签名档" FontSize="23" FontWeight="Bold" Foreground="#A9A9A9" Margin="0,5,0,0"></TextBlock>
                 
                 <Border Height="1" BorderBrush="{ThemeResource DividerBrush}" HorizontalAlignment="Stretch" BorderThickness="1"></Border>
-                <tool:MarkdownTextBlock Text="{x:Bind profile.Signature,Mode=OneWay}" x:Name="SignBoard" FontFamily="Noto Sans SC" LinkClicked="SignBoard_LinkClicked" Background="Transparent" ImageStretch="UniformToFill" ImageMaxWidth="450" ImageMaxHeight="450" ImageResolving="Drawer_ImageResolving"></tool:MarkdownTextBlock>
-                
+                <tool:MarkdownTextBlock x:Name="SignBoard" FontFamily="Noto Sans SC" LinkClicked="SignBoard_LinkClicked" Background="Transparent" ImageStretch="UniformToFill" ImageMaxWidth="450" ImageMaxHeight="450" ImageResolving="Drawer_ImageResolving" Visibility="Collapsed"></tool:MarkdownTextBlock>
+                <c:UbbTextBlock UbbText="{x:Bind profile.Signature,Mode=OneWay}" ImageMaxWidth="450"></c:UbbTextBlock>
                 <TextBlock Text="主题" FontSize="23" FontWeight="Bold" Foreground="#A9A9A9" x:Name="de" IsTextSelectionEnabled="True"></TextBlock>
                 <Border Height="1" BorderBrush="{ThemeResource DividerBrush}" HorizontalAlignment="Stretch" BorderThickness="1"></Border>
                 <Border Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1" CornerRadius="5">

@@ -107,7 +107,10 @@
                                 </StackPanel>
                             </HyperlinkButton>
                             <Border  Grid.Row="1" Padding="10" CornerRadius="4" Background="{ThemeResource MarkdownBackgroudBrush}" >
-                                <tool:MarkdownTextBlock x:Name="Drawer"  Text="{x:Bind Text,Converter={StaticResource UBBTextConverter}}" Background="Transparent" Foreground="{ThemeResource TextFillColorSecondaryBrush}" HorizontalAlignment="Stretch"  FontFamily="Noto Sans SC" VerticalAlignment="Stretch" LinkClicked="MarkdownTextBlock_LinkClicked"   ImageStretch="UniformToFill"  QuoteBorderBrush="{ThemeResource QuoteBorderBrush}" ImageClicked="Drawer_ImageClicked" ImageResolving="Drawer_ImageResolving" ImageMaxWidth="400" Unloaded="Drawer_Unloaded"></tool:MarkdownTextBlock>
+                                <image:UbbTextBlock UbbText="{x:Bind Text,Mode=OneWay}"></image:UbbTextBlock>
+                            </Border>
+                            <Border  Grid.Row="1" Padding="10" CornerRadius="4" Background="{ThemeResource MarkdownBackgroudBrush}" Visibility="Collapsed">
+                                <tool:MarkdownTextBlock x:Name="Drawer"   Background="Transparent" Foreground="{ThemeResource TextFillColorSecondaryBrush}" HorizontalAlignment="Stretch"  FontFamily="Noto Sans SC" VerticalAlignment="Stretch" LinkClicked="MarkdownTextBlock_LinkClicked"   ImageStretch="UniformToFill"  QuoteBorderBrush="{ThemeResource QuoteBorderBrush}" ImageClicked="Drawer_ImageClicked" ImageResolving="Drawer_ImageResolving" ImageMaxWidth="400" Unloaded="Drawer_Unloaded"></tool:MarkdownTextBlock>
                             </Border>
 
                             <StackPanel Orientation="Vertical" Grid.Row="0" Margin="5,5,10,0" HorizontalAlignment="Right">

@@ -10,12 +10,14 @@ using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Media.Imaging;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
 using System.Text;
 using Windows.ApplicationModel.DataTransfer;
 using Windows.UI;
 using Windows.UI.Text;
+using static System.Net.WebRequestMethods;
 namespace CC98.Controls.UbbRenderer.Common;
 
 // 渲染策略接口
@@ -30,28 +32,22 @@ public class TextRenderStrategy : IRenderStrategy
         if (node is TextNode textNode && !string.IsNullOrWhiteSpace(textNode.Content))
         {
             string content = textNode.Content;
-            if (string.IsNullOrEmpty(content))
-                return;
-
-            // 检查是否只包含换行符
-            if (IsOnlyNewLine(content))
-            {
-                HandleNewLineOnlyContent(node, context);
-                return;
-            }
-
-            // 处理包含换行符的文本
-            if (content.Contains("\r") || content.Contains("\n"))
-            {
-                HandleTextWithNewLines(content, node, context);
-                return;
-            }
-
-            // 普通文本
             var run = new Run { Text = content };
             context.AddInline(run);
-
         }
+    }
+    private bool IsInsideQuote(UbbNode node)
+    {
+        var current = node.Parent;
+        while (current != null)
+        {
+            if (current.Type == UbbNodeType.Quote)
+            {
+                return true;
+            }
+            current = current.Parent;
+        }
+        return false;
     }
     private bool IsOnlyNewLine(string text)
     {
@@ -99,6 +95,7 @@ public class TextRenderStrategy : IRenderStrategy
 
     private void HandleTextWithNewLines(string content, UbbNode node, RenderContext context)
     {
+        Debug.WriteLine($"Handling text with new lines: \"{content}\"");
         // 分割文本
         var lines = SplitTextWithNewLines(content);
 
@@ -368,7 +365,7 @@ public class UrlRenderStrategy : IRenderStrategy
                 catch { }
             }
             // 设置样式
-            hyperlink.Foreground = new SolidColorBrush(Colors.Blue);
+            hyperlink.Foreground = new SolidColorBrush(Colors.LightSeaGreen);
             hyperlink.TextDecorations = TextDecorations.Underline;
             // 点击事件
             hyperlink.Click += (sender, e) =>
@@ -414,7 +411,7 @@ public class ImageRenderStrategy : IRenderStrategy
                 var image = new SmartImage()
                 {
                     MaxWidth = (double)context.Properties["ImageMaxWidth"],
-                    Stretch = Stretch.UniformToFill,
+                    Stretch = Stretch.Uniform,
                     Source=src
                 };
                 var hyperlinkButton = new HyperlinkButton
@@ -723,7 +720,7 @@ public class QuoteRenderStrategy : IRenderStrategy
         else
         {
             border.Background = new SolidColorBrush(Colors.Transparent);
-            border.BorderThickness = new Thickness(1, 0, 0, 0);
+            border.BorderThickness = new Thickness(2, 0, 0, 0);
             border.BorderBrush = new SolidColorBrush(Color.FromArgb(255, 220, 176, 154));
             border.Margin = new Thickness(2, 2, 0, 2); // 内层缩进
         }
@@ -1014,7 +1011,7 @@ public class ColorRenderStrategy : IRenderStrategy
             case "white": return Colors.White;
             case "red": return Colors.Red;
             case "green": return Colors.Green;
-            case "blue": return Colors.Blue;
+            case "blue": return Color.FromArgb(255,142,130,254);
             case "gray":
             case "grey": return Colors.Gray;
             case "yellow": return Colors.Yellow;
@@ -1091,8 +1088,13 @@ public class EmojiRenderStrategy : IRenderStrategy
                 {
                     if (!string.IsNullOrEmpty(imageUrl))
                     {
-                        //var image = new SmartImage{Source = imageUrl};
-                        var image=new TextBlock { Text="测试"};
+                        var image = new SmartImage
+                        {
+                            Source = imageUrl,
+                            MaxWidth=32,
+                            MaxHeight=32,
+                            Stretch=Stretch.UniformToFill
+                        };
                         var inlineContainer = new InlineUIContainer { Child = image };
                         context.AddInline(inlineContainer);
                     }

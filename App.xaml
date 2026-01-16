@@ -67,6 +67,9 @@
             <Style TargetType="TextBlock">
                 <Setter Property="FontFamily" Value="/Assets/Fonts/HarmonyOS_Sans_SC_Regular.ttf#HarmonyOS Sans SC"></Setter>
             </Style>
+            <Style TargetType="RichTextBlock">
+                <Setter Property="FontFamily" Value="/Assets/Fonts/HarmonyOS_Sans_SC_Regular.ttf#HarmonyOS Sans SC"></Setter>
+            </Style>
             <Style TargetType="tool:SettingsCard">
                 <Setter Property="FontFamily" Value="/Assets/Fonts/HarmonyOS_Sans_SC_Regular.ttf#HarmonyOS Sans SC"></Setter>
             </Style>

@@ -312,39 +312,61 @@ public class Parser
     }
     private void ProcessCloseTagToken(Token token)
     {
-        var tagName = token.Value.ToLowerInvariant(); 
-
-        // 查找对应的开标签
+        var tagName = token.Value.ToLowerInvariant();
         var nodeTypeToFind = GetNodeTypeFromTagName(tagName);
 
-        // 查找对应的开标签
-        var stackCopy = new Stack<TagNode>(_nodeStack);
-        while (stackCopy.Count > 0)
+        // 查找栈中匹配的标签
+        var nodesToPop = new List<TagNode>();
+        var found = false;
+
+        // 临时复制栈以进行搜索
+        var tempStack = new Stack<TagNode>(_nodeStack.Reverse()); // 需要反转以获得正确的顺序
+
+        foreach (var node in tempStack)
         {
-            var node = stackCopy.Pop();
             if (node.Type == nodeTypeToFind)
             {
-                // 弹出到匹配的标签
-                while (_nodeStack.Count > 0 && _nodeStack.Peek() != node)
-                {
-                    _nodeStack.Pop();
-                }
-
-                if (_nodeStack.Count > 0)
-                    _nodeStack.Pop(); // 弹出匹配的标签本身
-
-                // 如果是块级标签，还需要弹出段落容器
-                if (_blockTags.Contains(tagName) && _nodeStack.Count > 0 &&
-                    _nodeStack.Peek().Type == UbbNodeType.Paragraph)
-                {
-                    _nodeStack.Pop();
-                }
-
-                return;
+                found = true;
+                break;
             }
+            nodesToPop.Add(node);
         }
 
-        // 没有找到匹配的开标签，忽略
+        if (found)
+        {
+            // 弹出所有直到匹配标签的节点
+            foreach (var nodeToPop in nodesToPop)
+            {
+                if (_nodeStack.Count > 0 && _nodeStack.Peek() == nodeToPop)
+                {
+                    _nodeStack.Pop();
+                }
+            }
+
+            // 弹出匹配的标签本身
+            if (_nodeStack.Count > 0 && _nodeStack.Peek().Type == nodeTypeToFind)
+            {
+                _nodeStack.Pop();
+            }
+
+            // 如果是块级标签，检查是否需要弹出段落容器
+            if (_blockTags.Contains(tagName))
+            {
+                // 如果栈顶是段落，并且这个段落是块级标签的子节点，则弹出它
+                if (_nodeStack.Count > 0 && _nodeStack.Peek().Type == UbbNodeType.Paragraph)
+                {
+                    // 检查这个段落的父节点是否是刚刚关闭的块级标签
+                    var paragraph = _nodeStack.Peek();
+                    var paragraphParent = paragraph.Parent as TagNode;
+
+                    // 如果段落的父节点是刚刚关闭的块级标签类型，则弹出段落
+                    if (paragraphParent != null && paragraphParent.Type == nodeTypeToFind)
+                    {
+                        _nodeStack.Pop();
+                    }
+                }
+            }
+        }
     }
 
     private void ProcessSelfCloseTagToken(Token token)

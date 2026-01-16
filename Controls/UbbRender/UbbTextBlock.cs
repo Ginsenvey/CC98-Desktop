@@ -203,7 +203,7 @@ namespace CC98.Controls
                     Properties =
                     {
                         ["FontSize"] = FontSize,
-                        ["Foreground"] = Foreground ?? new SolidColorBrush(Colors.Black),
+                        ["Foreground"] = Foreground ?? new SolidColorBrush(Colors.Gray),
                         ["CodeBackground"] = CodeBackground ?? new SolidColorBrush(Color.FromArgb(20, 0, 0, 0)),
                         ["QuoteBackground"] = QuoteBackground ?? new SolidColorBrush(Color.FromArgb(20, 0, 120, 215)),
                         ["ImageMaxWidth"] = ImageMaxWidth

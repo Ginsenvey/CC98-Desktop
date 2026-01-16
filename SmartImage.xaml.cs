@@ -139,7 +139,8 @@ namespace CC98.Controls
 
         private void InnerImage_Unloaded(object sender, RoutedEventArgs e)
         {
-            InnerImage.Source = null;
+            //此处释放资源会导致UBBTextBlock中Emoji标签无法正常显示。因此注释掉。
+            //InnerImage.Source = null;
         }
     }
 }
