@@ -1,4 +1,5 @@
-﻿using ColorCode;
+﻿using CC98.Controls.UbbRender;
+using ColorCode;
 using CommunityToolkit.WinUI.UI.Controls.Markdown.Render;
 using Microsoft.UI;
 using Microsoft.UI.Text;
@@ -410,11 +411,11 @@ public class ImageRenderStrategy : IRenderStrategy
 
             if (!string.IsNullOrEmpty(src))
             {
-                var image = new Image
+                var image = new SmartImage()
                 {
                     MaxWidth = (double)context.Properties["ImageMaxWidth"],
-                    Stretch = Stretch.Uniform,
-                    
+                    Stretch = Stretch.UniformToFill,
+                    Source=src
                 };
                 var hyperlinkButton = new HyperlinkButton
                 {
@@ -424,8 +425,8 @@ public class ImageRenderStrategy : IRenderStrategy
                     HorizontalAlignment = HorizontalAlignment.Left,
                     HorizontalContentAlignment=HorizontalAlignment.Stretch
                 };
-                // 异步加载图片
-                LoadImageAsync(image, src);
+                
+                
                 context.AddToContainer(hyperlinkButton);
             }
         }
@@ -1073,4 +1074,45 @@ public class FontRenderStrategy : IRenderStrategy
             }
         }
     }
+}
+public class EmojiRenderStrategy : IRenderStrategy
+{
+
+    public void Render(UbbNode node, RenderContext context)
+    {
+        // 不要FinalizeCurrentTextBlock(),保持在当前文本流
+        if (node is TagNode tagNode)
+        {
+            var emoticonCode = tagNode.GetAttribute("code");
+            if (!string.IsNullOrEmpty(emoticonCode))
+            {
+                var imageUrl = GetEmoticonUrl(emoticonCode);
+                try
+                {
+                    if (!string.IsNullOrEmpty(imageUrl))
+                    {
+                        //var image = new SmartImage{Source = imageUrl};
+                        var image=new TextBlock { Text="测试"};
+                        var inlineContainer = new InlineUIContainer { Child = image };
+                        context.AddInline(inlineContainer);
+                    }
+                    else
+                    {
+                        var run = new Run { Text = $"[{emoticonCode}]" };
+                        context.AddInline(run);
+                    }
+                }
+                catch(Exception ex)
+                {
+                    var run = new Run { Text = $"[{ex.Message}]" };
+                    context.AddInline(run);
+                }
+            }
+        }
+    }
+    private string GetEmoticonUrl(string code)
+    {
+        return EmoticonRules.GetEmoticonUrl(code);
+    }
+
 }

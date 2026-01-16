@@ -84,6 +84,7 @@ namespace CC98
                     Id = parameter["Pid"];
                     Editor.Text = parameter["BaseText"];
                     //Previewer.Text = UBBConverter.Convert(Editor.Text.Replace("\r\n", "  \n").Replace("\r", "  \n"), false);
+                    UbbViewer.UbbText = Editor.Text;
                     Editor.SelectionStart = Editor.Text.Length;
                     Parent_Id = parameter["ParentId"];
                     replyselector.IsSelected = true;
@@ -105,6 +106,7 @@ namespace CC98
                     Editor.Text = parameter["BaseText"];
                     SetTitle.Text= parameter["Title"];
                     //Previewer.Text = UBBConverter.Convert(Editor.Text.Replace("\r\n", "  \n").Replace("\r", "  \n"), false);
+                    UbbViewer.UbbText = Editor.Text;
                     Editor.SelectionStart = Editor.Text.Length;
                     replyselector.IsSelected = true;
                     SetTitle.IsEnabled = false;
@@ -216,8 +218,7 @@ namespace CC98
                 var picker = new FileOpenPicker(this.XamlRoot.ContentIslandEnvironment.AppWindowId);       
                 picker.CommitButtonText = "上传";
                 picker.SuggestedStartLocation = location;
-                //picker.FileTypeFilter.AddRange(filter);
-                //picker.ViewMode = PickerViewMode.Thumbnail;
+                picker.FileTypeFilter.AddRange(filter);
                 var file = await picker.PickSingleFileAsync();
                 if (file != null)
                 {

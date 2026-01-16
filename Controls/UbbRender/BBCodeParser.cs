@@ -1,4 +1,7 @@
-﻿using System;
+﻿using CC98.Controls.UbbRender;
+using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Documents;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -117,10 +120,17 @@ public class Tokenizer
 
                 _position++; // 跳过 ']'
 
-                var tokenType = isCloseTag ? TokenType.CloseTag :
-                               isSelfClose ? TokenType.SelfCloseTag : TokenType.OpenTag;
-
-                _tokens.Add(new Token(tokenType, tagContent.Trim('/'), start));
+                if (!isCloseTag && !isSelfClose && IsEmoticonTag(tagContent))
+                {
+                    // 表情标签作为自闭合标签处理
+                    _tokens.Add(new Token(TokenType.SelfCloseTag, tagContent, start));
+                }
+                else
+                {
+                    var tokenType = isCloseTag ? TokenType.CloseTag :
+                                   isSelfClose ? TokenType.SelfCloseTag : TokenType.OpenTag;
+                    _tokens.Add(new Token(tokenType, tagContent.Trim('/'), start));
+                }             
                 return;
             }
 
@@ -131,6 +141,15 @@ public class Tokenizer
         _position = start;
         ProcessText();
     }
+    // 检查是否是表情标签
+    private bool IsEmoticonTag(string tagContent)
+    {
+        // 检查是否包含空格（有属性就不是表情标签）
+        if (tagContent.Contains(' '))
+            return false;
+
+        return EmoticonRules.IsEmoticonTag(tagContent);
+    }
 }
 
 
@@ -140,7 +159,6 @@ public class Parser
     private int _position;
     private readonly Stack<TagNode> _nodeStack = new();
     private readonly UbbDocument _document;
-
     // 自闭合标签列表
     private static readonly HashSet<string> _selfClosingTags = new(StringComparer.OrdinalIgnoreCase)
     {
@@ -234,8 +252,20 @@ public class Parser
         {
             ProcessSelfClosingTag(tagInfo);
             return;
-        } 
+        }
+        // 检查是否为表情标签
+        if (IsEmoticonTag(tagInfo.Name))
+        {
+            ProcessEmoticonTag(tagInfo);
+            return;
+        }
 
+        // 检查是否为分割线标签
+        if (tagInfo.Name.Equals("line", StringComparison.OrdinalIgnoreCase))
+        {
+            ProcessLineTag(tagInfo);
+            return;
+        }
         // 创建新节点
         var newNode = CreateTagNode(tagInfo);
         _nodeStack.Peek().AddChild(newNode);
@@ -252,7 +282,34 @@ public class Parser
 
         _nodeStack.Push(newNode);
     }
+    private bool IsEmoticonTag(string tagName)
+    {
+        return EmoticonRules.IsEmoticonTag(tagName);
+    }
 
+    // 处理表情标签
+    private void ProcessEmoticonTag(TagInfo tagInfo)
+    {
+        var node = TagNode.Create(UbbNodeType.Emoji, tagInfo.Attributes);
+        // 将完整的标签名作为属性保存
+        node.Attributes["code"] = tagInfo.Name;
+
+        _nodeStack.Peek().AddChild(node);
+        _document.AllNodes.Add(node);
+
+        // 表情标签是自闭合的，不入栈
+    }
+
+    // 处理分割线标签
+    private void ProcessLineTag(TagInfo tagInfo)
+    {
+        var node = TagNode.Create(UbbNodeType.Divider, tagInfo.Attributes);
+
+        _nodeStack.Peek().AddChild(node);
+        _document.AllNodes.Add(node);
+
+        // 分割线标签是自闭合的，不入栈
+    }
     private void ProcessCloseTagToken(Token token)
     {
         var tagName = token.Value.ToLowerInvariant(); 
@@ -293,6 +350,11 @@ public class Parser
     private void ProcessSelfCloseTagToken(Token token)
     {
         var tagInfo = ParseTagInfo(token.Value);
+        if (IsEmoticonTag(tagInfo.Name))
+        {
+            ProcessEmoticonTag(tagInfo);
+            return;
+        }
         ProcessSelfClosingTag(tagInfo);
     }
 
@@ -414,6 +476,8 @@ public class Parser
 
     private UbbNodeType GetNodeTypeFromTagName(string tagName)
     {
+        if (IsEmoticonTag(tagName))
+            return UbbNodeType.Emoji;
         return tagName.ToLowerInvariant() switch
         {
             "b" => UbbNodeType.Bold,
@@ -437,6 +501,7 @@ public class Parser
             "*" => UbbNodeType.ListItem,
             "p" => UbbNodeType.Paragraph,
             "br" => UbbNodeType.LineBreak,
+            "line" => UbbNodeType.Divider,
             _ => UbbNodeType.Text // 未知标签作为文本处理
         };
     }
@@ -444,7 +509,11 @@ public class Parser
     private TagInfo ParseTagInfo(string tagContent)
     {
         var tagInfo = new TagInfo();
-
+        if (IsEmoticonTag(tagContent))
+        {
+            tagInfo.Name = tagContent.ToLowerInvariant();
+            return tagInfo;
+        }
         // 分离标签名和属性
         var spaceIndex = tagContent.IndexOf(' ');
         if (spaceIndex > 0)
@@ -508,19 +577,19 @@ public class Parser
         public Dictionary<string, string> Attributes { get; set; } = new();
     }
 }
-
 public class UbbParser
 {
     public static UbbDocument Parse(string ubbText)
     {
-        // 1. 词法分析
+        // 词法分析
         var tokenizer = new Tokenizer(ubbText);
         var tokens = tokenizer.Tokenize();
 
-        // 2. 语法分析
+        // 语法分析
         var parser = new Parser(tokens);
         var document = parser.Parse();
 
         return document;
     }
 }
+

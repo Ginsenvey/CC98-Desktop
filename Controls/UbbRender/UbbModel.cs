@@ -26,7 +26,10 @@ public enum UbbNodeType
     List,          // 列表 [list]
     ListItem,      // 列表项 [*]
     Paragraph,     // 段落（自动生成）
-    LineBreak      // 换行
+    LineBreak,      // 换行
+    Divider,        // 分隔线 [hr]
+    Emoji          // 表情 [em]
+
 }
 
 // 节点基类

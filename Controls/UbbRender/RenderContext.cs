@@ -11,7 +11,10 @@ public class RenderContext
 {
     public UbbTextBlock Control { get; set; }
     public Panel Container { get; set; }
-    public TextBlock CurrentTextBlock { get; set; }
+    // Use RichTextBlock to support InlineUIContainer children
+    public RichTextBlock CurrentRichTextBlock { get; set; }
+    private Paragraph CurrentParagraph { get; set; }
+
     public Stack<Panel> PanelStack { get; set; } = new Stack<Panel>();
     public Stack<Inline> InlineStack = new();
     // 临时存储当前正在构建的内联容器
@@ -44,7 +47,7 @@ public class RenderContext
     public void AddInline(Inline inline)
     {
         //如果还没有文本块，就新建一个
-        if (CurrentTextBlock == null)
+        if (CurrentParagraph == null || CurrentRichTextBlock == null)
         {
             StartNewTextBlock();
         }
@@ -75,8 +78,8 @@ public class RenderContext
         }
         else
         {
-            // 否则添加到文本块
-            CurrentTextBlock?.Inlines.Add(inline);
+            // 否则添加到当前段落
+            CurrentParagraph?.Inlines.Add(inline);
         }
     }
     /// <summary>
@@ -85,7 +88,7 @@ public class RenderContext
     /// <param name="container"></param>
     public void BeginInlineContainer(Inline container)
     {
-        if (CurrentTextBlock == null)
+        if (CurrentParagraph == null || CurrentRichTextBlock == null)
         {
             StartNewTextBlock();
         }
@@ -97,7 +100,7 @@ public class RenderContext
     }
 
     /// <summary>
-    /// 结束当前内联容器的构建
+    ///结束当前内联容器的构建
     /// </summary>
     public void EndInlineContainer()
     {
@@ -106,7 +109,7 @@ public class RenderContext
             return;
         }
         var completedInline = CurrentInline;
-        if (InlineStack.Count > 0)
+        if (InlineStack.Count >0)
         {
             // 从栈中取出父容器
             var parentContainer = InlineStack.Pop();
@@ -141,18 +144,19 @@ public class RenderContext
         }
         else
         {
-            // 如果没有父容器，添加到文本块
-            if (CurrentTextBlock == null)
+            // 如果没有父容器，添加到当前段落
+            if (CurrentParagraph == null || CurrentRichTextBlock == null)
             {
-                // 直接创建新的 TextBlock，避免调用 StartNewTextBlock() 导致循环
-                CurrentTextBlock = new TextBlock
+                //直接创建新的 RichTextBlock，避免循环调用 StartNewTextBlock()
+                CurrentRichTextBlock = new RichTextBlock
                 {
                     FontSize = Control.FontSize,
-                    Foreground = Control.Foreground ?? new SolidColorBrush(Colors.Black),
                     TextWrapping = TextWrapping.Wrap
                 };
+                CurrentParagraph = new Paragraph();
+                CurrentRichTextBlock.Blocks.Add(CurrentParagraph);
             }
-            CurrentTextBlock?.Inlines.Add(completedInline);
+            CurrentParagraph?.Inlines.Add(completedInline);
             CurrentInline = null;
         }
     }
@@ -167,17 +171,18 @@ public class RenderContext
         FinalizeCurrentTextBlock();
         Container.Children.Add(element);
     }
-    // 结束当前文本块的构建
+    //结束当前文本块的构建
     public void FinalizeCurrentTextBlock()
     {
         while (CurrentInline != null)
         {
             EndInlineContainer();
         }
-        if (CurrentTextBlock != null && CurrentTextBlock.Inlines.Any())
+        if (CurrentRichTextBlock != null && CurrentParagraph != null && CurrentParagraph.Inlines.Any())
         {
-            Container.Children.Add(CurrentTextBlock);
-            CurrentTextBlock = null;
+            Container.Children.Add(CurrentRichTextBlock);
+            CurrentRichTextBlock = null;
+            CurrentParagraph = null;
         }
         //清理栈
         InlineStack.Clear();
@@ -188,11 +193,13 @@ public class RenderContext
     {
         FinalizeCurrentTextBlock();
 
-        CurrentTextBlock = new TextBlock
+        CurrentRichTextBlock = new RichTextBlock
         {
             FontSize = Control.FontSize,
             Foreground = Control.Foreground ?? new SolidColorBrush(Colors.Black),
             TextWrapping = TextWrapping.Wrap
         };
+        CurrentParagraph = new Paragraph();
+        CurrentRichTextBlock.Blocks.Add(CurrentParagraph);
     }
 }

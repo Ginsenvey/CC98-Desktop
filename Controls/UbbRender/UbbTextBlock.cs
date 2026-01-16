@@ -151,7 +151,8 @@ namespace CC98.Controls
                 //[UbbNodeType.List] = new ListRenderStrategy(),
                 //[UbbNodeType.ListItem] = new ListItemRenderStrategy(),
                 [UbbNodeType.Paragraph] = new ParagraphRenderStrategy(),
-                [UbbNodeType.LineBreak] = new LineBreakRenderStrategy()
+                [UbbNodeType.LineBreak] = new LineBreakRenderStrategy(),
+                [UbbNodeType.Emoji]=new EmojiRenderStrategy()
             };
         }
 
@@ -183,7 +184,7 @@ namespace CC98.Controls
         // 渲染内容
         private void RenderContent()
         {
-            if (string.IsNullOrEmpty(UbbText) || _rootPanel == null)
+            if ( UbbText==null || _rootPanel == null)
                 return;
 
             // 清空现有内容
