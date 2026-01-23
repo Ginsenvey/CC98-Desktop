@@ -63,7 +63,7 @@
                     <ColumnDefinition Width="*"></ColumnDefinition>
                     <ColumnDefinition Width="Auto"></ColumnDefinition>
                 </Grid.ColumnDefinitions>
-                <TextBlock x:Name="TopicTitle" FontFamily="Noto Sans SC" Text="{x:Bind  metadata.text,Mode=OneWay}" Grid.Row="0" Grid.Column="0" VerticalAlignment="Center" FontWeight="Bold" Foreground="{ThemeResource AccentAAFillColorDefaultBrush}" FontSize="18" Margin="10,0,0,0" TextWrapping="Wrap" ></TextBlock>
+                <TextBlock x:Name="TopicTitle" Text="{x:Bind  metadata.text,Mode=OneWay}" Grid.Row="0" Grid.Column="0" VerticalAlignment="Center" FontWeight="Bold" Foreground="{ThemeResource AccentAAFillColorDefaultBrush}" FontSize="18" Margin="10,0,0,0" TextWrapping="Wrap" ></TextBlock>
                 
                 <StackPanel Orientation="Horizontal" Grid.Row="1" Grid.Column="0" Margin="10,10,0,0" Spacing="8">
                     <ic:SymbolIcon Symbol="Clock" FontSize="12" VerticalAlignment="Center"></ic:SymbolIcon>
@@ -103,14 +103,12 @@
                                     <Border Width="30" Height="30" CornerRadius="5" Background="{ThemeResource PortaitBackgroundColor}">
                                         <image:SmartImage  x:Name="portrait" Source="{x:Bind Url}" ></image:SmartImage>
                                     </Border>
-                                    <TextBlock Text="{x:Bind Author}" FontFamily="Noto Sans SC" VerticalAlignment="Center" ></TextBlock>
+                                    <TextBlock Text="{x:Bind Author}"  VerticalAlignment="Center" ></TextBlock>
                                 </StackPanel>
                             </HyperlinkButton>
-                            <Border  Grid.Row="1" Padding="10" CornerRadius="4" Background="{ThemeResource MarkdownBackgroudBrush}" >
-                                <image:UbbTextBlock UbbText="{x:Bind Text,Mode=OneWay}"></image:UbbTextBlock>
-                            </Border>
-                            <Border  Grid.Row="1" Padding="10" CornerRadius="4" Background="{ThemeResource MarkdownBackgroudBrush}" Visibility="Collapsed">
-                                <tool:MarkdownTextBlock x:Name="Drawer"   Background="Transparent" Foreground="{ThemeResource TextFillColorSecondaryBrush}" HorizontalAlignment="Stretch"  FontFamily="Noto Sans SC" VerticalAlignment="Stretch" LinkClicked="MarkdownTextBlock_LinkClicked"   ImageStretch="UniformToFill"  QuoteBorderBrush="{ThemeResource QuoteBorderBrush}" ImageClicked="Drawer_ImageClicked" ImageResolving="Drawer_ImageResolving" ImageMaxWidth="400" Unloaded="Drawer_Unloaded"></tool:MarkdownTextBlock>
+  
+                            <Border  Grid.Row="1" Padding="10" CornerRadius="4" Background="{ThemeResource MarkdownBackgroudBrush}">
+                                <tool:MarkdownTextBlock x:Name="Drawer" Text="{x:Bind Text,Converter={StaticResource UBBTextConverter},Mode=OneWay}"  Background="Transparent" Foreground="{ThemeResource TextFillColorSecondaryBrush}" HorizontalAlignment="Stretch"  FontFamily="/Assets/Fonts/HarmonyOS_Sans_SC_Regular.ttf#HarmonyOS Sans SC" VerticalAlignment="Stretch" LinkClicked="MarkdownTextBlock_LinkClicked"   ImageStretch="UniformToFill"  QuoteBorderBrush="{ThemeResource QuoteBorderBrush}" ImageClicked="Drawer_ImageClicked" ImageResolving="Drawer_ImageResolving" ImageMaxWidth="400" Unloaded="Drawer_Unloaded"></tool:MarkdownTextBlock>
                             </Border>
 
                             <StackPanel Orientation="Vertical" Grid.Row="0" Margin="5,5,10,0" HorizontalAlignment="Right">
@@ -294,16 +292,16 @@
                 <TextBlock Grid.Row="0" Grid.Column="1" Text="{x:Bind profile.Posts,Mode=OneWay}" FontWeight="SemiBold" HorizontalAlignment="Center"></TextBlock>
                 <TextBlock Grid.Row="0" Grid.Column="2" Text="{x:Bind profile.Fan,Mode=OneWay}" FontWeight="SemiBold" HorizontalAlignment="Center"></TextBlock>
                 <TextBlock Grid.Row="0" Grid.Column="3" Text="{x:Bind profile.Popularity,Mode=OneWay}" FontWeight="SemiBold" HorizontalAlignment="Center" ></TextBlock>
-                <TextBlock Grid.Row="1" Grid.Column="1" Text="主题数" FontFamily="Noto Sans SC" Foreground="{ThemeResource TextFillColorSecondaryBrush}" FontSize="12" HorizontalAlignment="Center"></TextBlock>
-                <TextBlock Grid.Row="1" Grid.Column="2" Text="粉丝" FontFamily="Noto Sans SC" Foreground="{ThemeResource TextFillColorSecondaryBrush}" FontSize="12" HorizontalAlignment="Center"></TextBlock>
-                <TextBlock Grid.Row="1" Grid.Column="3" Text="风评" FontFamily="Noto Sans SC" Foreground="{ThemeResource TextFillColorSecondaryBrush}" FontSize="12" HorizontalAlignment="Center"></TextBlock>
+                <TextBlock Grid.Row="1" Grid.Column="1" Text="主题数"  Foreground="{ThemeResource TextFillColorSecondaryBrush}" FontSize="12" HorizontalAlignment="Center"></TextBlock>
+                <TextBlock Grid.Row="1" Grid.Column="2" Text="粉丝"  Foreground="{ThemeResource TextFillColorSecondaryBrush}" FontSize="12" HorizontalAlignment="Center"></TextBlock>
+                <TextBlock Grid.Row="1" Grid.Column="3" Text="风评" Foreground="{ThemeResource TextFillColorSecondaryBrush}" FontSize="12" HorizontalAlignment="Center"></TextBlock>
                 <StackPanel Orientation="Horizontal" Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="4" Spacing="15">
-                    <TextBlock Text="{x:Bind profile.Name,Mode=OneWay}" FontFamily="Noto Sans SC" FontWeight="Bold" Foreground="#4d9891" IsTextSelectionEnabled="True"></TextBlock>
+                    <TextBlock Text="{x:Bind profile.Name,Mode=OneWay}"  FontWeight="Bold" Foreground="#4d9891" IsTextSelectionEnabled="True"></TextBlock>
                     <Border Background="{ThemeResource MarkdownBackgroudBrush}" Padding="3,0,3,0" CornerRadius="3">
-                        <TextBlock Text="{x:Bind profile.Id,Mode=OneWay}" FontFamily="Noto Sans SC" Foreground="{ThemeResource TextFillColorSecondaryBrush}" FontSize="12" IsTextSelectionEnabled="True"></TextBlock>
+                        <TextBlock Text="{x:Bind profile.Id,Mode=OneWay}"  Foreground="{ThemeResource TextFillColorSecondaryBrush}" FontSize="12" IsTextSelectionEnabled="True"></TextBlock>
                     </Border>
                 </StackPanel>
-                <tool:MarkdownTextBlock Text="{x:Bind profile.Signature,Mode=OneWay}" FontFamily="Noto Sans SC" Grid.Column="0" Grid.ColumnSpan="4" Grid.Row="3" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Background="Transparent" LinkClicked="MarkdownTextBlock_LinkClicked" ImageResolving="Drawer_ImageResolving"></tool:MarkdownTextBlock>
+                <tool:MarkdownTextBlock Text="{x:Bind profile.Signature,Mode=OneWay}"  Grid.Column="0" Grid.ColumnSpan="4" Grid.Row="3" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Background="Transparent" LinkClicked="MarkdownTextBlock_LinkClicked" ImageResolving="Drawer_ImageResolving"></tool:MarkdownTextBlock>
             </Grid>
         </TeachingTip>
 

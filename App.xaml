@@ -63,7 +63,6 @@
             <SolidColorBrush x:Key="QuoteBorderBrush" Color="{ThemeResource QuoteBorderColor}"></SolidColorBrush>
             <SolidColorBrush x:Key="StandardBrush" Color="{ThemeResource Standard}"></SolidColorBrush>
             <AcrylicBrush x:Key="AcrylicCardBrush" TintOpacity="0.4" TintColor="{ThemeResource AcrylicTintColor}" AlwaysUseFallback="False"/>
-            <FontFamily x:Key="HMSC">/Assets/Fonts/HarmonyOS_Sans_SC_Regular.ttf#hm sans</FontFamily>
             <Style TargetType="TextBlock">
                 <Setter Property="FontFamily" Value="/Assets/Fonts/HarmonyOS_Sans_SC_Regular.ttf#HarmonyOS Sans SC"></Setter>
             </Style>

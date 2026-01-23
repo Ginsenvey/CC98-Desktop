@@ -76,6 +76,7 @@ namespace CC98
 
         protected override void OnNavigatedFrom(NavigationEventArgs e)
         {
+            //释放资源
             base.OnNavigatedFrom(e);
 
             if (_mediaPlayer != null)
@@ -116,7 +117,9 @@ namespace CC98
             }
             
         }
-        
+        /// <summary>
+        /// 加载收藏集
+        /// </summary>
         private void LoadFavorites()
         {
             var f = ValidationHelper.IsTokenExist(Set, "Favorites");
@@ -169,7 +172,6 @@ namespace CC98
                 {
                     metadata.variant = IconVariant.Regular;
                 }
-                string boardid = js["boardId"].ToString();
               
                 if (metadata.reply != null)
                 {
@@ -1066,7 +1068,6 @@ namespace CC98
         public required string id { get; set; }
         public int count { get; set; }
         public required string description { get; set; }
-
     }
     public partial class MetaData : INotifyPropertyChanged
     {

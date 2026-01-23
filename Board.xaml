@@ -69,7 +69,7 @@
                                     <ColumnDefinition Width="*"></ColumnDefinition>
                                 </Grid.ColumnDefinitions>
                                 <ic:SymbolIcon Symbol="{x:Bind symbol}" Grid.Column="0" Foreground="{ThemeResource AccentAAFillColorDefaultBrush}"></ic:SymbolIcon>
-                                <TextBlock Text="{x:Bind text}" Grid.Column="1" VerticalAlignment="Center" Foreground="{ThemeResource TextFillColorSecondaryBrush}" FontFamily="Noto Sans SC"></TextBlock>
+                                <TextBlock Text="{x:Bind text}" Grid.Column="1" VerticalAlignment="Center" Foreground="{ThemeResource TextFillColorSecondaryBrush}"></TextBlock>
                                 <TextBlock Text="{x:Bind author}" Grid.Column="2" VerticalAlignment="Center" Foreground="{ThemeResource TextFillColorSecondaryBrush}"></TextBlock>
                                 <StackPanel Orientation="Horizontal" Grid.Column="3" Spacing="10" VerticalAlignment="Center" >
                                     <Button Background="Transparent"  HorizontalAlignment="Left" >

@@ -114,7 +114,7 @@
                 </StackPanel>
             </ContentDialog.Content>
         </ContentDialog>
-        <controls:Ribbon HorizontalAlignment="Stretch" Grid.Row="0" CornerRadius="0" BorderThickness="0" FontFamily="Noto Sans SC"> 
+        <controls:Ribbon HorizontalAlignment="Stretch" Grid.Row="0" CornerRadius="0" BorderThickness="0" FontFamily="/Assets/Fonts/HarmonyOS_Sans_SC_Regular.ttf#HarmonyOS Sans SC"> 
 
                 <controls:RibbonCollapsibleGroup AccessKey="AB"
                                              CollapsedAccessKey="AA"
@@ -328,7 +328,7 @@
             <SplitView Grid.Row="1" PanePlacement="Right" DisplayMode="Inline" IsPaneOpen="True" x:Name="EditArea" PaneBackground="{ThemeResource CardBackgroundFillColorDefaultBrush}">
                 <SplitView.Pane>
                 <ScrollViewer>
-                    <c:UbbTextBlock UbbText="" x:Name="UbbViewer"></c:UbbTextBlock>
+                    <tool:MarkdownTextBlock x:Name="Previewer"/> 
                 </ScrollViewer>
                    
                 </SplitView.Pane>

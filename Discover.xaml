@@ -22,7 +22,7 @@
                         <RowDefinition Height="*"></RowDefinition>
                     </Grid.RowDefinitions>
                     <HyperlinkButton Grid.Row="0"   x:Name="Person" BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}" BorderThickness="1" Margin="1,0,0,0" Click="Person_Click" Tag="{x:Bind rid}">
-                        <TextBlock Text="{x:Bind author}" VerticalAlignment="Center" FontSize="12" FontFamily="Noto Sans SC"></TextBlock>
+                        <TextBlock Text="{x:Bind author}" VerticalAlignment="Center" FontSize="12"></TextBlock>
                     </HyperlinkButton>
                     <HyperlinkButton  Grid.Row="1" Padding="10"  Height="Auto" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" Tag="{x:Bind pid}" Click="MainText_Click">
                         <TextBlock Text="{x:Bind title}"  TextWrapping="Wrap" Foreground="{ThemeResource TextFillColorSecondaryBrush}"></TextBlock>
