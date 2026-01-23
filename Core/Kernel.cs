@@ -60,13 +60,15 @@ namespace CC98.Kernel
         }
         public static async Task<string> OAuth(string verify,string code)
         {
+            //此处由于CC98后台原因，上传了secret。实际上是违背OIDC原则的，如果后台修正了问题，请去掉secret。
             string url = "https://openid.cc98.org/connect/token";
             var data = new Dictionary<string, string>()
             {
                 {"grant_type","authorization_code" },
                 {"client_id","d47a2448-779f-42f3-164f-08dd8896bbe5" },
-                {"redirect_uri","cc98://callback" },
-                {"code_verifier",verify},
+                {"client_secret","2e42f1b0-aa2b-4ea6-833e-4685f7d688e4" },
+                {"redirect_uri","cc98://callback"},
+                {"code_verifier",verify },
                 {"code",code }
             };
             var post_data=new FormUrlEncodedContent(data);
@@ -797,6 +799,7 @@ namespace CC98.Kernel
         {
             try
             {
+                ValidationHelper.Log("OAuth响应", $"状态码：{res.StatusCode}");
                 if (res.IsSuccessStatusCode)
                 {
                     string Text = await res.Content.ReadAsStringAsync();
@@ -811,7 +814,8 @@ namespace CC98.Kernel
                 }
                 else
                 {
-                    return "404:请求失败";
+                    string error=await res.Content.ReadAsStringAsync();
+                    return $"404:请求失败，错误内容为{error}";
                 }
             }
             catch

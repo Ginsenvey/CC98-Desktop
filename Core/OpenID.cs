@@ -9,7 +9,9 @@ using System.Text.Json;
 using System.Threading.Tasks;
 using System.Web;
 namespace CC98.Kernel.OpenID;
-
+/// <summary>
+/// 用于PKCE的OpenID认证流程生成
+/// </summary>
 public class OpenID()
 {
     public (string url,string veri,string state) GenerateAuthLoop()

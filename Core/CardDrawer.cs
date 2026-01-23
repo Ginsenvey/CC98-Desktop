@@ -7,7 +7,7 @@ namespace CC98.Kernel
     {
         public static async Task<string> DrawACard(string rule)
         {
-            string url = "https://card.cc98.org/api/draw/1";
+            string url = $"https://card.cc98.org/api/draw/{rule}";
             var res = await CCloginservice.vpn.PostAsync(url, null);
             return await ValidationHelper.AutoResponse(res);
         }

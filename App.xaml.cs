@@ -236,7 +236,9 @@ namespace CC98
             {
                 var protocol = (ProtocolActivatedEventArgs)e;
                 var query = System.Web.HttpUtility.ParseQueryString(protocol.Uri.Query);
+                ValidationHelper.Log("OAuth回调", protocol.Uri.ToString());
                 AuthFromOpenID(query);
+                
             }
             else
             {
@@ -330,13 +332,21 @@ namespace CC98
                 
             }
         }
-        private void Auth(string re)
+        /// <summary>
+        /// 提取令牌并注入
+        /// </summary>
+        /// <param name="resText"></param>
+        /// <remark>
+        /// 必须告知用户登录结果。
+        /// </remark>
+        private void Auth(string resText)
         {
-            if (re.Contains("access_token"))
+
+            if (resText.Contains("access_token"))
             {
                 try
                 {
-                    var js = Deserializer.ToDictionary(re);
+                    var js = Deserializer.ToDictionary(resText);
                     if (js != null)
                     {
                         string access = ValidationHelper.GetKey(js, "access_token");
@@ -361,8 +371,14 @@ namespace CC98
                     ActivateLogin(0);
                 }
             }
-            else//未返回有效凭据
-            {           
+            else//未返回有效凭据，此时可能与OIDC流程错误有关
+            {
+                AppNotification notification = new AppNotificationBuilder()
+                    .AddText("登录失败")
+                    .AddText("请报告开发者，错误信息:")
+                    .AddText(resText)
+                    .BuildNotification();
+                AppNotificationManager.Default.Show(notification);
                 Set.Values["IsActive"] = "0";
                 ActivateLogin(0);
             }
