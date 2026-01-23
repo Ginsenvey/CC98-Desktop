@@ -1,5 +1,4 @@
-﻿
-using CC98.Kernel;
+﻿using CC98.Kernel;
 using Duende.IdentityModel.Client;
 using HtmlAgilityPack;
 using Microsoft.UI.Xaml;

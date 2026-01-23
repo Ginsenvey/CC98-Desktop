@@ -814,6 +814,7 @@ namespace CC98
                     switch (tag)
                     {
                         case "0":
+                            //网页端OpenID未注册权限，不支持抽卡
                             if (ValidationHelper.IsTokenExist(Set, "IsActive") != "1")
                             {
                                 Flower.PlayAnimation("\uEA39", "当前登录方式不支持抽卡");

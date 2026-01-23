@@ -1,5 +1,4 @@
-﻿
-using CC98.Kernel;
+﻿using CC98.Kernel;
 using FluentIcons.Common;
 using Microsoft.UI.Xaml.Media.Imaging;
 using Newtonsoft.Json;

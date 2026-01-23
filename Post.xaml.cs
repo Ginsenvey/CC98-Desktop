@@ -70,8 +70,7 @@ namespace CC98
                 string mode= parameter["Mode"];
                 Mode = mode;
                 if (mode == "0")//回复主题
-                {
-                    
+                {    
                     status.Text = "回复主题:" + parameter["Pid"];
                     Id= parameter["Pid"];
                     replyselector.IsSelected = true;

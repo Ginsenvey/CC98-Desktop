@@ -1,5 +1,10 @@
 
+using CC98.Kernel;
+using CC98.Kernel.UserExperience;
+using CC98.Objects;
+using CC98.Services;
 using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.WinUI.UI.Controls;
 using DevWinUI;
 using FluentIcons.Common;
 using Microsoft.UI.Xaml;
@@ -19,6 +24,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
@@ -37,9 +43,6 @@ using Windows.Media.Core;
 using Windows.Media.Playback;
 using Windows.Storage;
 using Windows.UI.Core.Preview;
-using CC98.Services;
-using CC98.Kernel;
-using CC98.Kernel.UserExperience;
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
 
@@ -50,19 +53,18 @@ namespace CC98
     /// </summary>
     public sealed partial class Board : Page
     {
-        public ObservableCollection<STile> stiles=new();
+        public ObservableCollection<STile> stiles = new();
         public ApplicationDataContainer Set;
         public bool isBest = false;
-        public BoardData boardData { get; set; } = new() { name = "版面", todayCount = "今日发帖:9898", totalCount = "9898" };
+
+        public BoardData CurrentBoardData = new BoardData() { BoardMasters = [],Id=0,BigPaper="",Description="", Name = "版面", TodayCount = 9898, TopicCount = 9898 };
         public Board()
         {
             this.InitializeComponent();
             Set = ApplicationData.Current.LocalSettings;
             STileList.ItemsSource = stiles;
-            
-
         }
-        
+
         protected override void OnNavigatedTo(Microsoft.UI.Xaml.Navigation.NavigationEventArgs e)
         {
             base.OnNavigatedTo(e);
@@ -74,19 +76,14 @@ namespace CC98
             {
                 bid = parameter;
                 GetData(parameter);
-                LoadTopics(parameter,"0");
-
-            }
-            else
-            {
-
+                LoadTopics(parameter, "0");
             }
         }
-        public string bid= "0";
+        public string bid = "0";
         private async void GetData(string bid)
         {
-            string BoardUrl = "https://api.cc98.org/board/"+bid;
-            
+            string BoardUrl = "https://api.cc98.org/board/" + bid;
+
             try
             {
                 var BoardRes = await CCloginservice.vpn.GetAsync(BoardUrl);
@@ -95,31 +92,16 @@ namespace CC98
                     string BoardText = await BoardRes.Content.ReadAsStringAsync();
                     if (!string.IsNullOrEmpty(BoardText))
                     {
-                        var js = JsonConvert.DeserializeObject<Dictionary<string,object>>(BoardText);
-                        if (js != null)
+                        var data = JsonConvert.DeserializeObject<BoardData>(BoardText);
+                        if (data != null)
                         {
-                            var master = JsonConvert.DeserializeObject<JArray>(js["boardMasters"].ToString());
-                            string masters = string.Empty;
-                            List<string> masterlist = new List<string>();
-                            foreach(var user in master)
-                            {
-                                if (user != null)
-                                {
-                                    masterlist.Add(user.ToString());
-                                }
-                            }
-                            masters=string.Join(";", masterlist);
-                            string description = js["description"].ToString();
-                            string name = js["name"].ToString();
-                            string todaycount = js["todayCount"].ToString();
-                            string totaltopic = js["topicCount"].ToString();
-                            string bantext = js["bigPaper"].ToString() ;
-                            boardData.name = name;
-                            boardData.description = description;
-                            boardData.masters = masters;
-                            boardData.banText = UBBConverter.Convert(bantext, true);
-                            boardData.totalCount = "总话题数:" + totaltopic;
-                            boardData.todayCount = "今日帖数:" + todaycount;
+                            CurrentBoardData.Id = data.Id;
+                            CurrentBoardData.Name = data.Name;
+                            CurrentBoardData.Description = data.Description;
+                            CurrentBoardData.BigPaper = data.BigPaper;
+                            CurrentBoardData.BoardMasters = data.BoardMasters;
+                            CurrentBoardData.TopicCount = data.TopicCount;
+                            CurrentBoardData.TodayCount = data.TodayCount;
                         }
                     }
                 }
@@ -130,23 +112,23 @@ namespace CC98
             }
         }
 
-        private async Task LoadTopics(string bid,string start)
+        private async Task LoadTopics(string bid, string start)
         {
-            string _url =$"https://api.cc98.org/topic/best/board/{bid}?from={start}&size=20";
+            string _url = $"https://api.cc98.org/topic/best/board/{bid}?from={start}&size=20";
             string url = $"https://api.cc98.org/board/{bid}/topic?from={start}&size=20";
             var list = new JArray();
-            string res=await RequestSender.SimpleRequest(isBest?_url:url);
+            string res = await RequestSender.SimpleRequest(isBest ? _url : url);
             if (!res.StartsWith("404"))
             {
                 if (isBest)
                 {
-                    var js=Deserializer.ToDictionary(res);
+                    var js = Deserializer.ToDictionary(res);
                     if (js != null)
                     {
-                        string topics = ValidationHelper.GetKey(js,"topics");
+                        string topics = ValidationHelper.GetKey(js, "topics");
                         if (topics != "0")
                         {
-                            list= Deserializer.ToArray(topics);
+                            list = Deserializer.ToArray(topics);
                         }
                     }
                     else
@@ -157,7 +139,7 @@ namespace CC98
                 else
                 {
                     list = Deserializer.ToArray(res);
-                }        
+                }
             }
             else
             {
@@ -168,21 +150,21 @@ namespace CC98
                 foreach (var topic in list)
                 {
                     var info = JsonConvert.DeserializeObject<Dictionary<string, object>>(topic.ToString());
-                    string hit = ValidationHelper.GetKey(info,"hitCount");
-                    string pid = ValidationHelper.GetKey(info,"id");
+                    string hit = ValidationHelper.GetKey(info, "hitCount");
+                    string pid = ValidationHelper.GetKey(info, "id");
                     string author = "匿名";
-                    string text = ValidationHelper.GetKey(info,"title");
+                    string text = ValidationHelper.GetKey(info, "title");
                     if (info["userName"] != null)
                     {
-                        author = ValidationHelper.GetKey(info,"userName");
+                        author = ValidationHelper.GetKey(info, "userName");
                     }
                     string reply = ValidationHelper.GetKey(info, "replyCount");
-                    stiles.Add(new STile { author = author, hit = hit, reply = reply, pid = pid, text = text, symbol =isBest?FluentIcons.Common.Symbol.Star:FluentIcons.Common.Symbol.Note });
+                    stiles.Add(new STile { author = author, hit = hit, reply = reply, pid = pid, text = text, symbol = isBest ? FluentIcons.Common.Symbol.Star : FluentIcons.Common.Symbol.Note });
                 }
 
             }
         }
-        
+
 
         private void TileContent_Click(object sender, RoutedEventArgs e)
         {
@@ -201,7 +183,7 @@ namespace CC98
             }
         }
 
-        
+
         private async void MarkdownTextBlock_LinkClicked(object sender, CommunityToolkit.WinUI.UI.Controls.LinkClickedEventArgs e)
         {
             var url = e.Link.ToString();
@@ -209,12 +191,12 @@ namespace CC98
             switch (result.Key)
             {
                 case "topic":
-                    Frame.Navigate(typeof (Topic), result.Value);
+                    Frame.Navigate(typeof(Topic), result.Value);
                     break;
                 case "user":
                     {
                         string _url = "https://api.cc98.org/user/name/" + result.Value;
-                        
+
                         var PortRes = await CCloginservice.vpn.GetAsync(_url);
                         if (PortRes.StatusCode == System.Net.HttpStatusCode.OK)
                         {
@@ -271,7 +253,7 @@ namespace CC98
 
                         }
                     }
-                    
+
                     else if (result.Value == "video")
                     {
                         var param = new Dictionary<string, string>()
@@ -299,7 +281,7 @@ namespace CC98
             }
 
         }
-        
+
         public int history;
         private void STileList_Loaded(object sender, RoutedEventArgs e)
         {
@@ -340,11 +322,11 @@ namespace CC98
                             var r = await RequestSender.EditFocusList("add", bid);
                             if (r == "1")
                             {
-                                
+
                                 var i = new NavigationItem
                                 {
-                                    IconSymbol = BoardIcon.GetSymbol(bid, boardData.name),
-                                    Name = boardData.name,
+                                    IconSymbol = BoardIcon.GetSymbol(bid, CurrentBoardData.Name),
+                                    Name = CurrentBoardData.Name,
                                     IsEditable = true,
                                     Tag = bid
                                 };
@@ -365,7 +347,7 @@ namespace CC98
                             try
                             {
                                 await LoadTopics(bid, "0");
-                                
+
                             }
                             catch (Exception ex)
                             {
@@ -373,60 +355,49 @@ namespace CC98
                             }
                             break;
                     }
-                        
+
                 }
             }
-            
+
         }
 
         private async void BackFromBest_Click(object sender, RoutedEventArgs e)
         {
             BackFromBest.Visibility = Visibility.Collapsed;
             GooeyGroup.Visibility = Visibility.Visible;
-            isBest= false;
+            isBest = false;
             history = 0;
             stiles.Clear();
             await LoadTopics(bid, "0");
         }
-    }
-    public partial class BoardData :ObservableObject
-    {
-        
-        private string _name;
-        private string _totalCount;
-        private string _todayCount;
-        private string _masters;
-        private string _description;
-        private string _banText;
-        public string name
+
+        private async void Drawer_ImageResolving(object sender, ImageResolvingEventArgs e)
         {
-            get => _name;
-            set=> SetProperty(ref _name, value);
+            var defr = e.GetDeferral();
+            var Source = e.Url;
+            if (Source == null) return;
+
+            try
+            {
+                switch (Source)
+                {
+                    case string url when ImageResolver.IsWebUrl(url):
+                        e.Image = await ImageResolver.LoadWebImage(url);
+                        break;
+
+                    case string path when ImageResolver.IsLocalPath(path):
+                        e.Image = await ImageResolver.LoadLocalImage(path);
+                        break;
+                }
+            }
+            catch
+            {
+                e.Image = null;
+            }
+            e.Handled = true;
+            defr.Complete();
+
         }
-        public string totalCount
-        {
-            get => _totalCount;
-            set=>SetProperty(ref _totalCount, value);
-        }
-        public string masters
-        {
-            get => _masters;
-            set=>SetProperty(ref _masters, value);
-        }
-        public string description
-        {
-            get => _description;
-            set=>SetProperty(ref _description, value);
-        }
-        public string todayCount
-        {
-            get => _todayCount;
-            set=>SetProperty(ref _todayCount, value);
-        }
-        public string banText
-        {
-            get => _banText;
-            set => SetProperty(ref _banText, value);
-        }
+
     }
 }

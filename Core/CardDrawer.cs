@@ -1,5 +1,4 @@
-﻿
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 using static System.Net.WebRequestMethods;
 
 namespace CC98.Kernel
@@ -28,13 +27,8 @@ namespace CC98.Kernel
                     return "1";
                 }
             }
-            catch
-            {
-
-            }
+            catch{}
             return "0";
         }
-    }
-    
-    
+    }       
 }

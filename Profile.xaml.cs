@@ -455,7 +455,7 @@ namespace CC98
             set=>SetProperty(ref _isfollowing, value);
         }
     }
-    public class STile : INotifyPropertyChanged
+    public partial class STile : INotifyPropertyChanged
     {
         private string _text;
         private string _section;

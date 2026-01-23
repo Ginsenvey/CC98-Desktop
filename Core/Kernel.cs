@@ -66,7 +66,7 @@ namespace CC98.Kernel
                 {"grant_type","authorization_code" },
                 {"client_id","d47a2448-779f-42f3-164f-08dd8896bbe5" },
                 {"redirect_uri","cc98://callback" },
-                {"code_verifier",verify },
+                {"code_verifier",verify},
                 {"code",code }
             };
             var post_data=new FormUrlEncodedContent(data);
