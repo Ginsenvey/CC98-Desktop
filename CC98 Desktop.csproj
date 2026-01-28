@@ -171,7 +171,6 @@
     <PackageReference Include="CommunityToolkit.WinUI.Controls.ColorPicker" Version="8.2.251219" />
     <PackageReference Include="CommunityToolkit.WinUI.Controls.Primitives" Version="8.2.251219" />
     <PackageReference Include="CommunityToolkit.WinUI.Controls.SettingsControls" Version="8.2.251219" />
-    <PackageReference Include="CommunityToolkit.WinUI.Controls.TokenizingTextBox" Version="8.2.251219" />
     <PackageReference Include="CommunityToolkit.WinUI.UI.Controls.Markdown" Version="7.1.2" />
     <PackageReference Include="DevWinUI" Version="9.8.1" />
     <PackageReference Include="DevWinUI.Controls" Version="9.8.1" />
@@ -181,7 +180,6 @@
     <PackageReference Include="Microsoft.Windows.CsWinRT" Version="2.2.0" />
     <PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.26100.7175" />
     <PackageReference Include="Microsoft.WindowsAppSDK" Version="1.8.251106002" />
-    <PackageReference Include="Newtonsoft.Json" Version="13.0.5-beta1" />
   </ItemGroup>
 	
   <ItemGroup>

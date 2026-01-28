@@ -8,8 +8,6 @@ using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Navigation;
 using Microsoft.VisualBasic.FileIO;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -98,7 +96,7 @@ namespace CC98
         private async Task<bool> SearchTopic(string key,string start)
         {
             string searchurl = $"https://api.cc98.org/topic/search?keyword={key}&size=20&from={start}";
-            var r = await CCloginservice.vpn.GetAsync(searchurl);
+            var r = await LoginService.vpn.GetAsync(searchurl);
             if (r.StatusCode == HttpStatusCode.OK)
             {
                 string SText = await r.Content.ReadAsStringAsync();

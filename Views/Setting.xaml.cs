@@ -15,7 +15,6 @@ using Microsoft.UI.Xaml.Navigation;
 using Microsoft.Windows.AppNotifications;
 using Microsoft.Windows.AppNotifications.Builder;
 using Microsoft.Windows.BadgeNotifications;
-using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -110,7 +109,7 @@ namespace CC98
                 Set.Values["Theme"] = "2";
                 Follow.IsChecked = true;
             }
-            string pic = ValidationHelper.IsTokenExist(Set, "Themepic");
+            string pic = ValidationHelper.GetValue(Set, "Themepic");
             if (pic!="0")
             {  
                 var bitmap = new BitmapImage(new Uri(pic));
@@ -120,7 +119,7 @@ namespace CC98
             {
                 //这种情况不存在。
             }
-            if (ValidationHelper.IsTokenExist(Set,"TitlePage") != "0")
+            if (ValidationHelper.GetValue(Set,"TitlePage") != "0")
             {
                 TitlePage.SelectedIndex = Convert.ToInt32(Set.Values["TitlePage"])-1;
             }
@@ -128,7 +127,7 @@ namespace CC98
             {
                 Set.Values["TitlePage"] = "1";
             }
-            string _IsImageVisible = ValidationHelper.IsTokenExist(Set, "IsImageVisible");
+            string _IsImageVisible = ValidationHelper.GetValue(Set, "IsImageVisible");
             if (_IsImageVisible == "0")
             {
                 Set.Values["IsImageVisible"] = "2";//初始化为不显示
@@ -145,7 +144,7 @@ namespace CC98
                     IsImageVisible.IsOn = false;//2
                 }
             }
-            string _IsTailVisible = ValidationHelper.IsTokenExist(Set, "IsTailVisible");
+            string _IsTailVisible = ValidationHelper.GetValue(Set, "IsTailVisible");
             if (_IsTailVisible == "0")
             {
                 Set.Values["IsTailVisible"] = "2";//初始化为不显示
@@ -162,7 +161,7 @@ namespace CC98
                     TailVisibility.IsOn = false;//2
                 }
             }
-            string color = ValidationHelper.IsTokenExist(Set, "BaseColor");
+            string color = ValidationHelper.GetValue(Set, "BaseColor");
             BaseColorPiker.SelectedItem = BaseColorPiker.Items.First(i => (i as ComboBoxItem).Tag.ToString() == color);
         }
         public string EffectHistory = "";
@@ -279,8 +278,6 @@ namespace CC98
             {
                 settings += $"{item.Key}:{item.Value}\n";
             }
-            string vpn_auth_cookie = PasswordManager.RetrievePassword("Ticket");
-            settings += $"VPN会话: {vpn_auth_cookie}";
             LocalSet.Text = settings;
 
             LocalSetManager.IsExpanded = true;

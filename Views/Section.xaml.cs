@@ -13,13 +13,14 @@ using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Navigation;
 using System.Collections.ObjectModel;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 using Microsoft.UI.Xaml.Media.Imaging;
 using Windows.Storage;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using CC98.Kernel;
+using CC98.Kernel.ApiScope;
+using System.Text.Json;
+using DevWinUI;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -47,7 +48,7 @@ namespace CC98
         }
         private void LoadSet()
         {
-            var _Theme = ValidationHelper.IsTokenExist(Set, "ThemePic");
+            var _Theme = ValidationHelper.GetValue(Set, "ThemePic");
             if (_Theme != "0")
             {
                 //ThemePresenter.Source = new BitmapImage(new Uri(_Theme));
@@ -55,17 +56,16 @@ namespace CC98
         }
         private async Task<bool> FetchSection()
         {
-            string SectionText = await RequestSender.SimpleRequest("https://api.cc98.org/Board/all");
-            if (!SectionText.StartsWith("404"))
+            string url = ApiEndpoints.Board.AllBoards();
+            var res = await RequestSender.Fetch<string>(url);
+            if (res.IsNotValid)
             {
-                ValidationHelper.JsonWritter(SectionText, "SectionCache.json");
-                return true;
-            }
-            else
-            {
+                Flower.PlayAnimation("\uEA39", "¸üÐÂÊ×Ò³»º´æÊ§°Ü");
                 return false;
-                //Flower.PlayAnimation("\uEA39", "¸üÐÂÊ×Ò³»º´æÊ§°Ü");
             }
+            var data = res.Data;
+            ValidationHelper.JsonWritter(data, "SectionCache.json");
+            return true;
         }
         private async void GetAllSection()
         {
@@ -95,29 +95,12 @@ namespace CC98
                 Frame.Navigate(typeof(Board),tag); 
             }
         }
-        private void LoadSection(string SectionText)
+        private void LoadSection(string sectionJson)
         {
-            var SectionArray = Deserializer.ToArray(SectionText);
-            if (SectionArray != null)
+            var data = JsonSerializer.Deserialize<List<BoardInfo>>(sectionJson);
+            if (data != null)
             {
-                if (SectionArray.Count > 0)
-                {
-                    allSections.Clear();
-                    foreach (var section in SectionArray)
-                    {
-                        List<BoardInfo> boardinfo = new();
-                        var info = JsonConvert.DeserializeObject<Dictionary<string, object>>(section.ToString());
-                        string name = info["name"].ToString();
-                        string mastertext = info["masters"].ToString();
-                        var boards = JsonConvert.DeserializeObject<JArray>(info["boards"].ToString());
-                        foreach (var board in boards)
-                        {
-                            var js = JsonConvert.DeserializeObject<Dictionary<string, object>>(board.ToString());
-                            boardinfo.Add(new BoardInfo { BoardName = js["name"].ToString(), BoardId = js["id"].ToString() });
-                        }
-                        allSections.Add(new AllSection { SectionName = name, Boards = boardinfo });
-                    }
-                }
+                allSections.AddRange(data);
             }
         }
 
@@ -138,18 +121,12 @@ namespace CC98
     }
     public class AllSection
     {
-        public string SectionName
-        {
-            get; set;
-        }
-        public List<BoardInfo> Boards
-        {
-            get; set;
-        }
+        public string SectionName { get; set; } = string.Empty;
+        public List<BoardInfo> Boards {  get; set; }= new List<BoardInfo>();
     }
     public class BoardInfo
     {
-        public string BoardName { get; set; }
-        public string BoardId { get; set; }
+        public string BoardName { get; set; }=string.Empty;
+        public int BoardId { get; set; }
     }
 }

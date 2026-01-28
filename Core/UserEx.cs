@@ -1,7 +1,6 @@
 ﻿using CC98.Kernel;
 using FluentIcons.Common;
 using Microsoft.UI.Xaml.Media.Imaging;
-using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -174,14 +173,14 @@ namespace CC98.Kernel.UserExperience//用户体验模型，包括:版面图标�
         }
         public static async Task<BitmapSource> LoadWebImage(string url)
         {
-            if (!CCloginservice.vpn.IsVpnEnabled)
+            if (!LoginService.vpn.IsVpnEnabled)
             {
                 // 不使用WebVPN
                 return new BitmapImage(new Uri(url));
             }
 
             // 使用WebVPN加载
-            byte[] imageBytes = await CCloginservice.vpn.GetByteArrayAsync(url);
+            byte[] imageBytes = await LoginService.vpn.GetByteArrayAsync(url);
             return await LoadFromBytes(imageBytes);
         }
         public static async Task<BitmapSource> LoadLocalImage(string path)

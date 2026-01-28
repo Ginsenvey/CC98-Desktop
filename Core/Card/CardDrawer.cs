@@ -8,7 +8,7 @@ namespace CC98.Kernel
         public static async Task<string> DrawACard(string rule)
         {
             string url = $"https://card.cc98.org/api/draw/{rule}";
-            var res = await CCloginservice.vpn.PostAsync(url, null);
+            var res = await LoginService.vpn.PostAsync(url, null);
             return await ValidationHelper.AutoResponse(res);
         }
         public static async Task<string> Stat()
@@ -21,7 +21,7 @@ namespace CC98.Kernel
             string url = "https://card.cc98.org/api/collection/all-rest";
             try
             {
-                var r = await CCloginservice.vpn.DeleteAsync(url);
+                var r = await LoginService.vpn.DeleteAsync(url);
                 if (r.StatusCode == System.Net.HttpStatusCode.OK)
                 {
                     return "1";

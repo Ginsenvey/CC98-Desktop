@@ -8,8 +8,6 @@ using Microsoft.UI.Xaml.Data;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Navigation;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -111,7 +109,7 @@ namespace CC98
                     porturl += string.Join("&", users);
                     if (users.Count > 0)
                     {
-                        var portres = await CCloginservice.vpn.GetAsync(porturl);
+                        var portres = await LoginService.vpn.GetAsync(porturl);
                         if (portres.StatusCode == System.Net.HttpStatusCode.OK)
                         {
                             string port = await portres.Content.ReadAsStringAsync();
@@ -284,7 +282,7 @@ namespace CC98
         private async void Drawer_LinkClicked(object sender, LinkClickedEventArgs e)
         {
             var url = e.Link.ToString();
-            var result = LinkAnalyzer.LinkDefinite(url);
+            var result = LinkAnalyzer.Parse(url);
             switch (result.Key)
             {
                 case "topic":

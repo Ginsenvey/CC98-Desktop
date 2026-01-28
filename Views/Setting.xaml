@@ -160,11 +160,11 @@
                     <ToggleSwitch x:Name="TailVisibility" Toggled="TailVisibility_Toggled"></ToggleSwitch>
                 </tool:SettingsCard>
                 <TextBlock  Text="关于" FontSize="16" Margin="5,2,0,5"></TextBlock>
-                <tool:SettingsExpander Header="CC98 Desktop" Description="2025.发布构建">
+                <tool:SettingsExpander Header="CC98 Desktop" Description="2026.发布构建">
                     <tool:SettingsExpander.HeaderIcon>
                         <ic:SymbolIcon Symbol="Info" ></ic:SymbolIcon>
                     </tool:SettingsExpander.HeaderIcon>
-                    <TextBlock Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="Version 1.2.1" />
+                    <TextBlock Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="Version 1.2.6" />
                     <tool:SettingsExpander.ItemsHeader>
                         <TextBlock Text="开放源代码库" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Margin="20,10,10,10"></TextBlock>
                     </tool:SettingsExpander.ItemsHeader>

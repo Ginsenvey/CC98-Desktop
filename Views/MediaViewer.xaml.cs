@@ -66,7 +66,7 @@ namespace CC98
                 VideoPlayer.Visibility = Visibility.Visible;
                 Grid.SetRow(VideoPlayer,1);
                 Grid.SetRowSpan(VideoPlayer, 2);
-                var source =await CCloginservice.vpn.GetSourceAsync(_url);
+                var source =await LoginService.vpn.GetSourceAsync(_url);
                 if (source != null)
                 {
                     VideoPlayer.Source = source;

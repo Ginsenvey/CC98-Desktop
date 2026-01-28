@@ -16,8 +16,6 @@ using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Media.Animation;
 using Microsoft.UI.Xaml.Media.Imaging;
 using Microsoft.Windows.BadgeNotifications;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -105,7 +103,7 @@ namespace CC98
         }
         private async void LoadProfile()
         {
-            string port = ValidationHelper.IsTokenExist(Set, "Portrait");
+            string port = ValidationHelper.GetValue(Set, "Portrait");
             if (port != "0")
             {
                 try
@@ -160,7 +158,7 @@ namespace CC98
                 string r=await RequestSender.EditFocusList("delete", tag);
                 if (r == "1")
                 {
-                    string custom_boards = ValidationHelper.IsTokenExist(Set, "CustomBoards");
+                    string custom_boards = ValidationHelper.GetValue(Set, "CustomBoards");
                     if (custom_boards != "0")
                     {
                         var boardinfo = JsonConvert.DeserializeObject<Dictionary<string,string>>(custom_boards);
@@ -186,7 +184,7 @@ namespace CC98
         
         private async void GetFocusBoards()//同步客户端和在线关注版块的信息
         {
-            string custom_boards = ValidationHelper.IsTokenExist(Set, "CustomBoards");
+            string custom_boards = ValidationHelper.GetValue(Set, "CustomBoards");
             if (custom_boards!="0")
             {
                 memory = JsonConvert.DeserializeObject<Dictionary<string, string>>(custom_boards);
@@ -235,7 +233,7 @@ namespace CC98
                 string BoardUrl = "https://api.cc98.org/board/" + BoardId;
                 try
                 {
-                    var BoardRes = await CCloginservice.vpn.GetAsync(BoardUrl);
+                    var BoardRes = await LoginService.vpn.GetAsync(BoardUrl);
                     if (BoardRes.StatusCode == System.Net.HttpStatusCode.OK)
                     {
                         string BoardText = await BoardRes.Content.ReadAsStringAsync();
@@ -266,7 +264,7 @@ namespace CC98
         }
         private async void LoadIndex()
         {
-            string tag = ValidationHelper.IsTokenExist(Set, "TitlePage");
+            string tag = ValidationHelper.GetValue(Set, "TitlePage");
             if (tag!="0")
             {
                 switch (tag)
@@ -335,7 +333,7 @@ namespace CC98
         }
         private  void LoadSettings()
         {
-            string effect = ValidationHelper.IsTokenExist(Set, "Effect");
+            string effect = ValidationHelper.GetValue(Set, "Effect");
             switch (effect)
             {
                 case "0":
@@ -363,7 +361,7 @@ namespace CC98
                     this.SystemBackdrop = new MicaSystemBackdrop();
                     break;
             }
-            string theme = ValidationHelper.IsTokenExist(Set, "Theme");
+            string theme = ValidationHelper.GetValue(Set, "Theme");
             if (theme == "1")
             {
                 RootGrid.RequestedTheme = ElementTheme.Light;
@@ -377,14 +375,14 @@ namespace CC98
                 RootGrid.RequestedTheme = ElementTheme.Default;
             }
             
-            if (ValidationHelper.IsTokenExist(Set,"ThemePic")=="0")
+            if (ValidationHelper.GetValue(Set,"ThemePic")=="0")
             {
                 string themesPath = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Themes");
                 var Files = Directory.GetFiles(themesPath, "*.jpg", SearchOption.AllDirectories);
                 var file = Files[0];
                 Set.Values["Themepic"]= file;
             }
-            string color = ValidationHelper.IsTokenExist(Set, "BaseColor");
+            string color = ValidationHelper.GetValue(Set, "BaseColor");
             GridTitleBar.Background = (SolidColorBrush)Application.Current.Resources[color];
             Navi.Background= (SolidColorBrush)Application.Current.Resources[color];
         }
@@ -406,8 +404,8 @@ namespace CC98
             {
                 try
                 {
-                    CCloginservice.vpn.client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Access);
-                    var response = await CCloginservice.vpn.GetAsync("https://api.cc98.org/me/unread-count");
+                    LoginService.vpn.client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Access);
+                    var response = await LoginService.vpn.GetAsync("https://api.cc98.org/me/unread-count");
                     if (response.StatusCode == HttpStatusCode.OK)
                     {
                         string CheckResponse = await response.Content.ReadAsStringAsync();
@@ -431,7 +429,7 @@ namespace CC98
                         }
                         catch (Exception ex)//此类情况通常为网络问题，不再尝试登录
                         {
-                            if (CCloginservice.vpn.IsVpnEnabled)
+                            if (LoginService.vpn.IsVpnEnabled)
                             {
                                 LoadIndex();
                             }
@@ -463,7 +461,7 @@ namespace CC98
 
         private async void RefreshMessage()
         {
-            var response = await CCloginservice.vpn.GetAsync("https://api.cc98.org/me/unread-count");
+            var response = await LoginService.vpn.GetAsync("https://api.cc98.org/me/unread-count");
             if (response.StatusCode == HttpStatusCode.OK)
             {
 
@@ -815,7 +813,7 @@ namespace CC98
                     {
                         case "0":
                             //网页端OpenID未注册权限，不支持抽卡
-                            if (ValidationHelper.IsTokenExist(Set, "IsActive") != "1")
+                            if (ValidationHelper.GetValue(Set, "IsActive") != "1")
                             {
                                 Flower.PlayAnimation("\uEA39", "当前登录方式不支持抽卡");
                                 return;

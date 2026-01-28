@@ -13,8 +13,6 @@ using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Navigation;
 using Microsoft.Windows.Storage.Pickers;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -23,7 +21,7 @@ using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Runtime.InteropServices.WindowsRuntime;
-using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 using Windows.Foundation;
 using Windows.Foundation.Collections;
@@ -285,7 +283,7 @@ namespace CC98
                 {
                     string tail = "[align=right][size=3][color=gray]——来自「[b][color=purple]CC98 For Windows[/color][/b]」[/color][/size][/align]";
                     string maintext = Editor.Text.Replace("\r\n", "\n").Replace("\r", "\n");
-                    string target=ValidationHelper.IsTokenExist(Set,"IsTailVisible")=="1"?maintext+"\n"+tail:maintext;
+                    string target=ValidationHelper.GetValue(Set,"IsTailVisible")=="1"?maintext+"\n"+tail:maintext;
                     string MyReplyId=await RequestSender.SendReplyToTopic(Id,target, IsAnonymous,NotifyReplier ,Content_Type,Mode=="1",Parent_Id);
                     //直接构造json字符串和使用jsonconvert序列化的换行符变化方式不同。这里的替换方式适用于序列化。
                     if(MyReplyId.StartsWith("101:"))
@@ -349,13 +347,13 @@ namespace CC98
                 var fileContent = new ByteArrayContent(File.ReadAllBytes(filePath));
                 fileContent.Headers.ContentType = new MediaTypeHeaderValue("multipart/form-data"); 
                 formData.Add(fileContent, "files", Path.GetFileName(filePath));
-                HttpResponseMessage response = await CCloginservice.vpn.PostAsync(Url, formData);
+                HttpResponseMessage response = await LoginService.vpn.PostAsync(Url, formData);
                 if (response.StatusCode == System.Net.HttpStatusCode.OK)
                 {
                     string res = await response.Content.ReadAsStringAsync();
                     if (!string.IsNullOrEmpty(res))
                     {
-                        var array = JsonConvert.DeserializeObject<JArray>(res);
+                        var array = JsonSerializer.Deserialize<JArray>(res);
                         if (array.Count == 1)
                         {
                             return array[0].ToString();

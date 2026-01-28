@@ -1,6 +1,9 @@
 
 using CC98.Controls;
 using CC98.Kernel;
+using CC98.Kernel.ApiScope;
+using CC98.Objects;
+using DevWinUI;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Controls.Primitives;
@@ -9,9 +12,6 @@ using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Media.Imaging;
 using Microsoft.UI.Xaml.Navigation;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
-using Newtonsoft.Json.Serialization;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -37,102 +37,48 @@ namespace CC98
     public sealed partial class Discover : Page
     {
         public ApplicationDataContainer Set=ApplicationData.Current.LocalSettings;
-        public ObservableCollection<StandardPost> tiles=new();
-        public ObservableCollection<RandomPost> randomtiles=new();//必须是可观测集合，否则UI不显示。
+        public ObservableCollection<TopicInfo> topics=new();
+        public ObservableCollection<SimpleTopicInfo> randomTopics=new();//必须是可观测集合，否则UI不显示。
+        public int currentPage = 0;
+        public int PageSize = 20;
         public Discover()
         {
             this.InitializeComponent();
-           
             Set = ApplicationData.Current.LocalSettings;
-            
-            RandomTiles.ItemsSource = randomtiles;
-            GetNewTopic("0");
+            RandomTiles.ItemsSource = randomTopics;
+            GetNewTopic(0);
             GetRandomTile();
         }
         
-        private async Task<bool> GetNewTopic(string start)
+        private async Task<bool> GetNewTopic(int start)
         {
-            
-            string NewTopicUrl = "https://api.cc98.org/topic/new?from=" + start + "&size=20";
-            string NewTopicText=await RequestSender.SimpleRequest(NewTopicUrl);
-            if (!NewTopicText.StartsWith("404"))
+            string newTopicUrl = ApiEndpoints.Topic.NewTopicList(currentPage*PageSize);
+            var newTopicResult = await RequestSender.Fetch<List<TopicInfo>>(newTopicUrl);
+            if (!newTopicResult.IsSuccess || newTopicResult.Data == null)
             {
-                var NewTopicList = Deserializer.ToArray(NewTopicText);
-                if (NewTopicList != null)
-                {
-                    if(NewTopicList.Count > 0)
-                    {
-                        tiles.Clear();
-                        foreach (var Topic in NewTopicList)
-                        {
-                            try
-                            {
-                                var topic = Deserializer.ToItem(Topic.ToString());
-                                if (topic != null)
-                                {
-                                    tiles.Add(topic);
-                                }
-                            }
-                            catch
-                            {
-
-                            }
-                        }
-                        return true;
-                    }
-                }
+                return false;
             }
-            return false;
+            var data= newTopicResult.Data;
+            topics.AddRange(data);   
+            return true;
         }
 
         
         private async void GetRandomTile()
         {
-            string NewTopicUrl = "https://api.cc98.org/topic/random-recent?size=10";
-            try
+            string randomTopicUrl = ApiEndpoints.Topic.RandomTopicList();
+            var randomTopicResult = await RequestSender.Fetch<List<SimpleTopicInfo>>(randomTopicUrl);
+            if (!randomTopicResult.IsSuccess || randomTopicResult.Data == null)
             {
-                var RandomRes = await CCloginservice.vpn.GetAsync(NewTopicUrl);
-                if (RandomRes.StatusCode == System.Net.HttpStatusCode.OK)
-                {
-                    string RandomText = await RandomRes.Content.ReadAsStringAsync();
-                    var js = JsonConvert.DeserializeObject<JArray>(RandomText);
-                    if (js != null)
-                    {
-                        if (js.Count > 0)
-                        {
-                            randomtiles.Clear();
-                            foreach (var news in js)
-                            {
-                                var tile = JsonConvert.DeserializeObject<Dictionary<string, object>>(news.ToString());
-                                string rid = "0";
-                                if (tile["userId"] != null)
-                                {
-                                    rid = tile["userId"].ToString();
-                                }
-                                string pid = tile["id"].ToString();
-                                string hit = tile["hitCount"].ToString();
-                                string title = tile["title"].ToString();
-                                string time = tile["time"].ToString();
-                                string reply = tile["replyCount"].ToString();
-                                randomtiles.Add(new RandomPost { title = title, pid = pid, time = time, hit = hit, reply = reply });
-                            }
-                        }
-                    }
-                }
-                else
-                {
-
-                }
-
+                return;
             }
-            catch (Exception ex)
-            {
-                
-            }
+            var data = randomTopicResult.Data;
+            randomTopics.AddRange(data);
         }
 
         private void RefRandomTiles_Click(object sender, RoutedEventArgs e)
         {
+            randomTopics.Clear();
             GetRandomTile();
         }
 
@@ -254,14 +200,7 @@ namespace CC98
 
         
     }
-    public class RandomPost
-    {
-        public string title { get; set; }
-        public string reply { get; set; }
-        public string hit { get; set; }
-        public string pid { get; set; }
-        public string time { get; set; }
-    }
+    
     public partial class PostTemplateSelector : DataTemplateSelector
     {
         // 定义不同模板属性
@@ -272,9 +211,9 @@ namespace CC98
         // 重写选择方法
         protected override DataTemplate SelectTemplateCore(object item)
         {
-            if (item is StandardPost post)
+            if (item is TopicInfo topic)
             {
-                if (post.images.Count > 0)
+                if (topic.MediaContent.Thumbnail.Count > 0)
                 {
                     return ImageTemplate;
                 }

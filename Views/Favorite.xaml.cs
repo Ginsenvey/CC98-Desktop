@@ -66,7 +66,7 @@ namespace CC98
         }
         private void LoadFavorites()
         {
-            var f = ValidationHelper.IsTokenExist(Set, "Favorites");
+            var f = ValidationHelper.GetValue(Set, "Favorites");
             if (f != "0")
             {
                 //likecollection.MenuItems.Clear();
@@ -90,7 +90,7 @@ namespace CC98
             if (mode == "favorite")
             {
                 string url = "https://api.cc98.org/topic/me/favorite?from=" + start + "&size=11&order=" + order + "&groupid=" + groupid;
-                var r = await CCloginservice.vpn.GetAsync(url);
+                var r = await LoginService.vpn.GetAsync(url);
                 if (r.StatusCode == System.Net.HttpStatusCode.OK)
                 {
                     string restext = await r.Content.ReadAsStringAsync();

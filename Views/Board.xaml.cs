@@ -17,8 +17,6 @@ using Microsoft.UI.Xaml.Navigation;
 using Microsoft.VisualBasic;
 using Microsoft.Windows.AppNotifications;
 using Microsoft.Windows.AppNotifications.Builder;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -42,7 +40,9 @@ using Windows.Media.AppBroadcasting;
 using Windows.Media.Core;
 using Windows.Media.Playback;
 using Windows.Storage;
+using System.Text.Json;
 using Windows.UI.Core.Preview;
+using CC98.Kernel.ApiScope;
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
 
@@ -53,7 +53,7 @@ namespace CC98
     /// </summary>
     public sealed partial class Board : Page
     {
-        public ObservableCollection<STile> stiles = new();
+        public ObservableCollection<SimpleTopicInfo> topics = new();
         public ApplicationDataContainer Set;
         public bool isBest = false;
 
@@ -62,7 +62,7 @@ namespace CC98
         {
             this.InitializeComponent();
             Set = ApplicationData.Current.LocalSettings;
-            STileList.ItemsSource = stiles;
+            STileList.ItemsSource = topics;
         }
 
         protected override void OnNavigatedTo(Microsoft.UI.Xaml.Navigation.NavigationEventArgs e)
@@ -76,100 +76,46 @@ namespace CC98
             {
                 bid = parameter;
                 GetData(parameter);
-                LoadTopics(parameter, "0");
+                LoadTopics(parameter, 0);
             }
         }
         public string bid = "0";
-        private async void GetData(string bid)
+        private async void GetData(int boardId)
         {
-            string BoardUrl = "https://api.cc98.org/board/" + bid;
-
-            try
+            string boardDataUrl = ApiEndpoints.Board.BoardInfo(boardId);
+            var boardDataResult = await RequestSender.Fetch<BoardData>(boardDataUrl);
+            if (!boardDataResult.IsSuccess || boardDataResult.Data == null) 
             {
-                var BoardRes = await CCloginservice.vpn.GetAsync(BoardUrl);
-                if (BoardRes.StatusCode == System.Net.HttpStatusCode.OK)
-                {
-                    string BoardText = await BoardRes.Content.ReadAsStringAsync();
-                    if (!string.IsNullOrEmpty(BoardText))
-                    {
-                        var data = JsonConvert.DeserializeObject<BoardData>(BoardText);
-                        if (data != null)
-                        {
-                            CurrentBoardData.Id = data.Id;
-                            CurrentBoardData.Name = data.Name;
-                            CurrentBoardData.Description = data.Description;
-                            CurrentBoardData.BigPaper = data.BigPaper;
-                            CurrentBoardData.BoardMasters = data.BoardMasters;
-                            CurrentBoardData.TopicCount = data.TopicCount;
-                            CurrentBoardData.TodayCount = data.TodayCount;
-                        }
-                    }
-                }
+                return;
             }
-            catch (Exception ex)
-            {
-
-            }
+            var data= boardDataResult.Data;
+            CurrentBoardData.Id = data.Id;
+            CurrentBoardData.Name = data.Name;
+            CurrentBoardData.Description = data.Description;
+            CurrentBoardData.BigPaper = data.BigPaper;
+            CurrentBoardData.BoardMasters = data.BoardMasters;
+            CurrentBoardData.TopicCount = data.TopicCount;
+            CurrentBoardData.TodayCount = data.TodayCount;   
         }
 
-        private async Task LoadTopics(string bid, string start)
+        private async Task LoadTopics(int boardId, int start)
         {
-            string _url = $"https://api.cc98.org/topic/best/board/{bid}?from={start}&size=20";
-            string url = $"https://api.cc98.org/board/{bid}/topic?from={start}&size=20";
-            var list = new JArray();
-            string res = await RequestSender.SimpleRequest(isBest ? _url : url);
-            if (!res.StartsWith("404"))
+            string topicUrl = ApiEndpoints.Board.TopicList(isBest, boardId, start);
+            var topicResult = await RequestSender.Fetch<List<SimplePost>>(topicUrl);
+            if (topicResult.IsNotValid)
             {
-                if (isBest)
-                {
-                    var js = Deserializer.ToDictionary(res);
-                    if (js != null)
-                    {
-                        string topics = ValidationHelper.GetKey(js, "topics");
-                        if (topics != "0")
-                        {
-                            list = Deserializer.ToArray(topics);
-                        }
-                    }
-                    else
-                    {
-                        Flower.PlayAnimation("\uEA39", res);
-                    }
-                }
-                else
-                {
-                    list = Deserializer.ToArray(res);
-                }
+                Flower.PlayAnimation("\uEA39", topicResult.Message);
+                return;
             }
-            else
-            {
-                Flower.PlayAnimation("\uEA39", res);
-            }
-            if (list.Count > 0)
-            {
-                foreach (var topic in list)
-                {
-                    var info = JsonConvert.DeserializeObject<Dictionary<string, object>>(topic.ToString());
-                    string hit = ValidationHelper.GetKey(info, "hitCount");
-                    string pid = ValidationHelper.GetKey(info, "id");
-                    string author = "ÄäÃû";
-                    string text = ValidationHelper.GetKey(info, "title");
-                    if (info["userName"] != null)
-                    {
-                        author = ValidationHelper.GetKey(info, "userName");
-                    }
-                    string reply = ValidationHelper.GetKey(info, "replyCount");
-                    stiles.Add(new STile { author = author, hit = hit, reply = reply, pid = pid, text = text, symbol = isBest ? FluentIcons.Common.Symbol.Star : FluentIcons.Common.Symbol.Note });
-                }
-
-            }
+            var data= topicResult.Data;
+            topics.AddRange(data); 
         }
 
 
         private void TileContent_Click(object sender, RoutedEventArgs e)
         {
             var h = sender as HyperlinkButton;
-            var t = h?.DataContext as STile;
+            var t = h?.DataContext as SimpleTopicInfo;
             if (t != null)
             {
                 if (t.pid != null)
@@ -187,7 +133,7 @@ namespace CC98
         private async void MarkdownTextBlock_LinkClicked(object sender, CommunityToolkit.WinUI.UI.Controls.LinkClickedEventArgs e)
         {
             var url = e.Link.ToString();
-            var result = LinkAnalyzer.LinkDefinite(url);
+            var result = LinkAnalyzer.Parse(url);
             switch (result.Key)
             {
                 case "topic":
@@ -197,7 +143,7 @@ namespace CC98
                     {
                         string _url = "https://api.cc98.org/user/name/" + result.Value;
 
-                        var PortRes = await CCloginservice.vpn.GetAsync(_url);
+                        var PortRes = await LoginService.vpn.GetAsync(_url);
                         if (PortRes.StatusCode == System.Net.HttpStatusCode.OK)
                         {
                             string content = await PortRes.Content.ReadAsStringAsync();
@@ -342,7 +288,7 @@ namespace CC98
                             GooeyGroup.Visibility = Visibility.Collapsed;
                             BackFromBest.Visibility = Visibility.Visible;
                             history = 0;
-                            stiles.Clear();
+                            topics.Clear();
                             isBest = true;
                             try
                             {
@@ -367,7 +313,7 @@ namespace CC98
             GooeyGroup.Visibility = Visibility.Visible;
             isBest = false;
             history = 0;
-            stiles.Clear();
+            topics.Clear();
             await LoadTopics(bid, "0");
         }
 

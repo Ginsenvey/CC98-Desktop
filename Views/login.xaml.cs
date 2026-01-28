@@ -63,10 +63,10 @@ namespace CC98
 
         private async Task<string> InitializeNetwork()
         {
-            var network_status = await CCloginservice.vpn.CheckNetwork(false);
+            var network_status = await LoginService.vpn.CheckNetwork(false);
             if (network_status == "0")//无网络
             {
-                if (ValidationHelper.IsTokenExist(Set, "IsVpnUsable") == "1")
+                if (ValidationHelper.GetValue(Set, "IsVpnUsable") == "1")
                 {
                     //检测是否已初始化Ticket。若已初始化，使用并检查有效性。无效则重连。未初始化是出错的情况。
                     if (PasswordManager.PasswordExists("Ticket") && PasswordManager.PasswordExists("Route"))
@@ -79,30 +79,30 @@ namespace CC98
                         ticket.HttpOnly = true;
                         if (!string.IsNullOrEmpty(ticket_value) && (!string.IsNullOrEmpty(route_value)))
                         {
-                            CCloginservice.vpn.Jar.Add(ticket);
-                            CCloginservice.vpn.Jar.Add(route);
-                            string new_status = await CCloginservice.vpn.CheckNetwork(true);
+                            LoginService.vpn.Jar.Add(ticket);
+                            LoginService.vpn.Jar.Add(route);
+                            string new_status = await LoginService.vpn.CheckNetwork(true);
                             if (new_status == "1")//该函数不受IsVpnEnable和Logined影响
                             {
-                                CCloginservice.vpn.Logined = true;
-                                CCloginservice.vpn.IsVpnEnabled = true;
+                                LoginService.vpn.Logined = true;
+                                LoginService.vpn.IsVpnEnabled = true;
                                 return "1";
                             }
                             else//过期，尝试使用凭据重新获取Ticket
                             {
-                                CCloginservice.vpn.Logined = false;
-                                CCloginservice.vpn.IsVpnEnabled = false;
+                                LoginService.vpn.Logined = false;
+                                LoginService.vpn.IsVpnEnabled = false;
                                 if (PasswordManager.PasswordExists("VpnUserName") && PasswordManager.PasswordExists("VpnPassWord"))
                                 {
                                     string id = PasswordManager.RetrievePassword("VpnUserName");
                                     string pass = PasswordManager.RetrievePassword("VpnPassWord");
-                                    string vpn_res = await CCloginservice.vpn.LoginAsync(id, pass);
+                                    string vpn_res = await LoginService.vpn.LoginAsync(id, pass);
                                     if (vpn_res == "1")//连接成功
                                     {
                                         //这里不需要再额外修改Logined,因为LoginAsync中已经修改
-                                        CCloginservice.vpn.IsVpnEnabled = true;
-                                        var new_ticket = CCloginservice.vpn.Ticket;
-                                        var new_route = CCloginservice.vpn.Route;
+                                        LoginService.vpn.IsVpnEnabled = true;
+                                        var new_ticket = LoginService.vpn.Ticket;
+                                        var new_route = LoginService.vpn.Route;
                                         string _ticket = new_ticket.Value;
                                         string _route = new_route.Value;
                                         if (!string.IsNullOrEmpty(_ticket) && (!string.IsNullOrEmpty(_route)))
@@ -209,7 +209,7 @@ namespace CC98
 
         private void LinkToVpn_Click(object sender, RoutedEventArgs e)
         {
-            if (ValidationHelper.IsTokenExist(Set, "IsVpnUsable") == "1")
+            if (ValidationHelper.GetValue(Set, "IsVpnUsable") == "1")
             {
                 Flower.PlayAnimation("\uE930", "已配置VPN，无需其他操作");
                 return;
@@ -270,15 +270,15 @@ namespace CC98
         {
             try
             {
-                string vpn_res = await CCloginservice.vpn.LoginAsync(id, pass);
+                string vpn_res = await LoginService.vpn.LoginAsync(id, pass);
                 if (vpn_res == "1")
                 {
                     Set.Values["IsVpnUsable"] = "1";
-                    var ticket = CCloginservice.vpn.Ticket;
-                    var route=CCloginservice.vpn.Route;
+                    var ticket = LoginService.vpn.Ticket;
+                    var route=LoginService.vpn.Route;
                     string ticket_value = ticket.Value;
                     string route_value=route.Value;
-                    CCloginservice.vpn.IsVpnEnabled = true;
+                    LoginService.vpn.IsVpnEnabled = true;
                     PasswordManager.SavePassword(idbox.Text, "VpnUserName");
                     PasswordManager.SavePassword(passbox.Password, "VpnPassWord");
                     if (!string.IsNullOrEmpty(ticket_value)&&(!string.IsNullOrEmpty(route_value)))
@@ -351,7 +351,7 @@ namespace CC98
             if (!string.IsNullOrEmpty(ccidbox.Text) && !string.IsNullOrEmpty(ccpassbox.Password))
             {
                 LoginWithPassword.IsChecked = true;
-                var r = await CCloginservice.LoginAsync(ccidbox.Text, ccpassbox.Password);
+                var r = await LoginService.LoginAsync(ccidbox.Text, ccpassbox.Password);
                 Auth(r);
             }
             else

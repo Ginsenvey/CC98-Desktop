@@ -165,7 +165,7 @@
             </Button>
         </Grid>
         <Border Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="3" BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}" BorderThickness="1" Height="1" VerticalAlignment="Top"></Border>
-        <TextBlock Grid.Row="2" Grid.Column="0" Text="版本: v1.2.1 release." Foreground="{ThemeResource TextFillColorSecondaryBrush}" VerticalAlignment="Center" Margin="20,0,0,0"></TextBlock>
+        <TextBlock Grid.Row="2" Grid.Column="0" Text="版本: v1.2.6 release." Foreground="{ThemeResource TextFillColorSecondaryBrush}" VerticalAlignment="Center" Margin="20,0,0,0"></TextBlock>
         <StackPanel Orientation="Horizontal" Spacing="5" Grid.Row="2" Grid.Column="2" HorizontalAlignment="Right" Margin="0,0,20,0">
             <HyperlinkButton Background="Transparent"   Padding="0"  x:Name="Github"  NavigateUri="https://github.com/Ginsenvey/CC98-Desktop" ToolTipService.ToolTip="查看仓库" Height="42" Width="42">
                 <ImageIcon Source="/Assets/github.png" Width="25" Height="25"></ImageIcon>
