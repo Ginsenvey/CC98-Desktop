@@ -2,6 +2,7 @@ using CC98.Kernel;
 using CC98.Kernel.ApiScope;
 using CC98.Kernel.UserExperience;
 using CC98.Objects;
+using CC98.Services.Extensions;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.WinUI.Controls;
 using CommunityToolkit.WinUI.UI.Controls;
@@ -28,6 +29,7 @@ using System.Runtime.InteropServices.WindowsRuntime;
 using System.Text;
 using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 using Windows.ApplicationModel.DataTransfer;
 using Windows.Devices.Enumeration;
 using Windows.Foundation;
@@ -49,7 +51,7 @@ namespace CC98
     /// </summary>
     public sealed partial class Profile : Page
     {
-        public ObservableCollection<SimpleTopicInfo> stiles=new ObservableCollection<SimpleTopicInfo>();
+        public ObservableCollection<SimpleTopicInfo> recentTopics=new ObservableCollection<SimpleTopicInfo>();
         public ApplicationDataContainer Set = ApplicationData.Current.LocalSettings;
         public UserInfo profile=new UserInfo() { 
             Id=0,
@@ -57,39 +59,31 @@ namespace CC98
             PortraitUrl="",
             IsFollowing=false,
         };
+        public bool isMe=false;
+        public int userId = 0;
+        public int currentIndex = 0;
+        public int history = 0;
+        public bool hasMore = true;
         public Profile()
         {
             this.InitializeComponent();
-            SimpleTile.ItemsSource = stiles; 
+            SimpleTile.ItemsSource = recentTopics; 
         }
         protected override void OnNavigatedTo(Microsoft.UI.Xaml.Navigation.NavigationEventArgs e)
         {
             base.OnNavigatedTo(e);
 
             // 获取传递的参数
-            var param = e.Parameter as Dictionary<string,string>;
-            if (param != null)
+            var args = e.TryGetParameter<ProfileNavigationInfo>();
+            if (args != null)
             {
-                string uid = param["UserId"];
-                string mode = param["Mode"];
-                if (mode == "Others")
-                {
-                    CurrentPerson = uid;
-                    CurrentMode = mode;
-                    LoadProfile(mode, uid);
-                    LoadRecentTopic("0", uid, mode);
-                }
-                else
-                {
-                    LoadProfile(mode, uid);
-                    LoadRecentTopic("0", uid, mode);
-                    SignIn();
-                }
-            }
-            
+                userId = args.UserId;
+                isMe = args.IsMe;
+                LoadProfile();
+                LoadRecentTopic();
+                if(isMe)SignIn();
+            } 
         }
-        public string CurrentPerson = "0";
-        public string CurrentMode = "Me";
         private async void SignIn()
         {
             string SignInResult = await RequestSender.SignIn();
@@ -110,10 +104,9 @@ namespace CC98
             }
         }
         //用户个人页面检查跳转参数
-        private async void LoadProfile(string mode,int userId)
+        private async Task LoadProfile()
         {
-            bool isMe = false;
-            string profileUrl = ApiEndpoints.User.UserProfile(mode=="Me",userId);
+            string profileUrl = ApiEndpoints.User.UserProfile(isMe,userId);
             var profileResult = await RequestSender.Fetch<UserInfo>(profileUrl);
             if (!profileResult.IsSuccess || profileResult.Data == null)
             {
@@ -132,31 +125,29 @@ namespace CC98
             profile.Wealth = data.Wealth;
             profile.RegisterTime = data.RegisterTime;
             profile.IsFollowing = data.IsFollowing;
-            if (mode == "Me")
+            if (isMe&& ValidationHelper.GetValue(Set, "Uid")=="0")
             {
-                isMe = true;
                 Set.Values["Uid"] = data.Id.ToString();
                 Set.Values["Portrait"] = data.PortraitUrl;
-            }
-            if (ValidationHelper.GetValue(Set, "Uid") == data.Id.ToString())
-            {
-                isMe = true;
             }
             profile.IsOthers = !isMe;
             MyProfile.ProfilePicture = await ImageResolver.LoadWebImage(profile.PortraitUrl);
             InfoContent.DataContext = profile;
             SignBoard.DataContext = profile; 
         }
-        private async void LoadRecentTopic(int start,int userId,string mode)
+        private async Task LoadRecentTopic()
         {
-            string RecentTopicUrl = ApiEndpoints.Topic.RecentTopic(mode == "Me", userId, start);
+            string RecentTopicUrl = ApiEndpoints.Topic.RecentTopic(isMe, userId, currentIndex);
             var RecentTopicResult = await RequestSender.Fetch<List<SimpleTopicInfo>>(RecentTopicUrl);
-            if (RecentTopicResult.IsNotValid)
+            if (!RecentTopicResult.IsSuccess||RecentTopicResult.Data==null)
             {
                 return;
             }
             var data=RecentTopicResult.Data;
-            stiles.AddRange(data);
+            hasMore = data.Count == 11;
+            //移除末尾
+            if(hasMore)data.RemoveAt(10);
+            recentTopics.AddRange(data);
         }
         private async void Drawer_ImageResolving(object sender, ImageResolvingEventArgs e)
         {
@@ -191,25 +182,29 @@ namespace CC98
             var s = h?.DataContext as SimpleTopicInfo;
             if (s != null)
             {
-                if (s.pid != null)
-                {
-                    Frame.Navigate(typeof(Topic), s.pid);
-                }
-
+                var param = new TopicNavigationInfo { TopicId = s.Id };
+                Frame.Navigate(typeof(Topic), param);    
             }
         }
 
 
         private void SimpleTile_Loaded(object sender, RoutedEventArgs e)
         {
-            SimpleTile.ElementPrepared += (s, e) =>
+            SimpleTile.ElementPrepared += async (s, e) =>
             {
                 if (SimpleTile.ItemsSource != null)
                 {
                     int current = e.Index;
-                    if (current > 0 && (current + 1) % 11 == 0)
+                    if (current > history && (current + 1) % 10 == 0&&hasMore)
                     {
-                        LoadRecentTopic((current + 1).ToString(), CurrentPerson, CurrentMode);
+                        currentIndex = current;
+                        await LoadRecentTopic();
+                        //如果没有实际加载到数据，history不增加，下次滚动时继续触发加载
+                        //如果history仍增加，则界面卡死
+                        if (recentTopics.Count > currentIndex + 1)
+                        {
+                            history = currentIndex;
+                        }
                     }
                 }
             };
@@ -318,7 +313,7 @@ namespace CC98
 
         private void StartChat_Click(object sender, RoutedEventArgs e)
         {
-            var c = new Contact { mid = profile.Id, name = profile.Name, url = profile.PortraitUrl };
+            var c = new TargetUserInfo { TargetUserId = profile.Id, TargetUserName = profile.Name, PortraitUrl = profile.PortraitUrl };
             var p = new Dictionary<string, object>()
                     {
                         {"Type","1" },
@@ -338,7 +333,7 @@ namespace CC98
             string restext = await RequestSender.Follow(mode, profile.Id);
             if (restext == "1")
             {
-                LoadProfile(CurrentMode, CurrentPerson);
+                await LoadProfile();
                 Flower.PlayAnimation("\uE930", flag?"已取消关注":"已关注");
             }
             else

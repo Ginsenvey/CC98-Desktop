@@ -404,7 +404,7 @@ public static class RequestSender
 
     }
 
-    public static async Task<string> Follow(string mode, string id)
+    public static async Task<string> Follow(string mode, int id)
     {
         HttpResponseMessage res;
         try

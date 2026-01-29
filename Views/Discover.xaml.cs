@@ -112,7 +112,7 @@ namespace CC98
                     if (current > 0)
                     {
                         current -= 20;
-                        if (!await GetNewTopic(current.ToString()))
+                        if (!await GetNewTopic(current))
                         {
                             current += 20;
                         }
@@ -127,7 +127,7 @@ namespace CC98
                 else if (tag == "Forward")
                 {
                     current += 20;
-                    if (!await GetNewTopic(current.ToString()))
+                    if (!await GetNewTopic(current))
                     {
                         current -= 20;
                     }
@@ -143,10 +143,11 @@ namespace CC98
             var h = sender as HyperlinkButton;
             if (h != null)
             {
-                var p=h?.DataContext as RandomPost;
+                var p=h?.DataContext as RandomTopic;
                 if(p != null)
                 {
-                    Frame.Navigate(typeof(Topic),p.pid);
+                    var param = new TopicNavigationInfo { TopicId = p.Id };
+                    Frame.Navigate(typeof(Topic),param);
                 }
             }
         }

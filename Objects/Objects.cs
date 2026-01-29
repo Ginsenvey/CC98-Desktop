@@ -102,7 +102,8 @@ public partial class TopicInfo:ObservableObject
 
 /// <summary>
 /// 
-public class RandomPost
+public class RandomTopic
+
 {
     [JsonPropertyName("userId")]
     public required string UserId { get; set; }
@@ -111,13 +112,13 @@ public class RandomPost
     public required string Title { get; set; }
 
     [JsonPropertyName("replyCount")]
-    public required string ReplyCount { get; set; }
+    public required int ReplyCount { get; set; }
 
     [JsonPropertyName("hitCount")]
-    public required string HitCount { get; set; }
+    public required int HitCount { get; set; }
 
     [JsonPropertyName("id")]
-    public required string Id { get; set; }
+    public required int Id { get; set; }
 
     [JsonPropertyName("time")]
     public required DateTime Time { get; set; }
@@ -288,10 +289,8 @@ public class Friend : ObservableObject
 /// </summary>
 public class BasicUserInfo
 {
-    [JsonPropertyName("id")]
     public int Id { get; set;  }
-
-    [JsonPropertyName("portraitUrl")]
+    public string UserName { get; set; } = string.Empty;
     public string PortraitUrl { get; set; } = string.Empty;
 }
 
@@ -412,7 +411,18 @@ public partial class SimpleTopicInfo : ObservableObject
         get => field;
         set => SetProperty(ref field, value);
     }
+    [JsonIgnore]
+    public int SortId
+    {
+        get => field;
+        set => SetProperty(ref field, value);
+    }
 
+    public string BoardName
+    {
+        get => field ?? string.Empty;
+        set => SetProperty(ref field, value);
+    }
     public int HitCount
     {
         get => field;
@@ -520,4 +530,81 @@ public class MediaContent
     [JsonPropertyName("thumbnail")]
     public List<string> Thumbnail {  get; set; }= new List<string>();
 
+}
+
+public partial class ChatMessage : ObservableObject
+{
+    public string Time
+    {
+        get => field ?? string.Empty;
+        set => SetProperty(ref field, value);
+    }
+
+    public string Content
+    {
+        get => field ?? string.Empty;
+        set => SetProperty(ref field, value);
+    }
+
+
+    [JsonPropertyName("id")]
+    public int MessageId
+    {
+        get => field;
+        set => SetProperty(ref field, value);
+    }
+    [JsonPropertyName("receiverId")]
+    public int ReceiverId
+    {
+        get => field;
+        set => SetProperty(ref field, value);
+    }
+    [JsonIgnore]
+    public bool IsMe
+    {
+        get => field;
+        set => SetProperty(ref field, value);
+    }
+
+}
+public partial class ChatInfo : ObservableObject
+{
+
+    public string LastContent
+    {
+        get => field ?? string.Empty;
+        set => SetProperty(ref field, value);
+    }
+
+    public int UserId
+    {
+        get => field;
+        set => SetProperty(ref field, value);
+    }
+
+    public string Time
+    {
+        get => field ?? string.Empty;
+        set => SetProperty(ref field, value);
+
+    }
+    [JsonIgnore]
+    public string UserName
+    {
+        get => field ?? string.Empty;
+        set => SetProperty(ref field, value);
+    }
+
+    [JsonIgnore]
+    public string PortraitUrl
+    {
+        get => field ?? string.Empty;
+        set => SetProperty(ref field, value);
+    }
+}
+public enum PostOrder
+{
+    Time = 0,      // 按发帖时间排序
+    LastReply = 1, // 按最后回复时间排序
+    Mark = 2       // 按收藏顺序排序
 }

@@ -1,3 +1,5 @@
+using CC98.Objects;
+using CC98.Services.Extensions;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Controls.Primitives;
@@ -28,7 +30,7 @@ namespace CC98
 {
     public sealed partial class Message : Page
     {
-        public Dictionary<string,object> param=new Dictionary<string,object>();
+        public MessageNavigationInfo NavigationInfo { get; set; }=new MessageNavigationInfo();
         public ApplicationDataContainer Set = ApplicationData.Current.LocalSettings;
         public Message()
         {
@@ -39,11 +41,10 @@ namespace CC98
             base.OnNavigatedTo(e);
 
             // 获取传递的参数
-            var p = e.Parameter as Dictionary<string,object>;
-
-            if (p != null)
+            var args = e.TryGetParameter<MessageNavigationInfo>();
+            if (args != null)
             {
-                param = p;
+                NavigationInfo = args;
                 ChatMsg.IsSelected = true;
             }
         }
@@ -58,7 +59,7 @@ namespace CC98
                 {
                     if (tag == "0")//私信
                     {
-                        MsgFrame.Navigate(typeof(Chat), param);
+                        MsgFrame.Navigate(typeof(Chat), NavigationInfo);
                     }
                     else if (tag == "1")//系统通知
                     {

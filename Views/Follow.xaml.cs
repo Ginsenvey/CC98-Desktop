@@ -169,7 +169,7 @@ namespace CC98
                 var f = m?.DataContext as Friend;
                 if (f != null)
                 {
-                    var c=new Contact { mid=f.uid,name=f.name ,url=f.url};
+                    var c=new TargetUserInfo { TargetUserId=f.uid,TargetUserName=f.name ,PortraitUrl=f.url};
                     var p = new Dictionary<string, object>()
                     {
                         {"Type","1" },

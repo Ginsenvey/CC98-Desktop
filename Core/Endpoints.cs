@@ -1,4 +1,6 @@
-﻿namespace CC98.Kernel.ApiScope;
+﻿using System.Data;
+
+namespace CC98.Kernel.ApiScope;
 /// <summary>
 /// API终结点定义
 /// </summary>
@@ -28,6 +30,7 @@ public static class ApiEndpoints
 
         public static string UserInfoList(string param) => $"{Base}/user?{param}";
 
+
         /// <summary>
         /// 获取当前用户的好友列表
         /// </summary>
@@ -45,6 +48,10 @@ public static class ApiEndpoints
         /// 收藏夹列表
         /// </summary>
         public static string FavoritesList() => $"{Base}/me/favorite-topic-group";
+        public static string RecentChatUserList() => $"{Base}/message/recent-contact-users?from=0&size=10";
+
+        public static string ChatHistory(int userId,int start) => $"{Base}/message/user/{userId}?from={start}&size=10";
+        public static string SearchUser(string name) => $"{Base}/user/name/{name}";
     }
     public static class Post
     {
@@ -81,6 +88,9 @@ public static class ApiEndpoints
         public static string ReplyList(int topicId, int start) => $"{Base}/Topic/{topicId}/post?from={start}&size=10";
         public static string NewTopicList(int start) => $"{Base}/topic/new?from={start}&size=20";
         public static string RandomTopicList() => $"{Base}/topic/random-recent?size=10";
+
+        public static string SearchTopic(string key, int start) => $"{Base}/topic/search?keyword={key}&from={start}&size=20";
+        public static string FavoriteTopicList(int start, int order,int groupId) => $"{Base}/topic/me/favorite?from={start}&size=11&order={order}&groupid={groupId}";
     }
 
     public static class OpenID

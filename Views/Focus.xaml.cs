@@ -1,5 +1,6 @@
 
 using CC98.Kernel;
+using CC98.Objects;
 using CommunityToolkit.Labs.WinUI;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -8,8 +9,6 @@ using Microsoft.UI.Xaml.Data;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Navigation;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -34,7 +33,7 @@ namespace CC98
     public sealed partial class Focus : Page
     {
         public ApplicationDataContainer Set = ApplicationData.Current.LocalSettings;
-        public ObservableCollection<StandardPost> Tiles=new ObservableCollection<StandardPost>();
+        public ObservableCollection<TopicInfo> Tiles=[];
         public Focus()
         {
             this.InitializeComponent();

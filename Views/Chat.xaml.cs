@@ -1,6 +1,11 @@
 using CC98.Kernel;
+using CC98.Kernel.ApiScope;
 using CC98.Kernel.UserExperience;
+using CC98.Objects;
+using CC98.Services.Extensions;
+using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.WinUI.UI.Controls;
+using DevWinUI;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Controls.Primitives;
@@ -15,17 +20,10 @@ using System.ComponentModel;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices.WindowsRuntime;
+using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using Windows.ApplicationModel.Appointments;
 using Windows.ApplicationModel.DataTransfer;
-using Windows.Devices.Enumeration;
-using Windows.Foundation;
-using Windows.Foundation.Collections;
-using Windows.Media;
-using Windows.Media.Playback;
-using Windows.UI;
-using static CC98.Chat;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -38,30 +36,35 @@ namespace CC98
     /// </summary>
     public sealed partial class Chat : Page
     {
-        public ObservableCollection<Contact> contacts = new();
-        public ObservableCollection<Msg> Msgs = new();
-        public string type = "0";
-        public Contact NewSession = new();
+        public ObservableCollection<ChatInfo> chatInfoList = new();
+        public ObservableCollection<ChatMessage> messages = new();
+        //是否来自Profile页面的私信跳转功能
+        public bool isFromProfile = false;
+        public ChatInfo targetUserInfo = new();
+        public int currentUserId = 0;
+        public int currentIndex = 0;
+        public int history = 0;
+        public bool hasMore = true;
         public Chat()
         {
             this.InitializeComponent();
-            ContactRepeater.ItemsSource = contacts;
-            MessagesList.ItemsSource = Msgs;
+            ContactRepeater.ItemsSource = chatInfoList;
+            MessagesList.ItemsSource = messages;
         }
 
         protected override void OnNavigatedTo(Microsoft.UI.Xaml.Navigation.NavigationEventArgs e)
         {
             base.OnNavigatedTo(e);
-            var param = e.Parameter as Dictionary<string, object>;
-            if (param != null)
+            var args = e.TryGetParameter<MessageNavigationInfo>();
+            if (args != null)
             {
-                type = ValidationHelper.GetKey(param, "Type");
-                if (type == "1")//由私信功能跳转
+                isFromProfile = args.IsFromProfile;
+                if (isFromProfile)//由私信功能跳转
                 {
-                    var contact = param["Info"] as Contact;
-                    if (contact != null)
+                    var info = args.ChatUserInfo;
+                    if (info != null)
                     {
-                        NewSession = contact;//获取要私信的对象
+                        targetUserInfo = info;//获取要私信的对象
                     }
                 }
                 GetRecent();
@@ -74,130 +77,98 @@ namespace CC98
             if (i > -1)
             {
                 history = 0;
-                currentuid = contacts[i].mid;
-                RefDialogs();
+                currentUserId = chatInfoList[i].UserId;
+                RefreshMessageList();
             }
 
         }
         private async void GetRecent()
         {
-            string url = "https://api.cc98.org/message/recent-contact-users?from=0&size=10";
-            string res = await RequestSender.SimpleRequest(url);
-            if (!res.StartsWith("404:"))
+            string chatInfoUrl = ApiEndpoints.User.RecentChatUserList();
+            var chatInfoResult = await RequestSender.Fetch<List<ChatInfo>>(chatInfoUrl);
+            if (!chatInfoResult.IsSuccess || chatInfoResult.Data == null)
             {
-                var list = Deserializer.ToArray(res);
-                if (list != null)
-                {
-                    string porturl = "https://api.cc98.org/user/basic?";
-                    List<string> users = new();
-                    List<SMsg> msgs = new();
-                    foreach (var c in list)
-                    {
-                        var js = JsonConvert.DeserializeObject<Dictionary<string, object>>(c.ToString());
-                        string mid = js["userId"].ToString();//联系人CCID
-                        string time = js["time"].ToString();
-                        string text = js["lastContent"].ToString();
-                        users.Add("id=" + mid);
-                        msgs.Add(new SMsg { Mid = mid, Time = time, Text = text });
-                    }
+                //
+                return;
+            }
+            var data = chatInfoResult.Data;
 
-                    if ((!users.Contains("id=" + NewSession.mid)) && type == "1")
-                    {
-                        contacts.Add(NewSession);
-                        ContactRepeater.SelectedIndex = 0;
-                    }
-                    porturl += string.Join("&", users);
-                    if (users.Count > 0)
-                    {
-                        var portres = await LoginService.vpn.GetAsync(porturl);
-                        if (portres.StatusCode == System.Net.HttpStatusCode.OK)
-                        {
-                            string port = await portres.Content.ReadAsStringAsync();
-                            if (!string.IsNullOrEmpty(port))
-                            {
-                                var portlist = JsonConvert.DeserializeObject<JArray>(port);
-                                Dictionary<string, SInfo> personinfo = new();
-
-                                foreach (var p in portlist)
-                                {
-                                    var info = JsonConvert.DeserializeObject<Dictionary<string, object>>(p.ToString());
-                                    string name = info["name"].ToString();
-                                    string purl = info["portraitUrl"].ToString();
-                                    string id = info["id"].ToString();
-                                    personinfo.Add(id, new SInfo { Name = name, PortraitUrl = purl });
-                                }
-                                foreach (SMsg m in msgs)
-                                {
-                                    if (personinfo.ContainsKey(m.Mid))
-                                    {
-                                        contacts.Add(new Contact { mid = m.Mid, name = personinfo[m.Mid].Name, url = personinfo[m.Mid].PortraitUrl, text = m.Text, time = m.Time });
-                                    }
-
-                                }
-                                
-                                if (type == "1")
-                                {
-                                    ContactRepeater.SelectedItem = contacts.First(c => c.mid == NewSession.mid);
-                                }
-                                if (contacts.Count > 0 && type != "1")
-                                {
-                                    ContactRepeater.SelectedIndex = 0;
-                                }
-                                //如果删改web端的sessionStorage，web端会出现错位。说明98的代码也有一定问题。
-                            }
-                        }
-                    }
-
-                }
+            var param = string.Join("&", data.Select(x => $"id={x.UserId}").ToHashSet());
+            string userInfoUrl = ApiEndpoints.User.BasicUserInfoList(param);
+            var userInfoResult = await RequestSender.Fetch<List<BasicUserInfo>>(userInfoUrl);
+            if (!userInfoResult.IsSuccess || userInfoResult.Data == null)
+            {
+                //报错
+                return;
             }
 
+            var userInfoList = userInfoResult.Data;
+            foreach (var info in data)
+            {
+                var user = userInfoList.First(x => x.Id == info.UserId);
+                if (user != null)
+                {
+                    info.UserName = user.UserName;
+                    info.PortraitUrl = user.PortraitUrl;
+                }
+            }
+            chatInfoList.AddRange(data);
+            if (chatInfoList.Count == 0)
+            {
+                //
+                return;
+            }
+            //选中要私信的用户
+            if (isFromProfile)
+            {
+                ContactRepeater.SelectedItem = chatInfoList.First(c => c.UserId == targetUserInfo.UserId);
+            }
+            else
+            {
+                ContactRepeater.SelectedIndex = 0;
+            }
         }
-        public string currentuid = "";//用于在刷新时记忆当前对话
-        private async Task GetDialogs(string uid,string start)
+        
+        private async Task GetMessageList()
         {
-            string murl = "https://api.cc98.org/message/user/" + uid + "?from="+start+"&size=10";
-            string restext=await RequestSender.SimpleRequest(murl);
-            if (!restext.StartsWith("404:"))
+            string messageUrl = ApiEndpoints.User.ChatHistory(currentUserId, currentIndex);
+            var messageResult = await RequestSender.Fetch<List<ChatMessage>>(messageUrl);
+            if (!messageResult.IsSuccess)
             {
-                if (!string.IsNullOrEmpty(restext))
-                {
-                    var list = Deserializer.ToArray(restext);
-                    if (list != null)
-                    {
-                        history += 10;
-                        foreach (var c in list)
-                        {
-                            var js = JsonConvert.DeserializeObject<Dictionary<string, object>>(c.ToString());
-                            string msgid = js["id"].ToString();//消息ID
-                            bool isMe = js["receiverId"].ToString() == uid;
-                            string text = UBBConverter.Convert(js["content"].ToString(), true);
-                            string time = js["time"].ToString();
-                            Msgs.Insert(0,new Msg
-                            {
-                                msgid = msgid,
-                                text = text,
-                                time = time,
-                                isme = isMe
-                            });
-                        }
-                    }
-                }
+                //
+                return;
             }
-            
+            if(messageResult.Data == null)
+            {
+                //
+                return;
+            }
+            var data = messageResult.Data;
+            hasMore = data.Count == 10;
+            if (hasMore)
+            {
+                history += 10;
+            }
+            foreach(var message in data)
+            {
+                messages.Insert(0, message);
+            }
         }
-        public int history = 0;//此值用于防止重复刷新
+        
         private async void MoreMsg_RefreshRequested(RefreshContainer sender, RefreshRequestedEventArgs args)
         {
-            if (currentuid != "")
+            if (currentUserId != 0 && hasMore)
             {
-                await GetDialogs(currentuid, history.ToString());
+                currentIndex = history;
+                await GetMessageList();
             }
             
         }
-        private async void RefDialogs()
+        private async void RefreshMessageList()
         {
-            Msgs.Clear();
-            await GetDialogs(currentuid, "0");
+            messages.Clear();
+            currentIndex = 0;
+            await GetMessageList();
             if (MessagesList.Items.Count > 0)
             {
                 // 获取最后一个项目并滚动到它
@@ -208,9 +179,10 @@ namespace CC98
         
         private async void More_Click(object sender, RoutedEventArgs e)
         {
-            if (currentuid != "")
+            if (currentUserId != 0 && hasMore)
             {
-                await GetDialogs(currentuid, history.ToString());
+                currentIndex = history;
+                await GetMessageList();
             }
         }
         private void Drawer_ImageClicked(object sender, CommunityToolkit.WinUI.UI.Controls.LinkClickedEventArgs e)
@@ -258,12 +230,12 @@ namespace CC98
             if (!string.IsNullOrEmpty(ReplyBody.Text))
             {
                 Send.IsEnabled = false;
-                var r = await RequestSender.SendPrivateMsg(Convert.ToInt32(currentuid), ReplyBody.Text);
+                var r = await RequestSender.SendPrivateMsg(currentUserId, ReplyBody.Text);
                 Send.IsEnabled = true;
                 if (r == "1")
                 {
                     ReplyBody.Text = "";
-                    RefDialogs();
+                    RefreshMessageList();
                 }
                 else
                 {
@@ -276,7 +248,7 @@ namespace CC98
 
         private void Ref_Click(object sender, RoutedEventArgs e)
         {
-            RefDialogs();
+            RefreshMessageList();
         }
 
         private async void Drawer_LinkClicked(object sender, LinkClickedEventArgs e)
@@ -342,177 +314,10 @@ namespace CC98
             }
         }
     }
-    public partial class Msg : INotifyPropertyChanged
-    {
-        private string _time;
-        private string _text;
-        private bool _isme;
-        private string _msgid;
-        public string time
-        {
-            get { return _time; }
-            set
-            {
-                if (_time != value)
-                {
-                    _time = value;
-                    OnPropertyChanged(nameof(time));
-                }
-            }
-        }
 
-        public string text
-        {
-            get { return _text; }
-            set
-            {
-                if (_text != value)
-                {
-                    _text = value;
-                    OnPropertyChanged(nameof(text));
-                }
-            }
-        }
-
-        public bool isme
-        {
-            get { return _isme; }
-            set
-            {
-                if (_isme != value)
-                {
-                    _isme = value;
-                    OnPropertyChanged(nameof(isme));
-                }
-            }
-        }
-        public string msgid
-        {
-            get { return _msgid; }
-            set
-            {
-                if (_msgid != value)
-                {
-                    _msgid = value;
-                    OnPropertyChanged(nameof(msgid));
-                }
-            }
-        }
-
-        public event PropertyChangedEventHandler PropertyChanged;
-
-        protected virtual void OnPropertyChanged(string propertyName)
-        {
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-        }
-    }
-    public class SInfo
-    {
-        public string Name { get; set; }
-        public string PortraitUrl { get; set; }
-    }
-    public class SMsg
-    {
-        public string Text { get; set; }
-        public string Time { get; set; }
-        public string Mid { get; set; }
-    }
     
-    public partial class Contact : INotifyPropertyChanged
-    {
-        private string _text;
-        private string _mid;//会话ID
-        private string _time;
-        private string _name;//会话名
-        private string _url;//头像URL
-        public string text
-        {
-            get => _text;
-            set
-            {
-                if (_text != value)
-                {
-                    _text = value;
-                    OnPropertyChanged(nameof(text));
-                }
-            }
-        }
-
-
-
-
-        public string mid
-        {
-            get => _mid;
-            set
-            {
-                if (_mid != value)
-                {
-                    _mid = value;
-                    OnPropertyChanged(nameof(mid));
-                }
-            }
-        }
-
-
-
-        public string time
-        {
-            get => _time;
-            set
-            {
-                if (_time != value)
-                {
-                    _time = value;
-                    OnPropertyChanged(nameof(time));
-                }
-            }
-        }
-        public string name
-        {
-            get => _name;
-            set
-            {
-                if (_name != value)
-                {
-                    _name = value;
-                    OnPropertyChanged(nameof(name));
-                }
-            }
-        }
-        public string url
-        {
-            get => _url;
-            set
-            {
-                if (_url != value)
-                {
-                    _url = value;
-                    OnPropertyChanged(nameof(url));
-                }
-            }
-        }
-        public event PropertyChangedEventHandler PropertyChanged;
-
-        protected virtual void OnPropertyChanged(string propertyName)
-        {
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-        }
-    }
-    public partial class AlignmentConverter : IValueConverter
-    {
-        public object Convert(object value, Type targetType, object parameter, string language)
-        {
-            return (bool)value ?
-                HorizontalAlignment.Right :
-                HorizontalAlignment.Left;
-        }
-
-        public object ConvertBack(object value, Type targetType, object parameter, string language)
-        {
-            return DependencyProperty.UnsetValue;
-        }
-    }
+    
+    
 
     
 

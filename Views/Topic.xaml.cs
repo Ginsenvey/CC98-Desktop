@@ -42,6 +42,7 @@ using Windows.Storage;
 using Windows.Storage.Streams;
 using System.Text.Json;
 using CC98.Kernel.ApiScope;
+using CC98.Services.Extensions;
 namespace CC98
 {
     /// <summary>
@@ -49,7 +50,7 @@ namespace CC98
     /// </summary>
     public sealed partial class Topic : Page
     {
-        public ObservableCollection<Reply> replies;
+        public ObservableCollection<Reply> replies=[];
         public TopicInfo topicInfo { get; set; } = new TopicInfo(){};
         public UserInfo profile = new() {Popularity=0,PostCount=0,FanCount=0}; 
         public ApplicationDataContainer Set = ApplicationData.Current.LocalSettings;
@@ -59,13 +60,12 @@ namespace CC98
         public int topicId = 0;
         public int currentPage = 0;
         public int pageSize = 10;
+        private MediaPlayer _mediaPlayer;
         public Topic()
         {
             this.InitializeComponent();
-            replies = new ObservableCollection<Reply>() { };
             LoadSet();
             TileList.ItemsSource = replies;
-
         }
 
 
@@ -73,13 +73,10 @@ namespace CC98
         {
             //释放资源
             base.OnNavigatedFrom(e);
-
             if (_mediaPlayer != null)
             {
                 _mediaPlayer.Dispose();
-
             }
-
             TileList.ItemsSource = null;
             replies.Clear();
             TileList = null;
@@ -88,20 +85,16 @@ namespace CC98
         {
             base.OnNavigatedTo(e);
 
-            // 获取传递的参数
-            var parameter = e.Parameter as string;
-
-            if (parameter != null)
+            var args = e.TryGetParameter<TopicNavigationInfo>();
+            if (args != null)
             {
-                Set.Values["CurrentTopicId"] = parameter;
-                await LoadTopicInfo(parameter);
-                await LoadReply(parameter, "0");
+                Set.Values["CurrentTopicId"]=args.TopicId;
+                topicId=args.TopicId;
+                await LoadTopicInfo();
+                await LoadReply();
                 LoadFavorites();
             }
-            else
-            {
-
-            }
+            
         }
         private void LoadSet()
         {
@@ -109,8 +102,7 @@ namespace CC98
             if (_IsImageVisible == "0")
             {
                 Set.Values["IsImageVisible"] = "2";   //此时默认为不可见
-            }
-            
+            } 
         }
         /// <summary>
         /// 加载收藏集
@@ -143,7 +135,7 @@ namespace CC98
             }
         }
         
-        private async Task LoadTopicInfo(int topicId)
+        private async Task LoadTopicInfo()
         {
             string topicInfoUrl = ApiEndpoints.Topic.TopicInfo(topicId);
             var topicInfoResult = await RequestSender.Fetch<TopicInfo>(topicInfoUrl);
@@ -191,7 +183,7 @@ namespace CC98
             var data= replyResult.Data;
             
             var param = string.Join("&", data.Where(x=>!x.IsAnonymous).Select(x => $"id={x.UserId}").ToHashSet());
-            string userInfoUrl = ApiEndpoints.User.UserInfoList(param);
+            string userInfoUrl = ApiEndpoints.User.BasicUserInfoList(param);
             var userInfoResult = await RequestSender.Fetch<List<BasicUserInfo>>(userInfoUrl);
             if (!userInfoResult.IsSuccess || userInfoResult.Data == null)
             {
@@ -236,12 +228,8 @@ namespace CC98
             {
                 if (t.UserId != 0)//非匿名才会跳转
                 {
-                    var param = new Dictionary<string, string>()
-                        {
-                            {"Mode","Others" },
-                            {"UserId",t.UserId}
-                        };
-                    Frame.Navigate(typeof(Profile), param);
+                    var info=new ProfileNavigationInfo { IsMe=t.IsMe,UserId=t.UserId};
+                    Frame.Navigate(typeof(Profile), info);
                 }
 
             }
@@ -262,7 +250,7 @@ namespace CC98
                 if (index >= 0)
                 {
                     int startindex = 10 * (index);
-                    await LoadReply(ValidationHelper.GetValue(Set, "CurrentTopicId"), startindex.ToString());
+                    await LoadReply();
                     if (isJumping && JumpToFloor != -1)
                     {
                         GoTo(JumpToFloor);
@@ -274,7 +262,7 @@ namespace CC98
            
         }
 
-        private MediaPlayer _mediaPlayer;
+        
         private void InitializeMediaPlayer()
         {
             _mediaPlayer = new MediaPlayer
@@ -972,34 +960,6 @@ namespace CC98
     }
     
     
-    public partial class UBBTextConverter : IValueConverter
-    {
-        public ApplicationDataContainer Set = ApplicationData.Current.LocalSettings;
-        object IValueConverter.Convert(object value, Type targetType, object parameter, string language)
-        {
-            if (value != null)
-            {
-                string input = value as string??string.Empty;
-                if (!string.IsNullOrEmpty(input))
-                {
-                    return UBBConverter.Convert(input, ValidationHelper.GetValue(Set, "IsImageVisible")=="1");
-                }
-                else
-                {
-                    return string.Empty;
-                }
-
-            }
-            else
-            {
-                return string.Empty;
-            }
-        }
-
-        object IValueConverter.ConvertBack(object value, Type targetType, object parameter, string language)
-        {
-            throw new NotImplementedException();
-        }
-    }
+    
     
 }

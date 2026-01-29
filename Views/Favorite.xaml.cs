@@ -5,8 +5,6 @@ using Microsoft.UI.Xaml.Data;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Navigation;
-using Newtonsoft.Json.Linq;
-using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -19,6 +17,10 @@ using FluentIcons.Common;
 using Windows.Storage;
 using System.Threading.Tasks;
 using CC98.Kernel;
+using CC98.Objects;
+using System.Text.Json;
+using DevWinUI;
+using CC98.Kernel.ApiScope;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -31,38 +33,29 @@ namespace CC98
     public sealed partial class Favorite : Page
     {
         public ApplicationDataContainer Set = ApplicationData.Current.LocalSettings;
-        public ObservableCollection<StandardPost> tiles=new();
-        public FavoriteGroup SelectedFavo { get; set; }
-        public ObservableCollection<FavoriteGroup> Favos = new()
+        public ObservableCollection<SimpleTopicInfo> topics=new();
+        public Favorites selectedFavorites { get; set; }
+        public ObservableCollection<Favorites> favoritesList = new()
         {
-            new FavoriteGroup{GroupName="默认分组",Id="0"}
+            new Favorites{Name="默认分组",Id=0}
         };
-        public int SortId = 0;
+        public int sortId = 0;
+        public int groupId = 0;
+        public int currentIndex = 0;
+        public PostOrder currenOrder = PostOrder.Mark;
         public Favorite()
         {
             this.InitializeComponent();
         }
-        public string mode = "0";
-        public string groupid = "0";
+        
         
         protected override void OnNavigatedTo(Microsoft.UI.Xaml.Navigation.NavigationEventArgs e)
         {
             base.OnNavigatedTo(e);
 
-            // 获取传递的参数
-            var parameter = e.Parameter as Dictionary<string,string>;
+            LoadFavorites();
 
-            if (parameter != null)
-            {
-                LoadFavorites();
-                mode= parameter["mode"];
-                groupid=parameter["gid"];
-                if (mode =="favorite")
-                {
-                    Request(mode, "0", ((int)Current_Order).ToString(), groupid);
-                }
-                
-            }
+            GetFavoriteTopic();
         }
         private void LoadFavorites()
         {
@@ -70,59 +63,27 @@ namespace CC98
             if (f != "0")
             {
                 //likecollection.MenuItems.Clear();
-                var LikeList = JsonConvert.DeserializeObject<JArray>(f);
-                if(LikeList != null)
+                var data = JsonSerializer.Deserialize<List<Favorites>>(f);
+                if(data != null)
                 {
-                    Favos.Clear();
-                    foreach (var like in LikeList)
-                    {
-                        var likeinfo = JsonConvert.DeserializeObject<Dictionary<string, object>>(like.ToString());
-                        string collection = likeinfo["name"].ToString();
-                        string sortid = like["id"].ToString();
-                        Favos.Add(new FavoriteGroup { Id = sortid, GroupName = collection });
-                    }
-                }
-                
+                    favoritesList.Clear();
+                    favoritesList.AddRange(data);
+                }   
             }
         }
-        private async void Request(string mode,string start,string order,string groupid)
+        private async void GetFavoriteTopic()
         {
-            if (mode == "favorite")
+            string favoriteTopicUrl = ApiEndpoints.Topic.FavoriteTopicList(currentIndex,(int)currenOrder,groupId);
+            var favoriteTopicResult = await RequestSender.Fetch<List<SimpleTopicInfo>>(favoriteTopicUrl);
+            if (!favoriteTopicResult.IsSuccess || favoriteTopicResult.Data == null)
             {
-                string url = "https://api.cc98.org/topic/me/favorite?from=" + start + "&size=11&order=" + order + "&groupid=" + groupid;
-                var r = await LoginService.vpn.GetAsync(url);
-                if (r.StatusCode == System.Net.HttpStatusCode.OK)
-                {
-                    string restext = await r.Content.ReadAsStringAsync();
-                    var AllTopics = Deserializer.ToArray(restext);
-                    if (AllTopics != null)
-                    {
-                        foreach (var Topic in AllTopics)
-                        {
-                            var TopicInfo = JsonConvert.DeserializeObject<Dictionary<string, object>>(Topic.ToString());
-                            string Author = "匿名";
-                            if (TopicInfo["userName"] != null)
-                            {
-                                Author = TopicInfo["userName"].ToString();
-                            }
-                            string AuthorId = "-1";
-                            if (TopicInfo["userId"] !=null)
-                            {
-                                AuthorId = TopicInfo["userId"].ToString();
-                            }
-                            string Section = TopicInfo["boardName"].ToString();
-                            string Time = TopicInfo["time"].ToString();
-                            string Title = TopicInfo["title"].ToString();
-                            string Pid = TopicInfo["id"].ToString();
-                            string Hit = TopicInfo["hitCount"].ToString();
-                            string Reply = TopicInfo["replyCount"].ToString();
-                            tiles.Add(new StandardPost { author = "@ " + Author, section = Section, title = Title, pid = Pid, hit = Hit, reply = Reply, rid = AuthorId ,time=Time,sort=(SortId+1).ToString()});
-                            SortId++;
-                        }
-                    }
-                }
+                //
+                return;
             }
-                
+            
+            var data = favoriteTopicResult.Data;
+            
+            topics.AddRange(data);
         }
         public int history = 0;
         private void Collection_Loaded(object sender, RoutedEventArgs e)
@@ -133,10 +94,11 @@ namespace CC98
                 {
                     int current = e.Index;
                     
-                    if (current > 0 && (current + 1) % 11 == 0&&current>history)
+                    if ((current + 1) % 10 == 0&&current>history)
                     {
                         history = current;
-                        Request(mode, (current + 1).ToString(), ((int)Current_Order).ToString(), groupid);
+                        currentIndex = current + 1;
+                        GetFavoriteTopic();
                     }
                 }
             };
@@ -147,34 +109,29 @@ namespace CC98
             var h = sender as HyperlinkButton;
             if (h != null)
             {
-                var t = h?.DataContext as StandardPost;
+                var t = h?.DataContext as SimpleTopicInfo;
                 if (t != null)
                 {
-                    Frame.Navigate(typeof(Topic), t.pid);
+                    Frame.Navigate(typeof(Topic), t.Id);
                 }
             }
         }
-        public enum PostOrder
-        {
-            Time = 0,      // 按发帖时间排序
-            LastReply = 1, // 按最后回复时间排序
-            Mark = 2       // 按收藏顺序排序
-        }
-        public PostOrder Current_Order = PostOrder.Mark;
+        
+        
         private void ChangeSort_Click(object sender, RoutedEventArgs e)
         {
-            Current_Order= (PostOrder)(((int)Current_Order + 1) % 3);
-            tiles.Clear();
+            currenOrder= (PostOrder)(((int)currenOrder + 1) % 3);
+            topics.Clear();
             history = 0;
-            SortId = 0;
-            Request(mode, "0", ((int)Current_Order).ToString(), groupid);
+
+            GetFavoriteTopic();
             string Sort_Method = string.Empty;
-            if (Current_Order == PostOrder.Time)
+            if (currenOrder == PostOrder.Time)
             {
                 Sort_Method = "发帖时间";
                 SortIcon.Symbol = FluentIcons.Common.Symbol.History;
             }
-            else if (Current_Order == PostOrder.LastReply)
+            else if (currenOrder == PostOrder.LastReply)
             {
                 Sort_Method = "最后回复";
                 SortIcon.Symbol = FluentIcons.Common.Symbol.ArrowReply;
@@ -189,14 +146,14 @@ namespace CC98
 
         private void FavoriteBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            if (SelectedFavo != null)
+            if (selectedFavorites != null)
             {
-                tiles.Clear();
+                topics.Clear();
                 history = 0;
-                SortId = 0;
-                groupid = SelectedFavo.Id;
-                de.Text = SelectedFavo.GroupName;
-                Request(mode, "0", ((int)Current_Order).ToString(), groupid);
+                sortId = 0;
+                groupId = selectedFavorites.Id;
+                de.Text = selectedFavorites.Name;
+                GetFavoriteTopic();
             }
         }
 
@@ -205,16 +162,17 @@ namespace CC98
             var m=sender as MenuFlyoutItem;
             if(m != null)
             {
-                var t = m?.DataContext as StandardPost;
+                var t = m?.DataContext as SimpleTopicInfo;
                 if(t != null)
                 {
-                    bool res=await RequestSender.RemoveFavorite(t.pid);
-                    if(res)
+                    //bool res=await RequestSender.RemoveFavorite(t.Id);
+                    bool res = true; //待实现
+                    if (res)
                     {
-                        tiles.Clear();
+                        topics.Clear();
                         history = 0;
-                        SortId = 0;
-                        Request(mode, "0", ((int)Current_Order).ToString(), groupid);
+                        sortId = 0;
+                        GetFavoriteTopic();
                         Flower.PlayAnimation("\uE930", "已取消收藏");
                     }
                     else
