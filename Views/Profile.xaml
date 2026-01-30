@@ -46,7 +46,7 @@
                         </HyperlinkButton>
                         <HyperlinkButton Click="FollowList_Click" Tag="follower"> 
                             <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="{x:Bind profile.Fan,Mode=OneWay}"  FontSize="16" Margin="0,0,5,0"></TextBlock>
+                                <TextBlock Text="{x:Bind profile.FanCount,Mode=OneWay}"  FontSize="16" Margin="0,0,5,0"></TextBlock>
                                 <TextBlock Text="粉丝"  FontSize="16" Foreground="{ThemeResource TextFillColorSecondaryBrush}"></TextBlock>
                             </StackPanel>
                         </HyperlinkButton>
@@ -68,14 +68,14 @@
                         <TextBlock Text="发帖数" Grid.Row="1" Grid.Column="0" Foreground="{ThemeResource TextFillColorSecondaryBrush}"></TextBlock>
                         <TextBlock Text="CCID" Grid.Row="2" Grid.Column="0" Foreground="{ThemeResource TextFillColorSecondaryBrush}"></TextBlock>
                         <TextBlock Text="{x:Bind profile.Wealth,Mode=OneWay}" Grid.Row="0" Grid.Column="1" ></TextBlock>
-                        <TextBlock Text="{x:Bind profile.Posts,Mode=OneWay}" Grid.Row="1" Grid.Column="1" ></TextBlock>
+                        <TextBlock Text="{x:Bind profile.PostCount,Mode=OneWay}" Grid.Row="1" Grid.Column="1" ></TextBlock>
                         <TextBlock Text="{x:Bind profile.Id,Mode=OneWay}" Grid.Row="2" Grid.Column="1" IsTextSelectionEnabled="True"></TextBlock>
                         <TextBlock Text="风评" Grid.Row="0" Grid.Column="2" Foreground="{ThemeResource TextFillColorSecondaryBrush}"></TextBlock>
                         <TextBlock Text="注册时间" Grid.Row="1" Grid.Column="2" Foreground="{ThemeResource TextFillColorSecondaryBrush}"></TextBlock>
                         <TextBlock Text="最后登录" Grid.Row="2" Grid.Column="2" Foreground="{ThemeResource TextFillColorSecondaryBrush}"></TextBlock>
                         <TextBlock Text="{x:Bind profile.Popularity,Mode=OneWay}" Grid.Row="0" Grid.Column="3" ></TextBlock>
-                        <TextBlock Text="{x:Bind profile.Regtime,Mode=OneWay}" Grid.Row="1" Grid.Column="3" ></TextBlock>
-                        <TextBlock Text="{x:Bind profile.Logtime,Mode=OneWay}" Grid.Row="2" Grid.Column="3" ></TextBlock>
+                        <TextBlock Text="{x:Bind profile.RegisterTime,Mode=OneWay}" Grid.Row="1" Grid.Column="3" ></TextBlock>
+                        <TextBlock Text="{x:Bind profile.LastLogOnTime,Mode=OneWay}" Grid.Row="2" Grid.Column="3" ></TextBlock>
                     </Grid>
                     <StackPanel Grid.Column="1" Grid.Row="2" Orientation="Horizontal" Spacing="10">
                         <Button Visibility="{x:Bind profile.IsOthers,Converter={StaticResource BoolToVisibility},Mode=OneWay}" x:Name="StartChat" Click="StartChat_Click">

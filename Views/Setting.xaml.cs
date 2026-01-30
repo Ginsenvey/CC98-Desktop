@@ -32,6 +32,7 @@ using Windows.Foundation.Collections;
 using Windows.Media.Protection.PlayReady;
 using Windows.Security.Credentials;
 using Windows.Storage;
+using System.Text.Json;
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
 
@@ -328,12 +329,12 @@ namespace CC98
                             var text = await package.GetTextAsync();
                             try
                             {
-                                var add=JsonConvert.DeserializeObject<List<string>>(text);
+                                var add=json.Deserialize<List<string>>(text);
                                 if (add != null)
                                 {
                                     var list = CustomEmoji.GetAllEmoji();
                                     list.AddRange(add);
-                                    string content = JsonConvert.SerializeObject(list);
+                                    string content = JsonSerializer.Serialize(list);
                                     string path = "CustomEmoji.json";
                                     ValidationHelper.JsonWritter(content, path);
                                     Flower.PlayAnimation("\uE930", "‘ÿ»ÎÕÍ≥…");

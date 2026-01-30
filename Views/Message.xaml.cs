@@ -63,11 +63,11 @@ namespace CC98
                     }
                     else if (tag == "1")//系统通知
                     {
-                        MsgFrame.Navigate(typeof(NoticeMsg), "system");
+                        MsgFrame.Navigate(typeof(NoticePage), "system");
                     }
                     else if (tag == "2")//回复我的
                     {
-                        MsgFrame.Navigate(typeof(NoticeMsg), "reply");
+                        MsgFrame.Navigate(typeof(NoticePage), "reply");
                     }
                 } 
                 

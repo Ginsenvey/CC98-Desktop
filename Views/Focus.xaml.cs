@@ -1,7 +1,9 @@
 
 using CC98.Kernel;
+using CC98.Kernel.ApiScope;
 using CC98.Objects;
 using CommunityToolkit.Labs.WinUI;
+using DevWinUI;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Controls.Primitives;
@@ -33,52 +35,31 @@ namespace CC98
     public sealed partial class Focus : Page
     {
         public ApplicationDataContainer Set = ApplicationData.Current.LocalSettings;
-        public ObservableCollection<TopicInfo> Tiles=[];
+        public ObservableCollection<TopicInfo> topics=[];
+        public FocusContentType mode = FocusContentType.Followee;
+        public int currentIndex = 0;
+        public int history = 0;
         public Focus()
         {
             this.InitializeComponent();
-            STileList.ItemsSource = Tiles;
+            STileList.ItemsSource = topics;
             GetMoments("0");
         }
-        public string mode = "0";
-        private async void GetMoments(string start)
+        
+        private async void GetMoments()
         {
-            string MomentsUrl = $"https://api.cc98.org/me/followee/topic?from={start}&size=20&order=0"; ;
-            if (mode == "1")
+            string url = (mode == FocusContentType.Followee) ? ApiEndpoints.User.Moment(currentIndex) : ApiEndpoints.User.FavoriteTopicUpdate(currentIndex);
+            var result = await RequestSender.Fetch<List<TopicInfo>>(url);
+            if (!result.IsSuccess || result.Data == null)
             {
-                MomentsUrl = $"https://api.cc98.org/topic/me/favorite?from={start}&size=20&order=1";
+                //
+                return;
             }
-            
-            string MomentsText = await RequestSender.SimpleRequest(MomentsUrl);
-            if (!MomentsText.StartsWith("404"))
-            {
-                var Moments = Deserializer.ToArray(MomentsText);
-                if (Moments != null)
-                {
-                    if (Moments.Count > 0)
-                    {
-                        foreach (var Topic in Moments)
-                        {
-                            try
-                            {
-                                var topic = Deserializer.ToItem(Topic.ToString());
-                                if (topic != null)
-                                {
-                                    Tiles.Add(topic);
-                                }
-                            }
-                            catch (Exception ex)
-                            {
-
-                            }
-                        }
-                    }
-                }
-            }
-
+            var data=result.Data;
+            topics.AddRange(data);
         }
 
-        public int history = 0;
+        
         private void STileList_Loaded(object sender, RoutedEventArgs e)
         {
             STileList.ElementPrepared += (s, e) =>
@@ -107,8 +88,8 @@ namespace CC98
                 {
                     mode = _tag;
                     history = 0;
-                    Tiles.Clear();
-                    GetMoments("0");
+                    topics.Clear();
+                    GetMoments();
                 }
             }
         }

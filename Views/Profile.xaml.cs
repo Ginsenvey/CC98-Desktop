@@ -69,7 +69,7 @@ namespace CC98
             this.InitializeComponent();
             SimpleTile.ItemsSource = recentTopics; 
         }
-        protected override void OnNavigatedTo(Microsoft.UI.Xaml.Navigation.NavigationEventArgs e)
+        protected override async void OnNavigatedTo(Microsoft.UI.Xaml.Navigation.NavigationEventArgs e)
         {
             base.OnNavigatedTo(e);
 
@@ -79,8 +79,8 @@ namespace CC98
             {
                 userId = args.UserId;
                 isMe = args.IsMe;
-                LoadProfile();
-                LoadRecentTopic();
+                await LoadProfile();
+                await LoadRecentTopic();
                 if(isMe)SignIn();
             } 
         }
@@ -313,17 +313,9 @@ namespace CC98
 
         private void StartChat_Click(object sender, RoutedEventArgs e)
         {
-            var c = new TargetUserInfo { TargetUserId = profile.Id, TargetUserName = profile.Name, PortraitUrl = profile.PortraitUrl };
-            var p = new Dictionary<string, object>()
-                    {
-                        {"Type","1" },
-                        {"Info",c }
-                    };
-            if (profile.Id != "0")
-            {
-                Frame.Navigate(typeof(Message), p);
-            }
-            
+            var c = new ChatInfo { UserId = profile.Id, UserName = profile.Name, PortraitUrl = profile.PortraitUrl };
+            var param=new MessageNavigationInfo { ChatUserInfo = c ,IsFromProfile=false};
+            Frame.Navigate(typeof(Message), param);
         }
 
         private async void Follow_Click(object sender, RoutedEventArgs e)

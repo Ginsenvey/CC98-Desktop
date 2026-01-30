@@ -1,8 +1,10 @@
 
 using CC98.Kernel;
+using CC98.Kernel.ApiScope;
 using CC98.Kernel.UserExperience;
 using CC98.Objects;
 using CC98.Services;
+using CC98.Services.Extensions;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.WinUI.UI.Controls;
 using DevWinUI;
@@ -27,8 +29,11 @@ using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Reflection.Metadata;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices.WindowsRuntime;
+using System.Text;
+using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Windows.ApplicationModel.DataTransfer;
@@ -40,9 +45,7 @@ using Windows.Media.AppBroadcasting;
 using Windows.Media.Core;
 using Windows.Media.Playback;
 using Windows.Storage;
-using System.Text.Json;
 using Windows.UI.Core.Preview;
-using CC98.Kernel.ApiScope;
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
 
@@ -54,33 +57,30 @@ namespace CC98
     public sealed partial class Board : Page
     {
         public ObservableCollection<SimpleTopicInfo> topics = new();
-        public ApplicationDataContainer Set;
+        public ApplicationDataContainer Set = ApplicationData.Current.LocalSettings;
+        //是否精华帖
         public bool isBest = false;
+        public int boardId = 0;
+        public int currentIndex = 0;
 
-        public BoardData CurrentBoardData = new BoardData() { BoardMasters = [],Id=0,BigPaper="",Description="", Name = "版面", TodayCount = 9898, TopicCount = 9898 };
+        public BoardData boardData = new BoardData() { BoardMasters = [],Id=0,BigPaper="",Description="", Name = "版面", TodayCount = 9898, TopicCount = 9898 };
         public Board()
         {
             this.InitializeComponent();
-            Set = ApplicationData.Current.LocalSettings;
             STileList.ItemsSource = topics;
         }
 
-        protected override void OnNavigatedTo(Microsoft.UI.Xaml.Navigation.NavigationEventArgs e)
+        protected override async void OnNavigatedTo(Microsoft.UI.Xaml.Navigation.NavigationEventArgs e)
         {
             base.OnNavigatedTo(e);
 
-            // 获取传递的参数
-            var parameter = e.Parameter as string;
-
-            if (parameter != null)
-            {
-                bid = parameter;
-                GetData(parameter);
-                LoadTopics(parameter, 0);
-            }
+            var args = e.TryGetParameter<int>();
+            boardId = args;
+            await GetData();
+            await LoadTopics();
         }
-        public string bid = "0";
-        private async void GetData(int boardId)
+        
+        private async Task GetData()
         {
             string boardDataUrl = ApiEndpoints.Board.BoardInfo(boardId);
             var boardDataResult = await RequestSender.Fetch<BoardData>(boardDataUrl);
@@ -89,19 +89,19 @@ namespace CC98
                 return;
             }
             var data= boardDataResult.Data;
-            CurrentBoardData.Id = data.Id;
-            CurrentBoardData.Name = data.Name;
-            CurrentBoardData.Description = data.Description;
-            CurrentBoardData.BigPaper = data.BigPaper;
-            CurrentBoardData.BoardMasters = data.BoardMasters;
-            CurrentBoardData.TopicCount = data.TopicCount;
-            CurrentBoardData.TodayCount = data.TodayCount;   
+            boardData.Id = data.Id;
+            boardData.Name = data.Name;
+            boardData.Description = data.Description;
+            boardData.BigPaper = data.BigPaper;
+            boardData.BoardMasters = data.BoardMasters;
+            boardData.TopicCount = data.TopicCount;
+            boardData.TodayCount = data.TodayCount;   
         }
 
-        private async Task LoadTopics(int boardId, int start)
+        private async Task LoadTopics()
         {
-            string topicUrl = ApiEndpoints.Board.TopicList(isBest, boardId, start);
-            var topicResult = await RequestSender.Fetch<List<SimplePost>>(topicUrl);
+            string topicUrl = ApiEndpoints.Board.TopicList(isBest, boardId, currentIndex);
+            var topicResult = await RequestSender.Fetch<List<SimpleTopicInfo>>(topicUrl);
             if (topicResult.IsNotValid)
             {
                 Flower.PlayAnimation("\uEA39", topicResult.Message);
@@ -116,17 +116,8 @@ namespace CC98
         {
             var h = sender as HyperlinkButton;
             var t = h?.DataContext as SimpleTopicInfo;
-            if (t != null)
-            {
-                if (t.pid != null)
-                {
-                    Frame.Navigate(typeof(Topic), t.pid);
-                }
-            }
-            else
-            {
-                Flower.PlayAnimation("\uE930", "null");
-            }
+            if (t == null) return;
+            Frame.Navigate(typeof(Topic), t.Id);
         }
 
 
@@ -151,7 +142,7 @@ namespace CC98
                             {
                                 try
                                 {
-                                    var Info = JsonConvert.DeserializeObject<Dictionary<string, object>>(content);
+                                    var Info = JsonSerializer.Deserialize<Dictionary<string, object>>(content);
                                     string uid = Info["id"].ToString();
                                     if (uid != null)
                                     {
@@ -240,7 +231,8 @@ namespace CC98
                     if (current > 0 && (current + 1) % 20 == 0 && current > history)
                     {
                         history = current;
-                        await LoadTopics(bid, (current + 1).ToString());
+                        currentIndex = current+1;
+                        await LoadTopics();
                     }
                 }
             };
@@ -257,32 +249,30 @@ namespace CC98
                     switch (tag)
                     {
                         case "Send":
-                            var param = new Dictionary<string, string>()
+                            var param = new EditorNavigationInfo
                             {
-                                {"Mode","2" },
-                                {"BoardId",bid }
+                                EditorMode=EditorMode.DraftNewTopic,
+                                BoardId=boardId
                             };
-                            Frame.Navigate(typeof(Post), param);
+                            Frame.Navigate(typeof(Editor), param);
                             break;
                         case "Pin":
-                            var r = await RequestSender.EditFocusList("add", bid);
-                            if (r == "1")
+                            string url = ApiEndpoints.Board.EditFocusBoards(boardId);
+                            var content = new StringContent("", Encoding.UTF8, "application/json");
+                            var result = await RequestSender.Put(url, content);
+                            if (!result.IsSuccess)
                             {
-
-                                var i = new NavigationItem
-                                {
-                                    IconSymbol = BoardIcon.GetSymbol(bid, CurrentBoardData.Name),
-                                    Name = CurrentBoardData.Name,
-                                    IsEditable = true,
-                                    Tag = bid
-                                };
-                                Messenger.Instance.AddNavigationItem(i);
+                                //
+                                return;
                             }
-                            else
+                            var i = new NavigationItem
                             {
-                                Flower.PlayAnimation("\uEA39", r);
-                            }
-
+                                IconSymbol = BoardIcon.GetSymbol(boardId, boardData.Name),
+                                Name = boardData.Name,
+                                IsEditable = true,
+                                Tag = boardId.ToString()
+                            };
+                            Messenger.Instance.AddNavigationItem(i);
                             break;
                         case "Best":
                             GooeyGroup.Visibility = Visibility.Collapsed;
@@ -290,15 +280,8 @@ namespace CC98
                             history = 0;
                             topics.Clear();
                             isBest = true;
-                            try
-                            {
-                                await LoadTopics(bid, "0");
-
-                            }
-                            catch (Exception ex)
-                            {
-                                Flower.PlayAnimation("\uEA39", ex.Message);
-                            }
+                            currentIndex = 0;
+                            await LoadTopics();
                             break;
                     }
 
@@ -314,7 +297,7 @@ namespace CC98
             isBest = false;
             history = 0;
             topics.Clear();
-            await LoadTopics(bid, "0");
+            await LoadTopics();
         }
 
         private async void Drawer_ImageResolving(object sender, ImageResolvingEventArgs e)

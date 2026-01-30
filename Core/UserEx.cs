@@ -17,7 +17,7 @@ namespace CC98.Kernel.UserExperience//用户体验模型，包括:版面图标�
 {
     public static class BoardIcon
     {
-        public static FluentIcons.Common.Symbol GetSymbol(string Id, string Name)
+        public static FluentIcons.Common.Symbol GetSymbol(int Id, string Name)
         {
             if (BoardIcon.Icons.ContainsKey(Id))
             {
@@ -40,50 +40,50 @@ namespace CC98.Kernel.UserExperience//用户体验模型，包括:版面图标�
                 return FluentIcons.Common.Symbol.Tag;
             }
         }
-        public static Dictionary<string,FluentIcons.Common.Symbol> Icons=new Dictionary<string, Symbol>
+        public static Dictionary<int,FluentIcons.Common.Symbol> Icons=new Dictionary<int, Symbol>
         {
-            {"758",Symbol.LeafOne},
-            {"182",Symbol.Heart },
-            {"184",Symbol.ChatHelp },
-            {"68",Symbol.Library },
-            {"581",Symbol.BeakerEdit },
-            {"102",Symbol.HatGraduation },
-            {"304",Symbol.Translate },
-            {"263" ,Symbol.TaskList},
-            {"105",Symbol.Code },
-            {"749",Symbol.ReadingList },
-            {"100",Symbol.InfoSparkle},
-            {"777",Symbol.Shield },
-            {"357" ,Symbol.BoardSplit},
-            {"459",Symbol.CalendarWorkWeek },
-            {"515",Symbol.BuildingTownhouse },
-            {"235",Symbol.Agents },
-            {"782",Symbol.ArrowTrending },
-            {"180",Symbol.PhoneDesktop },
-            {"30",Symbol.AnimalPawPrint },
-            {"760",Symbol.Bookmark },
-            {"26",Symbol.BookmarkMultiple},
-            {"25",Symbol.MusicNote2 },
-            {"91",Symbol.Games },
-            {"115",Symbol.LeafTwo},
-            {"744",Symbol.MoviesAndTv},
-            {"788",Symbol.DriveTrain},
-            {"43",Symbol.ShoppingBag},
-            {"562",Symbol.ShoppingBagAdd},
-            {"569",Symbol.AgentsAdd},
-            {"764",Symbol.ShoppingBagArrowLeft },
-            {"114",Symbol.HeartBroken},
-            {"81",Symbol.WeatherMoon },
-            {"152",Symbol.HeartPulse},
-            {"135",Symbol.WeatherSunny },
-            {"15",Symbol.Sport },
-            {"226",Symbol.Toolbox},
-            {"258",Symbol.AnimalCat },
-            {"173",Symbol.CameraSparkles},
-            {"353",Symbol.Sparkle},
-            {"229",Symbol.FoodPizza},
-            {"261",Symbol.LeafThree},
-            {"315",Symbol.Album},
+            {758,Symbol.LeafOne},
+            {182,Symbol.Heart },
+            {184,Symbol.ChatHelp },
+            {68,Symbol.Library },
+            {581,Symbol.BeakerEdit },
+            {102,Symbol.HatGraduation },
+            {304,Symbol.Translate },
+            {263 ,Symbol.TaskList},
+            {105,Symbol.Code },
+            {749,Symbol.ReadingList },
+            {100,Symbol.InfoSparkle},
+            {777,Symbol.Shield },
+            {357 ,Symbol.BoardSplit},
+            {459,Symbol.CalendarWorkWeek },
+            {515,Symbol.BuildingTownhouse },
+            {235,Symbol.Agents },
+            {782,Symbol.ArrowTrending },
+            {180,Symbol.PhoneDesktop },
+            {30,Symbol.AnimalPawPrint },
+            {760,Symbol.Bookmark },
+            {26,Symbol.BookmarkMultiple},
+            {25,Symbol.MusicNote2 },
+            {91,Symbol.Games },
+            {115,Symbol.LeafTwo},
+            {744,Symbol.MoviesAndTv},
+            {788,Symbol.DriveTrain},
+            {43,Symbol.ShoppingBag},
+            {562,Symbol.ShoppingBagAdd},
+            {569,Symbol.AgentsAdd},
+            {764,Symbol.ShoppingBagArrowLeft },
+            {114,Symbol.HeartBroken},
+            {81,Symbol.WeatherMoon },
+            {152,Symbol.HeartPulse},
+            {135,Symbol.WeatherSunny },
+            {15,Symbol.Sport },
+            {226,Symbol.Toolbox},
+            {258,Symbol.AnimalCat },
+            {173,Symbol.CameraSparkles},
+            {353,Symbol.Sparkle},
+            {229,Symbol.FoodPizza},
+            {261,Symbol.LeafThree},
+            {315,Symbol.Album},
 
         };
     }
@@ -279,7 +279,7 @@ namespace CC98.Kernel.UserExperience//用户体验模型，包括:版面图标�
         {
             var list = GetAllEmoji();
             list.Add(url);
-            string content=JsonConvert.SerializeObject(list);
+            string content=JsonSerializer.Serialize(list);
             string path = "CustomEmoji.json";
             ValidationHelper.JsonWritter(content,path);
         }
@@ -292,7 +292,7 @@ namespace CC98.Kernel.UserExperience//用户体验模型，包括:版面图标�
             {
                 try
                 {
-                    var list = JsonConvert.DeserializeObject<List<string>>(content);
+                    var list = JsonSerializer.Deserialize<List<string>>(content);
                     if (list != null)
                     {
                         return list;
@@ -310,13 +310,13 @@ namespace CC98.Kernel.UserExperience//用户体验模型，包括:版面图标�
             {
                 list.RemoveAt(index);
             }
-            string content = JsonConvert.SerializeObject(list);
+            string content = JsonSerializer.Serialize(list);
             string path = "CustomEmoji.json";
             ValidationHelper.JsonWritter(content, path);
         }
         public static void ClearAllEmoji()
         {
-            string content = JsonConvert.SerializeObject(new List<string>());
+            string content = JsonSerializer.Serialize(new List<string>());
             string path = "CustomEmoji.json";
             ValidationHelper.JsonWritter(content, path);
         }

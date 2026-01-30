@@ -41,4 +41,23 @@ public class SearchNavigationInfo
     public string Key { get; set; } = string.Empty;
 }
 
+public class EditorNavigationInfo
+{
+    public EditorMode EditorMode { get; set;} = EditorMode.ReplyToPost;
+    public int TopicId { get; set;} = 0;
+    public int PostId {  get; set;} = 0;
+
+    public int BoardId { get; set; } = 0;
+    //所回复的帖子Id
+    public int ParentId {  get; set;} = 0;
+    //引用头
+    public string QuoteHeader {  get; set; } = string.Empty;
+
+    //传入待编辑帖子的原文，或者签名档的原文
+    public string BaseText {  get; set; } = string.Empty;
+    //回复主题的标题,其他提示信息
+    public string HintText { get; set; }= string.Empty;
+
+}
+
 

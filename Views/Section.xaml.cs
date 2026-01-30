@@ -33,11 +33,11 @@ namespace CC98
     public sealed partial class Section : Page
     {
         public ApplicationDataContainer Set=ApplicationData.Current.LocalSettings;
-        public ObservableCollection<AllSection> allSections;
+        public ObservableCollection<SectionInfo> allSections;
         public Section()
         {
             this.InitializeComponent();
-            allSections = new ObservableCollection<AllSection>()
+            allSections = new ObservableCollection<SectionInfo>()
             {
                 
             };
@@ -97,7 +97,7 @@ namespace CC98
         }
         private void LoadSection(string sectionJson)
         {
-            var data = JsonSerializer.Deserialize<List<BoardInfo>>(sectionJson);
+            var data = JsonSerializer.Deserialize<List<SectionInfo>>(sectionJson);
             if (data != null)
             {
                 allSections.AddRange(data);
@@ -119,7 +119,7 @@ namespace CC98
             }
         }
     }
-    public class AllSection
+    public class SectionInfo
     {
         public string SectionName { get; set; } = string.Empty;
         public List<BoardInfo> Boards {  get; set; }= new List<BoardInfo>();

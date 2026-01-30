@@ -1,4 +1,8 @@
 using CC98.Kernel;
+using CC98.Kernel.ApiScope;
+using CC98.Objects;
+using CC98.Services.Extensions;
+using DevWinUI;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using System.Collections.Generic;
@@ -9,11 +13,19 @@ using System.Collections.ObjectModel;
 namespace CC98
 {
 
-    public sealed partial class NoticeMsg : Page
+    public sealed partial class NoticePage : Page
     {
         public ObservableCollection<Notice> notices = new();
-        public string type = "system";
-        public NoticeMsg()
+        public NoticeType type = NoticeType.System;
+        public int currentPage = 0;
+        public int pageSize = 10;
+        public string GetTypeName(NoticeType type) => type switch
+        { 
+            NoticeType.System=>"system",
+            NoticeType.At=>"at",
+            _=>""
+         };
+        public NoticePage()
         {
             InitializeComponent();
             NoticeRepeater.ItemsSource = notices;
@@ -21,115 +33,46 @@ namespace CC98
         protected override void OnNavigatedTo(Microsoft.UI.Xaml.Navigation.NavigationEventArgs e)
         {
             base.OnNavigatedTo(e);
-
-            // 获取传递的参数
-            var p = e.Parameter as string;
-
-            if (p != null)
-            {
-                type = p;
-                GetNotice(type, "0");
-            }
+            var args = e.TryGetParameter<NoticeType>();
+            type = args;
+            GetNotice();
         }
+        
         //At和系统通知只显示最新10条
-        private async void GetNotice(string type,string start)
+        private async void GetNotice()
         {
             notices.Clear();
-            string NoticeText = await RequestSender.SystemNotice(type,start);
-            if (NoticeText.StartsWith("404:"))
+            var url = ApiEndpoints.User.SystemNotice(GetTypeName(type), currentPage * pageSize);
+            var result = await RequestSender.Fetch<List<Notice>>(url);
+            if (!result.IsSuccess || result.Data == null)
             {
+                //
                 return;
             }
-            else
-            {
-                var NoticeList = Deserializer.ToArray(NoticeText);
-                if (NoticeList != null)
-                {
-                    if (NoticeList.Count > 0)
-                    {
-                        
-                        foreach (var notice in NoticeList)
-                        {
-                            var js = JsonConvert.DeserializeObject<Dictionary<string, object>>(notice.ToString());
-                            if (js != null)
-                            {
-                                string floor = "0";
-                                string username = "匿名";
-                                if (js["postBasicInfo"] != null)
-                                {
-                                    var info = JsonConvert.DeserializeObject<Dictionary<string, object>>(js["postBasicInfo"].ToString());
-                                    floor = ValidationHelper.GetKey(info, "floor");
-                                    username=ValidationHelper.GetKey(info, "userName")=="0"?"匿名":ValidationHelper.GetKey(info, "userName") ;
-                                }
-                                string NoticeType = ValidationHelper.GetKey(js, "type");
-                                if (NoticeType == "1")
-                                {
-                                    notices.Add(new Notice
-                                    {
-                                        Title = js["title"].ToString(),
-                                        Time = js["time"].ToString(),
-                                        TopicId = ValidationHelper.GetKey(js, "topicId"),
-                                        Content = js["content"].ToString(),
-                                        NoticeId = js["id"].ToString(),
-                                        Floor = floor,
-                                        NoticeType = NoticeType
-                                    });
-                                }
-                                else
-                                {
-                                    notices.Add(new Notice
-                                    {
-                                        Title ="@ "+ username,
-                                        Time = js["time"].ToString(),
-                                        TopicId = ValidationHelper.GetKey(js, "topicId"),
-                                        Content = $"在主题 CC{ValidationHelper.GetKey(js, "topicId")} 中回复了你。",
-                                        NoticeId = js["id"].ToString(),
-                                        Floor = floor,
-                                        NoticeType = NoticeType
-                                    });
-                                }
-                                //根据类型确定显示内容。
-                                
-                                
-                            }
-                        }
-                    }
-                }
-            }
+            var data= result.Data;
+            notices.AddRange(data);      
         }
 
         private void NoticeCard_Click(object sender, RoutedEventArgs e)
         {
             var h = sender as HyperlinkButton;
-            if (h != null)
+            var n=h?.DataContext as Notice;
+            if (n == null) return;
+            if (n.Type == 2)
             {
-                var n=h?.DataContext as Notice;
-                if (n != null)
+                if (n.TopicId is not int topicId || n.PostBasicInfo == null) return;
+                if ((App.Current as App).m_window is MainWindow mainwindow)
                 {
-                    if (n.NoticeType == "2")
+                    var param = new TopicNavigationInfo
                     {
-                        if (n.TopicId != "0")
-                        {
-                            if ((App.Current as App).m_window is MainWindow mainwindow)
-                            {
-                                mainwindow.RootFrame.Navigate(typeof(Topic), n.TopicId);
-                            }               
-                        }
-                        
-                    }
+                        IsJumpingMode = true,
+                        TargetFloor=n.PostBasicInfo.Floor,
+                        TopicId= topicId
+                    };
+                    mainwindow.RootFrame.Navigate(typeof(Topic), param);
                 }
             }
         }
     }
-    public class Notice
-    {
-        public string Time { get; set; }
-        public string Title { get; set; }
-        public string NoticeId { get; set; }
-        public string TopicId { get; set; }
-        public string Content { get; set; }
-        public string Floor { get; set; }
-        public string NoticeType {  get; set; }
-
-    }
+    
 }

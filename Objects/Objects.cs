@@ -6,6 +6,7 @@ using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using CC98.Kernel;
 using CommunityToolkit.Mvvm.ComponentModel;
+using DevWinUI;
 
 namespace CC98.Objects;
 /// <summary>
@@ -126,26 +127,7 @@ public class RandomTopic
     public string FormattedTime => Time.ToString("yyyy-MM-dd HH:mm:ss");
 }
 
-/// <summary>
-/// 用于单个版面页面（Board）的简单帖子
-/// </summary>
-public class SimplePost
-{
-    [JsonPropertyName("id")]
-    public required string Id { get; set; }
-    [JsonPropertyName("title")]
-    public required string Title { get; set; }
 
-    [JsonPropertyName("userName")]
-    public required string UserName { get; set; }
-    [JsonPropertyName("replyCount")]
-    public required string ReplyCount { get; set; }
-    [JsonPropertyName("hitCount")]
-    public required string HitCount { get; set; }
-    [JsonPropertyName("time")]
-    public required DateTime Time { get; set; }
-    public string FormattedTime => Time.ToString("yyyy-MM-dd HH:mm:ss");
-}
 
 /// <summary>
 /// 版面信息
@@ -383,6 +365,11 @@ public partial class UserInfo : ObservableObject
         get => field;
         set => SetProperty(ref field, value);
     }
+    public List<int> CustomBoards
+    {
+        get => field??[];
+        set => SetProperty(ref field, value);
+    }
 }
 /// <summary>
 /// 用于单个版面页和个人主页的简单展示帖
@@ -602,9 +589,71 @@ public partial class ChatInfo : ObservableObject
         set => SetProperty(ref field, value);
     }
 }
-public enum PostOrder
+
+
+
+public class VoteInfo
 {
-    Time = 0,      // 按发帖时间排序
-    LastReply = 1, // 按最后回复时间排序
-    Mark = 2       // 按收藏顺序排序
+    public List<int> MyRecord { get; set; } = [];
+    public List<VoteItem> VoteItems { get; set; } = [];
+    //能否继续投票
+    public bool CanVote {  get; set; }
+    //是否过期
+    public bool IsAvailable {  get; set; }
+    //票数限制
+    public int MaxVoteCount {  get; set; }
+    public int expiredTime { get; set; }
+    //总投票人数
+    public int VoteUserCount {  get; set; }
+
+}
+public class VoteItem
+{
+    public int Id { get; set; }
+    public int Count { get; set; }
+    public string Description { get; set; } = string.Empty;
+}
+
+public class UnreadMessageInfo
+{
+    public int MessageCount { get; set; }
+    public int ReplyCount { get; set; }
+    public int AtCount { get; set; }
+    public int SystemCount {  get; set; }
+}
+
+public class Notice
+{
+    [JsonPropertyName("title")]
+    public string? Title {  get; set; }
+
+    [JsonPropertyName("topicId")]
+    public int? TopicId { get; set; }
+
+    [JsonPropertyName("postId")]
+    public int? PostId { get; set; }
+
+    [JsonPropertyName("time")]
+    public DateTimeOffset Time { get; set; }
+
+    [JsonPropertyName("postBasicInfo")]
+    public PostBasicInfo? PostBasicInfo { get; set; }
+
+    [JsonPropertyName("id")]
+    public int Type { get; set;}
+}
+
+public class PostBasicInfo
+{
+    [JsonPropertyName("id")]
+    public int Id { get; set; }
+
+    [JsonPropertyName("floor")]
+    public int Floor { get; set; }
+
+    [JsonPropertyName("userId")]
+    public long UserId { get; set; }
+
+    [JsonPropertyName("userName")]
+    public string UserName { get; set; }=string.Empty;
 }

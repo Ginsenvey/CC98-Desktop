@@ -1,5 +1,7 @@
 ﻿using CC98.Kernel;
+using CC98.Kernel.ApiScope;
 using CC98.Kernel.UserExperience;
+using CC98.Objects;
 using CC98.Services;
 using CommunityToolkit.WinUI.Converters;
 using DevWinUI;
@@ -37,6 +39,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using System.Xml.Linq;
 using Windows.ApplicationModel.DataTransfer;
 using Windows.Foundation;
 using Windows.Foundation.Collections;
@@ -45,6 +48,7 @@ using Windows.Security.Credentials;
 using Windows.Security.Cryptography.Certificates;
 using Windows.Storage;
 using Windows.Storage.Streams;
+using static CC98.Kernel.ApiScope.ApiEndpoints;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -59,12 +63,15 @@ namespace CC98
         public ObservableCollection<CategoryBase> MenuItems { get; } = new ObservableCollection<CategoryBase>();
         public ObservableCollection<CategoryBase> FooterMenuItems { get; } = new ObservableCollection<CategoryBase>();
         public Frame RootFrame => contentframe;//用于在嵌套的Frame中导航
+        public ApplicationDataContainer Set = ApplicationData.Current.LocalSettings;
+        public ObservableCollection<string> collections=[];
+        public int UnreadCount { get; set; }
         public MainWindow()
         {
             this.InitializeComponent();
             this.ExtendsContentIntoTitleBar = true;
             this.SetTitleBar(UserArea);
-            AppWindow.TitleBar.PreferredHeightOption = Microsoft.UI.Windowing.TitleBarHeightOption.Tall;
+            AppWindow.TitleBar.PreferredHeightOption = TitleBarHeightOption.Tall;
             var iconPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "cc98.ico");
             AppWindow.SetIcon(iconPath);
             AppWindow.SetTaskbarIcon(iconPath);
@@ -153,113 +160,89 @@ namespace CC98
         }
         private async void PinOff_Click(object sender, RoutedEventArgs e)
         {
-            if ((sender as MenuFlyoutItem)?.Tag is string tag)
+            var tag = (sender as MenuFlyoutItem)?.Tag as string;
+            if (tag == null) return;
+            int boardId=int.Parse(tag);
+            string url = ApiEndpoints.Board.EditFocusBoards(boardId);
+            var result = await RequestSender.Delete(url);
+            if (!result.IsSuccess)
             {
-                string r=await RequestSender.EditFocusList("delete", tag);
-                if (r == "1")
-                {
-                    string custom_boards = ValidationHelper.GetValue(Set, "CustomBoards");
-                    if (custom_boards != "0")
-                    {
-                        var boardinfo = JsonConvert.DeserializeObject<Dictionary<string,string>>(custom_boards);
-                        if(boardinfo != null)
-                        {
-                            if (boardinfo.ContainsKey(tag))
-                            {
-                                boardinfo.Remove(tag);
-                            }
-                        }
-                    }
-                    var item = MenuItems.OfType<NavigationItem>().First(g => g.Tag == tag);
-                    MenuItems.Remove(item);
-                }
-                else
-                {
-                    Flower.PlayAnimation("\uEA39", $"取消关注失败:{r.Split(":")[1]}");
-                }
-                
+                //
+                return;
             }
-            
+            string custom_boards = ValidationHelper.GetValue(Set, "CustomBoards");
+            if (custom_boards != "0")
+            {
+                var boardinfo = JsonSerializer.Deserialize<Dictionary<string, string>>(custom_boards);
+                if (boardinfo != null)
+                {
+                    if (boardinfo.ContainsKey(tag))
+                    {
+                        boardinfo.Remove(tag);
+                    }
+                }
+            }
+            var item = MenuItems.OfType<NavigationItem>().First(g => g.Tag == tag);
+            MenuItems.Remove(item);
+
         }
-        
+
         private async void GetFocusBoards()//同步客户端和在线关注版块的信息
         {
             string custom_boards = ValidationHelper.GetValue(Set, "CustomBoards");
             if (custom_boards!="0")
             {
-                memory = JsonConvert.DeserializeObject<Dictionary<string, string>>(custom_boards);
+                memory = JsonSerializer.Deserialize<Dictionary<int, string>>(custom_boards)??new Dictionary<int, string>();
             }
             else
             {
                 Set.Values["CustomBoards"] = "0";
             }
             //初始化本地缓存
-            string ProfileUrl = "https://api.cc98.org/me";
-            string ProfileText=await RequestSender.SimpleRequest(ProfileUrl);
-            if (!ProfileText.StartsWith("404:"))
-            {
-                var js = Deserializer.ToDictionary(ProfileText);
-                if(js != null)
-                {
-                    var boardlist = Deserializer.ToArray(js["customBoards"].ToString());
-                    if (boardlist != null)
-                    {
-                        foreach(var board in boardlist)
-                        {
-                            AddBoards(board.ToString());
-                        }
-
-                    }
-                }
-            }
-            else//无网络等，则直接使用缓存数据
+            string profileUrl = ApiEndpoints.User.UserProfile(true,0);
+            var profileResult = await RequestSender.Fetch<UserInfo>(profileUrl);
+            if (!profileResult.IsSuccess || profileResult.Data == null)
             {
                 if (memory != null)
                 {
                     foreach (var b in memory)
                     {
-                        MenuItems.Add(new NavigationItem { Name = b.Value, IconSymbol=BoardIcon.GetSymbol(b.Key,b.Value), Tag = b.Key, IsEditable = true });
+                        MenuItems.Add(new NavigationItem { Name = b.Value, IconSymbol = BoardIcon.GetSymbol(b.Key, b.Value), Tag = b.Key.ToString(), IsEditable = true });
                     }
                 }
+                return;
             }
+            var data = profileResult.Data;
+            var boards = data.CustomBoards;
+            foreach (var board in boards)
+            {
+                AddBoards(board);
+            }   
         }
-        public Dictionary<string, string> memory = new();
-        private async void AddBoards(string BoardId)
+        public Dictionary<int, string> memory = new();
+        private async void AddBoards(int boardId)
         {
             //此方法将检测本地是否已存储板块，没有则添加。无论本地是否已经存在，都会加载到导航栏。
             //先判断本地存储是否有此板块
-            if (!memory.ContainsKey(BoardId))
+            if (!memory.ContainsKey(boardId))
             {
-                string BoardUrl = "https://api.cc98.org/board/" + BoardId;
-                try
+                string boardDataUrl = ApiEndpoints.Board.BoardInfo(boardId);
+                var boardDataResult = await RequestSender.Fetch<BoardData>(boardDataUrl);
+                if (!boardDataResult.IsSuccess || boardDataResult.Data == null)
                 {
-                    var BoardRes = await LoginService.vpn.GetAsync(BoardUrl);
-                    if (BoardRes.StatusCode == System.Net.HttpStatusCode.OK)
-                    {
-                        string BoardText = await BoardRes.Content.ReadAsStringAsync();
-                        if (!string.IsNullOrEmpty(BoardText))
-                        {
-                            var js = JsonConvert.DeserializeObject<Dictionary<string, object>>(BoardText);
-                            if (js != null)
-                            {
-                                string name = js["name"].ToString();
-                                memory.Add(BoardId, name);
-                                MenuItems.Add(new NavigationItem { Name = name, IconSymbol = BoardIcon.GetSymbol(BoardId,name), Tag = BoardId, IsEditable = true });
-                                string boardjsontext = JsonConvert.SerializeObject(memory);
-                                Set.Values["CustomBoards"] = boardjsontext;
-                            }
-                        }
-                    }
+                    return;
                 }
-                catch
-                {
-
-                }
+                var data=boardDataResult.Data;
+                memory.Add(boardId, data.Name);
+                MenuItems.Add(new NavigationItem { Name = data.Name, IconSymbol = BoardIcon.GetSymbol(boardId, data.Name), Tag = boardId.ToString(), IsEditable = true });
+                string boardjsontext = JsonSerializer.Serialize(memory);
+                Set.Values["CustomBoards"] = boardjsontext;
+               
             }
             else
             {
                 //如果本地存储有此板块，则直接添加
-                MenuItems.Add(new NavigationItem { Name = memory[BoardId], IconSymbol = BoardIcon.GetSymbol(BoardId,""), Tag = BoardId, IsEditable = true });
+                MenuItems.Add(new NavigationItem { Name = memory[boardId], IconSymbol = BoardIcon.GetSymbol(boardId, memory[boardId]), Tag = boardId.ToString(), IsEditable = true });
             }
         }
         private async void LoadIndex()
@@ -394,139 +377,79 @@ namespace CC98
             RootGrid.RequestedTheme = theme;
         }
         
-        public ApplicationDataContainer Set= ApplicationData.Current.LocalSettings;
-        public ObservableCollection<string> collections;
+        
         private async void CheckLoginStatus()   
         {
-            
             string Access = PasswordManager.RetrievePassword("Access");
-            if (!string.IsNullOrEmpty(Access))
+            if (string.IsNullOrEmpty(Access))
             {
-                try
-                {
-                    LoginService.vpn.client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Access);
-                    var response = await LoginService.vpn.GetAsync("https://api.cc98.org/me/unread-count");
-                    if (response.StatusCode == HttpStatusCode.OK)
-                    {
-                        string CheckResponse = await response.Content.ReadAsStringAsync();
-                        try
-                        {
-                            var js = JsonConvert.DeserializeObject<Dictionary<string, object>>(CheckResponse);
-                            if (js != null)
-                            {
-                                UnreadCount = Convert.ToInt32(js["messageCount"]) + Convert.ToInt32(js["replyCount"]);
-                                BadgeNotificationManager.Current.SetBadgeAsCount((uint)UnreadCount);
-                                GetFocusBoards();
-                                await GetFavorites();
-                                LoadIndex();
-                                return;
-                            }
-                            else
-                            {
-                                LoadIndex();
-                            }
-
-                        }
-                        catch (Exception ex)//此类情况通常为网络问题，不再尝试登录
-                        {
-                            if (LoginService.vpn.IsVpnEnabled)
-                            {
-                                LoadIndex();
-                            }
-                            else
-                            {
-                                ShowTips("网络问题:", ex.Message);
-                            }
-                        }
-
-
-                    }
-
-                    else//无感知认证
-                    {
-                        LoadIndex();
-                    }
-                    GetFocusBoards();
-
-                }
-                catch (Exception ex)
-                {
-                    ShowTips("网络问题:", ex.Message);
-                }
+                //
+                return;
             }
-
+            LoginService.vpn.client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Access);
+            var url = ApiEndpoints.User.UnreadMessage();
+            var result = await RequestSender.Fetch<UnreadMessageInfo>(url);
+            if (!result.IsSuccess || result.Data == null)
+            {
+                //
+                if (result.StatusCode == (int)HttpStatusCode.Unauthorized)
+                {
+                    //登录失效
+                }
+                return;
+            }
+            var data= result.Data;
+            UnreadCount = data.MessageCount + data.AtCount + data.ReplyCount + data.SystemCount;
+            BadgeNotificationManager.Current.SetBadgeAsCount((uint)UnreadCount);
+            GetFocusBoards();
+            await GetFavorites();
+            LoadIndex();
         }
         
         
 
         private async void RefreshMessage()
         {
-            var response = await LoginService.vpn.GetAsync("https://api.cc98.org/me/unread-count");
-            if (response.StatusCode == HttpStatusCode.OK)
+            var url = ApiEndpoints.User.UnreadMessage();
+            var result = await RequestSender.Fetch<UnreadMessageInfo>(url);
+            if (!result.IsSuccess || result.Data == null)
             {
-
-                string CheckResponse = await response.Content.ReadAsStringAsync();
-                try
-                {
-                    var js = JsonConvert.DeserializeObject<Dictionary<string, object>>(CheckResponse);
-                    if (js != null)
-                    {
-                        UnreadCount = Convert.ToInt32(js["messageCount"]) + Convert.ToInt32(js["replyCount"]);
-                        BadgeNotificationManager.Current.SetBadgeAsCount((uint)UnreadCount);
-                    }
-                    else
-                    {
-                        BadgeNotificationManager.Current.SetBadgeAsCount(0);
-                    }
-                }
-                catch
-                {
-                    BadgeNotificationManager.Current.SetBadgeAsCount(0);
-                }
+                ValidationHelper.Log("刷新未读消息失败", $"{result.StatusCode}:{result.Message}");
+                return;
             }
+            var data = result.Data;
+            UnreadCount = data.MessageCount + data.AtCount + data.ReplyCount + data.SystemCount;
+            BadgeNotificationManager.Current.SetBadgeAsCount((uint)UnreadCount);
         }
 
         [RequiresUnreferencedCode("Calls System.Text.Json.JsonSerializer.Deserialize<TValue>(String, JsonSerializerOptions)")]
         private async Task<bool> GetFavorites()
         {
-            string Favorites = await RequestSender.FavoritesList();
-            if (!Favorites.StartsWith("404:"))
+            string favoritesInfoUrl=ApiEndpoints.User.FavoritesList();
+            var favoritesInfoResult = await RequestSender.Fetch<FavoritesInfo>(favoritesInfoUrl);
+            if (!favoritesInfoResult.IsSuccess || favoritesInfoResult.Data == null)
             {
-                try
-                {
-                    var likes = JsonConvert.DeserializeObject<Dictionary<string, object>>(Favorites);
-                    var LikeList = JsonConvert.DeserializeObject<JArray>(likes["data"].ToString());
-                    if (LikeList != null)
-                    {
-                        if (LikeList.Count > 0)
-                        {
-                            //临时存储收藏夹列表
-                            string FavoJson = JsonConvert.SerializeObject(LikeList);
-                            Set.Values["Favorites"] = FavoJson;
-                            return true;
-                        }
-                        else
-                        {
-                            Flower.PlayAnimation("\uE783", "暂无收藏夹");
-                            return false;
-                        }
-                    }
-                    else
-                    {
-                        Flower.PlayAnimation("\uEA39", "同步收藏夹失败");
-                        return false;
-                    }
-                }
-                catch (Exception ex)
-                {
-                    return false;
-                }
-
+                //
+                return false;
             }
-            return false;
+            var data= favoritesInfoResult.Data;
+            var groups = data.FavoriteTopicGroups;
+            if (groups.Count > 0)
+            {
+                //临时存储收藏夹列表
+                string FavoJson = JsonSerializer.Serialize(groups);
+                Set.Values["Favorites"] = FavoJson;
+                return true;
+            }
+            else
+            {
+                Flower.PlayAnimation("\uE783", "暂无收藏夹");
+                return false;
+            }
+            
         }
         
-        public int UnreadCount { get; set; }
+        
         
         
         
@@ -880,9 +803,9 @@ namespace CC98
 
     public class NavigationItem : CategoryBase,INotifyPropertyChanged
     {
-        public string Name { get; set; }
+        public string Name { get; set; } = string.Empty;
         public FluentIcons.Common.Symbol IconSymbol { get; set; }
-        public string Tag { get; set; }
+        public string Tag { get; set; }= string.Empty;
         public bool IsPinned { get; set; } // 是否固定
 
         public bool IsEditable {  get; set; }

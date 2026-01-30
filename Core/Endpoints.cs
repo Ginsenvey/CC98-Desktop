@@ -1,4 +1,6 @@
 ﻿using System.Data;
+using System.Text.RegularExpressions;
+using static CC98.Kernel.ApiScope.ApiEndpoints;
 
 namespace CC98.Kernel.ApiScope;
 /// <summary>
@@ -8,6 +10,11 @@ public static class ApiEndpoints
 {
     private const string Base = "https://api.cc98.org";
     private const string Oidc = "https://openid.cc98.org";
+
+    public static class Forum
+    {
+        public static string Index() => $"{Base}/config/index";
+    }
     /// <summary>
     /// 用户个人信息
     /// </summary>
@@ -52,6 +59,8 @@ public static class ApiEndpoints
 
         public static string ChatHistory(int userId,int start) => $"{Base}/message/user/{userId}?from={start}&size=10";
         public static string SearchUser(string name) => $"{Base}/user/name/{name}";
+        public static string UnreadMessage() => $"{Base}/me/unread-count";
+        public static string SystemNotice(string typeName,int start) => $"{Base}/notification/{typeName}?from={start}&size=10";
     }
     public static class Post
     {
@@ -59,6 +68,7 @@ public static class ApiEndpoints
         /// 点赞状态获取
         /// </summary>
         public static string ReactionState(int postId) => $"{Base}/post/{postId}/like";
+        public static string React(int postId) => $"{Base}/post/{postId}/like";
     }
     public static class Board
     {
@@ -72,6 +82,8 @@ public static class ApiEndpoints
         {
             return isBest? $"{Base}/topic/best/board/{boardId}?from={start}&size=20": $"{Base}/board/{boardId}/topic?from={start}&size=20";
         }
+
+        public static string EditFocusBoards(int boardId) => $"{Base}/me/custom-board/{boardId}";
     }
     public static class Topic 
     {
@@ -91,6 +103,8 @@ public static class ApiEndpoints
 
         public static string SearchTopic(string key, int start) => $"{Base}/topic/search?keyword={key}&from={start}&size=20";
         public static string FavoriteTopicList(int start, int order,int groupId) => $"{Base}/topic/me/favorite?from={start}&size=11&order={order}&groupid={groupId}";
+        public static string Vote(int topicId) => $"{Base}/topic/{topicId}/vote";
+        public static string AddIntoFavorites(int topicId,int groupId) => $"{Base}/me/favorite/{topicId}?groupid={groupId}";
     }
 
     public static class OpenID

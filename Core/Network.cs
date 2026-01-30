@@ -24,7 +24,7 @@ using Windows.Media.Core;
 using Windows.Media.Playback;
 using Windows.Storage;
 using Windows.Storage.Streams;
-
+using System.Text.Json;
 
 namespace CC98.Kernel.Network;
 /// <summary>
@@ -210,7 +210,7 @@ public partial class VpnService : IDisposable
     public static bool ParseLoginResult(string json)
     {
         if (string.IsNullOrEmpty(json)) return false;
-        var dic = JsonConvert.DeserializeObject<Dictionary<string, object>>(json);
+        var dic = JsonSerializer.Deserialize<Dictionary<string, object>>(json);
         if (dic == null) return false;
         if (dic.TryGetValue("success", out var r))
         {
@@ -445,7 +445,7 @@ public partial class VpnService : IDisposable
         }
         return res;
     }
-    public async Task<HttpResponseMessage> PutAsync(string url,StringContent content )
+    public async Task<HttpResponseMessage> PutAsync(string url,HttpContent? content)
     {
         if (!Logined && IsVpnEnabled)
             throw new Exception("WebVPN未连接");

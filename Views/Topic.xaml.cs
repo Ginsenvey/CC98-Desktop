@@ -1,7 +1,9 @@
 using CC98.Kernel;
+using CC98.Kernel.ApiScope;
 using CC98.Kernel.Network;
 using CC98.Kernel.UserExperience;
 using CC98.Objects;
+using CC98.Services.Extensions;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.WinUI.UI.Controls;
 using DevWinUI;
@@ -29,6 +31,7 @@ using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Text;
+using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Windows.ApplicationModel.DataTransfer;
@@ -40,9 +43,8 @@ using Windows.Media.Playback;
 using Windows.Media.Protection.PlayReady;
 using Windows.Storage;
 using Windows.Storage.Streams;
-using System.Text.Json;
-using CC98.Kernel.ApiScope;
-using CC98.Services.Extensions;
+using Windows.System;
+using static CC98.Kernel.ApiScope.ApiEndpoints;
 namespace CC98
 {
     /// <summary>
@@ -483,7 +485,7 @@ namespace CC98
                 {"Pid",ValidationHelper.GetValue(Set,"CurrentTopicId") },
 
             };
-            Frame.Navigate(typeof(Post), param);
+            Frame.Navigate(typeof(Editor), param);
         }
 
         private async void TileFlyout_Click(object sender, RoutedEventArgs e)
@@ -494,7 +496,7 @@ namespace CC98
                 var tag = m.Tag as string;
                 if (tag == "0")
                 {
-                    await LoadMetaData(ValidationHelper.GetValue(Set, "CurrentTopicId"));
+                    await LoadTopicInfo();
                     Flower.PlayAnimation("\uE930", "刷新标题栏成功");
                 }
                 else if (tag == "1")
@@ -520,7 +522,7 @@ namespace CC98
                     {
                         Set.Values["IsImageVisible"] = "1";
                     }
-                    await LoadReply(ValidationHelper.GetValue(Set, "CurrentTopicId"), (Pager.SelectedPageIndex * 10).ToString());
+                    await LoadReply();
                 }
 
             }
@@ -534,24 +536,19 @@ namespace CC98
         private async void CollectionItem_Click(object sender, RoutedEventArgs e)
         {
             var m = sender as MenuFlyoutItem;
-            if (m != null)
+            var t = m?.Tag as string;
+            if (t == null) return;
+            var url = ApiEndpoints.Topic.AddIntoFavorites(topicId, int.Parse(t));
+            var content = new StringContent("", Encoding.UTF8, "application/json");
+            var result=await RequestSender.Put(url, content);
+            if (!result.IsSuccess)
             {
-                var t = m.Tag as string;
-                if (!string.IsNullOrEmpty(t))
-                {
-                    bool status = await RequestSender.AddFavorites(Set.Values["CurrentTopicId"].ToString(), t);
-                    if (status)
-                    {
-                        topicInfo.variant = IconVariant.Color;
-                        await LoadMetaData(Set.Values["CurrentTopicId"] as string);
-                        Flower.PlayAnimation("\uE930", "已收藏");
-                    }
-                    else
-                    {
-
-                    }
-                }
+                //
+                return;
             }
+            topicInfo.IsFavorite = true;
+            await LoadTopicInfo();
+            Flower.PlayAnimation("\uE930", "已收藏");
         }
 
         private void Pause_Click(object sender, RoutedEventArgs e)
@@ -629,156 +626,116 @@ namespace CC98
             ProfileViewer.Target = sender as HyperlinkButton;
             var h = sender as HyperlinkButton;
             var t = h?.DataContext as Reply;
-            if (t != null)
+            if (t == null||t.IsAnonymous) return;
+            string profileUrl = ApiEndpoints.User.UserProfile(t.IsMe, t.UserId);
+            var profileResult = await RequestSender.Fetch<UserInfo>(profileUrl);
+            if (!profileResult.IsSuccess || profileResult.Data == null)
             {
-                if (t.Uid != "0")//非匿名才会跳转
-                {
-                    string ProfileUrl = "https://api.cc98.org/user/" + t.Uid;
-                    string ProfileText = await RequestSender.SimpleRequest(ProfileUrl);
-                    if (!ProfileText.StartsWith("404:"))
-                    {
-                        var js = JsonConvert.DeserializeObject<Dictionary<string, object>>(ProfileText);
-                        profile.Name = js["name"].ToString();
-                        profile.Id = js["id"].ToString();
-                        profile.Popularity = js["popularity"].ToString();
-                        profile.FanCount = js["fanCount"].ToString();
-                        profile.PortraitUrl = js["portraitUrl"].ToString();
-                        profile.SignatureCode = UBBConverter.Convert(js["signatureCode"].ToString(), true);
-                        profile.PostCount = js["postCount"].ToString();
-                        ProfileViewer.IsOpen = true;
-                    }
-                    else
-                    {
-                        de.Text = ProfileText;
-                    }
-                    
-                }
+                return;
             }
-
+            var data = profileResult.Data;
+            profile.Name = data.Name;
+            profile.Id = data.Id;
+            profile.Popularity = data.Popularity;
+            profile.FanCount = data.FanCount;
+            profile.PortraitUrl = data.SignatureCode;
+            profile.SignatureCode = UBBConverter.Convert(data.SignatureCode, true);
+            profile.PostCount = data.PostCount;
+            ProfileViewer.IsOpen = true;
         }
-        
 
 
-        private async void PostOperation_Click(object sender, RoutedEventArgs e)
+
+        private void PostOperation_Click(object sender, RoutedEventArgs e)
         {
             var operation = sender as MenuFlyoutItem;
-            if (operation != null)
+            var tag = operation?.Tag as string;
+            var reply = operation?.DataContext as Reply;
+            if (reply == null || tag == null) return;
+            switch (tag)
             {
-                var tag = operation.Tag;
-                var reply = operation.DataContext as Reply;
-                if (reply != null&&tag is string _tag )
-                {
-                    switch (_tag)
+                case "UBB":
+                    var pack = new DataPackage();
+                    pack.SetText(reply.Content);
+                    Clipboard.SetContent(pack);
+                    Flower.PlayAnimation("\uE930", "已复制为UBB代码");
+                    break;
+                case "MD":
+                    var _pack = new DataPackage();
+                    _pack.SetText(UBBConverter.Convert(reply.Content, true));
+                    Clipboard.SetContent(_pack);
+                    Flower.PlayAnimation("\uE930", "已复制为Markdown文本");
+                    break;
+                case "QUOTE":
+                    if (reply.Content != null)
                     {
-                        case "UBB":
-                            var pack = new DataPackage();
-                            pack.SetText(reply.Content);
-                            Clipboard.SetContent(pack);
-                            Flower.PlayAnimation("\uE930", "已复制为UBB代码");
-                            break;
-                        case "MD":
-                            var _pack = new DataPackage();
-                            _pack.SetText(UBBConverter.Convert(reply.Content, true));
-                            Clipboard.SetContent(_pack);
-                            Flower.PlayAnimation("\uE930", "已复制为Markdown文本");
-                            break;
-                        case "QUOTE":
-                            if (reply.Content != null)
-                            {
-                                int floor = reply.Floor;
-                                int page = 1 + floor / 10;
-                                int loc = floor % 10;
-                                string header = $"[b]以下是引用{floor}楼：用户{reply.UserName}在{reply.Time}的发言：[url=/topic/{ValidationHelper.GetValue(Set, "CurrentTopicId")}/{page}#{loc}]>>查看原帖<<[/url][/b]\r\n";
-                                var param = new Dictionary<string, string>()
+                        int floor = reply.Floor;
+                        int page = 1 + floor / 10;
+                        int loc = floor % 10;
+                        string header = $"[b]以下是引用{floor}楼：用户{reply.UserName}在{reply.Time}的发言：[url=/topic/{ValidationHelper.GetValue(Set, "CurrentTopicId")}/{page}#{loc}]>>查看原帖<<[/url][/b]\r\n";
+                        var param = new EditorNavigationInfo
                         {
-                            {"Mode","1"},//回复主题为0，回帖为1，发主题、投票为2
-                            {"Pid",ValidationHelper.GetValue(Set, "CurrentTopicId")},
-                            {"BaseText", $"[quote]{header}{reply.Content}[/quote]"},
-                            {"ParentId", reply.Id},
-
+                            EditorMode = EditorMode.ReplyToPost,
+                            TopicId = topicId,
+                            QuoteHeader = $"[quote]{header}{reply.Content}[/quote]",
+                            ParentId = reply.Id
                         };
-                                Frame.Navigate(typeof(Post), param);
-                            }
-                            break;
-                        case "EDIT":
-                            var _param = new Dictionary<string, string>()
-                            {
-                                {"Mode","3"},
-                                {"Pid",ValidationHelper.GetValue(Set, "CurrentTopicId")},
-                                {"BaseText", reply.Content},
-                                {"Rid", reply.Id},//回帖id
-                                {"Title",topicInfo.Title},//主题标题
-                            };
-                            Frame.Navigate(typeof(Post), _param);
-                            break;
+                        Frame.Navigate(typeof(Editor), param);
                     }
-                    
-                }
-                
+                    break;
+                case "EDIT":
+                    var _param = new EditorNavigationInfo
+                    {
+                        EditorMode = EditorMode.EditMyPost,
+                        TopicId = topicId,
+                        BaseText = reply.Content,
+                        PostId = reply.Id,
+                        HintText = topicInfo.Title,
+                    };
+                    Frame.Navigate(typeof(Editor), _param);
+                    break;
             }
         }
         private void PagerFix()
         {
-            if (Pager.NumberOfPages == 1)
-            {
-                Pager.NextButtonVisibility = DevWinUI.PagerControlButtonVisibility.Hidden;
-            }
-            else
-            {
-                Pager.NextButtonVisibility = DevWinUI.PagerControlButtonVisibility.Visible;
-            }
+            Pager.NextButtonVisibility = Pager.NumberOfPages == 1 ? 
+                PagerControlButtonVisibility.Hidden : 
+                PagerControlButtonVisibility.Visible;
         }
-        
+
 
 
         private async void Like_Click(object sender, RoutedEventArgs e)
         {
             var b = sender as Button;
-            if (b != null)
+            if (b == null) return;
+            var reply = b.DataContext as Reply;
+            var mode = b.Tag as string;
+            if (reply == null || mode == null) return;
+            var postId = reply.Id;
+            var url = ApiEndpoints.Post.React(postId);
+            var content = new StringContent(mode, Encoding.UTF8, "application/json");
+            var result = await RequestSender.Put(url, content);
+            if (!result.IsSuccess)
             {
-                var reply = b.DataContext as Reply;
-                var tag = b.Tag as string;
-                if (reply != null && tag != null)
-                {
-                    bool res = await RequestSender.Like(tag, reply.Id);
-                    if (res)
-                    {
-                        
-                        var NewState = await RequestSender.LikeState(reply.Id);
-                        if (NewState != null)
-                        {
-
-                            reply.Like = NewState["like"];
-                            reply.Dislike = NewState["dislike"];
-                            if (NewState["likestate"] == "1")
-                            {
-                                reply.Likestate = IconVariant.Filled;
-                                reply.Dislikestate = IconVariant.Regular;
-                            }
-                            else if (NewState["likestate"]=="2")
-                            {
-                                reply.Likestate= IconVariant.Regular;
-                                reply.Dislikestate = IconVariant.Filled;
-                            }
-                            else
-                            {
-                                reply.Likestate = IconVariant.Regular;
-                                reply.Dislikestate = IconVariant.Regular;
-                            }
-                        }
-
-                    }
-                    else
-                    {
-                        Flower.PlayAnimation("\uEA39","操作失败");
-                    }
-                }
+                //
+                Flower.PlayAnimation("\uEA39", "操作失败");
+                return;
             }
-
-
+            var newStateUrl = ApiEndpoints.Post.ReactionState(postId);
+            var newStateResult = await RequestSender.Fetch<ReactionState>(newStateUrl);
+            if (!newStateResult.IsSuccess || newStateResult.Data == null)
+            {
+                //
+                Flower.PlayAnimation("\uEA39", "获取赞踩数据失败");
+                return;
+            }
+            var newState = newStateResult.Data;
+            reply.LikeState = newState.LikeState;
+            reply.LikeCount = newState.LikeCount;
+            reply.DislikeCount = newState.DislikeCount;
         }
 
-       
 
         private async void Drawer_ImageResolving(object sender, ImageResolvingEventArgs e)
         {
@@ -844,75 +801,57 @@ namespace CC98
             if (isVote)
             {
 
-                string vote_url = $"https://api.cc98.org/topic/{ValidationHelper.GetValue(Set, "CurrentTopicId")}/vote";
-                var restext = await RequestSender.SimpleRequest(vote_url);
-                if (!restext.StartsWith("404:"))
+                string voteUrl = ApiEndpoints.Topic.Vote(topicId);
+                var voteResult = await RequestSender.Fetch<VoteInfo>(voteUrl);
+                if (!voteResult.IsSuccess || voteResult.Data == null)
                 {
-                    var info = Deserializer.ToDictionary(restext);
-                    if (info != null)
-                    {
-                        var vote_items = Deserializer.ToArray(ValidationHelper.GetKey(info, "voteItems"));
-                        var record_text = ValidationHelper.GetKey(info, "myRecord");
-                        var record = new List<int>();
-                        if (record_text != "0")
-                        {
-                            var js = Deserializer.ToDictionary(record_text);
-                            var array = ValidationHelper.GetKey(js, "items");
-                            record = Deserializer.ToArray(array).Select(g => Convert.ToInt32(g)).ToList();
-                        }
-
-                        if (vote_items != null)
-                        {
-                            var list = vote_items.Select(g => JsonConvert.DeserializeObject<VoteItem>(g.ToString())).ToList();
-                            VoteList.ItemsSource = list;
-                            if (record != null)
-                            {
-                                if (record.Count > 0)
-                                {
-                                    foreach (int g in record)
-                                    {
-                                        VoteList.SelectedItems.Add(VoteList.Items[g - 1]);
-                                    }
-                                }
-                            }
-                            bool can_vote = ValidationHelper.GetKey(info, "canVote") == "True";
-                            bool is_active = ValidationHelper.GetKey(info, "isAvailable") == "True";
-                            if (can_vote && is_active)
-                            {
-                                SendVote.IsEnabled = true;
-                                VoteTitle.Text = "投票(开放中)";
-                            }
-                            else
-                            {
-                                SendVote.IsEnabled = false;
-                                VoteList.IsEnabled = false;
-                                if (is_active)
-                                {
-                                    VoteTitle.Text = "投票(已投票)";
-                                }
-                                else
-                                {
-                                    VoteTitle.Text = "投票(已过期)";
-                                }
-                            }
-                            int max_count = Convert.ToInt32(ValidationHelper.GetKey(info, "maxVoteCount"));
-                            VoteList.SelectionChanged += (s, e) =>
-                            {
-                                if (VoteList.SelectedItems.Count > max_count)
-                                {
-                                    SendVote.IsEnabled = false;
-                                }
-                                else
-                                {
-                                    SendVote.IsEnabled = true;
-                                }
-                            };
-                            votetime.Text = "过期时间:" + ValidationHelper.GetKey(info, "expiredTime");
-                            voteinfo.Text = "参与人数:" + ValidationHelper.GetKey(info, "voteUserCount") + ";票数限制:" + ValidationHelper.GetKey(info, "maxVoteCount");
-                        }
-                    }
-
+                    //
+                    return;
                 }
+                var data= voteResult.Data;
+                VoteList.ItemsSource= data.VoteItems;
+                var record = data.MyRecord;
+                if (record.Count > 0)
+                {
+                    foreach (int i in record)
+                    {
+                        VoteList.SelectedItems.Add(VoteList.Items[i - 1]);
+                    }
+                }
+
+                if (data.CanVote && data.IsAvailable)
+                {
+                    SendVote.IsEnabled = true;
+                    VoteTitle.Text = "投票(开放中)";
+                }
+                else
+                {
+                    SendVote.IsEnabled = false;
+                    VoteList.IsEnabled = false;
+                    if (data.IsAvailable)
+                    {
+                        VoteTitle.Text = "投票(已投票)";
+                    }
+                    else
+                    {
+                        VoteTitle.Text = "投票(已过期)";
+                    }
+                }
+                VoteList.SelectionChanged += (s, e) =>
+                {
+                    if (VoteList.SelectedItems.Count > data.MaxVoteCount)
+                    {
+                        SendVote.IsEnabled = false;
+                    }
+                    else
+                    {
+                        SendVote.IsEnabled = true;
+                    }
+                };
+                votetime.Text = $"过期时间:{data.expiredTime}";
+                voteinfo.Text = $"参与人数:{data.VoteUserCount},票数限制:{data.MaxVoteCount}";
+
+
             }
         }
         private async void StartVote_Click(object sender, RoutedEventArgs e)
@@ -948,18 +887,6 @@ namespace CC98
             {
                 Flower.PlayAnimation("\uEA39", "选择至少一项");
             }
-        }
-
-        
+        }        
     }
-    public class VoteItem
-    {
-        public required string id { get; set; }
-        public int count { get; set; }
-        public required string description { get; set; }
-    }
-    
-    
-    
-    
 }

@@ -163,21 +163,12 @@ namespace CC98
 
         private void Chat_Click(object sender, RoutedEventArgs e)
         {
-            var m= sender as MenuFlyoutItem;
-            if (m != null)
-            {
-                var f = m?.DataContext as Friend;
-                if (f != null)
-                {
-                    var c=new TargetUserInfo { TargetUserId=f.uid,TargetUserName=f.name ,PortraitUrl=f.url};
-                    var p = new Dictionary<string, object>()
-                    {
-                        {"Type","1" },
-                        {"Info",c }
-                    };
-                    Frame.Navigate(typeof(Message), p);
-                }
-            }
+            var m= sender as MenuFlyoutItem;           
+            var f = m?.DataContext as Friend;
+            if (f == null) return;
+            var c = new ChatInfo { UserId = f.UserId, UserName = f.UserName, PortraitUrl = f.PortraitUrl };
+            var param = new MessageNavigationInfo { IsFromProfile = true, ChatUserInfo = c };
+            Frame.Navigate(typeof(Message), param);
         }
     }
   

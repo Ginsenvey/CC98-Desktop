@@ -27,3 +27,26 @@ public class ApiResponse<T>
     };
     public bool IsNotValid => !IsSuccess || Data == null;
 }
+
+public class ApiResponse
+{
+    public bool IsSuccess { get; set; }
+    public string Content {  get; set; }= string.Empty;
+    public string Message { get; set; } = string.Empty;
+    public int StatusCode { get; set; }
+
+    public static ApiResponse Success(string content, string message = "") => new ApiResponse
+    {
+        IsSuccess = true,
+        Content=content,
+        Message = message,
+        StatusCode = (int)HttpStatusCode.OK
+    };
+
+    public static ApiResponse Fail(string message, int statusCode = 0) => new ApiResponse
+    {
+        IsSuccess = false,
+        Message = message,
+        StatusCode = (int)statusCode
+    };
+}

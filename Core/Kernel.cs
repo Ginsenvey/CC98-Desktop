@@ -35,35 +35,23 @@ using Windows.Media.Protection.PlayReady;
 using Windows.Security.Credentials;
 using Windows.Storage;
 using Windows.Storage.Streams;
+using static CC98.Kernel.ApiScope.ApiEndpoints;
 namespace CC98.Kernel;
 
+/// <summary>
+/// 对Http请求做二次封装，提供给UI层。
+/// </summary>
 public static class RequestSender
 {
     /// <summary>
     /// 封装通用GET请求，并实现自动错误处理。
     /// </summary>
-    /// <param name="api"></param>
-    /// <returns></returns>
     public static async Task<ApiResponse<T>> Fetch<T>(string endpoint)
     {
         try
         {
             var res = await LoginService.vpn.GetAsync(endpoint);
-            var json = await res.Content.ReadAsStringAsync();
-            if (res.IsSuccessStatusCode)
-            {
-                var options = new JsonSerializerOptions
-                {
-                    PropertyNameCaseInsensitive = true
-                };
-                
-                var data = JsonSerializer.Deserialize<T>(json,options);
-                return ApiResponse<T>.Success(data!);
-            }
-            else
-            {
-                return ApiResponse<T>.Fail(res.ReasonPhrase ?? "请求失败", (int)res.StatusCode);
-            }
+            return await Deserialize<T>(res);
         }
         catch (HttpRequestException ex)
         {
@@ -83,58 +71,92 @@ public static class RequestSender
         }
 
     }
-    //获取新帖
-
-    public static async Task<string> TopicReply(string uid, string start)
+    /// <summary>
+    /// 适用于PUT。
+    /// </summary>
+    public static async Task<ApiResponse> Put(string endpoint,HttpContent? content)
     {
         try
         {
-
-            var Response = await LoginService.vpn.GetAsync("https://api.cc98.org/Topic/" + uid + "/post?from=" + start + "&size=10");
-            if (Response.StatusCode == HttpStatusCode.OK)
-            {
-                string ResponseBody = await Response.Content.ReadAsStringAsync();
-                if (!string.IsNullOrEmpty(ResponseBody))
-                {
-                    return ResponseBody;
-                }
-                else
-                {
-                    return "404:空返回";
-                }
-            }
-            else
-            {
-                return "404:请求失败";
-            }
-
+            var res = await LoginService.vpn.PutAsync(endpoint,content);
+            var json=await res.Content.ReadAsStringAsync();
+            return res.IsSuccessStatusCode? 
+                ApiResponse.Success(json): 
+                ApiResponse.Fail(res.ReasonPhrase ?? "请求失败", (int)res.StatusCode);   
+        }
+        catch (HttpRequestException ex)
+        {
+            return ApiResponse.Fail($"网络错误: {ex.Message}", 0);
+        }
+        catch (JsonException ex)
+        {
+            return ApiResponse.Fail($"数据解析错误: {ex.Message}", 0);
+        }
+        catch (TaskCanceledException)
+        {
+            return ApiResponse.Fail("请求超时", 0);
         }
         catch (Exception ex)
         {
-            return "404:" + ex.Message;
+            return ApiResponse.Fail($"系统错误: {ex.Message}", 0);
         }
+    }
+    /// <summary>
+    /// 适用于DELETE。
+    /// </summary>
+    public static async Task<ApiResponse> Delete(string endpoint)
+    {
+        try
+        {
+            var res = await LoginService.vpn.DeleteAsync(endpoint);
+            var json = await res.Content.ReadAsStringAsync();
+            return res.IsSuccessStatusCode ?
+                ApiResponse.Success(json) :
+                ApiResponse.Fail(res.ReasonPhrase ?? "请求失败", (int)res.StatusCode);
+        }
+        catch (HttpRequestException ex)
+        {
+            return ApiResponse.Fail($"网络错误: {ex.Message}", 0);
+        }
+        catch (JsonException ex)
+        {
+            return ApiResponse.Fail($"数据解析错误: {ex.Message}", 0);
+        }
+        catch (TaskCanceledException)
+        {
+            return ApiResponse.Fail("请求超时", 0);
+        }
+        catch (Exception ex)
+        {
+            return ApiResponse.Fail($"系统错误: {ex.Message}", 0);
+        }
+    }
+    public static async Task<ApiResponse<T>> Deserialize<T>(HttpResponseMessage res)
+    {
+        var json = await res.Content.ReadAsStringAsync();
+        if (res.IsSuccessStatusCode)
+        {
+            var options = new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true
+            };
 
+            var data = JsonSerializer.Deserialize<T>(json, options);
+            return ApiResponse<T>.Success(data!);
+        }
+        else
+        {
+            return ApiResponse<T>.Fail(res.ReasonPhrase ?? "请求失败", (int)res.StatusCode);
+        }
     }
-    //以"id=username"的格式作为列表的元素
-    public static async Task<ApiResponse<List<BasicUserInfo>>> SimpleUserInfo(List<string> users)
+   
+    public static async Task<bool> AddFavorites(string topicId, string GroupId)//话题Id,收藏夹的组Id
     {
-        string param = string.Join("&", users);
-        string url = ApiEndpoints.User.BasicUserInfoList(param);
-        return await Fetch<List<BasicUserInfo>>(url);    
-    }
-
-    public static async Task<ApiResponse<FavoritesInfo>> FavoritesList()
-    {
-        string url = ApiEndpoints.User.FavoritesList();
-        return await Fetch<FavoritesInfo>(url);
-    }
-    public static async Task<bool> AddFavorites(string Pid, string GroupId)//话题Id,收藏夹的组Id
-    {
-        if (!string.IsNullOrEmpty(GroupId) && (!string.IsNullOrEmpty(Pid)))
+        if (!string.IsNullOrEmpty(GroupId) && (!string.IsNullOrEmpty(topicId)))
         {
             try
             {
-                string favoriteurl = "https://api.cc98.org/me/favorite/" + Pid + "?groupid=" + GroupId;
+                string favoriteurl = $"https://api.cc98.org/me/favorite/{topicId}?groupid={GroupId}";
                 var request = new HttpRequestMessage(HttpMethod.Put, favoriteurl);
                 var content = new StringContent("", Encoding.UTF8, "application/json");
                 request.Content = content;//按照此格式发送空的put请求并设置请求头
@@ -203,7 +225,7 @@ public static class RequestSender
     }
     public static async Task<bool> Like(string mode, string postid)
     {
-        string url = "https://api.cc98.org/post/" + postid + "/like";
+        string url = $"https://api.cc98.org/post/{postid}/like";
         var content = new StringContent(mode, Encoding.UTF8, "application/json");
         var response = await LoginService.vpn.PutAsync(url, content);
         try
@@ -356,52 +378,6 @@ public static class RequestSender
         {
             return "0";
         }
-    }
-    public static async Task<string> EditFocusList(string mode, string group_id)
-    {
-        string url = $"https://api.cc98.org/me/custom-board/{group_id}";
-        if (mode == "add")
-        {
-            try
-            {
-                var content = new StringContent("", Encoding.UTF8, "application/json");
-                var response = await LoginService.vpn.PutAsync(url, content);
-                if (response.IsSuccessStatusCode)
-                {
-                    return "1";
-                }
-                else
-                {
-                    return "404:固定失败";
-                }
-            }
-            catch (HttpRequestException ex)
-            {
-                return $"404:{ex.Message}";
-            }
-
-        }
-        else
-        {
-            try
-            {
-
-                var res = await LoginService.vpn.DeleteAsync(url);
-                if (res.IsSuccessStatusCode)
-                {
-                    return "1";
-                }
-                else
-                {
-                    return "404:删除失败";
-                }
-            }
-            catch (HttpRequestException ex)
-            {
-                return $"404:{ex.Message}";
-            }
-        }
-
     }
 
     public static async Task<string> Follow(string mode, int id)
