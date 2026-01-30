@@ -37,6 +37,9 @@ namespace CC98
     {
         public ApplicationDataContainer Set = ApplicationData.Current.LocalSettings;
         public ObservableCollection<Friend> friends = new ObservableCollection<Friend>();
+        public string type = "follower";
+        public int currentPage = 0;
+        public int pageSize = 10;
         public Follow()
         {
             this.InitializeComponent();
@@ -63,20 +66,15 @@ namespace CC98
                     FriendType.Text = "关注";
                 }  
             }
-            string type = ValidationHelper.GetValue(Set, "CurrentFriendType");
-            if(type!="0")
-            {
-                LoadFriend(type, 0);
-            }
-            
-
+            currentPage = 0;
+            LoadFriend();
         }
         
 
-        private async void LoadFriend(string type, int start)
+        private async void LoadFriend()
         {
             //获取好友ID列表
-            string friendListUrl = ApiEndpoints.User.FreiendList(type, start);
+            string friendListUrl = ApiEndpoints.User.FreiendList(type, currentPage*pageSize);
             var friendIdsResult = await RequestSender.Fetch<List<int>>(friendListUrl);
             //处理第一层异常
             if (!friendIdsResult.IsSuccess || friendIdsResult.Data == null)
@@ -107,12 +105,7 @@ namespace CC98
                 var f = h?.DataContext as Friend;
                 if (f != null)
                 {
-                    var param = new Dictionary<string, string>()
-                    {
-                        {"Mode","Others" },
-                        {"UserId", f.uid}
-                    };
-                    
+                    var param = new ProfileNavigationInfo { IsMe=false,UserId=f.UserId};
                     Frame.Navigate(typeof(Profile), param);
                 }
             }
@@ -130,14 +123,15 @@ namespace CC98
                     {
                         
                         history = current;
-                        LoadFriend(ValidationHelper.GetValue(Set,"CurrentFriendType"), current + 1);
+                        currentPage += 1;
+                        LoadFriend();
 
                     }
                 }
             };
         }
 
-        private async void Follow_Click(object sender, RoutedEventArgs e)
+        private async void UnFollow_Click(object sender, RoutedEventArgs e)
         {
             var m = sender as MenuFlyoutItem;
             if (m != null)
@@ -145,18 +139,8 @@ namespace CC98
                 var _tag = m.Tag;
                 if(_tag is string tag)
                 {
-                    string restext = await RequestSender.Follow("0", tag);
-                    if (restext == "1")
-                    {
-                        friends.Clear();
-                        LoadFriend(ValidationHelper.GetValue(Set, "CurrentFriendType"), 0);
-                        history = 0;
-                        Flower.PlayAnimation("\uE930", "已取消关注");
-                    }
-                    else
-                    {
-                        Flower.PlayAnimation("\uEA39", "取消关注失败");
-                    }
+                    //string restext = await RequestSender.Follow("0", tag);
+                    
                 }
             }
         }

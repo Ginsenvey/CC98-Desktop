@@ -155,14 +155,14 @@ namespace CC98
         private void ContentCard_PointerEntered(object sender, PointerRoutedEventArgs e)
         {
             var h = sender as HyperlinkButton;
-            var translate = h.RenderTransform as TranslateTransform;
+            var translate = h?.RenderTransform as TranslateTransform;
             AnimateCard(translate, 0, -5); // 向上方移动
         }
 
         private void ContentCard_PointerExited(object sender, PointerRoutedEventArgs e)
         {
             var h = sender as HyperlinkButton;
-            var translate = h.RenderTransform as TranslateTransform;
+            var translate = h?.RenderTransform as TranslateTransform;
             AnimateCard(translate, 0, 0); // 恢复原位
         }
         private void AnimateCard(TranslateTransform transform, double targetX, double targetY)

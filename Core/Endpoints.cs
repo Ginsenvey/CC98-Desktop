@@ -10,10 +10,14 @@ public static class ApiEndpoints
 {
     private const string Base = "https://api.cc98.org";
     private const string Oidc = "https://openid.cc98.org";
+    private const string Card = "https://card.cc98.org";
 
     public static class Forum
     {
         public static string Index() => $"{Base}/config/index";
+        public static string CardStat() => $"{Card}/api/collection/stat";
+        public static string DraWCard(int rule) => $"{Card}/api/draw/{rule}";
+        public static string DestoryAllCards() => $"{Card}/api/collection/all-rest";
     }
     /// <summary>
     /// 用户个人信息
@@ -61,6 +65,7 @@ public static class ApiEndpoints
         public static string SearchUser(string name) => $"{Base}/user/name/{name}";
         public static string UnreadMessage() => $"{Base}/me/unread-count";
         public static string SystemNotice(string typeName,int start) => $"{Base}/notification/{typeName}?from={start}&size=10";
+        public static string EditFriends(int userId) => $"{Base}/me/followee/{userId}";
     }
     public static class Post
     {

@@ -5,6 +5,7 @@ using Microsoft.UI.Xaml.Data;
 using Microsoft.UI.Xaml.Media;
 using System;
 using Windows.Storage;
+using Windows.UI;
 
 namespace CC98.Services.Converters;
 

@@ -264,33 +264,7 @@ namespace CC98
                 case "user":
                     {
                         string _url = "https://api.cc98.org/user/name/" + result.Value;
-                        string infotext = await RequestSender.SimpleRequest(_url);
-
-                        if (!infotext.StartsWith("404:"))
-                        {
-                            var Info = Deserializer.ToDictionary(infotext);
-                            if (Info != null)
-                            {
-                                string uid = Info["id"].ToString();
-                                if (uid != null)
-                                {
-                                    if (uid.All(char.IsDigit))
-                                    {
-                                        var param = new Dictionary<string, string>()
-                                        {
-                                            {"Mode","Others" },
-                                            {"UserId",uid }
-                                        };
-                                        if ((App.Current as App).m_window is MainWindow _mainwindow)
-                                        {
-                                            _mainwindow.RootFrame.Navigate(typeof(Profile), param);
-                                        }
-                                            
-                                    }
-                                }
-                            }
-
-                        }
+                        
 
                         break;
                     }

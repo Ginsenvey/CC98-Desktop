@@ -43,7 +43,7 @@ namespace CC98
         {
             this.InitializeComponent();
             STileList.ItemsSource = topics;
-            GetMoments("0");
+            GetMoments();
         }
         
         private async void GetMoments()
@@ -71,7 +71,8 @@ namespace CC98
                     if (current > 0 && (current + 1) % 20 == 0 && current > history)
                     {
                         history = current;
-                        GetMoments((current + 1).ToString());
+                        currentIndex = current+1;
+                        GetMoments();
                     }
                 }
 
@@ -86,7 +87,7 @@ namespace CC98
                 var tag = s.Tag;
                 if(tag is string _tag)
                 {
-                    mode = _tag;
+                    mode = _tag=="1"?FocusContentType.Followee:FocusContentType.FavoriteUpdate;
                     history = 0;
                     topics.Clear();
                     GetMoments();
@@ -99,10 +100,11 @@ namespace CC98
             var h = sender as HyperlinkButton;
             if (h != null)
             {
-                var s = h?.DataContext as StandardPost;
+                var s = h?.DataContext as TopicInfo;
                 if (s != null)
                 {
-                    Frame.Navigate(typeof(Topic), s.pid);
+                    var param=new TopicNavigationInfo {TopicId=s.Id};
+                    Frame.Navigate(typeof(Topic), param);
                 }
             }
         }

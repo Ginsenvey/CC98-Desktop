@@ -284,8 +284,9 @@ namespace CC98
             {
                 case "topic":
                     Set.Values["CurrentTopicId"]=result.Value;
-                    await LoadTopicInfo(result.Value);
-                    await LoadReply(result.Value, "0");
+                    topicId =int.Parse(result.Value);
+                    await LoadTopicInfo();
+                    await LoadReply();
                     break;
                 case "user":
                     {
@@ -485,7 +486,7 @@ namespace CC98
                 {"Pid",ValidationHelper.GetValue(Set,"CurrentTopicId") },
 
             };
-            Frame.Navigate(typeof(Editor), param);
+            Frame.Navigate(typeof(UBBEditor), param);
         }
 
         private async void TileFlyout_Click(object sender, RoutedEventArgs e)
@@ -680,7 +681,7 @@ namespace CC98
                             QuoteHeader = $"[quote]{header}{reply.Content}[/quote]",
                             ParentId = reply.Id
                         };
-                        Frame.Navigate(typeof(Editor), param);
+                        Frame.Navigate(typeof(UBBEditor), param);
                     }
                     break;
                 case "EDIT":
@@ -692,7 +693,7 @@ namespace CC98
                         PostId = reply.Id,
                         HintText = topicInfo.Title,
                     };
-                    Frame.Navigate(typeof(Editor), _param);
+                    Frame.Navigate(typeof(UBBEditor), _param);
                     break;
             }
         }

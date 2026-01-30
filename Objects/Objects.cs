@@ -27,6 +27,11 @@ public class Favorites
 /// </summary> 
 public partial class TopicInfo:ObservableObject
 {
+    public int Id
+    {
+        get => field;
+        set => SetProperty(ref field, value);
+    }
     public string UserName
     {
         get => field ?? "匿名";
@@ -656,4 +661,72 @@ public class PostBasicInfo
 
     [JsonPropertyName("userName")]
     public string UserName { get; set; }=string.Empty;
+}
+/// <summary>
+/// 抽卡数据
+/// </summary>
+public partial class CardStat : ObservableObject
+{
+
+    public int Wealth
+    {
+        get => field;
+        set => SetProperty(ref field, value);
+    }
+    public int DrawCount
+    {
+        get => field;
+        set => SetProperty(ref field, value);
+    }
+    public int TotalCost
+    {
+        get => field;
+        set => SetProperty(ref field, value);
+    }
+    public int TotalBonus
+    {
+        get => field;
+        set => SetProperty(ref field, value);
+    }
+    public int CardCount
+    {
+        get => field;
+        set => SetProperty(ref field, value);
+    }
+}
+
+public partial class Card : ObservableObject
+{
+    private bool _isFlipped=false;
+    [JsonPropertyName("imageUri")]
+    public string ImageUri
+    {
+        get => field??string.Empty;
+        set => SetProperty(ref field, value);
+    }
+    [JsonIgnore]
+    public bool IsFlipped
+    {
+        get => _isFlipped;
+        set => SetProperty(ref _isFlipped, value);
+    }
+    public string Name
+    {
+        get => field??string.Empty;
+        set => SetProperty(ref field, value);
+    }
+
+}
+public class CardStatInfoPair
+{
+    public required string StatItem { get; set; }
+    public int Value { get; set; }
+}
+/// <summary>
+/// 抽卡概率信息
+/// </summary>
+public class GachaInfo
+{
+    public string Rank { get; set; } = string.Empty;
+    public string Probability { get; set; } = string.Empty;
 }

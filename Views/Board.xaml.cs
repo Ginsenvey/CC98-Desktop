@@ -254,7 +254,7 @@ namespace CC98
                                 EditorMode=EditorMode.DraftNewTopic,
                                 BoardId=boardId
                             };
-                            Frame.Navigate(typeof(Editor), param);
+                            Frame.Navigate(typeof(UBBEditor), param);
                             break;
                         case "Pin":
                             string url = ApiEndpoints.Board.EditFocusBoards(boardId);

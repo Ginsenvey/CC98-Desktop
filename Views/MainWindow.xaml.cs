@@ -23,6 +23,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Data;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
@@ -305,14 +306,17 @@ namespace CC98
         }
         private async Task<bool> FetchIndex()
         {
-            string IndexText = await RequestSender.SimpleRequest("https://api.cc98.org/config/index");
-            if (!IndexText.StartsWith("404"))
+            string drawUrl = ApiEndpoints.Forum.Index();
+            var drawResult = await RequestSender.Fetch<List<Objects.Card>>(drawUrl);
+            if (!drawResult.IsSuccess || drawResult.Data == null)
             {
-                ValidationHelper.JsonWritter(IndexText, "IndexCache.json");
-                return true;
+                //
+                return false;
             }
-            
-            return false;
+            var data = drawResult.Data;
+            string IndexText = JsonSerializer.Serialize(data);
+            ValidationHelper.JsonWritter(IndexText, "IndexCache.json");
+            return true;
         }
         private  void LoadSettings()
         {
@@ -520,15 +524,11 @@ namespace CC98
             switch (SearchMode)
             {
                 case 0:
-                    p = new Dictionary<string, string>()
-                            {
-                                {"type","topic" },
-                                {"key",key }
-                            };
+                    var param = new SearchNavigationInfo { SearchType = SearchType.Topic };
                     contentframe.Navigate(typeof(Search), p);
                     break;
                 case 1:
-                    SearchUser(key);
+                    //SearchUser(key);
                     break;
                 case 2:
                     contentframe.Navigate(typeof(Topic), key.Replace("cc",""));
@@ -537,38 +537,7 @@ namespace CC98
                     break;
             }
         }
-        private async void SearchUser(string key)
-        {
-            string url = $"https://api.cc98.org/user/name/{key}";
-            string infotext = await RequestSender.SimpleRequest(url);
-            if (!infotext.StartsWith("404:"))
-            {
-                var Info = Deserializer.ToDictionary(infotext);
-                if (Info != null)
-                {
-                    string uid = ValidationHelper.GetKey(Info, "id");
-                    if (uid != null&&uid!="0")
-                    {
-                        if (uid.All(char.IsDigit))
-                        {
-                            var param = new Dictionary<string, string>()
-                                        {
-                                            {"Mode","Others" },
-                                            {"UserId",uid }
-                                        };
-                            contentframe.Navigate(typeof(Profile), param);
-                            return;
-                        }
-                    }
-                }
-            }
-            else
-            {
-                Flower.PlayAnimation("\uEA39", "未搜索到结果");
-                return;
-            }
-            
-        }
+       
 
         private void Back_PointerEntered(object sender, PointerRoutedEventArgs e)
         {
@@ -780,7 +749,7 @@ namespace CC98
 
                 // 直接使用提取的数据
                 welcome.Text = $"欢迎新用户 {stats.lastUserName}";
-                ForumStatList.ItemsSource = new List<StatInfoPair>
+                ForumStatList.ItemsSource = new List<CardStatInfoPair>
     {
         new() { StatItem = "今日帖数", Value = stats.todayCount },
         new() { StatItem = "今日主题数", Value = stats.todayTopicCount },

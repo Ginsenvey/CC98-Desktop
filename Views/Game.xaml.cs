@@ -1,5 +1,8 @@
 
+using ABI.System;
 using CC98.Kernel;
+using CC98.Kernel.ApiScope;
+using CC98.Objects;
 using CommunityToolkit.Mvvm.ComponentModel;
 using DevWinUI;
 using Microsoft.UI.Xaml;
@@ -9,6 +12,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using Windows.Security.Credentials;
 using Windows.Storage;
@@ -24,10 +28,10 @@ namespace CC98
     public sealed partial class Game : Page
     {
         public ApplicationDataContainer Set = ApplicationData.Current.LocalSettings;
-        public ObservableCollection<Card> cards = new ObservableCollection<Card>();
-        public CardDrawStat CardDrawStat { get; set; }=new CardDrawStat() { wealth=0,cardCount=0,drawCount=0,totalBonus=0,totalCost=0};
-        public ObservableCollection<Odd> odds1 = new();
-        public ObservableCollection<Odd> odds2 = new();
+        public ObservableCollection<Objects.Card> cards = [];
+        public CardStat CardDrawStat { get; set; }=new CardStat() { Wealth=0,CardCount=0,DrawCount=0,TotalBonus=0,TotalCost=0};
+        public ObservableCollection<GachaInfo> gachaInfo1 = new();
+        public ObservableCollection<GachaInfo> gachaInfo2 = new();
         public Game()
         {
             this.InitializeComponent();
@@ -38,83 +42,61 @@ namespace CC98
         }
         private async void RefreshStat()
         {
-            string ProfileUrl = "https://api.cc98.org/me";
-            string ProfileText = await RequestSender.SimpleRequest(ProfileUrl);
-            if (!ProfileText.StartsWith("404:"))
+            string profileUrl = ApiEndpoints.User.UserProfile(true, 0);
+            var profileResult = await RequestSender.Fetch<UserInfo>(profileUrl);
+            if (!profileResult.IsSuccess || profileResult.Data == null)
             {
-                var js = Deserializer.ToDictionary(ProfileText);
-                if (js != null)
-                {
-                    int wealth = Convert.ToInt32(ValidationHelper.GetKey(js, "wealth"));
-                    CardDrawStat.wealth = wealth;
-                }
+                return;
             }
-            string _stat = await CardDrawer.Stat();
-            if (!_stat.StartsWith("404:"))
+            var data = profileResult.Data;
+            CardDrawStat.Wealth = data.Wealth;
+            var statUrl = ApiEndpoints.Forum.CardStat();
+            var statResult = await RequestSender.Fetch<CardStat>(statUrl);
+            if (!statResult.IsSuccess || statResult.Data == null)
             {
-                var stat = Deserializer.ToDictionary(_stat);
-                if (stat != null)
-                {
-                    CardDrawStat.drawCount = ValidationHelper.GetKeyAsInt(stat, "drawCount");
-                    CardDrawStat.totalCost = ValidationHelper.GetKeyAsInt(stat, "totalCost");
-                    CardDrawStat.totalBonus = ValidationHelper.GetKeyAsInt(stat, "totalBonus");
-                    CardDrawStat.cardCount = ValidationHelper.GetKeyAsInt(stat, "cardCount");
-                }
+                //
+                return;
             }
-            else
-            {
-                Flower.PlayAnimation("\uEA39", _stat);
-            }
+            var stat = statResult.Data;
+            CardDrawStat.DrawCount = stat.DrawCount;
+            CardDrawStat.TotalCost = stat.TotalCost;
+            CardDrawStat.TotalBonus = stat.TotalBonus;
+            CardDrawStat.CardCount = stat.CardCount;          
         }
         
         private void DisplayOdd()
         {
-            odds1.Add(new Odd { Rank = "Mystery", Probability = "0.03%" });
-            odds1.Add(new Odd{Rank = "SSR",Probability = "1.50%"});
-            odds1.Add(new Odd { Rank = "SR", Probability = "15.00%" });
-            odds1.Add(new Odd { Rank = "R", Probability = "29.99%" });
-            odds1.Add(new Odd { Rank = "N", Probability = "53.48%" });
+            gachaInfo1.Add(new GachaInfo { Rank = "Mystery", Probability = "0.03%" });
+            gachaInfo1.Add(new GachaInfo{Rank = "SSR",Probability = "1.50%"});
+            gachaInfo1.Add(new GachaInfo { Rank = "SR", Probability = "15.00%" });
+            gachaInfo1.Add(new GachaInfo { Rank = "R", Probability = "29.99%" });
+            gachaInfo1.Add(new GachaInfo { Rank = "N", Probability = "53.48%" });
             
 
-            odds2.Add(new Odd { Rank = "Mystery", Probability = "0.01%" });
-            odds2.Add(new Odd { Rank = "SSR", Probability = "1.50%" });
-            odds2.Add(new Odd { Rank = "SR", Probability = "15.00%" });
-            odds2.Add(new Odd { Rank = "R", Probability = "30.00%" });
-            odds2.Add(new Odd { Rank = "N", Probability = "53.49%" });
+            gachaInfo2.Add(new GachaInfo { Rank = "Mystery", Probability = "0.01%" });
+            gachaInfo2.Add(new GachaInfo { Rank = "SSR", Probability = "1.50%" });
+            gachaInfo2.Add(new GachaInfo { Rank = "SR", Probability = "15.00%" });
+            gachaInfo2.Add(new GachaInfo { Rank = "R", Probability = "30.00%" });
+            gachaInfo2.Add(new GachaInfo { Rank = "N", Probability = "53.49%" });
             
         }
-        private async void StartDraw(string rule)
+        private async void StartDraw(int rule)
         {
             cards.Clear();
-            string r = await CardDrawer.DrawACard(rule);
-            if (!r.StartsWith("404:"))
+            string drawUrl = ApiEndpoints.Forum.DraWCard(rule);
+            var drawResult = await RequestSender.Fetch<List<Objects.Card>>(drawUrl);
+            if (!drawResult.IsSuccess || drawResult.Data == null)
             {
-                var card_list = Deserializer.ToArray(r);
-                if (card_list != null)
-                {
-                    for(int i=0;i<card_list.Count;i++)
-                    {
-                        var card = Deserializer.ToDictionary(card_list[i].ToString());
-                        if (card != null)
-                        {
-                            string url = ValidationHelper.GetKey(card,"imageUri");
-                            cards.Add(new Card
-                            {
-                                Name= ValidationHelper.GetKey(card, "name"),
-                                Order = i.ToString(),
-                                ImageUrl = $"https://card.cc98.org{url.Substring(1, url.Length - 1)}",
-                                IsFlipped = false
-                            });
-                        }
-                        
-                    }
-                    RefreshStat();
-                }
+                //
+                return;
             }
-            else
+            var data=drawResult.Data;
+            foreach(var card in data)
             {
-                Flower.PlayAnimation("\uEA39", r);
+                card.ImageUri = $"https://card.cc98.org{card.ImageUri.Substring(1, card.ImageUri.Length - 1)}";
+
             }
+            cards.AddRange(data);
             
         }
         
@@ -132,7 +114,7 @@ namespace CC98
         {
             BusyIndicator.Visibility = Visibility.Visible;
             ResultViewer.Visibility = Visibility.Collapsed;
-            StartDraw("1");
+            StartDraw(1);
             await Task.Delay(1000);
             BusyIndicator.Visibility = Visibility.Collapsed;
             ResultViewer.Visibility = Visibility.Visible;
@@ -142,7 +124,7 @@ namespace CC98
         {
             BusyIndicator.Visibility = Visibility.Visible;
             ResultViewer.Visibility = Visibility.Collapsed;
-            StartDraw("2");
+            StartDraw(2);
             await Task.Delay(1500);
             BusyIndicator.Visibility = Visibility.Collapsed;
             ResultViewer.Visibility = Visibility.Visible;
@@ -173,7 +155,7 @@ namespace CC98
                         case "single-more":
                             if (SingleProperList.ItemsSource == null)
                             {
-                                SingleProperList.ItemsSource = odds1;
+                                SingleProperList.ItemsSource = gachaInfo1;
                             }
                             else
                             {
@@ -183,7 +165,7 @@ namespace CC98
                         case "multi-more":
                             if (MultiProperList.ItemsSource == null)
                             {
-                                MultiProperList.ItemsSource = odds1;
+                                MultiProperList.ItemsSource = gachaInfo1;
                             }
                             else
                             {
@@ -195,16 +177,17 @@ namespace CC98
                             var r = await DestroyCardDialog.ShowAsync();
                             if (r == ContentDialogResult.Primary)
                             {
-                                string status = await CardDrawer.DestroyAll();
-                                if (status == "1")
+                                string url = "https://card.cc98.org/api/collection/all-rest";
+                                var result = await RequestSender.Delete(url);
+                                if (!result.IsSuccess)
                                 {
-                                    RefreshStat();
-                                    Flower.PlayAnimation("\uE930", "分解成功");
-                                }
-                                else
-                                {
+                                    //
                                     Flower.PlayAnimation("\uEA39", "分解失败");
+                                    return;
                                 }
+                                RefreshStat();
+                                Flower.PlayAnimation("\uE930", "分解成功");
+      
                             }
                             break;
                         case "ref-stat":
@@ -219,108 +202,6 @@ namespace CC98
         }
 
     }
-    public class StatInfoPair
-    {
-        public required string StatItem { get; set; }
-        public int Value { get; set; }
-    }
-    public partial class CardDrawStat:ObservableObject
-    {
-        private int _wealth;
-        private int _drawCount;
-        private int _totalCost;
-        private int _totalBonus;
-        private int _cardCount;
-
-        public int wealth
-        {
-            get => _wealth;
-            set=>SetProperty(ref _wealth, value);
-        }
-        public int drawCount
-        {
-            get => _drawCount;
-            set=>SetProperty(ref _drawCount, value);
-        }
-        public int totalCost
-        {
-            get => _totalCost;
-            set=>SetProperty(ref _totalCost, value);
-        }
-        public int totalBonus
-        {
-            get => _totalBonus; 
-            set => SetProperty(ref _totalBonus, value);
-        }
-        public int cardCount
-        {
-            get => _cardCount; 
-            set => SetProperty(ref _cardCount, value);
-        }
-    }
-    public class Odd
-    {
-        public string Rank { get; set; }
-        public string Probability { get; set; }
-    }
-    public partial class Card: INotifyPropertyChanged
-    {
-        private string _Order { get; set; }
-        private string _ImageUrl { get; set; }
-        private bool _IsFlipped { get; set; }
-        private string _Name {  get; set; }
-        public string Order
-        {
-            get => _Order;
-            set
-            {
-                if (_Order != value)
-                {
-                    _Order = value;
-                    OnPropertyChanged(nameof(Order));
-                }
-            }
-        }
-        public string ImageUrl
-        {
-            get => _ImageUrl;
-            set
-            {
-                if (_ImageUrl != value)
-                {
-                    _ImageUrl = value;
-                    OnPropertyChanged(nameof(ImageUrl));
-                }
-            }
-        }
-        public bool IsFlipped
-        {
-            get => _IsFlipped;
-            set
-            {
-                if (_IsFlipped != value)
-                {
-                    _IsFlipped = value;
-                    OnPropertyChanged(nameof(IsFlipped));
-                }
-            }
-        }
-        public string Name
-        {
-            get => _Name;
-            set
-            {
-                if (_Name != value)
-                {
-                    _Name = value;
-                    OnPropertyChanged(nameof(Name));
-                }
-            }
-        }
-        public event PropertyChangedEventHandler PropertyChanged;
-        protected virtual void OnPropertyChanged(string propertyName)
-        {
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-        }
-    }
+    
+    
 }

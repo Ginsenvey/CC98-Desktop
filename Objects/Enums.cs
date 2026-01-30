@@ -6,7 +6,7 @@
 public enum FocusContentType
 {
     Followee = 0,
-    FavoriteUpdata = 1
+    FavoriteUpdate = 1
 }
 /// <summary>
 /// 赞/踩
