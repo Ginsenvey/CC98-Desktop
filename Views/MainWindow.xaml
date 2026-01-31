@@ -11,6 +11,8 @@
     xmlns:animatedvisuals="using:Microsoft.UI.Xaml.Controls.AnimatedVisuals"
     xmlns:dev="using:DevWinUI"
     xmlns:ic="using:FluentIcons.WinUI"
+    xmlns:obj="using:CC98.Objects"
+    xmlns:cv="using:CC98.Services.Converters"
     SystemBackdrop="{ThemeResource AcrylicBackgroundFillColorDefaultBackdrop}">
     
     <Grid x:Name="RootGrid">
@@ -27,7 +29,7 @@
             <TeachingTip.Content>
                 <ListView x:Name="ForumStatList" >
                     <ListView.ItemTemplate>
-                        <DataTemplate x:DataType="local:StatInfoPair">
+                        <DataTemplate x:DataType="obj:CardStatInfoPair">
                             <Grid>
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="2*"></ColumnDefinition>

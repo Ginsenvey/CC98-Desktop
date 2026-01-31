@@ -39,8 +39,6 @@ namespace CC98
         protected override void OnNavigatedTo(Microsoft.UI.Xaml.Navigation.NavigationEventArgs e)
         {
             base.OnNavigatedTo(e);
-
-            // 获取传递的参数
             var args = e.TryGetParameter<MessageNavigationInfo>();
             if (args != null)
             {
@@ -63,11 +61,11 @@ namespace CC98
                     }
                     else if (tag == "1")//系统通知
                     {
-                        MsgFrame.Navigate(typeof(NoticePage), "system");
+                        MsgFrame.Navigate(typeof(NoticePage), NoticeType.System);
                     }
                     else if (tag == "2")//回复我的
                     {
-                        MsgFrame.Navigate(typeof(NoticePage), "reply");
+                        MsgFrame.Navigate(typeof(NoticePage), NoticeType.Reply);
                     }
                 } 
                 

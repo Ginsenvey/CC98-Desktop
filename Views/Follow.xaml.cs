@@ -150,7 +150,7 @@ namespace CC98
             var m= sender as MenuFlyoutItem;           
             var f = m?.DataContext as Friend;
             if (f == null) return;
-            var c = new ChatInfo { UserId = f.UserId, UserName = f.UserName, PortraitUrl = f.PortraitUrl };
+            var c = new ChatInfo { UserId = f.UserId, Name = f.Name, PortraitUrl = f.PortraitUrl };
             var param = new MessageNavigationInfo { IsFromProfile = true, ChatUserInfo = c };
             Frame.Navigate(typeof(Message), param);
         }

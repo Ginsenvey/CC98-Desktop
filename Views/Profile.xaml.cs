@@ -3,8 +3,6 @@ using CC98.Kernel.ApiScope;
 using CC98.Kernel.UserExperience;
 using CC98.Objects;
 using CC98.Services.Extensions;
-using CommunityToolkit.Mvvm.ComponentModel;
-using CommunityToolkit.WinUI.Controls;
 using CommunityToolkit.WinUI.UI.Controls;
 using DevWinUI;
 using FluentIcons.Common;
@@ -13,34 +11,13 @@ using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Controls.Primitives;
 using Microsoft.UI.Xaml.Data;
 using Microsoft.UI.Xaml.Input;
-using Microsoft.UI.Xaml.Media;
-using Microsoft.UI.Xaml.Media.Imaging;
-using Microsoft.UI.Xaml.Navigation;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
-using System.IO;
-using System.Linq;
-using System.Net.Http;
-using System.Net.Http.Headers;
-using System.Net.Http.Json;
-using System.Runtime.InteropServices.WindowsRuntime;
-using System.Text;
-using System.Text.Json.Serialization;
-using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Windows.ApplicationModel.DataTransfer;
-using Windows.Devices.Enumeration;
-using Windows.Foundation;
-using Windows.Foundation.Collections;
-using Windows.Media;
-using Windows.Media.Capture;
-using Windows.Media.Core;
-using Windows.Media.Playback;
 using Windows.Storage;
-using Windows.System;
-using static System.Net.WebRequestMethods;
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
 
@@ -67,7 +44,6 @@ namespace CC98
         public Profile()
         {
             this.InitializeComponent();
-            SimpleTile.ItemsSource = recentTopics; 
         }
         protected override async void OnNavigatedTo(Microsoft.UI.Xaml.Navigation.NavigationEventArgs e)
         {
@@ -141,6 +117,7 @@ namespace CC98
             var RecentTopicResult = await RequestSender.Fetch<List<SimpleTopicInfo>>(RecentTopicUrl);
             if (!RecentTopicResult.IsSuccess||RecentTopicResult.Data==null)
             {
+                Flower.PlayAnimation("\uE739", RecentTopicResult.Message);
                 return;
             }
             var data=RecentTopicResult.Data;
@@ -291,8 +268,8 @@ namespace CC98
 
         private void StartChat_Click(object sender, RoutedEventArgs e)
         {
-            var c = new ChatInfo { UserId = profile.Id, UserName = profile.Name, PortraitUrl = profile.PortraitUrl };
-            var param=new MessageNavigationInfo { ChatUserInfo = c ,IsFromProfile=false};
+            var c = new ChatInfo { UserId = profile.Id, Name = profile.Name, PortraitUrl = profile.PortraitUrl };
+            var param=new MessageNavigationInfo { ChatUserInfo = c ,IsFromProfile=true};
             Frame.Navigate(typeof(Message), param);
         }
 

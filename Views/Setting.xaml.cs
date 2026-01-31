@@ -329,7 +329,7 @@ namespace CC98
                             var text = await package.GetTextAsync();
                             try
                             {
-                                var add=json.Deserialize<List<string>>(text);
+                                var add=JsonSerializer.Deserialize<List<string>>(text);
                                 if (add != null)
                                 {
                                     var list = CustomEmoji.GetAllEmoji();

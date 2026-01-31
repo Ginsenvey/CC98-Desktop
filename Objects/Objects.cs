@@ -1,12 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Numerics;
-using System.Text.Json.Serialization;
-using System.Threading.Tasks;
-using CC98.Kernel;
+﻿using CC98.Kernel;
 using CommunityToolkit.Mvvm.ComponentModel;
-using DevWinUI;
+using System;
+using System.Collections.Generic;
+using System.Text.Json.Serialization;
 
 namespace CC98.Objects;
 /// <summary>
@@ -16,10 +12,10 @@ public class Favorites
 {
     //收藏夹名称
     [JsonPropertyName("name")]
-    public required string Name { get; set; }
+    public string Name { get; set; }=string.Empty;
     //收藏夹ID
     [JsonPropertyName("id")]
-    public required int Id { get; set; }
+    public int Id { get; set; }
 }
 
 /// <summary>
@@ -37,7 +33,7 @@ public partial class TopicInfo:ObservableObject
         get => field ?? "匿名";
         set => SetProperty(ref field, value);
     }
-    public int UserId
+    public int? UserId
     {
         get => field;
         set => SetProperty(ref field, value);
@@ -71,18 +67,16 @@ public partial class TopicInfo:ObservableObject
         set=>SetProperty(ref field, value);
     }
  
-    public  DateTime Time
+    public DateTime Time
     {
         get => field;
-        set
-        {
-            if(SetProperty(ref field, value))
-            {
-                OnPropertyChanged(nameof(FormattedTime));
-            }
-        } 
+        set => SetProperty(ref field, value);
     }
-    
+    public bool IsMe
+    {
+        get => field;
+        set => SetProperty(ref field, value);
+    }
     public bool IsVote
     {
         get => field;
@@ -102,35 +96,10 @@ public partial class TopicInfo:ObservableObject
         set => SetProperty(ref field, value);
     }
 
-    //内置时间转换函数
-    public string FormattedTime => Time.ToString("yyyy-MM-dd HH:mm:ss");
+    
 }
 
-/// <summary>
-/// 
-public class RandomTopic
 
-{
-    [JsonPropertyName("userId")]
-    public required string UserId { get; set; }
-
-    [JsonPropertyName("title")]
-    public required string Title { get; set; }
-
-    [JsonPropertyName("replyCount")]
-    public required int ReplyCount { get; set; }
-
-    [JsonPropertyName("hitCount")]
-    public required int HitCount { get; set; }
-
-    [JsonPropertyName("id")]
-    public required int Id { get; set; }
-
-    [JsonPropertyName("time")]
-    public required DateTime Time { get; set; }
-
-    public string FormattedTime => Time.ToString("yyyy-MM-dd HH:mm:ss");
-}
 
 
 
@@ -258,8 +227,8 @@ public class Friend : ObservableObject
         get => field;
         set => SetProperty(ref field, value);
     }
-    [JsonPropertyName("userName")]
-    public string UserName
+    [JsonPropertyName("name")]
+    public string Name
     {
         get => field??string.Empty;
         set => SetProperty(ref field, value);
@@ -277,7 +246,7 @@ public class Friend : ObservableObject
 public class BasicUserInfo
 {
     public int Id { get; set;  }
-    public string UserName { get; set; } = string.Empty;
+    public string Name { get; set; } = string.Empty;
     public string PortraitUrl { get; set; } = string.Empty;
 }
 
@@ -328,9 +297,9 @@ public partial class UserInfo : ObservableObject
         get => field;
         set => SetProperty(ref field, value);
     }
-    public string LastLogOnTime
+    public DateTime LastLogOnTime
     {
-        get => field??string.Empty;
+        get => field;
         set => SetProperty(ref field, value);
     }
     public string PortraitUrl
@@ -354,9 +323,9 @@ public partial class UserInfo : ObservableObject
         set => SetProperty(ref field, value);
     }
 
-    public string RegisterTime
+    public DateTime RegisterTime
     {
-        get => field??string.Empty;
+        get => field;
         set => SetProperty(ref field, value);
     }
     [JsonIgnore]
@@ -451,7 +420,7 @@ public partial class Reply : ObservableObject
         get => field ?? "";
         set => SetProperty(ref field, value);
     }
-    public int UserId
+    public int? UserId
     {
         get => field;
         set => SetProperty(ref field, value);
@@ -502,19 +471,13 @@ public partial class Reply : ObservableObject
         set => SetProperty(ref field, value);
     }
     
-    public required DateTime Time
+    public DateTime Time
     {
         get => field;
-        set
-        {
-            if (SetProperty(ref field, value))
-            {
-                OnPropertyChanged(nameof(FormattedTime));
-            }
-        }
+        set=>SetProperty(ref field, value);
     }
 
-    public string FormattedTime => Time.ToString("yyyy-MM-dd HH:mm:ss");
+    
 }
 
 public class MediaContent
@@ -581,7 +544,7 @@ public partial class ChatInfo : ObservableObject
 
     }
     [JsonIgnore]
-    public string UserName
+    public string Name
     {
         get => field ?? string.Empty;
         set => SetProperty(ref field, value);
@@ -639,13 +602,15 @@ public class Notice
     public int? PostId { get; set; }
 
     [JsonPropertyName("time")]
-    public DateTimeOffset Time { get; set; }
+    public DateTime Time { get; set; }
 
     [JsonPropertyName("postBasicInfo")]
     public PostBasicInfo? PostBasicInfo { get; set; }
 
     [JsonPropertyName("id")]
     public int Type { get; set;}
+    [JsonPropertyName("content")]
+    public string? Content {  get; set; }
 }
 
 public class PostBasicInfo
@@ -729,4 +694,68 @@ public class GachaInfo
 {
     public string Rank { get; set; } = string.Empty;
     public string Probability { get; set; } = string.Empty;
+}
+
+public class FlipTopic : ObservableObject
+{
+    public string Title
+    {
+        get => field ?? string.Empty;
+        set => SetProperty(ref field, value);
+    }
+
+    public string Url
+    {
+        get => field ?? string.Empty;
+        set => SetProperty(ref field, value);
+    }
+    public string Time
+    {
+        get => field ?? string.Empty;
+        set => SetProperty(ref field, value);
+    }
+    public string Content
+    {
+        get => field ?? string.Empty;
+        set => SetProperty(ref field, value);
+    }
+}
+
+public class SectionCard
+{
+    public required string SectionName { get; set; }
+    public required string HexColor { get; set; }
+    public List<IndexTopic> IndexTopics { get; set; } = [];
+}
+public class IndexTopic : ObservableObject
+{
+    public string Title
+    {
+        get => field ?? string.Empty;
+        set => SetProperty(ref field, value);
+    }
+    public string BoardName
+    {
+        get => field ?? string.Empty;
+        set => SetProperty(ref field, value);
+    }
+    public int TopicId
+    {
+        get => field;
+        set => SetProperty(ref field, value);
+    }
+
+    public bool IsHotTopic
+    {
+        get => field;
+        set => SetProperty(ref field, value);
+    }
+}
+/// <summary>
+/// 精华帖
+/// </summary>
+public class BoardBest
+{
+    public int Count { get; set; }
+    public List<SimpleTopicInfo> Topics { get; set; } = [];
 }

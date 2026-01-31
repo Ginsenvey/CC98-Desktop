@@ -1,6 +1,9 @@
 
 using CC98.Kernel;
 using CC98.Kernel.UserExperience;
+using CC98.Objects;
+using CC98.Services.Extensions;
+using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.WinUI;
 using DevWinUI;
 using Microsoft.UI;
@@ -27,6 +30,7 @@ using System.Net.Http.Headers;
 using System.Runtime.InteropServices;
 using System.Runtime.InteropServices.WindowsRuntime;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using Windows.Foundation;
@@ -43,16 +47,14 @@ namespace CC98
     /// </summary>
     public sealed partial class Index : Page
     {
-        public ObservableCollection<SectionCard> cards;
-        public ObservableCollection<FlipPost> ftiles;
+        public ObservableCollection<SectionCard> sections=[];
+        public ObservableCollection<FlipTopic> flipTopics=[];
         public ApplicationDataContainer Set;
-        public ImageSource ThemePic;
+        public ImageSource? ThemePic;
         public Index()
         {
             this.InitializeComponent();
-            cards = new ObservableCollection<SectionCard>(){};
-            ftiles= new ObservableCollection<FlipPost>();
-            RecomList.ItemsSource = ftiles;
+            RecomList.ItemsSource = flipTopics;
             Set = ApplicationData.Current.LocalSettings;
             GetTopic();
             LoadSet();
@@ -85,13 +87,13 @@ namespace CC98
                         string content = ValidationHelper.GetKey(AllTopics, key);
                         if (content != "0")
                         {
-                            var TopicList = Deserializer.ToArray(content);
+                            var TopicList = JsonSerializer.Deserialize<JsonArray>(content);
                             if (TopicList != null && TopicList.Count > 0)
                             {
-                                var tiles = new List<SimplePost>();
+                                var tiles = new List<IndexTopic>();
                                 foreach (var Topic in TopicList)
                                 {
-                                    var TopicInfo = JsonConvert.DeserializeObject<Dictionary<string, object>>(Topic.ToString());
+                                    var TopicInfo = JsonSerializer.Deserialize<Dictionary<string, object>>(Topic.ToString());
                                     if (TopicInfo == null) return;
                                     string Section = "";
                                     if (TopicInfo.ContainsKey("boardName"))
@@ -110,38 +112,32 @@ namespace CC98
                                         Title = TopicInfo["title"].ToString();
                                     }
 
-                                    string Pid = TopicInfo["id"].ToString();
-                                    bool hasboardname = false;
+                                    int Pid = TopicInfo["id"].ToInt();
+                                    bool isHotTopic = false;
                                     if (key == "hotTopic")
                                     {
-                                        hasboardname = true;
+                                        isHotTopic = true;
                                     }
-                                    tiles.Add(new SimplePost { section = Section, title = Title, pid = Pid, hasboardname = hasboardname });
+                                    tiles.Add(new IndexTopic { BoardName = Section,Title = Title, TopicId = Pid, IsHotTopic = isHotTopic });
                                 }
-                                cards.Add(new SectionCard { SectionName = _SectionNames[i], Tiles = tiles, HexColor = ColorPaint.GenerateMorandiColorHex() });
+                                sections.Add(new SectionCard { SectionName = _SectionNames[i], IndexTopics = tiles, HexColor = ColorPaint.GenerateMorandiColorHex() });
                             }
                         }
                     }
                     string recom = ValidationHelper.GetKey(AllTopics, "recommendationReading");
                     if (recom != "0")
                     {
-                        var recomlist = Deserializer.ToArray(recom);
-                        ftiles.Clear();
+                        var recomlist = JsonSerializer.Deserialize<List<FlipTopic>>(recom);
+                        flipTopics.Clear();
                         if (recomlist != null)
                         {
-                            foreach (var r in recomlist)
+                            foreach (var item in recomlist)
                             {
-                                var js = JsonConvert.DeserializeObject<Dictionary<string, object>>(r.ToString());
-                                string title = js["title"].ToString();
-                                string content = js["content"].ToString();
-                                string pid = js["url"].ToString();
-                                string time = js["time"].ToString();
-                                ftiles.Add(new FlipPost { content = content, time = time, pid = "cc98:/" + pid, title = title });
+                                item.Url = $"cc98:/{item.Url}";
                             }
+                            flipTopics.AddRange(recomlist);
                             Pips.NumberOfPages = recomlist.Count;
                         }
-
-
                     }
                 }
                 
@@ -197,33 +193,13 @@ namespace CC98
         private void TopicItem_Click(object sender, RoutedEventArgs e)
         {
             var button = sender as HyperlinkButton;
-            if (button == null) return;
-            var tag = button.Tag as string;//当前绑定状态下，h没有DataContext.只能使用tag.
-            if (!string.IsNullOrEmpty(tag))
-            {
-                Frame.Navigate(typeof(Topic), tag);
-            }
-            
-            
-
-
+            var tag = button?.Tag;
+            if (tag == null) return;
+            var param = new TopicNavigationInfo { TopicId = tag.ToInt()};
+            Frame.Navigate(typeof(Topic), param);
+            Flower.PlayAnimation("\uE739", tag as string);
         }
 
-        private void AuthurName_Click(object sender, RoutedEventArgs e)
-        {
-            var h=sender as HyperlinkButton;
-            var tag = h.Tag as string;
-            if(!string.IsNullOrEmpty(tag))
-            {
-                Set.Values["ProfileNaviMode"] = "Others";
-                Set.Values["CurrentPerson"] = tag; ;
-                if (tag != "-1")
-                {
-                    Frame.Navigate(typeof(Profile),tag);
-                }
-            }
-        }
-        
         
 
         private void RecomHyperlink_Click(Microsoft.UI.Xaml.Documents.Hyperlink sender, Microsoft.UI.Xaml.Documents.HyperlinkClickEventArgs args)
@@ -231,167 +207,14 @@ namespace CC98
             string url = (sender as Hyperlink).NavigateUri.ToString();
             if (!string.IsNullOrEmpty(url))
             {
-                string param = url.Replace("cc98://topic/", "");
+                int topicId=int.Parse(url.Replace("cc98://topic/", ""));
+                var param=new TopicNavigationInfo { TopicId = topicId };
                 Frame.Navigate(typeof(Topic),param);
             }
             
             
         }
 
-        private void Ref_Click(object sender, RoutedEventArgs e)
-        {
-
-        }
     }
-    public class FlipPost : INotifyPropertyChanged
-    {
-        private string _title;//标题
-
-
-        private string _pid;//话题id
-
-
-        private string _time;//时间
-
-        private string _content;//内容
-        public string title
-        {
-            get => _title;
-            set
-            {
-                if (_title != value)
-                {
-                    _title = value;
-                    OnPropertyChanged(nameof(title));
-                }
-            }
-        }
-
-
-
-
-
-        public string pid
-        {
-            get => _pid;
-            set
-            {
-                if (_pid != value)
-                {
-                    _pid = value;
-                    OnPropertyChanged(nameof(pid));
-                }
-            }
-        }
-
-
-
-        public string time
-        {
-            get => _time;
-            set
-            {
-                if (_time != value)
-                {
-                    _time = value;
-                    OnPropertyChanged(nameof(time));
-                }
-            }
-        }
-
-
-        public string content
-        {
-            get => _content;
-            set
-            {
-                if (_content != value)
-                {
-                    _content = value;
-                    OnPropertyChanged(nameof(content));
-                }
-            }
-        }
-        public event PropertyChangedEventHandler PropertyChanged;
-
-        protected virtual void OnPropertyChanged(string propertyName)
-        {
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-        }
-    }
-    
-    public class SectionCard
-    {
-        public string SectionName { get; set; }
-        public string HexColor { get; set; }
-        public List<SimplePost> Tiles { get; set; }
-    }
-    public class SimplePost : INotifyPropertyChanged
-    {
-        private string _title;//标题
-        private string _section;//版面    
-        private string _pid;//话题id
-        private bool _hasboardname;//是否已包含版面名
-       
-        public string title
-        {
-            get => _title;
-            set
-            {
-                if (_title != value)
-                {
-                    _title = value;
-                    OnPropertyChanged(nameof(title));
-                }
-            }
-        }
-        public string section
-        {
-            get => _section;
-            set
-            {
-                if (_section != value)
-                {
-                    _section = value;
-                    OnPropertyChanged(nameof(section));
-                }
-            }
-        }
-        public string pid
-        {
-            get => _pid;
-            set
-            {
-                if (_pid != value)
-                {
-                    _pid = value;
-                    OnPropertyChanged(nameof(pid));
-                }
-            }
-        }
-
-        public bool hasboardname
-        {
-            get => _hasboardname;
-            set
-            {
-                if (_hasboardname != value)
-                {
-                    _hasboardname = value;
-                    OnPropertyChanged(nameof(hasboardname));
-                }
-            }
-        }
-        
-        public event PropertyChangedEventHandler PropertyChanged;
-
-        protected virtual void OnPropertyChanged(string propertyName)
-        {
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-        }
-    }
-    
-    
-  
     
 }

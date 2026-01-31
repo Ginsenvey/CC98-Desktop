@@ -19,6 +19,7 @@ using System.IO;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices.WindowsRuntime;
+using System.Threading.Tasks;
 using System.Windows.Input;
 using Windows.Foundation;
 using Windows.Foundation.Collections;
@@ -46,13 +47,15 @@ namespace CC98
             GetMoments();
         }
         
-        private async void GetMoments()
+        private async Task GetMoments()
         {
             string url = (mode == FocusContentType.Followee) ? ApiEndpoints.User.Moment(currentIndex) : ApiEndpoints.User.FavoriteTopicUpdate(currentIndex);
             var result = await RequestSender.Fetch<List<TopicInfo>>(url);
             if (!result.IsSuccess || result.Data == null)
             {
                 //
+                ValidationHelper.Log("¼ÓÔØÊý¾ÝÊ§°Ü", result.Message);
+                Flower.PlayAnimation("\uE739", result.Message);
                 return;
             }
             var data=result.Data;
@@ -62,24 +65,24 @@ namespace CC98
         
         private void STileList_Loaded(object sender, RoutedEventArgs e)
         {
-            STileList.ElementPrepared += (s, e) =>
+            STileList.ElementPrepared += async (s, e) =>
             {
                 if (STileList.ItemsSource != null)
                 {
                     int current = e.Index;
                    
-                    if (current > 0 && (current + 1) % 20 == 0 && current > history)
+                    if ((current + 1) % 20 == 0 && current > history)
                     {
                         history = current;
                         currentIndex = current+1;
-                        GetMoments();
+                        await GetMoments();
                     }
                 }
 
             };
         }
 
-        private void TypeChoice_SelectionChanged(SelectorBar sender, SelectorBarSelectionChangedEventArgs args)
+        private async void TypeChoice_SelectionChanged(SelectorBar sender, SelectorBarSelectionChangedEventArgs args)
         {
             var s=TypeChoice.SelectedItem as SelectorBarItem;
             if(s != null)
@@ -87,10 +90,11 @@ namespace CC98
                 var tag = s.Tag;
                 if(tag is string _tag)
                 {
-                    mode = _tag=="1"?FocusContentType.Followee:FocusContentType.FavoriteUpdate;
+                    mode = _tag=="0"?FocusContentType.Followee:FocusContentType.FavoriteUpdate;
                     history = 0;
+                    currentIndex = 0;
                     topics.Clear();
-                    GetMoments();
+                    await GetMoments();
                 }
             }
         }
@@ -98,15 +102,10 @@ namespace CC98
         private void Tile_Click(object sender, RoutedEventArgs e)
         {
             var h = sender as HyperlinkButton;
-            if (h != null)
-            {
-                var s = h?.DataContext as TopicInfo;
-                if (s != null)
-                {
-                    var param=new TopicNavigationInfo {TopicId=s.Id};
-                    Frame.Navigate(typeof(Topic), param);
-                }
-            }
+            var s = h?.DataContext as TopicInfo;
+            if (s == null) return;
+            var param = new TopicNavigationInfo { TopicId = s.Id };
+            Frame.Navigate(typeof(Topic), param);
         }
     }
 

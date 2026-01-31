@@ -23,6 +23,7 @@ namespace CC98
         { 
             NoticeType.System=>"system",
             NoticeType.At=>"at",
+            NoticeType.Reply=>"reply",
             _=>""
          };
         public NoticePage()
@@ -47,6 +48,7 @@ namespace CC98
             if (!result.IsSuccess || result.Data == null)
             {
                 //
+                ValidationHelper.Log("º”‘ÿ ˝æ› ß∞‹", result.Message);
                 return;
             }
             var data= result.Data;
@@ -58,19 +60,16 @@ namespace CC98
             var h = sender as HyperlinkButton;
             var n=h?.DataContext as Notice;
             if (n == null) return;
-            if (n.Type == 2)
+            if (n.TopicId is not int topicId || n.PostBasicInfo == null) return;
+            if ((App.Current as App).m_window is MainWindow mainwindow)
             {
-                if (n.TopicId is not int topicId || n.PostBasicInfo == null) return;
-                if ((App.Current as App).m_window is MainWindow mainwindow)
+                var param = new TopicNavigationInfo
                 {
-                    var param = new TopicNavigationInfo
-                    {
-                        IsJumpingMode = true,
-                        TargetFloor=n.PostBasicInfo.Floor,
-                        TopicId= topicId
-                    };
-                    mainwindow.RootFrame.Navigate(typeof(Topic), param);
-                }
+                    IsJumpingMode = true,
+                    TargetFloor = n.PostBasicInfo.Floor,
+                    TopicId = topicId
+                };
+                mainwindow.RootFrame.Navigate(typeof(Topic), param);
             }
         }
     }

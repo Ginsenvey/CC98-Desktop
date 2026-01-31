@@ -235,7 +235,6 @@ namespace CC98
             {
                 var protocol = (ProtocolActivatedEventArgs)e;
                 var query = System.Web.HttpUtility.ParseQueryString(protocol.Uri.Query);
-                ValidationHelper.Log("OAuth回调", protocol.Uri.ToString());
                 AuthFromOpenID(query);
                 
             }

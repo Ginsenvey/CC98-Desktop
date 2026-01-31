@@ -32,10 +32,10 @@
                                         <ColumnDefinition Width="50"></ColumnDefinition>
                                         <ColumnDefinition Width="*"></ColumnDefinition>
                                     </Grid.ColumnDefinitions>
-                                    <Border Grid.Column="0" Grid.Row="0" Grid.RowSpan="2" CornerRadius="5" Height="50" Width="50">
+                                    <Border Grid.Column="0" Grid.Row="0" Grid.RowSpan="2" CornerRadius="5" Height="45" Width="45">
                                         <image:SmartImage Source="{x:Bind PortraitUrl}" Stretch="UniformToFill"></image:SmartImage>
                                     </Border>
-                                    <TextBlock Text="{x:Bind UserName}" Grid.Column="1" Grid.Row="0" FontSize="15"></TextBlock>
+                                    <TextBlock Text="{x:Bind Name}" Grid.Column="1" Grid.Row="0" FontSize="15"></TextBlock>
                                     <TextBlock Text="{x:Bind LastContent}" Grid.Column="1" Grid.Row="1" FontSize="13" Foreground="{ThemeResource TextFillColorSecondaryBrush}" MaxLines="1"></TextBlock>
                                 </Grid>
                             </DataTemplate>

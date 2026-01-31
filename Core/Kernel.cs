@@ -498,7 +498,6 @@ public static class ValidationHelper
     {
         try
         {
-            ValidationHelper.Log("OAuth响应", $"状态码：{res.StatusCode}");
             if (res.IsSuccessStatusCode)
             {
                 string Text = await res.Content.ReadAsStringAsync();

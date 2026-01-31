@@ -12,10 +12,12 @@
     xmlns:dev="using:DevWinUI"
     xmlns:image="using:CC98.Controls"
     xmlns:tool="using:CommunityToolkit.WinUI.UI.Controls"
+    xmlns:obj="using:CC98.Objects"
+    xmlns:cv="using:CC98.Services.Converters"
     Background="{ThemeResource AcrylicBackgroundFillColorDefaultBrush}">
     <Page.Resources>
         <local:BooltoVisibilityConverter x:Key="BoolToVisibility"></local:BooltoVisibilityConverter>
-        <local:UBBTextConverter x:Key="UBBTextConverter"></local:UBBTextConverter>
+        <cv:UBBTextConverter x:Key="UBBTextConverter"/>
     </Page.Resources>
     <Grid x:Name="RootGrid" >
         <Grid.RowDefinitions>
@@ -63,15 +65,15 @@
                     <ColumnDefinition Width="*"></ColumnDefinition>
                     <ColumnDefinition Width="Auto"></ColumnDefinition>
                 </Grid.ColumnDefinitions>
-                <TextBlock x:Name="TopicTitle" Text="{x:Bind  metadata.text,Mode=OneWay}" Grid.Row="0" Grid.Column="0" VerticalAlignment="Center" FontWeight="Bold" Foreground="{ThemeResource AccentAAFillColorDefaultBrush}" FontSize="18" Margin="10,0,0,0" TextWrapping="Wrap" ></TextBlock>
+                <TextBlock x:Name="TopicTitle" Text="{x:Bind  topicInfo.Title,Mode=OneWay}" Grid.Row="0" Grid.Column="0" VerticalAlignment="Center" FontWeight="Bold" Foreground="{ThemeResource AccentAAFillColorDefaultBrush}" FontSize="18" Margin="10,0,0,0" TextWrapping="Wrap" ></TextBlock>
                 
                 <StackPanel Orientation="Horizontal" Grid.Row="1" Grid.Column="0" Margin="10,10,0,0" Spacing="8">
                     <ic:SymbolIcon Symbol="Clock" FontSize="12" VerticalAlignment="Center"></ic:SymbolIcon>
-                    <TextBlock Text="{x:Bind metadata.time,Mode=OneWay}" FontSize="14" VerticalAlignment="Center"></TextBlock>
+                    <TextBlock Text="{x:Bind topicInfo.Time,Mode=OneWay}" FontSize="14" VerticalAlignment="Center"></TextBlock>
                     <ic:SymbolIcon Symbol="Eye" FontSize="12" Margin="20,0,0,0"></ic:SymbolIcon>
-                    <TextBlock Text="{x:Bind metadata.hit,Mode=OneWay}" FontSize="14" VerticalAlignment="Center"></TextBlock>
-                    <ic:SymbolIcon Symbol="Star" FontSize="12" Margin="20,0,0,0" IconVariant="{x:Bind metadata.variant}"></ic:SymbolIcon>
-                    <TextBlock Text="{x:Bind metadata.favorite,Mode=OneWay}" FontSize="14" VerticalAlignment="Center"></TextBlock>
+                    <TextBlock Text="{x:Bind topicInfo.HitCount,Mode=OneWay}" FontSize="14" VerticalAlignment="Center"></TextBlock>
+                    <ic:SymbolIcon Symbol="Star" FontSize="12" Margin="20,0,0,0" ></ic:SymbolIcon>
+                    <TextBlock Text="{x:Bind topicInfo.FavoriteCount,Mode=OneWay}" FontSize="14" VerticalAlignment="Center"></TextBlock>
                     
                 </StackPanel>
                 <dev:BubbleButton Grid.Row="0" Grid.Column="1" Grid.RowSpan="2" VerticalAlignment="Center" Height="45" HorizontalAlignment="Right"  Margin="10,15,10,10" x:Name="writereply" Click="writereply_Click"  BubbleForeground="{ThemeResource AccentAAFillColorDefaultBrush}">
@@ -89,7 +91,7 @@
             <ItemsRepeater x:Name="TileList" VerticalCacheLength="48" >
                 
                 <ItemsRepeater.ItemTemplate>
-                    <DataTemplate x:DataType="local:Reply">
+                    <DataTemplate x:DataType="obj:Reply">
                         <Grid Padding="8" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"  BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="0,0.8,0,0.8" Margin="0,0,0,0" CornerRadius="0" >
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="2*"></RowDefinition>
@@ -101,18 +103,18 @@
                             <HyperlinkButton Grid.Row="0" Margin="0,0,0,5"  x:Name="Person" Click="Person_Click" DataContext="{x:Bind}" ContextRequested="Person_ContextRequested">
                                 <StackPanel Grid.Row="0"  Orientation="Horizontal" Spacing="10">
                                     <Border Width="30" Height="30" CornerRadius="5" Background="{ThemeResource PortaitBackgroundColor}">
-                                        <image:SmartImage  x:Name="portrait" Source="{x:Bind Url}" ></image:SmartImage>
+                                        <image:SmartImage  x:Name="portrait" Source="{x:Bind PortraitUrl}" ></image:SmartImage>
                                     </Border>
-                                    <TextBlock Text="{x:Bind Author}"  VerticalAlignment="Center" ></TextBlock>
+                                    <TextBlock Text="{x:Bind UserName}"  VerticalAlignment="Center" ></TextBlock>
                                 </StackPanel>
                             </HyperlinkButton>
   
                             <Border  Grid.Row="1" Padding="10" CornerRadius="4" Background="{ThemeResource MarkdownBackgroudBrush}">
-                                <tool:MarkdownTextBlock x:Name="Drawer" Text="{x:Bind Text,Converter={StaticResource UBBTextConverter},Mode=OneWay}"  Background="Transparent" Foreground="{ThemeResource TextFillColorSecondaryBrush}" HorizontalAlignment="Stretch"  FontFamily="/Assets/Fonts/HarmonyOS_Sans_SC_Regular.ttf#HarmonyOS Sans SC" VerticalAlignment="Stretch" LinkClicked="MarkdownTextBlock_LinkClicked"   ImageStretch="UniformToFill"  QuoteBorderBrush="{ThemeResource QuoteBorderBrush}" ImageClicked="Drawer_ImageClicked" ImageResolving="Drawer_ImageResolving" ImageMaxWidth="400" Unloaded="Drawer_Unloaded"></tool:MarkdownTextBlock>
+                                <tool:MarkdownTextBlock x:Name="Drawer" Text="{x:Bind Content,Converter={StaticResource UBBTextConverter},Mode=OneWay}"  Background="Transparent" Foreground="{ThemeResource TextFillColorSecondaryBrush}" HorizontalAlignment="Stretch"  FontFamily="/Assets/Fonts/HarmonyOS_Sans_SC_Regular.ttf#HarmonyOS Sans SC" VerticalAlignment="Stretch" LinkClicked="MarkdownTextBlock_LinkClicked"   ImageStretch="UniformToFill"  QuoteBorderBrush="{ThemeResource QuoteBorderBrush}" ImageClicked="Drawer_ImageClicked" ImageResolving="Drawer_ImageResolving" ImageMaxWidth="400" Unloaded="Drawer_Unloaded"></tool:MarkdownTextBlock>
                             </Border>
 
                             <StackPanel Orientation="Vertical" Grid.Row="0" Margin="5,5,10,0" HorizontalAlignment="Right">
-                                <TextBlock Text="{x:Bind  Time}"  FontSize="10"   Foreground="{ThemeResource TextFillColorSecondaryBrush}"></TextBlock>
+                                <TextBlock Text="{x:Bind Time}"  FontSize="10"   Foreground="{ThemeResource TextFillColorSecondaryBrush}"></TextBlock>
                                 <TextBlock Text="{x:Bind Floor}" FontSize="10" TextAlignment="Right" Foreground="{ThemeResource TextFillColorSecondaryBrush}"></TextBlock>
                             </StackPanel>
 
@@ -121,15 +123,15 @@
                             <StackPanel Orientation="Horizontal" Grid.Row="3" Spacing="10">
                                 <Button Background="Transparent"  Tag="1"  HorizontalAlignment="Left" Margin="0,10,0,0" x:Name="Like" Click="Like_Click" DataContext="{x:Bind}">
                                     <StackPanel Orientation="Horizontal" Spacing="5" >
-                                        <ic:SymbolIcon Symbol="ThumbLike" FontSize="10" Foreground="{ThemeResource TextFillColorSecondaryBrush}"  IconVariant="{x:Bind Likestate,Mode=OneWay}"></ic:SymbolIcon>
-                                        <TextBlock Text="{x:Bind Like,Mode=OneWay}" Grid.Row="2"  HorizontalAlignment="Right" FontSize="11" Foreground="{ThemeResource TextFillColorSecondaryBrush}"></TextBlock>
+                                        <ic:SymbolIcon Symbol="ThumbLike" FontSize="10" Foreground="{ThemeResource TextFillColorSecondaryBrush}" ></ic:SymbolIcon>
+                                        <TextBlock Text="{x:Bind LikeCount,Mode=OneWay}" Grid.Row="2"  HorizontalAlignment="Right" FontSize="11" Foreground="{ThemeResource TextFillColorSecondaryBrush}"></TextBlock>
                                     </StackPanel>
                                 </Button>
 
                                 <Button Background="Transparent" Tag="2" HorizontalAlignment="Left" Margin="0,10,0,0" Click="Like_Click" DataContext="{x:Bind}">
                                     <StackPanel Orientation="Horizontal" Spacing="5" >
-                                        <ic:SymbolIcon Symbol="ThumbDislike" FontSize="10" Foreground="{ThemeResource TextFillColorSecondaryBrush}" IconVariant="{x:Bind Dislikestate,Mode=OneWay}"></ic:SymbolIcon>
-                                        <TextBlock Text="{x:Bind Dislike,Mode=OneWay}"  HorizontalAlignment="Right" FontSize="11" Foreground="{ThemeResource TextFillColorSecondaryBrush}"></TextBlock>
+                                        <ic:SymbolIcon Symbol="ThumbDislike" FontSize="10" Foreground="{ThemeResource TextFillColorSecondaryBrush}" ></ic:SymbolIcon>
+                                        <TextBlock Text="{x:Bind DislikeCount,Mode=OneWay}"  HorizontalAlignment="Right" FontSize="11" Foreground="{ThemeResource TextFillColorSecondaryBrush}"></TextBlock>
                                     </StackPanel>
                                 </Button>
 
@@ -143,7 +145,7 @@
                                                 <ic:FluentIcon Icon="CommentQuote"></ic:FluentIcon>
                                             </MenuFlyoutItem.Icon>
                                         </MenuFlyoutItem>
-                                        <MenuFlyoutItem  Text="编辑" Click="PostOperation_Click" Tag="EDIT" DataContext="{x:Bind}" Visibility="{x:Bind Isme,Converter={StaticResource BoolToVisibility}}">
+                                        <MenuFlyoutItem  Text="编辑" Click="PostOperation_Click" Tag="EDIT" DataContext="{x:Bind}" Visibility="{x:Bind IsMe,Converter={StaticResource BoolToVisibility}}">
                                             <MenuFlyoutItem.Icon>
                                                 <ic:FluentIcon Icon="Edit"></ic:FluentIcon>
                                             </MenuFlyoutItem.Icon>
@@ -257,14 +259,14 @@
                         </Grid>
                     </ListView.Header>
                     <ListView.ItemTemplate>
-                        <DataTemplate x:DataType="local:VoteItem">
+                        <DataTemplate x:DataType="obj:VoteItem">
                             <Grid ColumnSpacing="10">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*"></ColumnDefinition>
                                     <ColumnDefinition Width="30"></ColumnDefinition>
                                 </Grid.ColumnDefinitions>
-                                <TextBlock Text="{x:Bind description}" Margin="0,3,0,3" TextWrapping="Wrap" Foreground="{ThemeResource TextFillColorSecondaryBrush}" FontSize="12" VerticalAlignment="Center"></TextBlock>
-                                <TextBlock Grid.Column="1" Text="{x:Bind count}" FontSize="12" VerticalAlignment="Center"></TextBlock>
+                                <TextBlock Text="{x:Bind Description}" Margin="0,3,0,3" TextWrapping="Wrap" Foreground="{ThemeResource TextFillColorSecondaryBrush}" FontSize="12" VerticalAlignment="Center"></TextBlock>
+                                <TextBlock Grid.Column="1" Text="{x:Bind Count}" FontSize="12" VerticalAlignment="Center"></TextBlock>
                             </Grid>
                         </DataTemplate>
                     </ListView.ItemTemplate>
@@ -288,9 +290,9 @@
                     <ColumnDefinition Width="*"></ColumnDefinition>
                     <ColumnDefinition Width="*"></ColumnDefinition>
                 </Grid.ColumnDefinitions>
-                <PersonPicture Tag="{x:Bind profile.Port,Mode=OneWay}" Grid.Column="0" Grid.Row="0" Grid.RowSpan="2" Width="50" Height="50" x:Name="SmallProfile" Loaded="SmallProfile_Loaded" Unloaded="SmallProfile_Unloaded"></PersonPicture>
-                <TextBlock Grid.Row="0" Grid.Column="1" Text="{x:Bind profile.Posts,Mode=OneWay}" FontWeight="SemiBold" HorizontalAlignment="Center"></TextBlock>
-                <TextBlock Grid.Row="0" Grid.Column="2" Text="{x:Bind profile.Fan,Mode=OneWay}" FontWeight="SemiBold" HorizontalAlignment="Center"></TextBlock>
+                <PersonPicture Tag="{x:Bind profile.PortraitUrl,Mode=OneWay}" Grid.Column="0" Grid.Row="0" Grid.RowSpan="2" Width="50" Height="50" x:Name="SmallProfile" Loaded="SmallProfile_Loaded" Unloaded="SmallProfile_Unloaded"></PersonPicture>
+                <TextBlock Grid.Row="0" Grid.Column="1" Text="{x:Bind profile.PostCount,Mode=OneWay}" FontWeight="SemiBold" HorizontalAlignment="Center"></TextBlock>
+                <TextBlock Grid.Row="0" Grid.Column="2" Text="{x:Bind profile.FanCount,Mode=OneWay}" FontWeight="SemiBold" HorizontalAlignment="Center"></TextBlock>
                 <TextBlock Grid.Row="0" Grid.Column="3" Text="{x:Bind profile.Popularity,Mode=OneWay}" FontWeight="SemiBold" HorizontalAlignment="Center" ></TextBlock>
                 <TextBlock Grid.Row="1" Grid.Column="1" Text="主题数"  Foreground="{ThemeResource TextFillColorSecondaryBrush}" FontSize="12" HorizontalAlignment="Center"></TextBlock>
                 <TextBlock Grid.Row="1" Grid.Column="2" Text="粉丝"  Foreground="{ThemeResource TextFillColorSecondaryBrush}" FontSize="12" HorizontalAlignment="Center"></TextBlock>
@@ -301,7 +303,7 @@
                         <TextBlock Text="{x:Bind profile.Id,Mode=OneWay}"  Foreground="{ThemeResource TextFillColorSecondaryBrush}" FontSize="12" IsTextSelectionEnabled="True"></TextBlock>
                     </Border>
                 </StackPanel>
-                <tool:MarkdownTextBlock Text="{x:Bind profile.Signature,Mode=OneWay}"  Grid.Column="0" Grid.ColumnSpan="4" Grid.Row="3" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Background="Transparent" LinkClicked="MarkdownTextBlock_LinkClicked" ImageResolving="Drawer_ImageResolving"></tool:MarkdownTextBlock>
+                <tool:MarkdownTextBlock Text="{x:Bind profile.SignatureCode,Mode=OneWay}"  Grid.Column="0" Grid.ColumnSpan="4" Grid.Row="3" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Background="Transparent" LinkClicked="MarkdownTextBlock_LinkClicked" ImageResolving="Drawer_ImageResolving"></tool:MarkdownTextBlock>
             </Grid>
         </TeachingTip>
 

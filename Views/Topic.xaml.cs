@@ -226,17 +226,11 @@ namespace CC98
         {
             var h = sender as HyperlinkButton;
             var t = h?.DataContext as Reply;
-            if (t != null)
-            {
-                if (t.UserId != 0)//非匿名才会跳转
-                {
-                    var info=new ProfileNavigationInfo { IsMe=t.IsMe,UserId=t.UserId};
-                    Frame.Navigate(typeof(Profile), info);
-                }
-
-            }
+            if (t == null)return;
+            if (t.IsAnonymous) return;
+            var info = new ProfileNavigationInfo { IsMe = t.IsMe, UserId = t.UserId ?? 0 };
+            Frame.Navigate(typeof(Profile), info);
         }
-        public int CurrentPage = 0;
         private async void Pager_SelectedIndexChanged(DevWinUI.PagerControl sender, DevWinUI.PagerControlSelectedIndexChangedEventArgs args)
         {
             //此方法在页面加载完成后会被调用一次，Pager的SelectedIndex会被设置为0。
@@ -248,10 +242,9 @@ namespace CC98
             {
                 de.Text += "trigged";
                 int index = Pager.SelectedPageIndex;
-                CurrentPage = index;
+                currentPage = index;
                 if (index >= 0)
                 {
-                    int startindex = 10 * (index);
                     await LoadReply();
                     if (isJumping && JumpToFloor != -1)
                     {
@@ -291,31 +284,7 @@ namespace CC98
                 case "user":
                     {
                         string _url = "https://api.cc98.org/user/name/" + result.Value;
-                        string infotext = await RequestSender.SimpleRequest(_url);
-                        
-                        if (!infotext.StartsWith("404:"))
-                        {
-                            var Info = Deserializer.ToDictionary(infotext);
-                            if (Info != null)
-                            {
-                                string uid = Info["id"].ToString();
-                                if (uid != null)
-                                {
-                                    if (uid.All(char.IsDigit))
-                                    {
-                                        var param = new Dictionary<string, string>()
-                                        {
-                                            {"Mode","Others" },
-                                            {"UserId",uid }
-                                        };
-                                        Frame.Navigate(typeof(Profile), param);
-                                    }
-                                }
-                            }
-                            
-                        }
-       
-                            break;
+                        break;
                     }
                 //using语句不能在switch语句中直接出现。因此，使用大括号包围这个case.
                 case "anchor":
@@ -628,7 +597,7 @@ namespace CC98
             var h = sender as HyperlinkButton;
             var t = h?.DataContext as Reply;
             if (t == null||t.IsAnonymous) return;
-            string profileUrl = ApiEndpoints.User.UserProfile(t.IsMe, t.UserId);
+            string profileUrl = ApiEndpoints.User.UserProfile(t.IsMe, t.UserId??0);
             var profileResult = await RequestSender.Fetch<UserInfo>(profileUrl);
             if (!profileResult.IsSuccess || profileResult.Data == null)
             {

@@ -9,6 +9,8 @@
     mc:Ignorable="d"
     xmlns:image="using:CC98.Controls"
     xmlns:ic="using:FluentIcons.WinUI" 
+    xmlns:obj="using:CC98.Objects"
+    xmlns:cv="using:CC98.Services.Converters"
     Background="{ThemeResource DesktopAcrylicTransparentBrush}">
 
     <Grid Padding="15,0,15,0">
@@ -23,7 +25,7 @@
         <ScrollViewer Grid.Row="1"  Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" CornerRadius="7" Margin="0,0,0,30">
             <ItemsRepeater  x:Name="Collection" Loaded="Collection_Loaded">
                 <ItemsRepeater.ItemTemplate>
-                    <DataTemplate x:DataType="local:Friends">
+                    <DataTemplate x:DataType="obj:Friend">
                         <HyperlinkButton HorizontalContentAlignment="Stretch" HorizontalAlignment="Stretch" CornerRadius="0" x:Name="TileContent" Click="TileContent_Click" BorderThickness="0.5" BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}" DataContext="{x:Bind}">
                             <HyperlinkButton.ContextFlyout>
                                 <MenuFlyout>
@@ -32,7 +34,7 @@
                                             <ic:FluentIcon Icon="ChatAdd" ></ic:FluentIcon>
                                         </MenuFlyoutItem.Icon>
                                     </MenuFlyoutItem>
-                                    <MenuFlyoutItem Text="取关"  Click="UnFollow_Click" Tag="{x:Bind uid}">
+                                    <MenuFlyoutItem Text="取关"  Click="UnFollow_Click" Tag="{x:Bind UserId}">
                                         <MenuFlyoutItem.Icon>
                                             <ic:FluentIcon Icon="PersonDelete" ></ic:FluentIcon>
                                         </MenuFlyoutItem.Icon>
@@ -51,14 +53,14 @@
                                     <RowDefinition Height="*"></RowDefinition>
                                 </Grid.RowDefinitions>
                                 <Border Grid.Column="0" Grid.Row="0" Grid.RowSpan="2" Width="40" Height="40"  VerticalAlignment="Center" HorizontalAlignment="Center" CornerRadius="3">
-                                    <image:SmartImage Source="{x:Bind url}" Stretch="UniformToFill"></image:SmartImage>
+                                    <image:SmartImage Source="{x:Bind PortraitUrl}" Stretch="UniformToFill"></image:SmartImage>
                                 </Border>
                                 
-                                <TextBlock Text="{x:Bind name}" Grid.Column="1" Grid.Row="0" Grid.RowSpan="2"  VerticalAlignment="Center"></TextBlock>
+                                <TextBlock Text="{x:Bind Name}" Grid.Column="1" Grid.Row="0" Grid.RowSpan="2"  VerticalAlignment="Center"></TextBlock>
                                 <TextBlock Text="帖数" Grid.Column="2" Grid.Row="0" Foreground="{ThemeResource TextFillColorSecondaryBrush}"></TextBlock>
                                 <TextBlock Text="粉丝" Grid.Column="2" Grid.Row="1" Foreground="{ThemeResource TextFillColorSecondaryBrush}"></TextBlock>
-                                <TextBlock Text="{x:Bind post}" Grid.Column="3" Grid.Row="0"  VerticalAlignment="Center" ></TextBlock>
-                                <TextBlock Text="{x:Bind follower}" Grid.Column="3" Grid.Row="1"  VerticalAlignment="Bottom" ></TextBlock>
+                                <TextBlock Text="{x:Bind PostCount}" Grid.Column="3" Grid.Row="0"  VerticalAlignment="Center" ></TextBlock>
+                                <TextBlock Text="{x:Bind FanCount}" Grid.Column="3" Grid.Row="1"  VerticalAlignment="Bottom" ></TextBlock>
 
                             </Grid>
                         </HyperlinkButton>

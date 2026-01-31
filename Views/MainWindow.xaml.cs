@@ -50,6 +50,7 @@ using Windows.Security.Cryptography.Certificates;
 using Windows.Storage;
 using Windows.Storage.Streams;
 using static CC98.Kernel.ApiScope.ApiEndpoints;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -264,11 +265,7 @@ namespace CC98
                         break;
                     
                     case"2":
-                        var param = new Dictionary<string, string>()
-                        {
-                            {"Mode","Me" },
-                            {"UserId","1" }//自己是1，与匿名模式0区分开。
-                        };
+                        var param = new ProfileNavigationInfo { IsMe = true };
                         contentframe.Navigate(typeof(Profile),param);
                         break;
                     case "3":
@@ -291,7 +288,6 @@ namespace CC98
         }
         private  void InitializeTimer()
         {
-            
             SyncTimer = new DispatcherTimer();
             SyncTimer.Interval = TimeSpan.FromSeconds(120);  
             SyncTimer.Tick += DispatcherTimer_Tick;  
@@ -587,11 +583,8 @@ namespace CC98
                         contentframe.Navigate(typeof(Setting));
                         break;
                     case "Message":
-                        var param_2 = new Dictionary<string, object>()
-                        {
-                            {"Type","0"},
-                        };
-                        contentframe.Navigate(typeof(Message), param_2);
+                        var param = new MessageNavigationInfo {IsFromProfile = false };
+                        contentframe.Navigate(typeof(Message), param);
                         break;
                     case "Focus":
                         contentframe.Navigate(typeof(Focus));
@@ -601,7 +594,7 @@ namespace CC98
                         {
                             try
                             {
-                                contentframe.Navigate(typeof(Board),tag);
+                                contentframe.Navigate(typeof(Board),int.Parse(tag));
                             }
                             catch
                             {
@@ -684,12 +677,7 @@ namespace CC98
         private void Me_Click(object sender, RoutedEventArgs e)
         {
             LoadProfile();
-            
-            var param = new Dictionary<string, string>()
-                        {
-                            {"Mode","Me" },
-                            {"UserId","1" }//自己是1，与匿名模式0区分开。
-                        };
+            var param = new ProfileNavigationInfo { IsMe = true };
             contentframe.Navigate(typeof(Profile), param);
         }
 

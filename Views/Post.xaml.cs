@@ -22,6 +22,7 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Runtime.InteropServices.WindowsRuntime;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using System.Threading.Tasks;
 using Windows.Foundation;
 using Windows.Foundation.Collections;
@@ -211,7 +212,6 @@ namespace CC98
         {
             try
             {
-
                 var picker = new FileOpenPicker(this.XamlRoot.ContentIslandEnvironment.AppWindowId);       
                 picker.CommitButtonText = "上传";
                 picker.SuggestedStartLocation = location;
@@ -353,7 +353,7 @@ namespace CC98
                     string res = await response.Content.ReadAsStringAsync();
                     if (!string.IsNullOrEmpty(res))
                     {
-                        var array = JsonSerializer.Deserialize<JArray>(res);
+                        var array = JsonSerializer.Deserialize<JsonArray>(res);
                         if (array.Count == 1)
                         {
                             return array[0].ToString();
@@ -423,8 +423,8 @@ namespace CC98
                     {
                         if (CurrentLabel == "img")
                         {
-                            var imagefilter = new List<string> { "*.png", "*.jpg", "*.jpeg", "*.bmp", "*.gif", "*.webp" };
-                            string imageurl = await FileSender("图像", imagefilter, "选择一张图片", Microsoft.Windows.Storage.Pickers.PickerLocationId.PicturesLibrary);
+                            var imagefilter = new List<string> { ".png", ".jpg", ".jpeg", ".bmp", ".gif", ".webp" };
+                            string imageurl = await FileSender("图像", imagefilter, "选择一张图片", PickerLocationId.PicturesLibrary);
                             if (imageurl != "0")
                             {
                                 InsertTag("img", "img", imageurl);
@@ -439,7 +439,7 @@ namespace CC98
                         }
                         else if (CurrentLabel == "video")
                         {
-                            var videofilter = new List<string> { "*.mp4", "*.mkv", "*.avi", "*.mov", "*.wmv" };
+                            var videofilter = new List<string> { ".mp4", ".mkv", ".avi", ".mov", ".wmv" };
                             string videourl = await FileSender("视频", videofilter, "选择视频文件", Microsoft.Windows.Storage.Pickers.PickerLocationId.VideosLibrary);
                             if (videourl != "0")
                             {
@@ -454,7 +454,7 @@ namespace CC98
                         }
                         else if (CurrentLabel == "audio")
                         {
-                            var audiofilter = new List<string> { "*.mp3", "*.wav", "*.m4a", "*.flac", "*.aac" };
+                            var audiofilter = new List<string> { ".mp3", ".wav", ".m4a", ".flac", ".aac" };
                             string audiourl = await FileSender("音频", audiofilter, "选择y音频文件", Microsoft.Windows.Storage.Pickers.PickerLocationId.MusicLibrary);
                             if (audiourl != "0")
                             {
@@ -469,7 +469,7 @@ namespace CC98
                         }
                         else if (CurrentLabel == "upload")
                         {
-                            var docfilter = new List<string> { "*" };
+                            var docfilter = new List<string>();
                             string docurl = await FileSender("任意文件", docfilter, "选择文件",Microsoft.Windows.Storage.Pickers.PickerLocationId.Desktop);
                             if (docurl != "0")
                             {

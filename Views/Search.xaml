@@ -8,6 +8,8 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d"
     xmlns:ic="using:FluentIcons.WinUI"
+    xmlns:obj="using:CC98.Objects"
+    xmlns:cv="using:CC98.Services.Converters"
     Background="{ThemeResource DesktopAcrylicTransparentBrush}">
 
     <Grid Padding="15" RowSpacing="15">
@@ -38,7 +40,7 @@
                 </ItemsRepeater.Layout>
 
                 <ItemsRepeater.ItemTemplate>
-                    <DataTemplate x:DataType="local:StandardPost">
+                    <DataTemplate x:DataType="obj:TopicInfo">
                         <Grid Padding="8" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" BorderThickness="1" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" RowSpacing="8" CornerRadius="5">
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="2*"></RowDefinition>
@@ -46,26 +48,26 @@
                                 <RowDefinition Height="*"></RowDefinition>
                             </Grid.RowDefinitions>
 
-                            <HyperlinkButton Grid.Row="0" Margin="1,0,0,0"  x:Name="Person" BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}" Tag="{x:Bind rid}" BorderThickness="1" Click="Person_Click">
-                                <TextBlock Text="{x:Bind author}" FontSize="12" VerticalAlignment="Center" ></TextBlock>
+                            <HyperlinkButton Grid.Row="0" Margin="1,0,0,0"  x:Name="Person" BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}" Tag="{x:Bind UserId}" BorderThickness="1" Click="Person_Click">
+                                <TextBlock Text="{x:Bind UserName}" FontSize="12" VerticalAlignment="Center" ></TextBlock>
 
                             </HyperlinkButton>
-                            <TextBlock Grid.Row="0" HorizontalAlignment="Right" Text="{x:Bind time}"  FontSize="10"   Foreground="{ThemeResource TextFillColorSecondaryBrush}"></TextBlock>
-                            <HyperlinkButton  Grid.Row="1" Padding="10"  Height="Auto" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left"  Click="SearchContent_Click" Tag="{x:Bind pid}">
-                                <TextBlock Text="{x:Bind title}"  TextWrapping="Wrap" Foreground="{ThemeResource TextFillColorSecondaryBrush}"></TextBlock>
+                            <TextBlock Grid.Row="0" HorizontalAlignment="Right" Text="{x:Bind Time}"  FontSize="10"   Foreground="{ThemeResource TextFillColorSecondaryBrush}"></TextBlock>
+                            <HyperlinkButton  Grid.Row="1" Padding="10"  Height="Auto" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left"  Click="SearchContent_Click" Tag="{x:Bind Id}">
+                                <TextBlock Text="{x:Bind Title}"  TextWrapping="Wrap" Foreground="{ThemeResource TextFillColorSecondaryBrush}"></TextBlock>
                             </HyperlinkButton>
                             <StackPanel Orientation="Horizontal" Grid.Row="2" >
                                 <Border Padding="8,0,8,0" Background="Transparent"  HorizontalAlignment="Left" >
                                     <StackPanel Orientation="Horizontal" Spacing="5" >
                                         <ic:SymbolIcon Symbol="Chat" FontSize="11"></ic:SymbolIcon>
-                                        <TextBlock Text="{x:Bind reply}"   FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" VerticalAlignment="Center"></TextBlock>
+                                        <TextBlock Text="{x:Bind ReplyCount}"   FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" VerticalAlignment="Center"></TextBlock>
                                     </StackPanel>
                                 </Border>
                              
                                 <Border Padding="8,0,8,0" Background="Transparent"  HorizontalAlignment="Left"  >
                                     <StackPanel Orientation="Horizontal" Spacing="5" >
                                         <ic:SymbolIcon Symbol="Fire" FontSize="11" ></ic:SymbolIcon>
-                                        <TextBlock Text="{x:Bind hit}"   FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" VerticalAlignment="Center"></TextBlock>
+                                        <TextBlock Text="{x:Bind HitCount}"   FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" VerticalAlignment="Center"></TextBlock>
                                     </StackPanel>
                                 </Border>
 

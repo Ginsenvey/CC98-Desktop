@@ -10,7 +10,8 @@
     xmlns:lab="using:CommunityToolkit.Labs.WinUI"
     xmlns:ic="using:FluentIcons.WinUI"
     xmlns:controls="using:CommunityToolkit.WinUI.Controls"
-    
+    xmlns:obj="using:CC98.Objects"
+    xmlns:cv="using:CC98.Services.Converters"
     Background="{ThemeResource DesktopAcrylicTransparentBrush}">
 
     <Grid Padding="15,5,15,15">
@@ -26,7 +27,7 @@
         <ScrollViewer Grid.Row="1"   BorderThickness="1" BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}" CornerRadius="5" >
             <ItemsRepeater x:Name="STileList" Loaded="STileList_Loaded">
                 <ItemsRepeater.ItemTemplate>
-                    <DataTemplate x:DataType="local:StandardPost">
+                    <DataTemplate x:DataType="obj:TopicInfo">
                         <HyperlinkButton HorizontalContentAlignment="Stretch" HorizontalAlignment="Stretch" CornerRadius="0" Click="Tile_Click" DataContext="{x:Bind}">
                             <Grid Padding="0,10,0,10" ColumnSpacing="5" >
                                 <Grid.ColumnDefinitions>
@@ -37,19 +38,19 @@
                                     <ColumnDefinition Width="70"></ColumnDefinition>
                                 </Grid.ColumnDefinitions>
                                 <ic:SymbolIcon Symbol="LeafOne"></ic:SymbolIcon>
-                                <TextBlock Text="{x:Bind title}" Grid.Column="1" VerticalAlignment="Center" Foreground="{ThemeResource TextFillColorSecondaryBrush}"></TextBlock>
-                                <TextBlock Text="{x:Bind author}" Grid.Column="2" VerticalAlignment="Center" Foreground="{ThemeResource TextFillColorSecondaryBrush}"></TextBlock>
+                                <TextBlock Text="{x:Bind Title}" Grid.Column="1" VerticalAlignment="Center" Foreground="{ThemeResource TextFillColorSecondaryBrush}"></TextBlock>
+                                <TextBlock Text="{x:Bind UserName}" Grid.Column="2" VerticalAlignment="Center" Foreground="{ThemeResource TextFillColorSecondaryBrush}"></TextBlock>
                                 <Border Grid.Column="3" Background="Transparent"  HorizontalAlignment="Left" >
                                     <StackPanel Orientation="Horizontal" Spacing="5" >
                                         <ic:SymbolIcon Symbol="Chat" FontSize="11"></ic:SymbolIcon>
-                                        <TextBlock Text="{x:Bind reply}" Grid.Row="2"  HorizontalAlignment="Right" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}"></TextBlock>
+                                        <TextBlock Text="{x:Bind ReplyCount}" Grid.Row="2"  HorizontalAlignment="Right" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}"></TextBlock>
                                     </StackPanel>
                                 </Border>
 
                                 <Border Grid.Column="4" Background="Transparent"  HorizontalAlignment="Left" >
                                     <StackPanel Orientation="Horizontal" Spacing="5" >
                                         <ic:SymbolIcon Symbol="Fire" FontSize="11"></ic:SymbolIcon>
-                                        <TextBlock Text="{x:Bind hit}"   HorizontalAlignment="Right" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}"></TextBlock>
+                                        <TextBlock Text="{x:Bind HitCount}"   HorizontalAlignment="Right" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}"></TextBlock>
                                     </StackPanel>
                                 </Border>
                             </Grid>
@@ -59,13 +60,7 @@
                 </ItemsRepeater.ItemTemplate>
             </ItemsRepeater>
         </ScrollViewer>
-
-
-
-
-
-
-
+        <local:InfoFlower x:Name="Flower" Grid.Row="0" Grid.RowSpan="2" HorizontalAlignment="Center" VerticalAlignment="Bottom"></local:InfoFlower>
 
     </Grid>
 </Page>

@@ -15,7 +15,7 @@
         <DataTemplate x:Key="BoardCase" x:DataType="local:BoardInfo">
             <HyperlinkButton Content="{x:Bind BoardName}"  Padding="8" Tag="{x:Bind BoardId}"  Click="BoardButton_Click" x:Name="BoardButton" BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}" BorderThickness="1" Margin="10,0,10,10"></HyperlinkButton>
         </DataTemplate>
-        <DataTemplate x:Key="SectionCase" x:DataType="local:AllSection">
+        <DataTemplate x:Key="SectionCase" x:DataType="local:SectionInfo">
             <StackPanel Orientation="Vertical" CornerRadius="5" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1" Margin="10,10,10,10" Padding="10">
                 <TextBlock Text="{x:Bind SectionName}"  FontWeight="Bold" FontSize="16" Margin="12,0,12,12"></TextBlock>
                 <ItemsRepeater ItemTemplate="{StaticResource  BoardCase}" ItemsSource="{x:Bind Boards}">

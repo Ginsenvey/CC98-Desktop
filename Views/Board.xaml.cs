@@ -73,7 +73,6 @@ namespace CC98
         protected override async void OnNavigatedTo(Microsoft.UI.Xaml.Navigation.NavigationEventArgs e)
         {
             base.OnNavigatedTo(e);
-
             var args = e.TryGetParameter<int>();
             boardId = args;
             await GetData();
@@ -86,6 +85,7 @@ namespace CC98
             var boardDataResult = await RequestSender.Fetch<BoardData>(boardDataUrl);
             if (!boardDataResult.IsSuccess || boardDataResult.Data == null) 
             {
+                Flower.PlayAnimation("\uEA39", boardDataResult.Message);
                 return;
             }
             var data= boardDataResult.Data;
@@ -101,6 +101,17 @@ namespace CC98
         private async Task LoadTopics()
         {
             string topicUrl = ApiEndpoints.Board.TopicList(isBest, boardId, currentIndex);
+            if (isBest)
+            {
+                var result = await RequestSender.Fetch<BoardBest>(topicUrl);
+                if (result.IsNotValid)
+                {
+                    Flower.PlayAnimation("\uEA39", result.Message);
+                    return;
+                }
+                var bests= result.Data?.Topics;
+                topics.AddRange(bests);
+            }
             var topicResult = await RequestSender.Fetch<List<SimpleTopicInfo>>(topicUrl);
             if (topicResult.IsNotValid)
             {
@@ -117,7 +128,8 @@ namespace CC98
             var h = sender as HyperlinkButton;
             var t = h?.DataContext as SimpleTopicInfo;
             if (t == null) return;
-            Frame.Navigate(typeof(Topic), t.Id);
+            var param = new TopicNavigationInfo { TopicId = t.Id };
+            Frame.Navigate(typeof(Topic), param);
         }
 
 

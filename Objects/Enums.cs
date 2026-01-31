@@ -35,7 +35,9 @@ public enum EditorMode
     Chat = 6,//回复私信
 }
 
-
+/// <summary>
+/// 通知类型，与网页端值一致。
+/// </summary>
 public enum NoticeType
 {
     System=1,

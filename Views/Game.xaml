@@ -10,6 +10,8 @@
     xmlns:dev="using:DevWinUI"
     xmlns:ic="using:FluentIcons.WinUI"
     xmlns:image="using:CC98.Controls"
+    xmlns:obj="using:CC98.Objects"
+    xmlns:cv="using:CC98.Services.Converters"
     Background="{ThemeResource DesktopAcrylicTransparentBrush}">
 
     <Grid Padding="15" RowSpacing="15" ColumnSpacing="10">
@@ -49,31 +51,31 @@
                     <ListViewItem>
                         <Grid>
                             <TextBlock Text="财富值" FontSize="13"></TextBlock>
-                            <TextBlock HorizontalAlignment="Right" FontSize="13" Text="{x:Bind CardDrawStat.wealth,Mode=OneWay}" Foreground="{ThemeResource TextFillColorSecondaryBrush}"></TextBlock>
+                            <TextBlock HorizontalAlignment="Right" FontSize="13" Text="{x:Bind CardDrawStat.Wealth,Mode=OneWay}" Foreground="{ThemeResource TextFillColorSecondaryBrush}"></TextBlock>
                         </Grid>
                     </ListViewItem>
                     <ListViewItem>
                         <Grid>
                             <TextBlock Text="抽卡次数" FontSize="13"></TextBlock>
-                            <TextBlock HorizontalAlignment="Right" FontSize="13" Text="{x:Bind CardDrawStat.drawCount,Mode=OneWay}" Foreground="{ThemeResource TextFillColorSecondaryBrush}"></TextBlock>
+                            <TextBlock HorizontalAlignment="Right" FontSize="13" Text="{x:Bind CardDrawStat.DrawCount,Mode=OneWay}" Foreground="{ThemeResource TextFillColorSecondaryBrush}"></TextBlock>
                         </Grid>
                     </ListViewItem>
                     <ListViewItem>
                         <Grid>
                             <TextBlock Text="花费" FontSize="13"></TextBlock>
-                            <TextBlock HorizontalAlignment="Right" FontSize="13" Text="{x:Bind CardDrawStat.totalCost,Mode=OneWay}" Foreground="{ThemeResource TextFillColorSecondaryBrush}"></TextBlock>
+                            <TextBlock HorizontalAlignment="Right" FontSize="13" Text="{x:Bind CardDrawStat.TotalCost,Mode=OneWay}" Foreground="{ThemeResource TextFillColorSecondaryBrush}"></TextBlock>
                         </Grid>
                     </ListViewItem>
                     <ListViewItem>
                         <Grid>
                             <TextBlock Text="收益" FontSize="13"></TextBlock>
-                            <TextBlock HorizontalAlignment="Right" FontSize="13" Text="{x:Bind CardDrawStat.totalBonus,Mode=OneWay}" Foreground="{ThemeResource TextFillColorSecondaryBrush}"></TextBlock>
+                            <TextBlock HorizontalAlignment="Right" FontSize="13" Text="{x:Bind CardDrawStat.TotalBonus,Mode=OneWay}" Foreground="{ThemeResource TextFillColorSecondaryBrush}"></TextBlock>
                         </Grid>
                     </ListViewItem>
                     <ListViewItem>
                         <Grid>
                             <TextBlock Text="卡片总数" FontSize="13"></TextBlock>
-                            <TextBlock HorizontalAlignment="Right" FontSize="13" Text="{x:Bind CardDrawStat.cardCount,Mode=OneWay}" Foreground="{ThemeResource TextFillColorSecondaryBrush}"></TextBlock>
+                            <TextBlock HorizontalAlignment="Right" FontSize="13" Text="{x:Bind CardDrawStat.CardCount,Mode=OneWay}" Foreground="{ThemeResource TextFillColorSecondaryBrush}"></TextBlock>
                         </Grid>
                     </ListViewItem>
                 </ListView>
@@ -93,7 +95,7 @@
                 <Border BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}" Height="2" BorderThickness="2"></Border>
                 <ListView x:Name="SingleProperList">
                     <ListView.ItemTemplate>
-                        <DataTemplate x:DataType="local:Odd">
+                        <DataTemplate x:DataType="obj:GachaInfo">
                             <Grid>
                                 <TextBlock Text="{x:Bind Rank}" HorizontalAlignment="Left" FontSize="13"></TextBlock>
                                 <TextBlock Text="{x:Bind Probability}" HorizontalAlignment="Right" Foreground="{ThemeResource TextFillColorSecondaryBrush}" FontSize="13"></TextBlock>
@@ -117,7 +119,7 @@
                 <Border BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}" Height="2" BorderThickness="2"></Border>
                 <ListView x:Name="MultiProperList">
                     <ListView.ItemTemplate>
-                        <DataTemplate x:DataType="local:Odd">
+                        <DataTemplate x:DataType="obj:GachaInfo">
                             <Grid>
                                 <TextBlock Text="{x:Bind Rank}" HorizontalAlignment="Left" FontSize="13"></TextBlock>
                                 <TextBlock Text="{x:Bind Probability}" HorizontalAlignment="Right" Foreground="{ThemeResource TextFillColorSecondaryBrush}" FontSize="13"></TextBlock>
@@ -142,13 +144,13 @@
                     <LinedFlowLayout MinItemSpacing="15" LineSpacing="15" ItemsStretch="Fill" ItemsJustification="Center"></LinedFlowLayout>
                 </ItemsRepeater.Layout>
                 <ItemsRepeater.ItemTemplate>
-                    <DataTemplate x:DataType="local:Card">
-                        <dev:FlipSide  Tapped="FlipSide_Tapped" Tag="{x:Bind Order}" IsFlipped="{x:Bind IsFlipped,Mode=TwoWay}" Width="175" Height="280" >
+                    <DataTemplate x:DataType="obj:Card">
+                        <dev:FlipSide  Tapped="FlipSide_Tapped"  IsFlipped="{x:Bind IsFlipped,Mode=TwoWay}" Width="175" Height="280" >
                             <dev:FlipSide.Side1>
                                 <Image Source="/Assets/Card.jpg" Width="175" Height="280" Stretch="UniformToFill"></Image>
                             </dev:FlipSide.Side1>
                             <dev:FlipSide.Side2>
-                                <image:SmartImage Source="{x:Bind ImageUrl}"  Width="175" Height="280" ToolTipService.ToolTip="{x:Bind Name}"></image:SmartImage>
+                                <image:SmartImage Source="{x:Bind ImageUri}"  Width="175" Height="280" ToolTipService.ToolTip="{x:Bind Name}"></image:SmartImage>
                             </dev:FlipSide.Side2>
                         </dev:FlipSide >
                     </DataTemplate>

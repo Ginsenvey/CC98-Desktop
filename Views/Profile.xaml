@@ -12,6 +12,8 @@
     xmlns:dev="using:DevWinUI"
     xmlns:ic="using:FluentIcons.WinUI"
     xmlns:c="using:CC98.Controls"
+    xmlns:obj="using:CC98.Objects"
+    xmlns:cv="using:CC98.Services.Converters"
     Background="{ThemeResource DesktopAcrylicTransparentBrush}">
     <Page.Resources>
         <local:BooltoVisibilityConverter x:Key="BoolToVisibility"></local:BooltoVisibilityConverter>
@@ -40,7 +42,7 @@
                     <StackPanel Orientation="Horizontal" Grid.Row="2" Grid.Column="0" Spacing="5" >
                         <HyperlinkButton  Click="FollowList_Click" Tag="followee">
                             <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="{x:Bind profile.Follow,Mode=OneWay}"  FontSize="16" Margin="0,0,5,0"></TextBlock>
+                                <TextBlock Text="{x:Bind profile.FollowCount,Mode=OneWay}"  FontSize="16" Margin="0,0,5,0"></TextBlock>
                                 <TextBlock Text="关注"  FontSize="16" Foreground="{ThemeResource TextFillColorSecondaryBrush}"></TextBlock>
                             </StackPanel>
                         </HyperlinkButton>
@@ -101,13 +103,13 @@
                 <TextBlock Text="签名档" FontSize="23" FontWeight="Bold" Foreground="#A9A9A9" Margin="0,5,0,0"></TextBlock>
                 
                 <Border Height="1" BorderBrush="{ThemeResource DividerBrush}" HorizontalAlignment="Stretch" BorderThickness="1"></Border>
-                <tool:MarkdownTextBlock x:Name="SignBoard"  LinkClicked="SignBoard_LinkClicked" Background="Transparent" ImageStretch="UniformToFill" ImageMaxWidth="450" ImageMaxHeight="450" ImageResolving="Drawer_ImageResolving" ></tool:MarkdownTextBlock>
+                <tool:MarkdownTextBlock x:Name="SignBoard" Text="{x:Bind profile.SignatureCode,Mode=OneWay}"  LinkClicked="SignBoard_LinkClicked" Background="Transparent" ImageStretch="UniformToFill" ImageMaxWidth="450" ImageMaxHeight="450" ImageResolving="Drawer_ImageResolving" ></tool:MarkdownTextBlock>
                 <TextBlock Text="主题" FontSize="23" FontWeight="Bold" Foreground="#A9A9A9" x:Name="de" IsTextSelectionEnabled="True"></TextBlock>
                 <Border Height="1" BorderBrush="{ThemeResource DividerBrush}" HorizontalAlignment="Stretch" BorderThickness="1"></Border>
                 <Border Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1" CornerRadius="5">
-                    <ItemsRepeater x:Name="SimpleTile" Loaded="SimpleTile_Loaded" >
+                    <ItemsRepeater x:Name="SimpleTile" Loaded="SimpleTile_Loaded" ItemsSource="{x:Bind recentTopics}">
                         <ItemsRepeater.ItemTemplate>
-                            <DataTemplate x:DataType="local:STile">
+                            <DataTemplate x:DataType="obj:SimpleTopicInfo">
                                 <HyperlinkButton HorizontalContentAlignment="Stretch" HorizontalAlignment="Stretch" CornerRadius="0" x:Name="TileContent" Click="STileButton_Click" DataContext="{x:Bind}">
                                     <Grid Padding="12">
                                         <Grid.ColumnDefinitions>
@@ -116,8 +118,8 @@
                                             <ColumnDefinition Width="2*"></ColumnDefinition>
                                         </Grid.ColumnDefinitions>
                                         <ic:SymbolIcon Symbol="Note" Grid.Column="0" Foreground="{ThemeResource AccentAAFillColorDefaultBrush}"></ic:SymbolIcon>
-                                        <TextBlock Text="{x:Bind text}" Grid.Column="1" VerticalAlignment="Center" Foreground="{ThemeResource TextFillColorSecondaryBrush}"></TextBlock>
-                                        <TextBlock Text="{x:Bind time}" Grid.Column="2" VerticalAlignment="Center" Foreground="{ThemeResource TextFillColorSecondaryBrush}"></TextBlock>
+                                        <TextBlock Text="{x:Bind Title}" Grid.Column="1" VerticalAlignment="Center" Foreground="{ThemeResource TextFillColorSecondaryBrush}"></TextBlock>
+                                        <TextBlock Text="{x:Bind Time}" Grid.Column="2" VerticalAlignment="Center" Foreground="{ThemeResource TextFillColorSecondaryBrush}"></TextBlock>
 
                                     </Grid>
                                 </HyperlinkButton>

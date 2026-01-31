@@ -50,9 +50,10 @@ namespace CC98
             this.ExtendsContentIntoTitleBar = true;
             this.SetTitleBar(GridTitleBar);
             AppWindow.TitleBar.PreferredHeightOption = Microsoft.UI.Windowing.TitleBarHeightOption.Tall;
-            
+            var iconPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "cc98.ico");
+            AppWindow.SetIcon(iconPath);
+            AppWindow.SetTaskbarIcon(iconPath);
             this.SystemBackdrop=new AcrylicSystemBackdrop();
-
             Activated += MediaViewer_Activated;
             this.Closed += MediaViewer_Closed;
         }

@@ -94,7 +94,7 @@ public static class ApiEndpoints
     {
         public static string RecentTopic(bool isMe,int userId, int start)
         {
-            return isMe ? $"{Base}/me/recent-topic?from={start}/size=11": $"{Base}/user/{userId}/recent-topic?userid={userId}&from={start}&size=11";
+            return isMe ? $"{Base}/me/recent-topic?from={start}&size=11": $"{Base}/user/{userId}/recent-topic?userid={userId}&from={start}&size=11";
         }
         public static string TopicInfo(int topicId) => $"{Base}/topic/{topicId}";
         /// <summary>

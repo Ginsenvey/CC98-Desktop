@@ -11,6 +11,8 @@
     xmlns:ic="using:FluentIcons.WinUI"
     xmlns:tool="using:CommunityToolkit.WinUI.UI.Controls"
     xmlns:dev="using:DevWinUI"
+    xmlns:obj="using:CC98.Objects"
+    xmlns:cv="using:CC98.Services.Converters"
     Background="{ThemeResource DesktopAcrylicTransparentBrush}">
     <Grid x:Name="RootGrid">
         <Grid.RowDefinitions>
@@ -32,22 +34,22 @@
                         <ColumnDefinition Width="3*"></ColumnDefinition>
                     </Grid.ColumnDefinitions>
                     <ic:SymbolIcon Symbol="Chat" Grid.Row="0" Grid.RowSpan="2" FontSize="22" Grid.Column="0" Foreground="{ThemeResource AccentAAFillColorDefaultBrush}"></ic:SymbolIcon>
-                    <TextBlock Grid.Row="0" Grid.RowSpan="2" Grid.Column="1" Text="{x:Bind CurrentBoardData.Name,Mode=OneWay}" FontSize="20" FontWeight="Bold" Foreground="{ThemeResource AccentAAFillColorDefaultBrush}" VerticalAlignment="Center"></TextBlock>
-                    <TextBlock Grid.Row="0" Grid.Column="2" Text="{x:Bind CurrentBoardData.Description,Mode=OneWay}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" VerticalAlignment="Center" TextWrapping="Wrap" Margin="0,10,10,0"></TextBlock>
-                    <TextBlock Grid.Row="1" Grid.Column="2" Text="{x:Bind CurrentBoardData.BoardMastersString,Mode=OneWay}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" VerticalAlignment="Bottom" Margin="0,0,10,10"></TextBlock>
+                    <TextBlock Grid.Row="0" Grid.RowSpan="2" Grid.Column="1" Text="{x:Bind boardData.Name,Mode=OneWay}" FontSize="20" FontWeight="Bold" Foreground="{ThemeResource AccentAAFillColorDefaultBrush}" VerticalAlignment="Center"></TextBlock>
+                    <TextBlock Grid.Row="0" Grid.Column="2" Text="{x:Bind boardData.Description,Mode=OneWay}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" VerticalAlignment="Center" TextWrapping="Wrap" Margin="0,10,10,0"></TextBlock>
+                    <TextBlock Grid.Row="1" Grid.Column="2" Text="{x:Bind boardData.BoardMastersString,Mode=OneWay}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" VerticalAlignment="Bottom" Margin="0,0,10,10"></TextBlock>
                     <lab:TokenView Grid.Column="3" Grid.Row="0" Grid.RowSpan="2" >
                         <lab:TokenItem>
-                            <TextBlock Text="{x:Bind CurrentBoardData.TopicCountString,Mode=OneWay}"></TextBlock>
+                            <TextBlock Text="{x:Bind boardData.TopicCountString,Mode=OneWay}"></TextBlock>
                         </lab:TokenItem>
                         <lab:TokenItem IsSelected="True">
-                            <TextBlock Text="{x:Bind CurrentBoardData.TodayCountString,Mode=OneWay}"></TextBlock>
+                            <TextBlock Text="{x:Bind boardData.TodayCountString,Mode=OneWay}"></TextBlock>
                         </lab:TokenItem>
                     </lab:TokenView>
                 </Grid>
             </Expander.Header>
             <Expander.Content>
                 <ScrollViewer MaxHeight="240">
-                    <tool:MarkdownTextBlock x:Name="Banner" Text="{x:Bind CurrentBoardData.BannerText,Mode=OneWay}" CornerRadius="10"  Background="Transparent" LinkClicked="MarkdownTextBlock_LinkClicked" ImageMaxHeight="100" ImageStretch="Uniform" ImageResolving="Drawer_ImageResolving"></tool:MarkdownTextBlock>
+                    <tool:MarkdownTextBlock x:Name="Banner" Text="{x:Bind boardData.BannerText,Mode=OneWay}" CornerRadius="10"  Background="Transparent" LinkClicked="MarkdownTextBlock_LinkClicked" ImageMaxHeight="100" ImageStretch="Uniform" ImageResolving="Drawer_ImageResolving"></tool:MarkdownTextBlock>
                 </ScrollViewer>
                 
             </Expander.Content>
@@ -55,7 +57,7 @@
         <ScrollViewer Grid.Row="1" Margin="0,10,0,10">
             <ItemsRepeater x:Name="STileList" Loaded="STileList_Loaded">
                 <ItemsRepeater.ItemTemplate>
-                    <DataTemplate x:DataType="local:STile">
+                    <DataTemplate x:DataType="obj:SimpleTopicInfo">
                         <HyperlinkButton HorizontalContentAlignment="Stretch" HorizontalAlignment="Stretch" CornerRadius="0" x:Name="TileContent" DataContext="{x:Bind}" Click="TileContent_Click">
                             <Grid Padding="5">
                                 <Grid.ColumnDefinitions>
@@ -65,20 +67,20 @@
                                     <ColumnDefinition Width="*"></ColumnDefinition>
                                 </Grid.ColumnDefinitions>
                                 <ic:SymbolIcon Symbol="{x:Bind symbol}" Grid.Column="0" Foreground="{ThemeResource AccentAAFillColorDefaultBrush}"></ic:SymbolIcon>
-                                <TextBlock Text="{x:Bind text}" Grid.Column="1" VerticalAlignment="Center" Foreground="{ThemeResource TextFillColorSecondaryBrush}"></TextBlock>
-                                <TextBlock Text="{x:Bind author}" Grid.Column="2" VerticalAlignment="Center" Foreground="{ThemeResource TextFillColorSecondaryBrush}"></TextBlock>
+                                <TextBlock Text="{x:Bind Title}" Grid.Column="1" VerticalAlignment="Center" Foreground="{ThemeResource TextFillColorSecondaryBrush}"></TextBlock>
+                                <TextBlock Text="{x:Bind UserName}" Grid.Column="2" VerticalAlignment="Center" Foreground="{ThemeResource TextFillColorSecondaryBrush}"></TextBlock>
                                 <StackPanel Orientation="Horizontal" Grid.Column="3" Spacing="10" VerticalAlignment="Center" >
                                     <Button Background="Transparent"  HorizontalAlignment="Left" >
                                         <StackPanel Orientation="Horizontal" Spacing="5" >
                                             <ic:SymbolIcon Symbol="Chat" FontSize="11"></ic:SymbolIcon>
-                                            <TextBlock Text="{x:Bind reply}" Grid.Row="2"  HorizontalAlignment="Right" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}"></TextBlock>
+                                            <TextBlock Text="{x:Bind ReplyCount}" Grid.Row="2"  HorizontalAlignment="Right" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}"></TextBlock>
                                         </StackPanel>
                                     </Button>
 
                                     <Button Background="Transparent"  HorizontalAlignment="Left" >
                                         <StackPanel Orientation="Horizontal" Spacing="5" >
                                             <ic:SymbolIcon Symbol="Fire" FontSize="11"></ic:SymbolIcon>
-                                            <TextBlock Text="{x:Bind hit}"   HorizontalAlignment="Right" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}"></TextBlock>
+                                            <TextBlock Text="{x:Bind HitCount}"   HorizontalAlignment="Right" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}"></TextBlock>
                                         </StackPanel>
                                     </Button>
                                 </StackPanel>

@@ -3,6 +3,7 @@ using CC98.Controls;
 using CC98.Kernel;
 using CC98.Kernel.ApiScope;
 using CC98.Objects;
+using CC98.Services.Extensions;
 using DevWinUI;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -38,24 +39,24 @@ namespace CC98
     {
         public ApplicationDataContainer Set=ApplicationData.Current.LocalSettings;
         public ObservableCollection<TopicInfo> topics=new();
-        public ObservableCollection<SimpleTopicInfo> randomTopics=new();//必须是可观测集合，否则UI不显示。
+        public ObservableCollection<SimpleTopicInfo> randomTopics = new();
         public int currentPage = 0;
         public int PageSize = 20;
         public Discover()
         {
             this.InitializeComponent();
             Set = ApplicationData.Current.LocalSettings;
-            RandomTiles.ItemsSource = randomTopics;
-            GetNewTopic(0);
+            GetNewTopic();
             GetRandomTile();
         }
         
-        private async Task<bool> GetNewTopic(int start)
+        private async Task<bool> GetNewTopic()
         {
             string newTopicUrl = ApiEndpoints.Topic.NewTopicList(currentPage*PageSize);
             var newTopicResult = await RequestSender.Fetch<List<TopicInfo>>(newTopicUrl);
             if (!newTopicResult.IsSuccess || newTopicResult.Data == null)
             {
+                ValidationHelper.Log("加载数据失败", newTopicResult.Message);
                 return false;
             }
             var data= newTopicResult.Data;
@@ -64,7 +65,7 @@ namespace CC98
         }
 
         
-        private async void GetRandomTile()
+        private async Task GetRandomTile()
         {
             string randomTopicUrl = ApiEndpoints.Topic.RandomTopicList();
             var randomTopicResult = await RequestSender.Fetch<List<SimpleTopicInfo>>(randomTopicUrl);
@@ -76,10 +77,10 @@ namespace CC98
             randomTopics.AddRange(data);
         }
 
-        private void RefRandomTiles_Click(object sender, RoutedEventArgs e)
+        private async void RefRandomTiles_Click(object sender, RoutedEventArgs e)
         {
             randomTopics.Clear();
-            GetRandomTile();
+            await GetRandomTile();
         }
 
         
@@ -112,7 +113,7 @@ namespace CC98
                     if (current > 0)
                     {
                         current -= 20;
-                        if (!await GetNewTopic(current))
+                        if (!await GetNewTopic())
                         {
                             current += 20;
                         }
@@ -127,7 +128,7 @@ namespace CC98
                 else if (tag == "Forward")
                 {
                     current += 20;
-                    if (!await GetNewTopic(current))
+                    if (!await GetNewTopic())
                     {
                         current -= 20;
                     }
@@ -143,7 +144,7 @@ namespace CC98
             var h = sender as HyperlinkButton;
             if (h != null)
             {
-                var p=h?.DataContext as RandomTopic;
+                var p=h?.DataContext as SimpleTopicInfo;
                 if(p != null)
                 {
                     var param = new TopicNavigationInfo { TopicId = p.Id };
@@ -155,32 +156,21 @@ namespace CC98
         private void MainText_Click(object sender, RoutedEventArgs e)
         {
             var h = sender as HyperlinkButton;
-            if (h != null)
-            {
-                var pid = h.Tag as string;
-                if (pid != null)
-                {
-                    Frame.Navigate(typeof(Topic), pid);
-                }
-            }
+            var tag = h?.Tag;
+            if (tag == null) return;
+            var param = new TopicNavigationInfo { TopicId = tag.ToInt() };
+            Frame.Navigate(typeof(Topic), param);
+           
         }
 
         private void Person_Click(object sender, RoutedEventArgs e)
         {
             var h= sender as HyperlinkButton;
-            if(h != null)
-            {
-                var tag=h.Tag as string;
-                if(tag != null&&tag!="0")
-                {
-                    var param = new Dictionary<string, string>()
-                        {
-                            {"Mode","Others" },
-                            {"UserId",tag }
-                        };
-                    Frame.Navigate(typeof(Profile), param);
-                }
-            }
+            var tag = h?.Tag as TopicInfo;
+            if (tag == null) return;
+            if (tag.IsAnonymous) return;
+            var param = new ProfileNavigationInfo { IsMe = tag.IsMe, UserId = tag.UserId??0};
+            Frame.Navigate(typeof(Profile), param);
         }
 
         private void CopyId_Click(object sender, RoutedEventArgs e)
@@ -197,33 +187,6 @@ namespace CC98
                     Flower.PlayAnimation("\uE930", "已复制帖子ID");
                 }
             }
-        }
-
-        
-    }
-    
-    public partial class PostTemplateSelector : DataTemplateSelector
-    {
-        // 定义不同模板属性
-        public DataTemplate? ImageTemplate { get; set; }
-        public DataTemplate? TextOnlyTemplate { get; set; }
-        
-
-        // 重写选择方法
-        protected override DataTemplate SelectTemplateCore(object item)
-        {
-            if (item is TopicInfo topic)
-            {
-                if (topic.MediaContent.Thumbnail.Count > 0)
-                {
-                    return ImageTemplate;
-                }
-            }
-            return TextOnlyTemplate;
-        }
-
-        
-        
-    }
-    
+        }       
+    } 
 }

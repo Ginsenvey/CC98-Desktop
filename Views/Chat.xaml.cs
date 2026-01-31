@@ -108,7 +108,7 @@ namespace CC98
                 var user = userInfoList.First(x => x.Id == info.UserId);
                 if (user != null)
                 {
-                    info.UserName = user.UserName;
+                    info.Name = user.Name;
                     info.PortraitUrl = user.PortraitUrl;
                 }
             }

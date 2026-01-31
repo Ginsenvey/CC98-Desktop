@@ -9,15 +9,15 @@
     mc:Ignorable="d"
     xmlns:ic="using:FluentIcons.WinUI"
     xmlns:lab="using:CommunityToolkit.Labs.WinUI"
+    xmlns:obj="using:CC98.Objects"
+    xmlns:cv="using:CC98.Services.Converters"
     xmlns:tool="using:CommunityToolkit.WinUI.Controls"
     
     Background="{ThemeResource DesktopAcrylicTransparentBrush}">
     <Page.Resources>
-        <local:HexToBrushConverter x:Key="HexToColorBrush"></local:HexToBrushConverter>
-        <DataTemplate x:Key="Presenter" x:DataType="local:SimplePost">
-          
-
-                <HyperlinkButton  PointerEntered="ContentCard_PointerEntered" PointerExited="ContentCard_PointerExited" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch" x:Name="TopicItem" Click="TopicItem_Click" Tag="{x:Bind pid}" CornerRadius="0" Height="53" >
+        <cv:HexToBrushConverter x:Key="HexToColorBrush"/>
+        <DataTemplate x:Key="Presenter" x:DataType="obj:IndexTopic">
+            <HyperlinkButton  PointerEntered="ContentCard_PointerEntered" PointerExited="ContentCard_PointerExited" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch" x:Name="TopicItem" Click="TopicItem_Click" Tag="{x:Bind TopicId}" CornerRadius="0" Height="53" >
                     <HyperlinkButton.RenderTransform>
                         <TranslateTransform x:Name="CardTranslate" X="0" Y="0"/>
                     </HyperlinkButton.RenderTransform> 
@@ -26,16 +26,16 @@
                             <ColumnDefinition Width="Auto"></ColumnDefinition>
                             <ColumnDefinition Width="*"></ColumnDefinition>
                         </Grid.ColumnDefinitions>
-                        <TextBlock Text="{x:Bind title}" Grid.Column="1" FontSize="14"  VerticalAlignment="Center" Foreground="{ThemeResource TextFillColorSecondaryBrush}" HorizontalAlignment="Left" MaxLines="1"></TextBlock>
-                        <Border Grid.Column="0" Background="{ThemeResource MarkdownBackgroudBrush}" CornerRadius="3" VerticalAlignment="Center" Padding="3" Visibility="{x:Bind hasboardname}">
-                            <TextBlock Text="{x:Bind  section}"   FontSize="12" Grid.Row="0"   Foreground="{ThemeResource AccentAAFillColorSecondaryBrush}"></TextBlock>
+                        <TextBlock Text="{x:Bind Title}" Grid.Column="1" FontSize="14"  VerticalAlignment="Center" Foreground="{ThemeResource TextFillColorSecondaryBrush}" HorizontalAlignment="Left" MaxLines="1"></TextBlock>
+                        <Border Grid.Column="0" Background="{ThemeResource MarkdownBackgroudBrush}" CornerRadius="3" VerticalAlignment="Center" Padding="3" Visibility="{x:Bind IsHotTopic}">
+                            <TextBlock Text="{x:Bind BoardName}"   FontSize="12" Grid.Row="0"   Foreground="{ThemeResource AccentAAFillColorSecondaryBrush}"></TextBlock>
                         </Border>
                     </Grid>
                 </HyperlinkButton>
 
           
         </DataTemplate>
-        <DataTemplate x:Key="SectionCardStyle" x:DataType="local:SectionCard">
+        <DataTemplate x:Key="SectionCardStyle" x:DataType="obj:SectionCard">
             <Grid RowSpacing="5" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" CornerRadius="5" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1" MinWidth="450" HorizontalAlignment="Stretch">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"></RowDefinition>
@@ -47,7 +47,7 @@
                     <TextBlock Text="{x:Bind SectionName}" Margin="10,20,10,15" FontSize="16" Foreground="{ThemeResource TextFillColorSecondaryBrush}"></TextBlock>
                 </StackPanel>
                 <Border Grid.Row="1" Height="2" BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}" HorizontalAlignment="Stretch" BorderThickness="2"></Border>
-                <ItemsRepeater Grid.Row="2" x:Name="TileList" ItemTemplate="{StaticResource Presenter}" ItemsSource="{x:Bind Tiles}" ></ItemsRepeater>
+                <ItemsRepeater Grid.Row="2" x:Name="TileList" ItemTemplate="{StaticResource Presenter}" ItemsSource="{x:Bind IndexTopics}" ></ItemsRepeater>
             </Grid>
         </DataTemplate>
     </Page.Resources>
@@ -62,7 +62,7 @@
                 <ImageBrush x:Name="ThemePresenter" Opacity="0.4" Stretch="UniformToFill"></ImageBrush>
             </FlipView.Background>
             <FlipView.ItemTemplate>
-                <DataTemplate x:DataType="local:FlipPost">
+                <DataTemplate x:DataType="obj:FlipTopic">
                     <Grid Padding="20" >
                         <Grid.RowDefinitions>
                             <RowDefinition Height="*"></RowDefinition>
@@ -73,10 +73,10 @@
                             <ColumnDefinition Width="*"></ColumnDefinition>
                         </Grid.ColumnDefinitions>
                         <ic:SymbolIcon Symbol="DesignIdeas" FontSize="26" Foreground="{ThemeResource AccentAAFillColorDefaultBrush}" Grid.Column="0" Grid.Row="0" Grid.RowSpan="2"></ic:SymbolIcon>
-                        <TextBlock Text="{x:Bind content}" Grid.Row="1" Grid.Column="1" Foreground="{ThemeResource TextFillColorSecondaryBrush}" ></TextBlock>
+                        <TextBlock Text="{x:Bind Content}" Grid.Row="1" Grid.Column="1" Foreground="{ThemeResource TextFillColorSecondaryBrush}" ></TextBlock>
                         <TextBlock  Grid.Row="0" Grid.Column="1"  FontWeight="Bold" TextDecorations="Underline">
-                            <Hyperlink NavigateUri="{x:Bind pid}" Click="RecomHyperlink_Click" x:Name="RecomHyperlink">
-                                <Run Text="{x:Bind title}" ></Run>
+                            <Hyperlink NavigateUri="{x:Bind Url}" Click="RecomHyperlink_Click" x:Name="RecomHyperlink">
+                                <Run Text="{x:Bind Title}" ></Run>
                             </Hyperlink>
                         </TextBlock>
                         
@@ -86,12 +86,12 @@
         </FlipView>
         <PipsPager x:Name="Pips" Grid.Row="0" VerticalAlignment="Bottom" HorizontalAlignment="Center"  SelectedPageIndex="{x:Bind Path=RecomList.SelectedIndex,Mode=TwoWay}"></PipsPager>
         <ScrollViewer Grid.Row="1" Margin="10,0,10,10" Padding="10">
-            <ItemsRepeater x:Name="SectionRepeater" ItemTemplate="{StaticResource SectionCardStyle}" ItemsSource="{x:Bind cards}" HorizontalAlignment="Stretch" VerticalCacheLength="32">
+            <ItemsRepeater x:Name="SectionRepeater" ItemTemplate="{StaticResource SectionCardStyle}" ItemsSource="{x:Bind sections}" HorizontalAlignment="Stretch" VerticalCacheLength="32">
                 <ItemsRepeater.Layout>
                     <tool:StaggeredLayout ItemsStretch="Fill" ColumnSpacing="30" RowSpacing="45" DesiredColumnWidth="450"></tool:StaggeredLayout>
                 </ItemsRepeater.Layout>
             </ItemsRepeater>
         </ScrollViewer>
-        
+        <local:InfoFlower x:Name="Flower" Grid.Row="0" Grid.RowSpan="2" HorizontalAlignment="Center" VerticalAlignment="Bottom"></local:InfoFlower>
     </Grid>
 </Page>
