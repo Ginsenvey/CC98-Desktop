@@ -31,6 +31,7 @@ using Windows.Foundation.Collections;
 using Windows.Storage;
 using Windows.UI.Text;
 using CC98.Controls;
+using CC98.Services;
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
 
@@ -41,9 +42,11 @@ namespace CC98
     /// </summary>
     public partial class App : Application
     {
-        public ApplicationDataContainer Set;
+        public ApplicationDataContainer Set = ApplicationData.Current.LocalSettings;
         public static event Action<ElementTheme> ThemeChanged;
         public static new App Current => (App)Application.Current;
+        private static AppLog _logger;
+        public static AppLog Logger => _logger ?? throw new InvalidOperationException("Logger未初始化");
 
         public static void RaiseThemeChanged(ElementTheme theme)
         {
@@ -51,9 +54,7 @@ namespace CC98
         }
         public App()
         {
-            this.InitializeComponent();
-            Set = ApplicationData.Current.LocalSettings;
-            
+            this.InitializeComponent();            
         }
         // 在 App 类中添加字段以保留托盘图标引用，防止被 GC 回收
         private DevWinUI.SystemTrayIcon? _trayIcon;
@@ -126,7 +127,7 @@ namespace CC98
             }
             catch (Exception ex)
             {
-                ValidationHelper.Log("系统托盘", ex.Message);
+                Logger.Write("系统托盘","注册系统托盘发生错误",ex.Message);
             }
         }
         private async Task<string> InitializeNetwork()
@@ -230,13 +231,24 @@ namespace CC98
 
         protected override async void OnLaunched(Microsoft.UI.Xaml.LaunchActivatedEventArgs args)
         {
+            try
+            {
+                //初始化日志
+                _logger = new AppLog("CC98");
+                await Logger.InitializeAsync();
+            }
+            catch (Exception ex)
+            {
+                //弹出
+                System.Diagnostics.Debug.WriteLine(ex.Message);
+                throw;
+            }
             var e= AppInstance.GetActivatedEventArgs();
             if (e.Kind == ActivationKind.Protocol)
             {
                 var protocol = (ProtocolActivatedEventArgs)e;
                 var query = System.Web.HttpUtility.ParseQueryString(protocol.Uri.Query);
-                AuthFromOpenID(query);
-                
+                AuthFromOpenID(query); 
             }
             else
             {

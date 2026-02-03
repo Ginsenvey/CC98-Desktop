@@ -238,11 +238,11 @@ namespace CC98
 
         }
 
-        private void AddAsEmoji_Click(object sender, RoutedEventArgs e)
+        private async void AddAsEmoji_Click(object sender, RoutedEventArgs e)
         {
             if (_type == "image" && !_url.StartsWith("ms-appx"))
             {
-                CustomEmoji.SaveEmoji(_url);
+                await CustomEmoji.SaveEmojiAsync(_url);
                 msg.Target = sender as Button;
                 msg.Title = "提示";
                 msg.Content = "已添加到自定义表情";

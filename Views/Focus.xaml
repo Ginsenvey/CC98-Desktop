@@ -25,7 +25,7 @@
         </SelectorBar>
 
         <ScrollViewer Grid.Row="1"   BorderThickness="1" BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}" CornerRadius="5" >
-            <ItemsRepeater x:Name="STileList" Loaded="STileList_Loaded">
+            <ItemsRepeater x:Name="MomentRepeater" ItemsSource="{x:Bind topics}" ElementPrepared="MomentRepeater_ElementPrepared">
                 <ItemsRepeater.ItemTemplate>
                     <DataTemplate x:DataType="obj:TopicInfo">
                         <HyperlinkButton HorizontalContentAlignment="Stretch" HorizontalAlignment="Stretch" CornerRadius="0" Click="Tile_Click" DataContext="{x:Bind}">
@@ -38,7 +38,7 @@
                                     <ColumnDefinition Width="70"></ColumnDefinition>
                                 </Grid.ColumnDefinitions>
                                 <ic:SymbolIcon Symbol="LeafOne"></ic:SymbolIcon>
-                                <TextBlock Text="{x:Bind Title}" Grid.Column="1" VerticalAlignment="Center" Foreground="{ThemeResource TextFillColorSecondaryBrush}"></TextBlock>
+                                <TextBlock Text="{x:Bind Title}" Grid.Column="1" VerticalAlignment="Center" MaxLines="1" Foreground="{ThemeResource TextFillColorSecondaryBrush}"></TextBlock>
                                 <TextBlock Text="{x:Bind UserName}" Grid.Column="2" VerticalAlignment="Center" Foreground="{ThemeResource TextFillColorSecondaryBrush}"></TextBlock>
                                 <Border Grid.Column="3" Background="Transparent"  HorizontalAlignment="Left" >
                                     <StackPanel Orientation="Horizontal" Spacing="5" >

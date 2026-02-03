@@ -114,7 +114,7 @@ namespace CC98
                     else
                     {
                         currentIndex = 0;
-                        Flower.PlayAnimation("\uE946", "已到达最新页面");
+                        Flower.Play("\uE946", "已到达最新页面");
                     }
                 }
                 else if (tag == "Forward")

@@ -33,6 +33,8 @@ using Windows.Media.Protection.PlayReady;
 using Windows.Security.Credentials;
 using Windows.Storage;
 using System.Text.Json;
+using CC98.Services;
+using CC98.Services.Extensions;
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
 
@@ -162,8 +164,6 @@ namespace CC98
                     TailVisibility.IsOn = false;//2
                 }
             }
-            string color = ValidationHelper.GetValue(Set, "BaseColor");
-            BaseColorPiker.SelectedItem = BaseColorPiker.Items.First(i => (i as ComboBoxItem).Tag.ToString() == color);
         }
         public string EffectHistory = "";
         public ApplicationDataContainer Set=ApplicationData.Current.LocalSettings;
@@ -295,73 +295,10 @@ namespace CC98
         
         
         
-        private async void Emoji_Click(object sender, RoutedEventArgs e)
+        private void Emoji_Click(object sender, RoutedEventArgs e)
         {
-            var h = sender as HyperlinkButton;
-            if (h != null)
-            {
-                var _tag = h.Tag;
-                if(_tag is string tag)
-                {
-                    if (tag == "0")
-                    {
-                        StorageFolder Folder = ApplicationData.Current.LocalCacheFolder;
-                        string path = Folder.Path + "/" + "CustomEmoji.json";
-                        string content = ValidationHelper.JsonReader(path);
-                        if (!content.StartsWith("10:"))
-                        {
-                            var package = new DataPackage();
-                            package.SetText(content);
-                            Clipboard.SetContent(package);
-
-                            Flower.PlayAnimation("\uE930", "已复制到剪贴板");
-                        }
-                        else
-                        {
-                            Flower.PlayAnimation("\uEA39", content);
-                        }
-                    }
-                    else if (tag == "1")
-                    {
-                        var package = Clipboard.GetContent();
-                        if (package.Contains(StandardDataFormats.Text))
-                        {
-                            var text = await package.GetTextAsync();
-                            try
-                            {
-                                var add=JsonSerializer.Deserialize<List<string>>(text);
-                                if (add != null)
-                                {
-                                    var list = CustomEmoji.GetAllEmoji();
-                                    list.AddRange(add);
-                                    string content = JsonSerializer.Serialize(list);
-                                    string path = "CustomEmoji.json";
-                                    ValidationHelper.JsonWritter(content, path);
-                                    Flower.PlayAnimation("\uE930", "载入完成");
-                                }
-                                else
-                                {
-                                    Flower.PlayAnimation("\uEA39", "内容无效");
-                                }
-                                
-                            }
-                            catch(Exception ex)
-                            {
-                                Flower.PlayAnimation("\uEA39", ex.Message);
-                            }
-                        }
-                        else
-                        {
-                            Flower.PlayAnimation("\uEA39", "剪切板中没有文本");
-                        }
-                    }
-                    else
-                    {
-                        CustomEmoji.ClearAllEmoji();
-                        Flower.PlayAnimation("\uE930", "已清空表情");
-                    }
-                }
-            }
+            CustomEmoji.ClearAllEmoji();
+            Flower.Play(Objects.FlowStatus.Success, "已清空表情");
         }
         
 
@@ -391,21 +328,7 @@ namespace CC98
 
       
 
-        private void BaseColorPiker_SelectionChanged_1(object sender, SelectionChangedEventArgs e)
-        {
-            if (sender is ComboBox c)
-            {
-                if(c.SelectedItem is ComboBoxItem i)
-                {
-                    if(i.Tag is string tag)
-                    {
-                        Set.Values["BaseColor"] = tag;
-                    }
-                    
-                }
-            }
-            
-        }
+       
 
         private void TailVisibility_Toggled(object sender, RoutedEventArgs e)
         {

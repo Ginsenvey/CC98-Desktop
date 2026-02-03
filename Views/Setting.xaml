@@ -105,7 +105,7 @@
                         </tool:SettingsCard>
                     </tool:SettingsExpander.Items>
                 </tool:SettingsExpander>
-                <tool:SettingsExpander Header="自定义背景" Description="修改背景图片和配色"> 
+                <tool:SettingsExpander Header="自定义背景" Description="修改背景图片"> 
                     <tool:SettingsExpander.HeaderIcon>
                         <ic:SymbolIcon Symbol="PaintBrush"></ic:SymbolIcon>
                     </tool:SettingsExpander.HeaderIcon>
@@ -136,14 +136,7 @@
                                 </SplitButton.Flyout>
                             </SplitButton>
                         </tool:SettingsCard>
-                        <tool:SettingsCard Header="配色" Description="选择应用导航区域的背景色,重启生效">
-                            <ComboBox Background="Transparent" SelectionChanged="BaseColorPiker_SelectionChanged_1" x:Name="BaseColorPiker">
-                                <ComboBoxItem Content="透明" Tag="0"></ComboBoxItem>
-                                <ComboBoxItem Content="粉-青" Tag="pinkgreen"></ComboBoxItem>
-                                <ComboBoxItem Content="天蓝" Tag="skyblue"></ComboBoxItem>
-                                <ComboBoxItem Content="鹅黄" Tag="yellow"></ComboBoxItem>
-                            </ComboBox>
-                        </tool:SettingsCard>
+                        
                     </tool:SettingsExpander.Items>
                 </tool:SettingsExpander>
                 <TextBlock  Text="浏览" FontSize="16" Margin="5,2,0,5"></TextBlock>
@@ -213,14 +206,8 @@
                         <ic:SymbolIcon Symbol="Heart"></ic:SymbolIcon>
                     </tool:SettingsExpander.HeaderIcon>
                     <tool:SettingsExpander.Items>
-                        <tool:SettingsCard Header="导出表情包文本" >
-                            <HyperlinkButton Content="导出"  x:Name="ExtractEmoji" Click="Emoji_Click" Tag="0"></HyperlinkButton>
-                        </tool:SettingsCard>
-                        <tool:SettingsCard Header="载入表情包" Description="将剪切板上的文本载入自定义表情库">
-                            <HyperlinkButton Content="开始"   Click="Emoji_Click" Tag="1"></HyperlinkButton>
-                        </tool:SettingsCard>
-                        <tool:SettingsCard Header="删除所有表情" >
-                            <HyperlinkButton Content="确认"   Click="Emoji_Click" Tag="2"></HyperlinkButton>
+                        <tool:SettingsCard Header="清空自定义表情" >
+                            <HyperlinkButton Content="确认"   Click="Emoji_Click" ></HyperlinkButton>
                         </tool:SettingsCard>
                     </tool:SettingsExpander.Items>
                 </tool:SettingsExpander>

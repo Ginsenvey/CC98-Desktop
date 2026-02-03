@@ -100,7 +100,7 @@
                                 <RowDefinition Height="*"></RowDefinition>
                             </Grid.RowDefinitions>
 
-                            <HyperlinkButton Grid.Row="0" Margin="0,0,0,5"  x:Name="Person" Click="Person_Click" DataContext="{x:Bind}" ContextRequested="Person_ContextRequested">
+                            <HyperlinkButton Grid.Row="0" Margin="0,0,0,5"  x:Name="Person" Click="Person_Click" Tag="{x:Bind}" ContextRequested="Person_ContextRequested">
                                 <StackPanel Grid.Row="0"  Orientation="Horizontal" Spacing="10">
                                     <Border Width="30" Height="30" CornerRadius="5" Background="{ThemeResource PortaitBackgroundColor}">
                                         <image:SmartImage  x:Name="portrait" Source="{x:Bind PortraitUrl}" ></image:SmartImage>

@@ -8,32 +8,49 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:obj="using:CC98.Objects"
     xmlns:cv="using:CC98.Services.Converters"
+    xmlns:sv="using:CC98.Services"
     mc:Ignorable="d">
-
+    <Page.Resources>
+        <DataTemplate x:Key="SystemNoticeTemplate" x:DataType="obj:Notice">
+            <HyperlinkButton HorizontalContentAlignment="Stretch" HorizontalAlignment="Stretch" CornerRadius="0" x:Name="NoticeCard" Click="NoticeCard_Click" DataContext="{x:Bind}">
+                <Grid Padding="3" RowSpacing="8">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"></ColumnDefinition>
+                        <ColumnDefinition Width="*"></ColumnDefinition>
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="*"></RowDefinition>
+                        <RowDefinition Height="*"></RowDefinition>
+                    </Grid.RowDefinitions>
+                    <TextBlock Text="{x:Bind Title}" Grid.Column="0" Grid.Row="0" Grid.RowSpan="2" FontWeight="Bold"></TextBlock>
+                    <TextBlock Text="{x:Bind Time}" FontSize="12" Grid.Column="1" Grid.Row="0"  HorizontalAlignment="Right" Foreground="{ThemeResource TextFillColorSecondaryBrush}"></TextBlock>
+                    <TextBlock Text="{x:Bind Content}" FontSize="12" Grid.Column="0" Grid.ColumnSpan="2" Grid.Row="1" Foreground="{ThemeResource TextFillColorSecondaryBrush}"></TextBlock>
+                </Grid>
+            </HyperlinkButton>
+        </DataTemplate>
+        <DataTemplate x:Key="ReplyOrAtNoticeTemplate" x:DataType="obj:Notice">
+            <HyperlinkButton HorizontalContentAlignment="Stretch" HorizontalAlignment="Stretch" CornerRadius="0" x:Name="NoticeCard" Click="NoticeCard_Click" DataContext="{x:Bind}">
+                <Grid Padding="3" RowSpacing="8">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"></ColumnDefinition>
+                        <ColumnDefinition Width="*"></ColumnDefinition>
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="*"></RowDefinition>
+                        <RowDefinition Height="*"></RowDefinition>
+                    </Grid.RowDefinitions>
+                    <TextBlock Text="{x:Bind PostBasicInfo.UserName}" Grid.Column="0" Grid.Row="0" Grid.RowSpan="2" FontWeight="Bold"></TextBlock>
+                    <TextBlock Text="{x:Bind Time}" FontSize="12" Grid.Column="1" Grid.Row="0"  HorizontalAlignment="Right" Foreground="{ThemeResource TextFillColorSecondaryBrush}"></TextBlock>
+                    <TextBlock Text="{x:Bind Content}" FontSize="12" Grid.Column="0" Grid.ColumnSpan="2" Grid.Row="1" Foreground="{ThemeResource TextFillColorSecondaryBrush}"></TextBlock>
+                </Grid>
+            </HyperlinkButton>
+        </DataTemplate>
+        <sv:NoticeTemplateSelector x:Key="Selector" SystemTemplate="{StaticResource SystemNoticeTemplate}" ReplyOrAtTemplate="{StaticResource ReplyOrAtNoticeTemplate}" ></sv:NoticeTemplateSelector>
+    </Page.Resources>
     <Grid>
         <ScrollViewer x:Name="NoticeViewer">
-            <ItemsRepeater x:Name="NoticeRepeater">
-                <ItemsRepeater.ItemTemplate>
-                    <DataTemplate x:DataType="obj:Notice">
-                        <HyperlinkButton HorizontalContentAlignment="Stretch" HorizontalAlignment="Stretch" CornerRadius="0" x:Name="NoticeCard" Click="NoticeCard_Click" DataContext="{x:Bind}">
-                            <Grid Padding="3" RowSpacing="8">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="Auto"></ColumnDefinition>
-                                    <ColumnDefinition Width="*"></ColumnDefinition>
-                                </Grid.ColumnDefinitions>
-                                <Grid.RowDefinitions>
-                                    <RowDefinition Height="*"></RowDefinition>
-                                    <RowDefinition Height="*"></RowDefinition>
-                                </Grid.RowDefinitions>
-                                <TextBlock Text="{x:Bind Title}" Grid.Column="0" Grid.Row="0" Grid.RowSpan="2" FontWeight="Bold"></TextBlock>
-                                <TextBlock Text="{x:Bind Time}" FontSize="12" Grid.Column="1" Grid.Row="0"  HorizontalAlignment="Right" Foreground="{ThemeResource TextFillColorSecondaryBrush}"></TextBlock>
-                                <TextBlock Text="{x:Bind Content}" FontSize="12" Grid.Column="0" Grid.ColumnSpan="2" Grid.Row="1" Foreground="{ThemeResource TextFillColorSecondaryBrush}"></TextBlock>
-                            </Grid>
-                        </HyperlinkButton>
-                    </DataTemplate>
-                </ItemsRepeater.ItemTemplate>
-            </ItemsRepeater>
-
+            <ItemsRepeater x:Name="NoticeRepeater" ItemsSource="{x:Bind notices}"  ItemTemplate="{StaticResource Selector}" ElementPrepared="NoticeRepeater_ElementPrepared"></ItemsRepeater>
         </ScrollViewer>
+        <local:InfoFlower x:Name="Flower"  HorizontalAlignment="Center" VerticalAlignment="Bottom"></local:InfoFlower>
     </Grid>
 </Page>

@@ -230,7 +230,7 @@ namespace CC98
             }
             catch (Exception ex)
             {
-                ValidationHelper.Log("文件上传出错", ex.Message);
+                App.Logger.Write("UBBEditor","文件上传出错", ex.Message);
                 status.Text = "上传失败:" + ex.Message;
             }
             return "0";
@@ -293,7 +293,7 @@ namespace CC98
                     else if(MyReplyId.StartsWith("400:"))
                     {
                         status.Text = "发生错误。请向开发者报告此问题，日志已记录";
-                        ValidationHelper.Log("向主题发送回复出错", MyReplyId.Split(":")[1]);
+                        App.Logger.Write("UBBEditor",$"向主题发送回复出错", MyReplyId.Split(":")[1]);
                     }
                     else
                     {
@@ -333,7 +333,7 @@ namespace CC98
                     }
                     else
                     {
-                        Flower.PlayAnimation("\uEA39", "编辑失败");
+                        Flower.Play("\uEA39", "编辑失败");
                         status.Text = "编辑失败";
                     }
                 }
@@ -433,7 +433,7 @@ namespace CC98
                             else
                             {
                                 FileHelper.Hide();
-                                Flower.PlayAnimation("\uEA39", "未上传文件");
+                                Flower.Play("\uEA39", "未上传文件");
                             }
 
                         }
@@ -449,7 +449,7 @@ namespace CC98
                             else
                             {
                                 FileHelper.Hide();
-                                Flower.PlayAnimation("\uEA39", "未上传文件");
+                                Flower.Play("\uEA39", "未上传文件");
                             }
                         }
                         else if (CurrentLabel == "audio")
@@ -464,7 +464,7 @@ namespace CC98
                             else
                             {
                                 FileHelper.Hide();
-                                Flower.PlayAnimation("\uEA39", "未上传文件");
+                                Flower.Play("\uEA39", "未上传文件");
                             }
                         }
                         else if (CurrentLabel == "upload")
@@ -479,7 +479,7 @@ namespace CC98
                             else
                             {
                                 FileHelper.Hide();
-                                Flower.PlayAnimation("\uEA39", "未上传文件");
+                                Flower.Play("\uEA39", "未上传文件");
                             }
                         }
 
@@ -547,14 +547,14 @@ namespace CC98
                 Content_Type = 1;
                 MD.Visibility = Visibility.Visible;
                 UBB.Visibility = Visibility.Collapsed;
-                Flower.PlayAnimation("\uE946", "切换到Markdown");
+                Flower.Play("\uE946", "切换到Markdown");
             }
             else
             {
                 Content_Type = 0;
                 MD.Visibility = Visibility.Collapsed;
                 UBB.Visibility = Visibility.Visible;
-                Flower.PlayAnimation("\uE946", "切换到UBB");
+                Flower.Play("\uE946", "切换到UBB");
             }
         }
 

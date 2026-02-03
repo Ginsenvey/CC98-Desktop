@@ -12,6 +12,7 @@ using Microsoft.UI.Xaml.Data;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Navigation;
+using CC98.Objects;
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
 
@@ -23,24 +24,35 @@ public sealed partial class InfoFlower : UserControl
     {
         this.InitializeComponent();
     }
-    public void PlayAnimation(string Glyph,string Text)
+    public string GetGlyphFromStatus(FlowStatus status)=>status switch
     {
-        // 重置状态
+        FlowStatus.Warning => "\uE7BA",
+        FlowStatus.Success => "\uE930",
+        FlowStatus.Fail => "\uEA39",
+        FlowStatus.Info => "\uE779",
+        _ => "\uE779",
+    };
+
+    public void Play(string Glyph,string message)
+    {
         this.FlowIcon.Glyph = Glyph;
-        this.FlowInfo.Text = Text;
+        this.FlowInfo.Text = message;
         FlowerTransform.TranslateY = 0;
         Flower.Opacity = 0;
-
-        // 显示控件
         Flower.Visibility = Visibility.Visible;
-
-        // 启动动画
         FlowerAnimation.Begin();
-
-        // 动画结束时隐藏
         FlowerAnimation.Completed += OnAnimationCompleted;
     }
-
+    public void Play(FlowStatus status, string message)
+    {
+        this.FlowIcon.Glyph = GetGlyphFromStatus(status);
+        this.FlowInfo.Text = message;
+        FlowerTransform.TranslateY = 0;
+        Flower.Opacity = 0;
+        Flower.Visibility = Visibility.Visible;
+        FlowerAnimation.Begin();
+        FlowerAnimation.Completed += OnAnimationCompleted;
+    }
     private void OnAnimationCompleted(object sender, object e)
     {
         Flower.Visibility = Visibility.Collapsed;

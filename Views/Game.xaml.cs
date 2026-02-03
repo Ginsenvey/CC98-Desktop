@@ -181,17 +181,17 @@ namespace CC98
                                 if (!result.IsSuccess)
                                 {
                                     //
-                                    Flower.PlayAnimation("\uEA39", "分解失败");
+                                    Flower.Play("\uEA39", "分解失败");
                                     return;
                                 }
                                 RefreshStat();
-                                Flower.PlayAnimation("\uE930", "分解成功");
+                                Flower.Play("\uE930", "分解成功");
       
                             }
                             break;
                         case "ref-stat":
                             RefreshStat();
-                            Flower.PlayAnimation("\uE930", "正在刷新数据");
+                            Flower.Play("\uE930", "正在刷新数据");
                             break;
                     }
                 }

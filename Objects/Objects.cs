@@ -2,7 +2,9 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Text.Json.Serialization;
+using System.Threading.Tasks;
 
 namespace CC98.Objects;
 /// <summary>
@@ -607,8 +609,9 @@ public class Notice
     [JsonPropertyName("postBasicInfo")]
     public PostBasicInfo? PostBasicInfo { get; set; }
 
-    [JsonPropertyName("id")]
+    [JsonPropertyName("type")]
     public int Type { get; set;}
+    //Content字段只存在于系统通知中
     [JsonPropertyName("content")]
     public string? Content {  get; set; }
 }
@@ -626,6 +629,9 @@ public class PostBasicInfo
 
     [JsonPropertyName("userName")]
     public string UserName { get; set; }=string.Empty;
+
+    [JsonPropertyName("isDeleted")]
+    public bool IsDeleted { get; set; }
 }
 /// <summary>
 /// 抽卡数据
@@ -734,17 +740,19 @@ public class IndexTopic : ObservableObject
         get => field ?? string.Empty;
         set => SetProperty(ref field, value);
     }
-    public string BoardName
+    //只有热门话题此项不为null
+    public string? BoardName
     {
         get => field ?? string.Empty;
         set => SetProperty(ref field, value);
     }
-    public int TopicId
+    public int Id
     {
         get => field;
         set => SetProperty(ref field, value);
     }
-
+    //是否热门
+    [JsonIgnore]
     public bool IsHotTopic
     {
         get => field;
@@ -759,3 +767,24 @@ public class BoardBest
     public int Count { get; set; }
     public List<SimpleTopicInfo> Topics { get; set; } = [];
 }
+//仅用于通知中的主题简要信息
+public class BasicTopicInfo
+{
+    public string Title { get; set; } = string.Empty;
+
+    public int Id { get; set; }
+}
+public class BoardInfo
+{
+    public int Id { get; set; }
+    public string Name { get; set; } = string.Empty;
+}
+
+public class SectionInfo
+{
+    public string Name { get; set; } = string.Empty;
+    public List<string> Masters { get; set; } = new();
+    public List<BoardInfo> Boards { get; set; } = new();
+}
+
+

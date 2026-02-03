@@ -41,6 +41,17 @@ public enum EditorMode
 public enum NoticeType
 {
     System=1,
+    Reply=2,
     At=3,
-    Reply=2
+    
+}
+/// <summary>
+/// UI事件的分类
+/// </summary>
+public enum FlowStatus
+{
+    Warning=0,
+    Success=1,
+    Fail=2,
+    Info=3,
 }

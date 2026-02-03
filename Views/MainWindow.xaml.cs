@@ -67,6 +67,7 @@ namespace CC98
         public Frame RootFrame => contentframe;//用于在嵌套的Frame中导航
         public ApplicationDataContainer Set = ApplicationData.Current.LocalSettings;
         public ObservableCollection<string> collections=[];
+
         public int UnreadCount { get; set; }
         public MainWindow()
         {
@@ -81,6 +82,7 @@ namespace CC98
             LoadSettings();
             App.ThemeChanged += OnAppThemeChanged;
             Messenger.Instance.NavigationItemAdded += OnNavigationItemAdded;
+            var dataManager = CC98HomeDataManager.Instance;
             Surfing();
         }
 
@@ -259,7 +261,7 @@ namespace CC98
                         var index = await FetchIndex();
                         if (!index)
                         {
-                            Flower.PlayAnimation("\uEA39", "刷新首页失败");
+                            Flower.Play("\uEA39", "刷新首页失败");
                         }
                         contentframe.Navigate(typeof(Index));
                         break;
@@ -302,17 +304,8 @@ namespace CC98
         }
         private async Task<bool> FetchIndex()
         {
-            string drawUrl = ApiEndpoints.Forum.Index();
-            var drawResult = await RequestSender.Fetch<List<Objects.Card>>(drawUrl);
-            if (!drawResult.IsSuccess || drawResult.Data == null)
-            {
-                //
-                return false;
-            }
-            var data = drawResult.Data;
-            string IndexText = JsonSerializer.Serialize(data);
-            ValidationHelper.JsonWritter(IndexText, "IndexCache.json");
-            return true;
+            string url = ApiEndpoints.Forum.Index();
+            return await CC98HomeDataManager.Instance.RefreshFromApiAsync(url);
         }
         private  void LoadSettings()
         {
@@ -365,9 +358,9 @@ namespace CC98
                 var file = Files[0];
                 Set.Values["Themepic"]= file;
             }
-            string color = ValidationHelper.GetValue(Set, "BaseColor");
-            GridTitleBar.Background = (SolidColorBrush)Application.Current.Resources[color];
-            Navi.Background= (SolidColorBrush)Application.Current.Resources[color];
+            //string color = "CardGradient1Brush";
+            //GridTitleBar.Background = (Brush)Application.Current.Resources[color];
+            //Navi.Background= (Brush)Application.Current.Resources[color];
         }
         
         private DispatcherTimer SyncTimer { get; set; }
@@ -414,7 +407,7 @@ namespace CC98
             var result = await RequestSender.Fetch<UnreadMessageInfo>(url);
             if (!result.IsSuccess || result.Data == null)
             {
-                ValidationHelper.Log("刷新未读消息失败", $"{result.StatusCode}:{result.Message}");
+                App.Logger.Write("MainWindow","刷新未读消息失败", $"{result.StatusCode}:{result.Message}");
                 return;
             }
             var data = result.Data;
@@ -422,7 +415,7 @@ namespace CC98
             BadgeNotificationManager.Current.SetBadgeAsCount((uint)UnreadCount);
         }
 
-        [RequiresUnreferencedCode("Calls System.Text.Json.JsonSerializer.Deserialize<TValue>(String, JsonSerializerOptions)")]
+        
         private async Task<bool> GetFavorites()
         {
             string favoritesInfoUrl=ApiEndpoints.User.FavoritesList();
@@ -443,7 +436,7 @@ namespace CC98
             }
             else
             {
-                Flower.PlayAnimation("\uE783", "暂无收藏夹");
+                Flower.Play("\uE783", "暂无收藏夹");
                 return false;
             }
             
@@ -695,7 +688,7 @@ namespace CC98
                             //网页端OpenID未注册权限，不支持抽卡
                             if (ValidationHelper.GetValue(Set, "IsActive") != "1")
                             {
-                                Flower.PlayAnimation("\uEA39", "当前登录方式不支持抽卡");
+                                Flower.Play("\uEA39", "当前登录方式不支持抽卡");
                                 return;
                             }
                             contentframe.Navigate(typeof(Game));
@@ -782,30 +775,6 @@ namespace CC98
         public bool IsEditable { get; set; } 
     }
 
-    public partial class NavigationTemplateSelector : DataTemplateSelector
-    {
-        public DataTemplate GroupTemplate { get; set; }
-        public DataTemplate PinnedItemTemplate { get; set; }
-        public DataTemplate ItemTemplate { get; set; }
-
-        protected override DataTemplate SelectTemplateCore(object item)
-        {
-            if(item is NavigationItem n)
-            {
-                if (n.IsEditable ==true)
-                {
-                    return PinnedItemTemplate;
-                }
-                else
-                {
-                    return ItemTemplate;
-                }
-            }
-            else
-            {
-                return GroupTemplate;
-            }
-        }
-    }
+    
     
 }

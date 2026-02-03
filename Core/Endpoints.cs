@@ -14,6 +14,7 @@ public static class ApiEndpoints
 
     public static class Forum
     {
+        public static string AllBoards() => $"{Base}/Board/all";
         public static string Index() => $"{Base}/config/index";
         public static string CardStat() => $"{Card}/api/collection/stat";
         public static string DraWCard(int rule) => $"{Card}/api/draw/{rule}";
@@ -77,7 +78,7 @@ public static class ApiEndpoints
     }
     public static class Board
     {
-        public static string AllBoards() => $"{Base}/Board/all";
+        
         public static string BoardInfo(int boardId) => $"{Base}/board/{boardId}";
         /// <summary>
         /// 获取版面帖子
@@ -110,6 +111,8 @@ public static class ApiEndpoints
         public static string FavoriteTopicList(int start, int order,int groupId) => $"{Base}/topic/me/favorite?from={start}&size=11&order={order}&groupid={groupId}";
         public static string Vote(int topicId) => $"{Base}/topic/{topicId}/vote";
         public static string AddIntoFavorites(int topicId,int groupId) => $"{Base}/me/favorite/{topicId}?groupid={groupId}";
+
+        public static string BasicTopicInfoList(string param) => $"{Base}/topic/basic?{param}";
     }
 
     public static class OpenID

@@ -25,6 +25,8 @@ using Windows.Media.Playback;
 using Windows.Storage;
 using Windows.Storage.Streams;
 using System.Text.Json;
+using CC98.Services;
+using Microsoft.Extensions.Logging;
 
 namespace CC98.Kernel.Network;
 /// <summary>
@@ -191,7 +193,7 @@ public partial class VpnService : IDisposable
                 }
                 else
                 {
-                    ValidationHelper.Log("网络检查出错", $"非法返回内容：{res_text}");
+                    App.Logger.Write("网络检查","请查看返回内容" ,$"{res_text}");
                     return "404:非法返回";
                 }
             }

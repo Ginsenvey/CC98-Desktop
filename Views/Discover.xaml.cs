@@ -56,7 +56,8 @@ namespace CC98
             var newTopicResult = await RequestSender.Fetch<List<TopicInfo>>(newTopicUrl);
             if (!newTopicResult.IsSuccess || newTopicResult.Data == null)
             {
-                ValidationHelper.Log("加载数据失败", newTopicResult.Message);
+                Flower.Play(FlowStatus.Fail, "加载新帖失败");
+                App.Logger.Write("Discover","加载新帖失败", newTopicResult.Message);
                 return false;
             }
             var data= newTopicResult.Data;
@@ -122,7 +123,7 @@ namespace CC98
                     else
                     {
                         current = 0;
-                        Flower.PlayAnimation("\uE946", "已到达最新页面");
+                        Flower.Play("\uE946", "已到达最新页面");
                     }
                 }
                 else if (tag == "Forward")
@@ -184,7 +185,7 @@ namespace CC98
                     var package = new DataPackage();
                     package.SetText(tag);
                     Clipboard.SetContent(package);
-                    Flower.PlayAnimation("\uE930", "已复制帖子ID");
+                    Flower.Play("\uE930", "已复制帖子ID");
                 }
             }
         }       

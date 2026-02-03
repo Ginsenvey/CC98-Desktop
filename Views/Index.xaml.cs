@@ -1,7 +1,9 @@
 
 using CC98.Kernel;
+using CC98.Kernel.ApiScope;
 using CC98.Kernel.UserExperience;
 using CC98.Objects;
+using CC98.Services;
 using CC98.Services.Extensions;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.WinUI;
@@ -49,14 +51,15 @@ namespace CC98
     {
         public ObservableCollection<SectionCard> sections=[];
         public ObservableCollection<FlipTopic> flipTopics=[];
-        public ApplicationDataContainer Set;
+        public CC98HomeDataManager.HomeStatistics? Statistics { get; private set; }
+        public ApplicationDataContainer Set=ApplicationData.Current.LocalSettings;
+        private readonly CC98HomeDataManager _dataManager;
         public ImageSource? ThemePic;
         public Index()
         {
             this.InitializeComponent();
-            RecomList.ItemsSource = flipTopics;
-            Set = ApplicationData.Current.LocalSettings;
-            GetTopic();
+            _dataManager=CC98HomeDataManager.Instance;
+            LoadFromCacheAsync();
             LoadSet();
         }
        
@@ -69,85 +72,36 @@ namespace CC98
                 ThemePresenter.ImageSource = new BitmapImage(new Uri(_Theme));
             }
         }
-        private void GetTopic()
+        private async Task LoadFromCacheAsync()
         {
             //只从缓存中读取。
             List<string> SectionNames = new List<string>() { "hotTopic", "schoolEvent", "academics", "study", "emotion", "fleaMarket", "fullTimeJob", "partTimeJob" };
             List<string> _SectionNames = new List<string>() { "十大话题", "校园活动", "学术通知", "学习天地", "感性·情感", "跳蚤市场", "求职广场", "实习兼职" };
-            string jpath = Path.Combine(ApplicationData.Current.LocalCacheFolder.Path, "IndexCache.json");
-            var json = ValidationHelper.JsonReader(jpath);
-            if (!json.StartsWith("10"))
+            sections.Clear();
+            flipTopics.Clear();
+            for(int i=0; i<SectionNames.Count; i++)
             {
-                var AllTopics = Deserializer.ToDictionary(json);
-                if (AllTopics != null)
-                {
-                    for (int i = 0; i < 8; i++)
-                    {
-                        string key = SectionNames[i];
-                        string content = ValidationHelper.GetKey(AllTopics, key);
-                        if (content != "0")
-                        {
-                            var TopicList = JsonSerializer.Deserialize<JsonArray>(content);
-                            if (TopicList != null && TopicList.Count > 0)
-                            {
-                                var tiles = new List<IndexTopic>();
-                                foreach (var Topic in TopicList)
-                                {
-                                    var TopicInfo = JsonSerializer.Deserialize<Dictionary<string, object>>(Topic.ToString());
-                                    if (TopicInfo == null) return;
-                                    string Section = "";
-                                    if (TopicInfo.ContainsKey("boardName"))
-                                    {
-                                        Section = TopicInfo["boardName"].ToString();
-                                    }
-
-
-                                    string Title = string.Empty;
-                                    if (TopicInfo["title"].ToString().Length > 21)
-                                    {
-                                        Title = TopicInfo["title"].ToString().Substring(0, 21) + "…";
-                                    }
-                                    else
-                                    {
-                                        Title = TopicInfo["title"].ToString();
-                                    }
-
-                                    int Pid = TopicInfo["id"].ToInt();
-                                    bool isHotTopic = false;
-                                    if (key == "hotTopic")
-                                    {
-                                        isHotTopic = true;
-                                    }
-                                    tiles.Add(new IndexTopic { BoardName = Section,Title = Title, TopicId = Pid, IsHotTopic = isHotTopic });
-                                }
-                                sections.Add(new SectionCard { SectionName = _SectionNames[i], IndexTopics = tiles, HexColor = ColorPaint.GenerateMorandiColorHex() });
-                            }
-                        }
-                    }
-                    string recom = ValidationHelper.GetKey(AllTopics, "recommendationReading");
-                    if (recom != "0")
-                    {
-                        var recomlist = JsonSerializer.Deserialize<List<FlipTopic>>(recom);
-                        flipTopics.Clear();
-                        if (recomlist != null)
-                        {
-                            foreach (var item in recomlist)
-                            {
-                                item.Url = $"cc98:/{item.Url}";
-                            }
-                            flipTopics.AddRange(recomlist);
-                            Pips.NumberOfPages = recomlist.Count;
-                        }
-                    }
-                }
-                
+                string propertyName = SectionNames[i];
+                string name= _SectionNames[i];
+                var hotTopics = await _dataManager.GetTopicPartitionAsync(propertyName);
+                var section=new SectionCard { SectionName=name,IndexTopics=hotTopics,HexColor=ColorPaint.GenerateMorandiColorHex()};
+                sections.Add(section);
             }
-            
-            
-            
+            var recommendations = await _dataManager.GetRecommendationReadingAsync();
+            if (recommendations == null)
+            {
+                App.Logger.Write("Index", "获取推荐阅读列表失败");
+                return;
+            }
+            foreach (var item in recommendations)
+            {
+                item.Url = $"cc98:/{item.Url}";
+            }
+            flipTopics.AddRange(recommendations);
+            Pips.NumberOfPages = recommendations.Count;         
         }
-        
 
+        
         private void ContentCard_PointerEntered(object sender, PointerRoutedEventArgs e)
         {
             var h = sender as HyperlinkButton;
@@ -197,7 +151,6 @@ namespace CC98
             if (tag == null) return;
             var param = new TopicNavigationInfo { TopicId = tag.ToInt()};
             Frame.Navigate(typeof(Topic), param);
-            Flower.PlayAnimation("\uE739", tag as string);
         }
 
         
@@ -210,9 +163,7 @@ namespace CC98
                 int topicId=int.Parse(url.Replace("cc98://topic/", ""));
                 var param=new TopicNavigationInfo { TopicId = topicId };
                 Frame.Navigate(typeof(Topic),param);
-            }
-            
-            
+            } 
         }
 
     }

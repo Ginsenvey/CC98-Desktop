@@ -114,12 +114,12 @@ namespace CC98
             var favoritesJson = ValidationHelper.GetValue(Set, "Favorites");
             if (favoritesJson == "0")
             {
-                Flower.PlayAnimation("\uEA39", "收藏夹未缓存");
+                Flower.Play("\uEA39", "收藏夹未缓存");
             }
             var favoritesList = JsonSerializer.Deserialize<List<Favorites>>(favoritesJson);
             if (favoritesList == null)
             {
-                Flower.PlayAnimation("\uEA39", "解析收藏夹缓存出错");
+                Flower.Play("\uEA39", "解析收藏夹缓存出错");
                 return;
             }
             foreach (var favorites in favoritesList)
@@ -132,7 +132,7 @@ namespace CC98
                 }
                 catch (Exception ex)
                 {
-                    Flower.PlayAnimation("\uEA39", ex.Message);
+                    Flower.Play("\uEA39", ex.Message);
                 }
             }
         }
@@ -179,7 +179,8 @@ namespace CC98
             var replyResult=await RequestSender.Fetch<List<Reply>>(replyUrl);
             if (!replyResult.IsSuccess || replyResult.Data == null)
             {
-                //报错
+                //
+                App.Logger.Write("Topic","加载回帖失败", replyResult.Message);
                 return;
             }
             var data= replyResult.Data;
@@ -358,7 +359,7 @@ namespace CC98
                         }
                         else
                         {
-                            Flower.PlayAnimation("\uEA39", "音频下载出错");
+                            Flower.Play("\uEA39", "音频下载出错");
                         }
                     }
                     else if (result.Value == "video")
@@ -402,17 +403,17 @@ namespace CC98
                                     fileStream = new FileStream(DownloadLocation, FileMode.Create, FileAccess.Write, FileShare.None))
                                     {
                                         await contentStream.CopyToAsync(fileStream);
-                                        Flower.PlayAnimation("\uE930", "下载文件成功");
+                                        Flower.Play("\uE930", "下载文件成功");
                                     }
                                 }
                                 else
                                 {
-                                    Flower.PlayAnimation("\uEA39", $"下载失败，状态码为{fileres.StatusCode.ToString()}");
+                                    Flower.Play("\uEA39", $"下载失败，状态码为{fileres.StatusCode.ToString()}");
                                 }
                             }
                             catch (Exception ex)
                             {
-                                Flower.PlayAnimation("\uEA39", ex.Message);
+                                Flower.Play("\uEA39", ex.Message);
                             }
                         }
 
@@ -424,14 +425,14 @@ namespace CC98
                         var _datapackage = new DataPackage();
                         _datapackage.SetText(url);
                         Clipboard.SetContent(_datapackage);
-                        Flower.PlayAnimation("\uE930", "已复制Bili外链");
+                        Flower.Play("\uE930", "已复制Bili外链");
                     }
                     break ;
                 default://自动复制到用户剪切板
                     var datapackage = new DataPackage();
                     datapackage.SetText(url);
                     Clipboard.SetContent(datapackage);
-                    Flower.PlayAnimation("\uE930", "已复制外部链接");
+                    Flower.Play("\uE930", "已复制外部链接");
                     break;
             }
 
@@ -467,7 +468,7 @@ namespace CC98
                 if (tag == "0")
                 {
                     await LoadTopicInfo();
-                    Flower.PlayAnimation("\uE930", "刷新标题栏成功");
+                    Flower.Play("\uE930", "刷新标题栏成功");
                 }
                 else if (tag == "1")
                 {
@@ -475,7 +476,7 @@ namespace CC98
                     var datapackage = new DataPackage();
                     datapackage.SetText(shareurl);
                     Clipboard.SetContent(datapackage);
-                    Flower.PlayAnimation("\uE930", "已复制帖子链接");
+                    Flower.Play("\uE930", "已复制帖子链接");
                 }
                 else if (tag == "2")
                 {
@@ -518,7 +519,7 @@ namespace CC98
             }
             topicInfo.IsFavorite = true;
             await LoadTopicInfo();
-            Flower.PlayAnimation("\uE930", "已收藏");
+            Flower.Play("\uE930", "已收藏");
         }
 
         private void Pause_Click(object sender, RoutedEventArgs e)
@@ -591,28 +592,6 @@ namespace CC98
             picviewer.Activate();
 
         }
-        private async void Person_ContextRequested(UIElement sender, ContextRequestedEventArgs args)
-        {
-            ProfileViewer.Target = sender as HyperlinkButton;
-            var h = sender as HyperlinkButton;
-            var t = h?.DataContext as Reply;
-            if (t == null||t.IsAnonymous) return;
-            string profileUrl = ApiEndpoints.User.UserProfile(t.IsMe, t.UserId??0);
-            var profileResult = await RequestSender.Fetch<UserInfo>(profileUrl);
-            if (!profileResult.IsSuccess || profileResult.Data == null)
-            {
-                return;
-            }
-            var data = profileResult.Data;
-            profile.Name = data.Name;
-            profile.Id = data.Id;
-            profile.Popularity = data.Popularity;
-            profile.FanCount = data.FanCount;
-            profile.PortraitUrl = data.SignatureCode;
-            profile.SignatureCode = UBBConverter.Convert(data.SignatureCode, true);
-            profile.PostCount = data.PostCount;
-            ProfileViewer.IsOpen = true;
-        }
 
 
 
@@ -628,13 +607,13 @@ namespace CC98
                     var pack = new DataPackage();
                     pack.SetText(reply.Content);
                     Clipboard.SetContent(pack);
-                    Flower.PlayAnimation("\uE930", "已复制为UBB代码");
+                    Flower.Play("\uE930", "已复制为UBB代码");
                     break;
                 case "MD":
                     var _pack = new DataPackage();
                     _pack.SetText(UBBConverter.Convert(reply.Content, true));
                     Clipboard.SetContent(_pack);
-                    Flower.PlayAnimation("\uE930", "已复制为Markdown文本");
+                    Flower.Play("\uE930", "已复制为Markdown文本");
                     break;
                 case "QUOTE":
                     if (reply.Content != null)
@@ -689,7 +668,7 @@ namespace CC98
             if (!result.IsSuccess)
             {
                 //
-                Flower.PlayAnimation("\uEA39", "操作失败");
+                Flower.Play("\uEA39", "操作失败");
                 return;
             }
             var newStateUrl = ApiEndpoints.Post.ReactionState(postId);
@@ -697,7 +676,7 @@ namespace CC98
             if (!newStateResult.IsSuccess || newStateResult.Data == null)
             {
                 //
-                Flower.PlayAnimation("\uEA39", "获取赞踩数据失败");
+                Flower.Play("\uEA39", "获取赞踩数据失败");
                 return;
             }
             var newState = newStateResult.Data;
@@ -845,18 +824,48 @@ namespace CC98
                 var r = await RequestSender.SendVoteResult(ValidationHelper.GetValue(Set, "CurrentTopicId"), list);
                 if (r == "1")
                 {
-                    Flower.PlayAnimation("\uE930", "投票完成");
+                    Flower.Play("\uE930", "投票完成");
                     await InitializeVote();
                 }
                 else
                 {
-                    Flower.PlayAnimation("\uEA39", "投票失败");
+                    Flower.Play("\uEA39", "投票失败");
                 }
             }
             else
             {
-                Flower.PlayAnimation("\uEA39", "选择至少一项");
+                Flower.Play("\uEA39", "选择至少一项");
             }
-        }        
+        }
+
+        private async void Person_ContextRequested(UIElement sender, ContextRequestedEventArgs args)
+        {
+            try
+            {
+                var h = sender as HyperlinkButton;
+                ProfileViewer.Target = h;
+                var t = h?.Tag as Reply;
+                if (t == null || t.IsAnonymous) return;
+                string profileUrl = ApiEndpoints.User.UserProfile(false, t.UserId ?? 0);
+                var profileResult = await RequestSender.Fetch<UserInfo>(profileUrl);
+                if (!profileResult.IsSuccess || profileResult.Data == null)
+                {
+                    return;
+                }
+                var data = profileResult.Data;
+                profile.Name = data.Name;
+                profile.Id = data.Id;
+                profile.Popularity = data.Popularity;
+                profile.FanCount = data.FanCount;
+                profile.PortraitUrl = data.PortraitUrl;
+                profile.SignatureCode = UBBConverter.Convert(data.SignatureCode, true);
+                profile.PostCount = data.PostCount;
+                ProfileViewer.IsOpen = true;
+            }
+            catch (Exception ex)
+            {
+                App.Logger.Write("Topic", "加载用户信息预览失败", ex.Message);
+            }
+        }
     }
 }

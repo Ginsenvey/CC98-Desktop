@@ -1,6 +1,7 @@
 ﻿using CC98.Kernel.ApiScope;
 using CC98.Kernel.Network;
 using CC98.Objects;
+using CC98.Services;
 using CommunityToolkit.WinUI.UI.Controls.TextToolbarSymbols;
 using FluentIcons.Common;
 using Microsoft.UI.Xaml.Controls;
@@ -181,12 +182,7 @@ public static class RequestSender
             return true;
         }
     }
-    public static async Task<bool> RemoveFavorite(string Pid)
-    {
-        string url = $"https://api.cc98.org/me/favorite/{Pid}";
-        var res = await LoginService.vpn.DeleteAsync(url);
-        return res.IsSuccessStatusCode;
-    }
+    
     public static async Task<string> SignIn()
     {
         string SignInUrl = "https://api.cc98.org/me/signin";
@@ -217,38 +213,7 @@ public static class RequestSender
         }
 
     }
-    public static async Task<string> SystemNotice(string type, string start)
-    {
-        string url = $"https://api.cc98.org/notification/{type}?from={start}&size=10";
-        var res = await LoginService.vpn.GetAsync(url);
-        return await ValidationHelper.AutoResponse(res);
-    }
-    public static async Task<bool> Like(string mode, string postid)
-    {
-        string url = $"https://api.cc98.org/post/{postid}/like";
-        var content = new StringContent(mode, Encoding.UTF8, "application/json");
-        var response = await LoginService.vpn.PutAsync(url, content);
-        try
-        {
-            if (response.StatusCode == System.Net.HttpStatusCode.OK)
-            {
-                return true;
-            }
-            else
-            {
-                return false;
-            }
-        }
-        catch
-        {
-            return false;
-        }
-    }
-    public static async Task<ApiResponse<ReactionState>> LikeState(int postId)
-    {
-        string url =ApiEndpoints.Post.ReactionState(postId);
-        return await Fetch<ReactionState>(url);
-    }
+    
     public static async Task<string> SendPost(string board_id, string content, string title, int content_type, bool notify_poster, int post_type, bool is_anonymous)
     {
         string url = "https://api.cc98.org/board/" + board_id + "/topic";
@@ -336,7 +301,7 @@ public static class RequestSender
         }
         catch
         {
-            ValidationHelper.Log("编辑回复失败", $"请求地址：{url}\r\n请求内容：{reply_text}");
+            //ValidationHelper.Log("编辑回复失败", $"请求地址：{url}\r\n请求内容：{reply_text}");
             return false;
         }
     }
@@ -380,35 +345,7 @@ public static class RequestSender
         }
     }
 
-    public static async Task<string> Follow(string mode, int id)
-    {
-        HttpResponseMessage res;
-        try
-        {
-            string url = $"https://api.cc98.org/me/followee/{id}";
-            if (mode == "0")//取消关注
-            {
-                res = await LoginService.vpn.DeleteAsync(url);
-            }
-            else
-            {
-                res = await LoginService.vpn.PutAsync(url, null);
-            }
-
-            if (res.StatusCode == HttpStatusCode.OK)
-            {
-                return "1";
-            }
-            else
-            {
-                return "0";
-            }
-        }
-        catch (Exception ex)
-        {
-            return $"2:{ex.Message}";
-        }
-    }
+    
     public static async Task<ApiResponse<string>> GetBoardTags(string bid)
     {
         List<string> tags = new();
@@ -418,41 +355,7 @@ public static class RequestSender
 }
 
 
-//将json字符串解析为目标对象,总是返回对象或者null。
-//要获取错误信息，请接收并检验RequestSender的返回值。解析器不会处理错误，所以输入解析器的字符串必须有效。
-public static class Deserializer
-{
-    //将文本转为JArray
-    
-    
-    public static Dictionary<string, object> ToDictionary(string text)//将本地缓存或者在线数据转化为字典。
-    {
-        if (!text.StartsWith("10") && (!text.StartsWith("404")))//10为文件系统错误类型。
-        {
-            try
-            {
-                var IndexContent = JsonSerializer.Deserialize<Dictionary<string, object>>(text);
-                if (IndexContent != null)
-                {
-                    return IndexContent;
-                }
-                else
-                {
-                    return null;
-                }
-            }
-            catch
-            {
-                return null;
-            }
-        }
-        else
-        {
-            return null;
-        }
-    }
-    
-}
+
 public static class ValidationHelper
 {
     public static async Task CopyStreamToRandomAccessStream(Stream input, IRandomAccessStream output)
@@ -536,53 +439,8 @@ public static class ValidationHelper
         }
         return "0";
     }
-    public static string JsonReader(string path)
-    {
-        if (File.Exists(path))
-        {
-            string content = File.ReadAllText(path);
-            if (!string.IsNullOrEmpty(content))
-            {
-                return content;
-            }
-            else if (content == null)
-            {
-                return "100:null";
-            }
-            else
-            {
-                return "100:空内容";
-            }
-        }
-        else
-        {
-            return "101:不存在的文件";
-        }
-
-    }
-
-    public static void JsonWritter(string json, string filename)
-    {
-        StorageFolder cacheFolder = ApplicationData.Current.LocalCacheFolder;
-        string path = cacheFolder.Path + "/" + filename;
-        File.WriteAllText(path, json);
-        //必须使用同步方法自动关闭流。否则，立刻进行读取将读取到空内容。
-    }
-    public static void Log(string description, string message)
-    {
-        var log = new Dictionary<string, object>()
-            {
-                {"描述",description},
-                {"详细信息",message},
-                {"时间",DateTime.Now},
-            };
-        string log_text = JsonSerializer.Serialize(log);
-        StorageFolder cacheFolder = ApplicationData.Current.LocalCacheFolder;
-        string path = cacheFolder.Path + "/" + "log.json";
-        string pre_log = JsonReader(path);
-        string new_log = pre_log + "\r\n" + log_text;
-        JsonWritter(new_log, "log.json");
-    }
+    
+    
     public static string GetKey(Dictionary<string, object> dic, string key)//值不可为"0".
     {
         if (dic == null) return "0";

@@ -276,14 +276,14 @@ namespace CC98
                         var _datapackage = new DataPackage();
                         _datapackage.SetText(url);
                         Clipboard.SetContent(_datapackage);
-                        Flower.PlayAnimation("\uE930", "已复制Bili外链");
+                        Flower.Play("\uE930", "已复制Bili外链");
                     }
                     break;
                 default://自动复制到用户剪切板
                     var datapackage = new DataPackage();
                     datapackage.SetText(url);
                     Clipboard.SetContent(datapackage);
-                    Flower.PlayAnimation("\uE930", "已复制外部链接");
+                    Flower.Play("\uE930", "已复制外部链接");
                     break;
             }
         }

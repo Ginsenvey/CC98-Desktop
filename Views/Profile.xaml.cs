@@ -117,7 +117,7 @@ namespace CC98
             var RecentTopicResult = await RequestSender.Fetch<List<SimpleTopicInfo>>(RecentTopicUrl);
             if (!RecentTopicResult.IsSuccess||RecentTopicResult.Data==null)
             {
-                Flower.PlayAnimation("\uE739", RecentTopicResult.Message);
+                Flower.Play("\uE739", RecentTopicResult.Message);
                 return;
             }
             var data=RecentTopicResult.Data;
@@ -229,14 +229,14 @@ namespace CC98
                 case "backlink":
                     if (result.Value == "bili")
                     {
-                        Flower.PlayAnimation("\uE930", "已复制Bili外链");
+                        Flower.Play("\uE930", "已复制Bili外链");
                     }
                     break;
                 default://自动复制到用户剪切板
                     var datapackage = new DataPackage();
                     datapackage.SetText(result.Value);
                     Clipboard.SetContent(datapackage);
-                    Flower.PlayAnimation("\uE930", "已复制外部链接");
+                    Flower.Play("\uE930", "已复制外部链接");
                     break;
             }
         }
@@ -273,20 +273,11 @@ namespace CC98
             Frame.Navigate(typeof(Message), param);
         }
 
-        private async void Follow_Click(object sender, RoutedEventArgs e)
+        private void Follow_Click(object sender, RoutedEventArgs e)
         {
             bool flag = profile.IsFollowing;
             string mode=  flag?"0":"1";
-            string restext = await RequestSender.Follow(mode, profile.Id);
-            if (restext == "1")
-            {
-                await LoadProfile();
-                Flower.PlayAnimation("\uE930", flag?"已取消关注":"已关注");
-            }
-            else
-            {
-                Flower.PlayAnimation("\uEA39", "操作失败");
-            }
+            
         }
     }
     

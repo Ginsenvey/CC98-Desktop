@@ -22,7 +22,7 @@
         <local:BoolToFollowTextConverter x:Key="FollowConverter"/>
     </Page.Resources>
     <Grid>
-        <ScrollViewer >
+        <ScrollViewer>
             <StackPanel Orientation="Vertical" Padding="15" Spacing="10">
                 <Grid  Height="230" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1" Padding="15" CornerRadius="5" x:Name="InfoContent">
                     <Grid.RowDefinitions>

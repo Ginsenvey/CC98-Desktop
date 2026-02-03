@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using Windows.Security.Credentials;
 using System.Linq;
-namespace CC98.Kernel;
+namespace CC98.Services;
 
 /// <summary>
 /// 本地化密码管理

@@ -21,6 +21,8 @@ using CC98.Kernel;
 using CC98.Kernel.ApiScope;
 using System.Text.Json;
 using DevWinUI;
+using CC98.Services.Extensions;
+using CC98.Objects;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -33,17 +35,12 @@ namespace CC98
     public sealed partial class Section : Page
     {
         public ApplicationDataContainer Set=ApplicationData.Current.LocalSettings;
-        public ObservableCollection<SectionInfo> allSections;
+        public ObservableCollection<SectionInfo> allSections=[];
+        public BoardSectionManager manager = BoardSectionManager.Instance;
         public Section()
         {
             this.InitializeComponent();
-            allSections = new ObservableCollection<SectionInfo>()
-            {
-                
-            };
-            SectionPresenter.ItemsSource = allSections;
-            
-            GetAllSection();
+            InitializeBoardSectionsAsync();
             LoadSet();
         }
         private void LoadSet()
@@ -54,50 +51,31 @@ namespace CC98
                 //ThemePresenter.Source = new BitmapImage(new Uri(_Theme));
             }
         }
-        private async Task<bool> FetchSection()
+        private async void InitializeBoardSectionsAsync()
         {
-            string url = ApiEndpoints.Board.AllBoards();
-            var res = await RequestSender.Fetch<string>(url);
-            if (res.IsNotValid)
+            // 检查缓存是否存在
+            bool hasCache =  manager.HasValidCacheAsync();
+
+            if (!hasCache)
             {
-                Flower.PlayAnimation("\uEA39", "更新首页缓存失败");
-                return false;
+                // 没有缓存，立即刷新
+                await manager.RefreshFromApiAsync(ApiEndpoints.Forum.AllBoards());
             }
-            var data = res.Data;
-            ValidationHelper.JsonWritter(data, "SectionCache.json");
-            return true;
-        }
-        private async void GetAllSection()
-        {
-            StorageFolder cacheFolder = ApplicationData.Current.LocalCacheFolder;
-            string path = cacheFolder.Path + "/" + "SectionCache.json";
-            string SectionText = ValidationHelper.JsonReader(path);
-            if (!SectionText.StartsWith("10"))
-            {
-                LoadSection(SectionText);
-            }
-            else
-            {
-                if (await FetchSection())
-                {
-                    LoadSection(SectionText);
-                }
-            }
-            
+            await LoadSection();
         }
 
         private void BoardButton_Click(object sender, RoutedEventArgs e)
         {
             var h = sender as HyperlinkButton;
-            var tag = h.Tag as string;//当前绑定状态下，h没有DataContext.只能使用tag.
+            var tag = h?.Tag as string;//当前绑定状态下，h没有DataContext.只能使用tag.
             if(tag != null)
             {
-                Frame.Navigate(typeof(Board),tag); 
+                Frame.Navigate(typeof(Board),tag.ToInt()); 
             }
         }
-        private void LoadSection(string sectionJson)
+        private async Task LoadSection()
         {
-            var data = JsonSerializer.Deserialize<List<SectionInfo>>(sectionJson);
+            var data = await manager.LoadFromCacheAsync();
             if (data != null)
             {
                 allSections.AddRange(data);
@@ -106,27 +84,13 @@ namespace CC98
 
         private async void RefreshSection_Click(object sender, RoutedEventArgs e)
         {
-            if (await FetchSection())
+            bool success = await manager.RefreshFromApiAsync(ApiEndpoints.Forum.AllBoards());
+
+            if (success)
             {
-                StorageFolder cacheFolder = ApplicationData.Current.LocalCacheFolder;
-                string path = cacheFolder.Path + "/" + "SectionCache.json";
-                string SectionText = ValidationHelper.JsonReader(path);
-                if (!SectionText.StartsWith("10"))
-                {
-                    LoadSection(SectionText);
-                    Flower.PlayAnimation("\uE930", "刷新版面成功");
-                }
+                // 刷新成功后重新加载数据
+                await LoadSection();
             }
         }
-    }
-    public class SectionInfo
-    {
-        public string SectionName { get; set; } = string.Empty;
-        public List<BoardInfo> Boards {  get; set; }= new List<BoardInfo>();
-    }
-    public class BoardInfo
-    {
-        public string BoardName { get; set; }=string.Empty;
-        public int BoardId { get; set; }
     }
 }

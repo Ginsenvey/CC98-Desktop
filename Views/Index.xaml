@@ -13,11 +13,11 @@
     xmlns:cv="using:CC98.Services.Converters"
     xmlns:tool="using:CommunityToolkit.WinUI.Controls"
     
-    Background="{ThemeResource DesktopAcrylicTransparentBrush}">
+    Background="{ThemeResource CardGradient1Brush}">
     <Page.Resources>
         <cv:HexToBrushConverter x:Key="HexToColorBrush"/>
         <DataTemplate x:Key="Presenter" x:DataType="obj:IndexTopic">
-            <HyperlinkButton  PointerEntered="ContentCard_PointerEntered" PointerExited="ContentCard_PointerExited" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch" x:Name="TopicItem" Click="TopicItem_Click" Tag="{x:Bind TopicId}" CornerRadius="0" Height="53" >
+            <HyperlinkButton  PointerEntered="ContentCard_PointerEntered" PointerExited="ContentCard_PointerExited" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch" x:Name="TopicItem" Click="TopicItem_Click" Tag="{x:Bind Id}" CornerRadius="0" Height="53" >
                     <HyperlinkButton.RenderTransform>
                         <TranslateTransform x:Name="CardTranslate" X="0" Y="0"/>
                     </HyperlinkButton.RenderTransform> 
@@ -57,7 +57,7 @@
             <RowDefinition Height="6*"></RowDefinition>
         </Grid.RowDefinitions>
 
-        <FlipView  Grid.Row="0"  x:Name="RecomList" VerticalAlignment="Top" CornerRadius="6">
+        <FlipView  Grid.Row="0"  x:Name="RecomList" ItemsSource="{x:Bind flipTopics}" VerticalAlignment="Top" CornerRadius="6">
             <FlipView.Background>
                 <ImageBrush x:Name="ThemePresenter" Opacity="0.4" Stretch="UniformToFill"></ImageBrush>
             </FlipView.Background>

@@ -1,5 +1,6 @@
 using CC98.Kernel;
 using CC98.Kernel.OpenID;
+using CC98.Services;
 using DevWinUI;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
@@ -183,13 +184,13 @@ namespace CC98
                     Application.Current.Exit();
                     break;
                 case "6"://未启用VPN
-                    Flower.PlayAnimation("\uEA39", "未启用VPN");
+                    Flower.Play("\uEA39", "未启用VPN");
                     GuidePane.Visibility=Visibility.Collapsed;
                     LoginPane.Visibility = Visibility.Collapsed;
                     VpnPane.Visibility = Visibility.Visible;
                     break;
                 default:
-                    Flower.PlayAnimation("\uEA39", status);
+                    Flower.Play("\uEA39", status);
                     break;
             }    
         }
@@ -211,7 +212,7 @@ namespace CC98
         {
             if (ValidationHelper.GetValue(Set, "IsVpnUsable") == "1")
             {
-                Flower.PlayAnimation("\uE930", "已配置VPN，无需其他操作");
+                Flower.Play("\uE930", "已配置VPN，无需其他操作");
                 return;
             }
             GuidePane.Visibility= Visibility.Collapsed;
@@ -234,7 +235,7 @@ namespace CC98
                 var r = await SetupVPN(idbox.Text, passbox.Password);
                 if (r == "1")
                 {
-                    Flower.PlayAnimation("\uE930", "已保存VPN凭据");
+                    Flower.Play("\uE930", "已保存VPN凭据");
                     Link.IsChecked = false;
                     if (mode == 0)
                     {
@@ -257,13 +258,13 @@ namespace CC98
                 {
                     Link.IsChecked = false;
                     Link.ShowError = true;
-                    Flower.PlayAnimation("\uEA39", r);
+                    Flower.Play("\uEA39", r);
                 }
 
             }
             else
             {
-                Flower.PlayAnimation("\uEA39", "凭据不完整");
+                Flower.Play("\uEA39", "凭据不完整");
             }
         }
         private async Task<string> SetupVPN(string id,string pass)
@@ -318,13 +319,13 @@ namespace CC98
                         PasswordLoginPane.Visibility = Visibility.Visible;
                         break;
                     case "6"://未启用VPN
-                        Flower.PlayAnimation("\uEA39", "未启用VPN");
+                        Flower.Play("\uEA39", "未启用VPN");
                         GuidePane.Visibility = Visibility.Collapsed;
                         LoginPane.Visibility = Visibility.Collapsed;
                         VpnPane.Visibility = Visibility.Visible;
                         break;
                     default:
-                        Flower.PlayAnimation("\uEA39", status);
+                        Flower.Play("\uEA39", status);
                         break;
                 }
             }
@@ -356,7 +357,7 @@ namespace CC98
             }
             else
             {
-                Flower.PlayAnimation("\uEA39", "凭据不完整");
+                Flower.Play("\uEA39", "凭据不完整");
             }
         }
         
@@ -404,7 +405,7 @@ namespace CC98
             {
                 LoginWithPassword.IsChecked = false;
                 LoginWithPassword.ShowError = true;
-                Flower.PlayAnimation("\uEA39", "凭据不正确");
+                Flower.Play("\uEA39", "凭据不正确");
                 Set.Values["IsActive"] = "0";
             }
         }
@@ -413,7 +414,7 @@ namespace CC98
             LoginWithPassword.IsChecked = false;
             LoginWithPassword.ShowError = true;
             Set.Values["IsActive"] = "0";
-            Flower.PlayAnimation("\uEA39", message);
+            Flower.Play("\uEA39", message);
             PasswordLoginPane.Visibility = Visibility.Collapsed;
             VpnPane.Visibility = Visibility.Collapsed;
             GuidePane.Visibility = Visibility.Collapsed;

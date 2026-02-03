@@ -10,14 +10,15 @@
     xmlns:tool="using:CommunityToolkit.WinUI.UI.Controls"
     xmlns:ic="using:FluentIcons.WinUI"
     xmlns:dev="using:DevWinUI"
+    xmlns:obj="using:CC98.Objects"
     Background="{ThemeResource DesktopAcrylicTransparentBrush}">
     <Page.Resources>
-        <DataTemplate x:Key="BoardCase" x:DataType="local:BoardInfo">
-            <HyperlinkButton Content="{x:Bind BoardName}"  Padding="8" Tag="{x:Bind BoardId}"  Click="BoardButton_Click" x:Name="BoardButton" BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}" BorderThickness="1" Margin="10,0,10,10"></HyperlinkButton>
+        <DataTemplate x:Key="BoardCase" x:DataType="obj:BoardInfo">
+            <HyperlinkButton Content="{x:Bind Name}"  Padding="8" Tag="{x:Bind Id}"  Click="BoardButton_Click" x:Name="BoardButton" BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}" BorderThickness="1" Margin="10,0,10,10"></HyperlinkButton>
         </DataTemplate>
-        <DataTemplate x:Key="SectionCase" x:DataType="local:SectionInfo">
+        <DataTemplate x:Key="SectionCase" x:DataType="obj:SectionInfo">
             <StackPanel Orientation="Vertical" CornerRadius="5" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1" Margin="10,10,10,10" Padding="10">
-                <TextBlock Text="{x:Bind SectionName}"  FontWeight="Bold" FontSize="16" Margin="12,0,12,12"></TextBlock>
+                <TextBlock Text="{x:Bind Name}"  FontWeight="Bold" FontSize="16" Margin="12,0,12,12"></TextBlock>
                 <ItemsRepeater ItemTemplate="{StaticResource  BoardCase}" ItemsSource="{x:Bind Boards}">
                     <ItemsRepeater.Layout>
                         <UniformGridLayout ItemsJustification="Start" ItemsStretch="Fill"></UniformGridLayout>
@@ -26,22 +27,24 @@
             </StackPanel>
         </DataTemplate>
     </Page.Resources>
+
     <Grid>
-        <Grid.RowDefinitions>
-            <RowDefinition Height="*" MinHeight="100" ></RowDefinition>
-            <RowDefinition Height="6*"></RowDefinition>
-        </Grid.RowDefinitions>
-        <Grid Grid.Row="0" >
-            
+        <dev:Stars></dev:Stars>
+        <Grid Background="{ThemeResource CardGradient2Brush}" Padding="15">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"></RowDefinition>
+                <RowDefinition Height="*"></RowDefinition>
+            </Grid.RowDefinitions>
+            <TextBlock Grid.Row="0" Text="版面" FontWeight="Bold" FontSize="22" Margin="10"></TextBlock>
+            <ScrollViewer Grid.Row="1">
+                <ItemsRepeater x:Name="SectionPresenter" ItemsSource="{x:Bind allSections}" ItemTemplate="{StaticResource SectionCase}">
+                    <ItemsRepeater.Layout>
+                        <StackLayout Orientation="Vertical"></StackLayout>
+                    </ItemsRepeater.Layout>
+                </ItemsRepeater>
+            </ScrollViewer>
+            <local:InfoFlower Grid.Row="0" Grid.RowSpan="2" x:Name="Flower"></local:InfoFlower>
         </Grid>
-        
-        <ScrollViewer Grid.Row="1">
-            <ItemsRepeater x:Name="SectionPresenter"  ItemTemplate="{StaticResource SectionCase}">
-                <ItemsRepeater.Layout>
-                    <StackLayout Orientation="Vertical"></StackLayout>
-                </ItemsRepeater.Layout>
-            </ItemsRepeater>
-        </ScrollViewer>
-        <local:InfoFlower Grid.Row="0" Grid.RowSpan="2" x:Name="Flower"></local:InfoFlower>
     </Grid>
+    
 </Page>

@@ -18,8 +18,8 @@
         <SelectorBar Grid.Row="0" HorizontalAlignment="Left" SelectionChanged="NaviBar_SelectionChanged" x:Name="NaviBar">
             <SelectorBarItem Text="私信" x:Name="ChatMsg" Tag="0"></SelectorBarItem>
             <SelectorBarItem Text="系统通知" x:Name="SystemNotice" Tag="1"></SelectorBarItem>
-            <SelectorBarItem Text="回复" x:Name="ReplyTome" Tag="2"></SelectorBarItem>
-            <SelectorBarItem Text="@ 我的" Tag="3" IsEnabled="False"></SelectorBarItem>
+            <SelectorBarItem Text="回复"  Tag="2"></SelectorBarItem>
+            <SelectorBarItem Text="@我的" Tag="3"></SelectorBarItem>
         </SelectorBar>
         
         <Grid  Grid.Row="1" CornerRadius="6" BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}" BorderThickness="1">

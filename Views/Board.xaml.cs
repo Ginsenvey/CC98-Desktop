@@ -85,7 +85,7 @@ namespace CC98
             var boardDataResult = await RequestSender.Fetch<BoardData>(boardDataUrl);
             if (!boardDataResult.IsSuccess || boardDataResult.Data == null) 
             {
-                Flower.PlayAnimation("\uEA39", boardDataResult.Message);
+                Flower.Play("\uEA39", boardDataResult.Message);
                 return;
             }
             var data= boardDataResult.Data;
@@ -106,7 +106,7 @@ namespace CC98
                 var result = await RequestSender.Fetch<BoardBest>(topicUrl);
                 if (result.IsNotValid)
                 {
-                    Flower.PlayAnimation("\uEA39", result.Message);
+                    Flower.Play("\uEA39", result.Message);
                     return;
                 }
                 var bests= result.Data?.Topics;
@@ -115,7 +115,7 @@ namespace CC98
             var topicResult = await RequestSender.Fetch<List<SimpleTopicInfo>>(topicUrl);
             if (topicResult.IsNotValid)
             {
-                Flower.PlayAnimation("\uEA39", topicResult.Message);
+                Flower.Play("\uEA39", topicResult.Message);
                 return;
             }
             var data= topicResult.Data;
@@ -218,14 +218,14 @@ namespace CC98
                 case "backlink":
                     if (result.Value == "bili")
                     {
-                        Flower.PlayAnimation("\uE930", "已复制Bili外链");
+                        Flower.Play("\uE930", "已复制Bili外链");
                     }
                     break;
                 default://自动复制到用户剪切板
                     var datapackage = new DataPackage();
                     datapackage.SetText(url);
                     Clipboard.SetContent(datapackage);
-                    Flower.PlayAnimation("\uE930", "已复制外部链接");
+                    Flower.Play("\uE930", "已复制外部链接");
                     break;
             }
 

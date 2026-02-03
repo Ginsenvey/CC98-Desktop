@@ -141,7 +141,7 @@ namespace CC98
                 Sort_Method = "收藏顺序";
                 SortIcon.Symbol = FluentIcons.Common.Symbol.StarAdd;
             }
-            Flower.PlayAnimation("\uE8CB", "切换为" + Sort_Method + "排序");
+            Flower.Play("\uE8CB", "切换为" + Sort_Method + "排序");
         }
 
         private void FavoriteBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -173,11 +173,11 @@ namespace CC98
                         history = 0;
                         sortId = 0;
                         GetFavoriteTopic();
-                        Flower.PlayAnimation("\uE930", "已取消收藏");
+                        Flower.Play("\uE930", "已取消收藏");
                     }
                     else
                     {
-                        Flower.PlayAnimation("\uEA39", "取消收藏失败");
+                        Flower.Play("\uEA39", "取消收藏失败");
                     }
                 }
             }

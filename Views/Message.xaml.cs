@@ -53,7 +53,7 @@ namespace CC98
             if (bar != null)
             {
                 var _tag = bar.Tag;
-                if(_tag is string tag)
+                if (_tag is string tag)
                 {
                     if (tag == "0")//私信
                     {
@@ -67,7 +67,11 @@ namespace CC98
                     {
                         MsgFrame.Navigate(typeof(NoticePage), NoticeType.Reply);
                     }
-                } 
+                    else if (tag == "3")//提到我的
+                    {
+                        MsgFrame.Navigate(typeof(NoticePage), NoticeType.At);
+                    }
+                }
                 
             }
         }

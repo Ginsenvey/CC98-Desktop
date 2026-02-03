@@ -44,7 +44,7 @@ namespace CC98.Kernel.UserExperience//用户体验模型，包括:版面图标�
         {
             {758,Symbol.LeafOne},
             {182,Symbol.Heart },
-            {184,Symbol.ChatHelp },
+            {184,Symbol.ChatHelp},
             {68,Symbol.Library },
             {581,Symbol.BeakerEdit },
             {102,Symbol.HatGraduation },
@@ -273,54 +273,7 @@ namespace CC98.Kernel.UserExperience//用户体验模型，包括:版面图标�
             return (R, G, B);
         }
     }
-    public static class CustomEmoji
-    {
-        public static void SaveEmoji(string url)
-        {
-            var list = GetAllEmoji();
-            list.Add(url);
-            string content=JsonSerializer.Serialize(list);
-            string path = "CustomEmoji.json";
-            ValidationHelper.JsonWritter(content,path);
-        }
-        public static List<string> GetAllEmoji()
-        {
-            StorageFolder Folder = ApplicationData.Current.LocalCacheFolder;
-            string path = Folder.Path + "/" + "CustomEmoji.json";
-            string content = ValidationHelper.JsonReader(path);
-            if (!content.StartsWith("10:"))
-            {
-                try
-                {
-                    var list = JsonSerializer.Deserialize<List<string>>(content);
-                    if (list != null)
-                    {
-                        return list;
-                    }
-                        
-                }
-                catch { }
-            }
-            return new List<string>();
-        }
-        public static void DeleteEmoji(int index)
-        {
-            var list = GetAllEmoji();
-            if (list.Count > index)
-            {
-                list.RemoveAt(index);
-            }
-            string content = JsonSerializer.Serialize(list);
-            string path = "CustomEmoji.json";
-            ValidationHelper.JsonWritter(content, path);
-        }
-        public static void ClearAllEmoji()
-        {
-            string content = JsonSerializer.Serialize(new List<string>());
-            string path = "CustomEmoji.json";
-            ValidationHelper.JsonWritter(content, path);
-        }
-    }
+    
 
     
     

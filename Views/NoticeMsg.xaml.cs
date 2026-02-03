@@ -7,6 +7,8 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Linq;
+using System.Threading.Tasks;
 
 
 
@@ -17,8 +19,7 @@ namespace CC98
     {
         public ObservableCollection<Notice> notices = new();
         public NoticeType type = NoticeType.System;
-        public int currentPage = 0;
-        public int pageSize = 10;
+        public Increment increment = new(); 
         public string GetTypeName(NoticeType type) => type switch
         { 
             NoticeType.System=>"system",
@@ -29,38 +30,85 @@ namespace CC98
         public NoticePage()
         {
             InitializeComponent();
-            NoticeRepeater.ItemsSource = notices;
         }
-        protected override void OnNavigatedTo(Microsoft.UI.Xaml.Navigation.NavigationEventArgs e)
+        protected override async void OnNavigatedTo(Microsoft.UI.Xaml.Navigation.NavigationEventArgs e)
         {
             base.OnNavigatedTo(e);
             var args = e.TryGetParameter<NoticeType>();
             type = args;
-            GetNotice();
+            await GetNotice();
         }
         
         //At和系统通知只显示最新10条
-        private async void GetNotice()
+        private async Task<bool> GetNotice()
         {
-            notices.Clear();
-            var url = ApiEndpoints.User.SystemNotice(GetTypeName(type), currentPage * pageSize);
+            var url = ApiEndpoints.User.SystemNotice(GetTypeName(type), increment.startIndex);
             var result = await RequestSender.Fetch<List<Notice>>(url);
             if (!result.IsSuccess || result.Data == null)
             {
                 //
-                ValidationHelper.Log("加载数据失败", result.Message);
-                return;
+                Flower.Play(FlowStatus.Fail, "加载通知失败");
+                App.Logger.Write("NoticeMsg","加载通知失败", result.Message);
+                return false;
             }
             var data= result.Data;
-            notices.AddRange(data);      
+            increment.hasMore = data.Count == increment.pageSize;
+            if (!increment.hasMore)
+            {
+                Flower.Play(FlowStatus.Info, "没有更多通知了");
+            }
+            if (type == NoticeType.Reply ||type==NoticeType.At)
+            {
+                var topicIds = data.Where(n => n.TopicId.HasValue).Select(n => n.TopicId!.Value).Distinct().ToList();
+                var topicInfos = await GetBasicTopicInfo(topicIds);
+                foreach (var notice in data)
+                {
+                    var info= topicInfos.FirstOrDefault(t => t.Id == notice.TopicId);
+                    if (info != null)
+                    {
+                        string operation = type == NoticeType.Reply ? "回复" : "@";
+                        string content=$"在帖子《{info.Title}》{operation}了你。";
+                        notice.Content = content;
+                    }
+                }
+            }
+            notices.AddRange(data);
+            return true;
+        }
+
+        
+
+        private async Task<List<BasicTopicInfo>> GetBasicTopicInfo(List<int> topicIds)
+        {
+            var param= string.Join("&", topicIds.Select(id => $"id={id}"));
+            var url=ApiEndpoints.Topic.BasicTopicInfoList(param);
+            var result = await RequestSender.Fetch<List<BasicTopicInfo>>(url);
+            if (!result.IsSuccess || result.Data == null)
+            {
+                //
+                Flower.Play(FlowStatus.Fail, "获取帖子基本信息失败");
+                App.Logger.Write("通知","获取帖子基本信息失败", result.Message);
+                return [];
+            }
+            var data= result.Data;
+            return data;
+        }
+
+        private async void NoticeRepeater_ElementPrepared(ItemsRepeater sender, ItemsRepeaterElementPreparedEventArgs args)
+        {
+            await increment.LoadMore(args.Index, GetNotice);
         }
 
         private void NoticeCard_Click(object sender, RoutedEventArgs e)
         {
             var h = sender as HyperlinkButton;
-            var n=h?.DataContext as Notice;
+            var n = h?.DataContext as Notice;
             if (n == null) return;
             if (n.TopicId is not int topicId || n.PostBasicInfo == null) return;
+            if (n.PostBasicInfo.IsDeleted) 
+            { 
+                Flower.Play(FlowStatus.Info, "该帖子已被删除");
+            };
             if ((App.Current as App).m_window is MainWindow mainwindow)
             {
                 var param = new TopicNavigationInfo

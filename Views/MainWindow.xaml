@@ -13,6 +13,7 @@
     xmlns:ic="using:FluentIcons.WinUI"
     xmlns:obj="using:CC98.Objects"
     xmlns:cv="using:CC98.Services.Converters"
+    xmlns:sv="using:CC98.Services"
     SystemBackdrop="{ThemeResource AcrylicBackgroundFillColorDefaultBackdrop}">
     
     <Grid x:Name="RootGrid">
@@ -134,7 +135,7 @@
                         </StackPanel>
                     </NavigationViewItem>
                 </DataTemplate>
-                <local:NavigationTemplateSelector 
+                <sv:NavigationTemplateSelector 
             x:Key="TemplateSelector"
             GroupTemplate="{StaticResource GroupTemplate}"
             PinnedItemTemplate="{StaticResource PinnedItemTemplate}"

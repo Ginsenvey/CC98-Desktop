@@ -7,6 +7,8 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Threading.Tasks;
 using System;
+using CC98.Services;
+using System.Text.Json.Serialization;
 
 namespace CC98.Kernel;
 
@@ -33,14 +35,11 @@ public static class LoginService
     }
     public static async Task<string> OAuth(string verify, string code)
     {
-        //此处由于CC98后台原因，上传了secret。实际上是违背OIDC原则的，如果后台修正了问题，请去掉secret。
-        //如果需要secret，那么下面的刷新令牌也需要secret。
         string url = "https://openid.cc98.org/connect/token";
         var data = new Dictionary<string, string>()
             {
                 {"grant_type","authorization_code" },
-                {"client_id","d47a2448-779f-42f3-164f-08dd8896bbe5" },
-                {"client_secret","2e42f1b0-aa2b-4ea6-833e-4685f7d688e4" },
+                {"client_id","d47a2448-779f-42f3-164f-08dd8896bbe5" },   
                 {"redirect_uri","cc98://callback"},
                 {"code_verifier",verify },
                 {"code",code }
@@ -50,9 +49,9 @@ public static class LoginService
         return await ValidationHelper.AutoResponse(res);
     }
     //IsPassWordLogin:是否由密码登录
-    public static async Task<AuthorizeResult> GetNewToken(string RefreshToken, bool IsPassWordLogin)
+    public static async Task<AuthorizeResult?> GetNewToken(string RefreshToken, bool IsPassWordLogin)
     {
-        string LoginUrl = "https://openid.cc98.org/connect/token";
+        string tokenUrl = ApiEndpoints.OpenID.GetTokenUrl();
         Dictionary<string, string> data;
         if (IsPassWordLogin)
         {
@@ -69,7 +68,6 @@ public static class LoginService
             data = new Dictionary<string, string>()
                 {
                     {"client_id","d47a2448-779f-42f3-164f-08dd8896bbe5" },
-                    {"client_secret","2e42f1b0-aa2b-4ea6-833e-4685f7d688e4" },
                     {"grant_type" ,"refresh_token"},
                     {"refresh_token",RefreshToken },
                 };
@@ -79,31 +77,32 @@ public static class LoginService
         var PostData = new FormUrlEncodedContent(data);
         try
         {
-            var response = await vpn.PostAsync(LoginUrl, PostData);
+            var response = await vpn.PostAsync(tokenUrl, PostData);
             string NewAccessText = await response.Content.ReadAsStringAsync();
             if (response.StatusCode == HttpStatusCode.OK)
             {
+
                 var js = Deserializer.ToDictionary(NewAccessText);
                 if (js != null)
                 {
                     string access = ValidationHelper.GetKey(js, "access_token");
                     string refresh = ValidationHelper.GetKey(js, "refresh_token");//密码登陆时返回“0”
-                    return new AuthorizeResult { StatusCode = "1", Access = access, Refresh = refresh, Message = "刷新令牌成功" };
+                    return new AuthorizeResult { StatusCode = "1", AccessToken = access, RefreshToken = refresh, Message = "刷新令牌成功" };
                 }
                 else
                 {
-                    return new AuthorizeResult { StatusCode = "0", Access = "", Refresh = "", Message = NewAccessText };//返回值不是字典;
+                    return new AuthorizeResult { StatusCode = "0", AccessToken = "", RefreshToken = "", Message = NewAccessText };//返回值不是字典;
                 }
             }
             else//令牌过期或者次数超限时状态码不是OK
             {
-                return new AuthorizeResult { StatusCode = "2", Access = "", Refresh = "", Message = NewAccessText };//令牌作废
+                return new AuthorizeResult { StatusCode = "2", AccessToken = "", RefreshToken = "", Message = NewAccessText };//令牌作废
             }
 
         }
         catch (Exception ex)
         {
-            return new AuthorizeResult { StatusCode = "3", Access = "", Refresh = "", Message = ex.Message };//无网络等
+            return new AuthorizeResult { StatusCode = "3", AccessToken = "", RefreshToken = "", Message = ex.Message };//无网络等
         }
     }
 
@@ -115,26 +114,24 @@ public static class LoginService
         string rft = PasswordManager.RetrievePassword("Refresh");
         if (!string.IsNullOrEmpty(rft))
         {
-            var token = await LoginService.GetNewToken(rft, mode);
-            if (token.StatusCode == "1")
+            var result = await LoginService.GetNewToken(rft, mode);
+            if (result == null) return "0:请求失败";
+            if (result.IsValid)
             {
-                PasswordManager.SavePassword(token.Access, "Access");
+                PasswordManager.SavePassword(result.AccessToken, "Access");
                 if (!mode)
                 {
                     //密码登录使用不变刷新令牌
-                    PasswordManager.SavePassword(token.Refresh, "Refresh");
+                    PasswordManager.SavePassword(result.RefreshToken, "Refresh");
                 }
-                LoginService.vpn.client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token.Access);
+                LoginService.vpn.client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", result.AccessToken);
                 return "1";
 
             }
-            else if (token.StatusCode == "2")//返回了错误而不是令牌，一般是失效
-            {
-                return $"2:{token.Message}";//检测到此问题时，必须弹出登录
-            }
+            //else(result.StatusCode == "2")//返回了错误而不是令牌，一般是失效
             else
             {
-                return $"0:{token.Message}";
+                return $"2:{result.Message}";//检测到此问题时，必须弹出登录
             }
         }
         else
@@ -148,8 +145,12 @@ public static class LoginService
 
 public class AuthorizeResult
 {
-    public required string StatusCode { get; set; }
-    public required string Refresh { get; set; }
-    public required string Access { get; set; }
-    public required string Message { get; set; }
+    //此处判断令牌合法的逻辑应该加强
+    public bool IsValid => RefreshToken!=null&&AccessToken!=null;
+    [JsonPropertyName("refresh_token")]
+    public string? RefreshToken { get; set; }
+    [JsonPropertyName("access_token")]
+    public string? AccessToken { get; set; }
+    [JsonIgnore]
+    public string Message { get; set; }=string.Empty;
 }
