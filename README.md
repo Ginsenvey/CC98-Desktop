@@ -1,4 +1,4 @@
- # CC98 Desktop
+# CC98 Desktop
 
 `CC98 桌面版` 是CC98跨平台计划的一部分。 
 
@@ -72,8 +72,9 @@
 你也可以克隆本应用仓库，自由修改和编译新的分支。不过，在分发时，应当告知所有的改动。  
 
 ##### 设置开发环境
-1. 确保您安装了Windows SDK 10.0.0.19041
+1. 下载Visual Studio 2022及以上; 在工作负载中，安装Windows SDK 10.0.0.19041
 2. 本应用使用了[CommunityToolKit中的实验性功能](https://github.com/CommunityToolkit/Labs-Windows)，请参考[Toolkit Labs](https://github.com/CommunityToolkit/Windows/wiki/Preview-Packages)的wiki将Toolkit Labs添加至Nuget的Package Sources。
+3. 选择Release分支进行生成。Dev分支中包含未完成的功能和未知问题。
 
 **开放源代码库**  
   
