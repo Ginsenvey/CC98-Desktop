@@ -12,6 +12,8 @@ using System.Threading.Tasks;
 using Windows.Graphics;
 using Windows.Storage;
 using Windows.System;
+using System.Text.Json;
+using CC98.Objects;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -352,69 +354,58 @@ namespace CC98
             if (!string.IsNullOrEmpty(ccidbox.Text) && !string.IsNullOrEmpty(ccpassbox.Password))
             {
                 LoginWithPassword.IsChecked = true;
-                var r = await LoginService.LoginAsync(ccidbox.Text, ccpassbox.Password);
-                Auth(r);
+                var result = await LoginService.LoginAsync(ccidbox.Text, ccpassbox.Password);
+                if (!result.IsSuccess)
+                {
+                    //
+                    Flower.Play(FlowStatus.Fail,result.Message);
+                    return;
+                }
+                var token = result.Data;
+                if (token == null)
+                {
+                    //
+                    Flower.Play(FlowStatus.Fail, "发生错误。请报告开发者");
+                    return;
+                }
+                if (token.IsValid)
+                {
+                    InjectToken(token);
+                }
+                else
+                {
+                    LoginWithPassword.IsChecked = false;
+                    LoginWithPassword.ShowError = true;
+                    Flower.Play(FlowStatus.Fail, token.Message);
+                    Set.Values["IsActive"] = "0";
+                }
             }
             else
             {
-                Flower.Play("\uEA39", "凭据不完整");
+                Flower.Play(FlowStatus.Info, "凭据不完整");
             }
         }
         
-        private void Auth(string re)
+        private void InjectToken(AuthorizeResult result)
         {
-            if (re.Contains("access_token"))
+            //在注入之前，必须确认IsValid==true
+            PasswordManager.SavePassword(result.AccessToken, "Access");
+            PasswordManager.SavePassword(result.RefreshToken, "Refresh");
+            LoginWithPassword.IsChecked = false;
+            Set.Values["IsActive"] = "2";
+            var window = new MainWindow();
+            window.Activate();
+            this.DispatcherQueue.TryEnqueue(() =>
             {
-                try
-                {
-                    var js = Deserializer.ToDictionary(re);
-                    if (js != null)
-                    {
-                        string access = ValidationHelper.GetKey(js, "access_token");
-                        string refresh = ValidationHelper.GetKey(js, "refresh_token");
-                        if (access != "0" && refresh != "0")
-                        {
-                            PasswordManager.SavePassword(access, "Access");
-                            PasswordManager.SavePassword(refresh, "Refresh");
-                            LoginWithPassword.IsChecked = false;
-                            Set.Values["IsActive"] = "2";
-                            var window = new MainWindow();
-                            window.Activate();
-                            this.DispatcherQueue.TryEnqueue(() =>
-                            {
-                                this.Close();
-                            });
-                        }
-                        else
-                        {                            
-                            //不应存在此情况
-                            HandleError("出错。请报告开发者");
-                        }
-                    }
-                    else
-                    {
-                        HandleError("登录失败:无法解析令牌");
-                    }
-                }
-                catch(Exception ex)//解析错误，凭据处理错误
-                {
-                    HandleError(ex.Message);
-                }
-            }
-            else//未返回有效凭据
-            {
-                LoginWithPassword.IsChecked = false;
-                LoginWithPassword.ShowError = true;
-                Flower.Play("\uEA39", "凭据不正确");
-                Set.Values["IsActive"] = "0";
-            }
+                this.Close();
+            });
         }
         private void HandleError(string message)
         {
             LoginWithPassword.IsChecked = false;
             LoginWithPassword.ShowError = true;
             Set.Values["IsActive"] = "0";
-            Flower.Play("\uEA39", message);
+            Flower.Play(FlowStatus.Fail, message);
             PasswordLoginPane.Visibility = Visibility.Collapsed;
             VpnPane.Visibility = Visibility.Collapsed;
             GuidePane.Visibility = Visibility.Collapsed;

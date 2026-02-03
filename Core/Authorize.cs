@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using System;
 using CC98.Services;
 using System.Text.Json.Serialization;
+using CC98.Objects;
 
 namespace CC98.Kernel;
 
@@ -17,7 +18,7 @@ public static class LoginService
     public static VpnService vpn = new VpnService();
     static LoginService() { }
 
-    public static async Task<string> LoginAsync(string username, string password)
+    public static async Task<ApiResponse<AuthorizeResult>> LoginAsync(string username, string password)
     {
         string url = ApiEndpoints.OpenID.GetTokenUrl();
         var data = new Dictionary<string, string>()
@@ -30,10 +31,10 @@ public static class LoginService
                 {"scope","cc98-api openid offline_access" }
             };
         var PostData = new FormUrlEncodedContent(data);
-        var response = await vpn.PostAsync(url, PostData);
-        return await ValidationHelper.AutoResponse(response);
+        var result = await RequestSender.Submit<AuthorizeResult>(url, PostData);
+        return result;
     }
-    public static async Task<string> OAuth(string verify, string code)
+    public static async Task<ApiResponse<AuthorizeResult>> OAuth(string verify, string code)
     {
         string url = "https://openid.cc98.org/connect/token";
         var data = new Dictionary<string, string>()
@@ -45,8 +46,9 @@ public static class LoginService
                 {"code",code }
             };
         var post_data = new FormUrlEncodedContent(data);
-        var res = await vpn.PostAsync(url, post_data);
-        return await ValidationHelper.AutoResponse(res);
+
+        var result=await RequestSender.Submit<AuthorizeResult>(url, post_data);
+        return result;
     }
     //IsPassWordLogin:是否由密码登录
     public static async Task<AuthorizeResult?> GetNewToken(string RefreshToken, bool IsPassWordLogin)
@@ -77,32 +79,24 @@ public static class LoginService
         var PostData = new FormUrlEncodedContent(data);
         try
         {
-            var response = await vpn.PostAsync(tokenUrl, PostData);
-            string NewAccessText = await response.Content.ReadAsStringAsync();
-            if (response.StatusCode == HttpStatusCode.OK)
+            var result = await RequestSender.Submit<AuthorizeResult>(tokenUrl, PostData);
+            //响应未成功,判断错误类型。这里通常不是因为授权问题，而是请求未成功到达授权服务器，或者其他网络/json解析错误。
+            if (!result.IsSuccess)
             {
-
-                var js = Deserializer.ToDictionary(NewAccessText);
-                if (js != null)
-                {
-                    string access = ValidationHelper.GetKey(js, "access_token");
-                    string refresh = ValidationHelper.GetKey(js, "refresh_token");//密码登陆时返回“0”
-                    return new AuthorizeResult { StatusCode = "1", AccessToken = access, RefreshToken = refresh, Message = "刷新令牌成功" };
-                }
-                else
-                {
-                    return new AuthorizeResult { StatusCode = "0", AccessToken = "", RefreshToken = "", Message = NewAccessText };//返回值不是字典;
-                }
+                return null;
             }
-            else//令牌过期或者次数超限时状态码不是OK
+            //响应成功，但是解析出空对象。这是不太可能的，除非代码逻辑有问题。
+            var tokenResult = result.Data;
+            if (tokenResult == null)
             {
-                return new AuthorizeResult { StatusCode = "2", AccessToken = "", RefreshToken = "", Message = NewAccessText };//令牌作废
+                return null;
             }
-
+            return tokenResult;
         }
+        //外层捕捉到错误。这通常是代码问题。
         catch (Exception ex)
         {
-            return new AuthorizeResult { StatusCode = "3", AccessToken = "", RefreshToken = "", Message = ex.Message };//无网络等
+            return null;
         }
     }
 
@@ -145,12 +139,25 @@ public static class LoginService
 
 public class AuthorizeResult
 {
-    //此处判断令牌合法的逻辑应该加强
-    public bool IsValid => RefreshToken!=null&&AccessToken!=null;
     [JsonPropertyName("refresh_token")]
     public string? RefreshToken { get; set; }
     [JsonPropertyName("access_token")]
     public string? AccessToken { get; set; }
+
+    // 添加错误信息属性
+    [JsonPropertyName("error")]
+    public string? Error { get; set; }
+
+    [JsonPropertyName("error_description")]
+    public string? ErrorDescription { get; set; }
+
+    public bool IsValid =>
+        !string.IsNullOrEmpty(RefreshToken) &&
+        !string.IsNullOrEmpty(AccessToken) &&
+        string.IsNullOrEmpty(Error); // 同时要求没有错误
+
     [JsonIgnore]
-    public string Message { get; set; }=string.Empty;
+    public string Message =>
+        IsValid ? "授权成功" :
+        $"{Error}: {ErrorDescription}" ?? "未知授权错误";
 }

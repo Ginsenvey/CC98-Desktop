@@ -1,5 +1,8 @@
-﻿using CC98.Kernel;
+﻿using CC98.Controls;
+using CC98.Kernel;
 using CC98.Kernel.UserExperience;
+using CC98.Objects;
+using CC98.Services;
 using ColorCode.Compilation.Languages;
 using DevWinUI;
 using Microsoft.UI.Xaml;
@@ -30,8 +33,6 @@ using Windows.Foundation;
 using Windows.Foundation.Collections;
 using Windows.Storage;
 using Windows.UI.Text;
-using CC98.Controls;
-using CC98.Services;
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
 
@@ -317,82 +318,69 @@ namespace CC98
             string iss = ValidationHelper.GetValue(query, "iss");
             string state = ValidationHelper.GetValue(query, "state");
             string session_state = ValidationHelper.GetValue(query, "session_state");
-            if (code != "0" && iss != "0" && state != "0" && session_state != "0")
+            if (code == "0" || iss == "0" || state == "0" || session_state == "0")
             {
-                string state_to_verify=PasswordManager.RetrievePassword("State");
-                PasswordManager.RemovePassword("State");
-                if (state_to_verify == state)//检验
+                ShowError("登录失败", "回调参数不完整", "请报告开发者");
+                ActivateLogin(0);
+                return;
+            }
+            string state_to_verify = PasswordManager.RetrievePassword("State");
+            PasswordManager.RemovePassword("State");
+            if (state_to_verify != state)
+            {
+                ShowError("警告", "返回验证参数不正确", "你可能重复点击了登录按钮，或当前网络环境有风险。");
+            }
+            string veri = PasswordManager.RetrievePassword("Verifier");
+            PasswordManager.ClearAllPasswords("Verifier");
+            if (veri != null)
+            {
+                var result = await LoginService.OAuth(veri, code);
+                if (!result.IsSuccess)
                 {
-                    string veri = PasswordManager.RetrievePassword("Verifier");
-                    if (veri != null)
-                    {
-                        string res_text = await LoginService.OAuth(veri, code);
-                        Auth(res_text);
-                        PasswordManager.ClearAllPasswords("Verifier");
-                    }
+                    //
+                    ShowError("登录失败", "发生错误", result.Message);
+                    ActivateLogin(0);
+                    return;
+                }
+                var token = result.Data;
+                if (token == null)
+                {
+                    //
+                    ActivateLogin(0);
+                    return;
+                }
+                if (token.IsValid)
+                {
+                    InjectToken(token);
                 }
                 else
                 {
-                    AppNotification notification = new AppNotificationBuilder()
-                    .AddText("警告")
-                    .AddText("服务器返回验证参数不正确。当前网络环境可能有风险，或者存在其他问题。")
-                    .BuildNotification();
-                    AppNotificationManager.Default.Show(notification);
+                    Set.Values["IsActive"] = "0";
+                    ShowError("登录失败", "未取得有效令牌", token.Message);
+                    ActivateLogin(0);
+
                 }
-                
+               
             }
         }
-        /// <summary>
-        /// 提取令牌并注入
-        /// </summary>
-        /// <param name="resText"></param>
-        /// <remark>
-        /// 必须告知用户登录结果。
-        /// </remark>
-        private void Auth(string resText)
+        private void InjectToken(AuthorizeResult result)
         {
-
-            if (resText.Contains("access_token"))
-            {
-                try
-                {
-                    var js = Deserializer.ToDictionary(resText);
-                    if (js != null)
-                    {
-                        string access = ValidationHelper.GetKey(js, "access_token");
-                        string refresh = ValidationHelper.GetKey(js, "refresh_token");
-                        if (access != "0" && refresh != "0")
-                        {
-                            PasswordManager.SavePassword(access, "Access");
-                            PasswordManager.SavePassword(refresh, "Refresh");
-                            Set.Values["IsActive"] = "1";
-                            m_window = new MainWindow();
-                            m_window.Activate();
-                        }
-                        else
-                        {
-                            //不应存在此情况
-                        }
-                    }
-                }
-                catch//解析错误，凭据处理错误
-                {
-                    Set.Values["IsActive"] = "0";
-                    ActivateLogin(0);
-                }
-            }
-            else//未返回有效凭据，此时可能与OIDC流程错误有关
-            {
-                AppNotification notification = new AppNotificationBuilder()
-                    .AddText("登录失败")
-                    .AddText("请报告开发者，错误信息:")
-                    .AddText(resText)
+            PasswordManager.SavePassword(result.AccessToken, "Access");
+            PasswordManager.SavePassword(result.RefreshToken, "Refresh");
+            Set.Values["IsActive"] = "1";
+            m_window = new MainWindow();
+            m_window.Activate();
+        }
+       
+        private void ShowError(string title,string subtitle,string message)
+        {
+            AppNotification notification = new AppNotificationBuilder()
+                    .AddText(title)
+                    .AddText(subtitle)
+                    .AddText(message)
                     .BuildNotification();
-                AppNotificationManager.Default.Show(notification);
-                Set.Values["IsActive"] = "0";
-                ActivateLogin(0);
-            }
-        }  
+            AppNotificationManager.Default.Show(notification);
+        }
         private void ActivateLogin(int mode)
         {
             loginpage = new login(mode);

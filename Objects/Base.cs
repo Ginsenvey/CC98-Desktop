@@ -98,8 +98,3 @@ public class Increment
     }
 }
 
-public class AppLog 
-{ 
-    public string message;
-
-}

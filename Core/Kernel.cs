@@ -132,6 +132,31 @@ public static class RequestSender
             return ApiResponse.Fail($"系统错误: {ex.Message}", 0);
         }
     }
+    public static async Task<ApiResponse<T>> Submit<T>(string endpoint,HttpContent content)
+    {
+        try
+        {
+            var res = await LoginService.vpn.PostAsync(endpoint,content);
+            return await Deserialize<T>(res);
+        }
+        catch (HttpRequestException ex)
+        {
+            return ApiResponse<T>.Fail($"网络错误: {ex.Message}", 0);
+        }
+        catch (JsonException ex)
+        {
+            return ApiResponse<T>.Fail($"数据解析错误: {ex.Message}", 0);
+        }
+        catch (TaskCanceledException)
+        {
+            return ApiResponse<T>.Fail("请求超时", 0);
+        }
+        catch (Exception ex)
+        {
+            return ApiResponse<T>.Fail($"系统错误: {ex.Message}", 0);
+        }
+
+    }
     public static async Task<ApiResponse<T>> Deserialize<T>(HttpResponseMessage res)
     {
         var json = await res.Content.ReadAsStringAsync();
