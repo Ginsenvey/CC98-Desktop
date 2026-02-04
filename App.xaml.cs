@@ -1,5 +1,6 @@
 ﻿using CC98.Controls;
 using CC98.Kernel;
+using CC98.Kernel.Network;
 using CC98.Kernel.UserExperience;
 using CC98.Objects;
 using CC98.Services;
@@ -48,6 +49,8 @@ namespace CC98
         public static new App Current => (App)Application.Current;
         private static AppLog _logger;
         public static AppLog Logger => _logger ?? throw new InvalidOperationException("Logger未初始化");
+        // 在 App 类中添加字段以保留托盘图标引用，防止被 GC 回收
+        private DevWinUI.SystemTrayIcon? _trayIcon;
 
         public static void RaiseThemeChanged(ElementTheme theme)
         {
@@ -57,80 +60,9 @@ namespace CC98
         {
             this.InitializeComponent();            
         }
-        // 在 App 类中添加字段以保留托盘图标引用，防止被 GC 回收
-        private DevWinUI.SystemTrayIcon? _trayIcon;
+        
 
-        private void DisplayTrayIcon()
-        {
-            try
-            {
-                var icon = WindowHelper.GetWindowIcon(m_window);
-                uint iconId = 9898;
-
-                // 保留引用，避免被 GC 回收
-                _trayIcon = new SystemTrayIcon(iconId, icon, "CC98论坛");
-                _trayIcon.LeftClick += (s, e) =>
-                {
-                    m_window.DispatcherQueue.TryEnqueue(() => {
-                        if (!m_window.Visible) m_window.AppWindow.Show();
-                        m_window.Activate();
-                        var appWindow = Microsoft.UI.Windowing.AppWindow.GetFromWindowId(m_window.AppWindow.Id);
-                        if (appWindow.Presenter is Microsoft.UI.Windowing.OverlappedPresenter overlappedPresenter)
-                        {
-                            if (overlappedPresenter.State == Microsoft.UI.Windowing.OverlappedPresenterState.Minimized)
-                            {
-                                overlappedPresenter.Restore();
-                            }
-                        }
-                    });
-                };
-                _trayIcon.RightClick += (s, e) =>
-                {
-                    // 使用 WinUI 的 MenuFlyout 并将其赋值给事件参数的 Flyout 属性
-                    var flyout = new MenuFlyout();
-                    var titleItem = new MenuFlyoutItem { Text = "CC98",IsEnabled=false,Width=180 };
-                    var openItem = new MenuFlyoutItem { Text = "进入论坛" ,Width=180,Icon=new FluentIcons.WinUI.SymbolIcon { Symbol=FluentIcons.Common.Symbol.Home} };
-                    openItem.Click += (_, __) =>
-                    {
-                        m_window.DispatcherQueue.TryEnqueue(() => m_window.Activate());
-                    };
-
-                    var exitItem = new MenuFlyoutItem { Text = "退出" ,Width=180, Icon = new FluentIcons.WinUI.SymbolIcon { Symbol = FluentIcons.Common.Symbol.ArrowExit} };
-                    exitItem.Click += (_, __) =>
-                    {
-                        LoginService.vpn.Dispose();
-                        m_window.DispatcherQueue.TryEnqueue(() =>
-                        {
-                            m_window.Close();
-                            loginpage?.Close();
-                        });
-
-                        // 隐藏并释放托盘对象
-                        if (_trayIcon != null)
-                        {
-                            _trayIcon.IsVisible = false;
-                            _trayIcon.Dispose();
-                            _trayIcon = null;
-                        }
-
-                        Application.Current.Exit();
-                    };
-                    flyout.Items.Add(titleItem);
-                    flyout.Items.Add(new MenuFlyoutSeparator());
-                    flyout.Items.Add(openItem);
-                    flyout.Items.Add(exitItem);
-
-                    // 将 Flyout 交给 DevWinUI 的 SystemTrayIcon 处理显示
-                    e.Flyout = flyout;
-                };
-
-                _trayIcon.IsVisible = true;
-            }
-            catch (Exception ex)
-            {
-                Logger.Write("系统托盘","注册系统托盘发生错误",ex.Message);
-            }
-        }
+        
         private async Task<string> InitializeNetwork()
         {
             var network_status = await LoginService.vpn.CheckNetwork(false);
@@ -167,8 +99,8 @@ namespace CC98
                                 {
                                     string id = PasswordManager.RetrievePassword("VpnUserName");
                                     string pass = PasswordManager.RetrievePassword("VpnPassWord");
-                                    string vpn_res = await LoginService.vpn.LoginAsync(id, pass);
-                                    if (vpn_res == "1")//连接成功
+                                    var res = await LoginService.vpn.LoginAsync(id, pass);
+                                    if (res.Status==VPNLoginStatus.Success)//连接成功
                                     {
                                         LoginService.vpn.IsVpnEnabled = true;
                                         var new_ticket = LoginService.vpn.Ticket;
@@ -363,6 +295,8 @@ namespace CC98
                
             }
         }
+
+
         private void InjectToken(AuthorizeResult result)
         {
             PasswordManager.SavePassword(result.AccessToken, "Access");
@@ -371,7 +305,78 @@ namespace CC98
             m_window = new MainWindow();
             m_window.Activate();
         }
-       
+
+        private void DisplayTrayIcon()
+        {
+            try
+            {
+                var icon = WindowHelper.GetWindowIcon(m_window);
+                uint iconId = 9898;
+
+                // 保留引用，避免被 GC 回收
+                _trayIcon = new SystemTrayIcon(iconId, icon, "CC98论坛");
+                _trayIcon.LeftClick += (s, e) =>
+                {
+                    m_window.DispatcherQueue.TryEnqueue(() => {
+                        if (!m_window.Visible) m_window.AppWindow.Show();
+                        m_window.Activate();
+                        var appWindow = Microsoft.UI.Windowing.AppWindow.GetFromWindowId(m_window.AppWindow.Id);
+                        if (appWindow.Presenter is Microsoft.UI.Windowing.OverlappedPresenter overlappedPresenter)
+                        {
+                            if (overlappedPresenter.State == Microsoft.UI.Windowing.OverlappedPresenterState.Minimized)
+                            {
+                                overlappedPresenter.Restore();
+                            }
+                        }
+                    });
+                };
+                _trayIcon.RightClick += (s, e) =>
+                {
+                    // 使用 WinUI 的 MenuFlyout 并将其赋值给事件参数的 Flyout 属性
+                    var flyout = new MenuFlyout();
+                    var titleItem = new MenuFlyoutItem { Text = "CC98", IsEnabled = false, Width = 180 };
+                    var openItem = new MenuFlyoutItem { Text = "进入论坛", Width = 180, Icon = new FluentIcons.WinUI.SymbolIcon { Symbol = FluentIcons.Common.Symbol.Home } };
+                    openItem.Click += (_, __) =>
+                    {
+                        m_window.DispatcherQueue.TryEnqueue(() => m_window.Activate());
+                    };
+
+                    var exitItem = new MenuFlyoutItem { Text = "退出", Width = 180, Icon = new FluentIcons.WinUI.SymbolIcon { Symbol = FluentIcons.Common.Symbol.ArrowExit } };
+                    exitItem.Click += (_, __) =>
+                    {
+                        LoginService.vpn.Dispose();
+                        m_window.DispatcherQueue.TryEnqueue(() =>
+                        {
+                            m_window.Close();
+                            loginpage?.Close();
+                        });
+
+                        // 隐藏并释放托盘对象
+                        if (_trayIcon != null)
+                        {
+                            _trayIcon.IsVisible = false;
+                            _trayIcon.Dispose();
+                            _trayIcon = null;
+                        }
+
+                        Application.Current.Exit();
+                    };
+                    flyout.Items.Add(titleItem);
+                    flyout.Items.Add(new MenuFlyoutSeparator());
+                    flyout.Items.Add(openItem);
+                    flyout.Items.Add(exitItem);
+
+                    // 将 Flyout 交给 DevWinUI 的 SystemTrayIcon 处理显示
+                    e.Flyout = flyout;
+                };
+
+                _trayIcon.IsVisible = true;
+            }
+            catch (Exception ex)
+            {
+                Logger.Write("系统托盘", "注册系统托盘发生错误", ex.Message);
+            }
+        }
         private void ShowError(string title,string subtitle,string message)
         {
             AppNotification notification = new AppNotificationBuilder()

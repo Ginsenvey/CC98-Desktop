@@ -396,9 +396,9 @@ public partial class SimpleTopicInfo : ObservableObject
         get => field;
         set => SetProperty(ref field, value);
     }
-    public string Time
+    public DateTime Time
     {
-        get => field ?? string.Empty;
+        get => field;
         set => SetProperty(ref field, value);
     }
     public FluentIcons.Common.Symbol symbol
@@ -491,9 +491,9 @@ public class MediaContent
 
 public partial class ChatMessage : ObservableObject
 {
-    public string Time
+    public DateTime Time
     {
-        get => field ?? string.Empty;
+        get => field;
         set => SetProperty(ref field, value);
     }
 

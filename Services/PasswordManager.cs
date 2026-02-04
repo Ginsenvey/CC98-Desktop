@@ -158,6 +158,7 @@ public static class PasswordManager
         PasswordManager.ClearAllPasswords("Access");
         PasswordManager.ClearAllPasswords("Refresh");
         PasswordManager.ClearAllPasswords("Ticket");
+        PasswordManager.ClearAllPasswords("Route");
         PasswordManager.ClearAllPasswords("VpnUserName");
         PasswordManager.ClearAllPasswords("VpnPassWord");
     }

@@ -14,6 +14,8 @@ using Windows.Storage;
 using Windows.System;
 using System.Text.Json;
 using CC98.Objects;
+using CC98.Kernel.Network;
+using Microsoft.UI.Xaml.Media.Imaging;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -99,8 +101,8 @@ namespace CC98
                                 {
                                     string id = PasswordManager.RetrievePassword("VpnUserName");
                                     string pass = PasswordManager.RetrievePassword("VpnPassWord");
-                                    string vpn_res = await LoginService.vpn.LoginAsync(id, pass);
-                                    if (vpn_res == "1")//连接成功
+                                    var res = await LoginService.vpn.LoginAsync(id, pass);
+                                    if (res.Status==VPNLoginStatus.Success)//连接成功
                                     {
                                         //这里不需要再额外修改Logined,因为LoginAsync中已经修改
                                         LoginService.vpn.IsVpnEnabled = true;
@@ -231,78 +233,110 @@ namespace CC98
 
         private  async void Link_Click(object sender, RoutedEventArgs e)
         {
-            if (!string.IsNullOrEmpty(idbox.Text) && !string.IsNullOrEmpty(passbox.Password))
+            if (string.IsNullOrEmpty(idbox.Text) || string.IsNullOrEmpty(passbox.Password))
             {
-                Link.IsChecked = true;
-                var r = await SetupVPN(idbox.Text, passbox.Password);
-                if (r == "1")
-                {
-                    Flower.Play("\uE930", "已保存VPN凭据");
+                //
+                return;
+            }
+            Link.IsChecked = true;
+            try
+            {
+                await SetupVPN(idbox.Text, passbox.Password);
+            }
+            catch (Exception ex)
+            {
+                Link.IsChecked = false;
+                Link.ShowError = true;
+                Flower.Play(FlowStatus.Fail, ex.Message);
+            }
+            
+        }
+        private async Task SetupVPN(string id,string pass)
+        {
+            var res = await LoginService.vpn.LoginAsync(id, pass);
+            switch (res.Status)
+            {
+                case VPNLoginStatus.Success:
+                    SaveToken(id, pass);
                     Link.IsChecked = false;
-                    if (mode == 0)
+                    LoginService.vpn.IsVpnEnabled = true;
+                    GoBackOrLaunchApp();
+                    break;
+                case VPNLoginStatus.Error:
+                    Link.IsChecked = false;
+                    Link.ShowError = true;
+                    Flower.Play(FlowStatus.Fail, res.Description);
+                    break;
+                case VPNLoginStatus.NeedConfirm:
+                    var confirm_res = await LoginService.vpn.Confirm();
+                    if (confirm_res.Status == VPNLoginStatus.Success)
                     {
-                        VpnPane.Visibility = Visibility.Collapsed;
-                        GuidePane.Visibility = Visibility.Collapsed;
-                        LoginPane.Visibility = Visibility.Visible;
+                        SaveToken(id, pass);
+                        Link.IsChecked = false;
+                        LoginService.vpn.IsVpnEnabled = true;
+                        GoBackOrLaunchApp();
                     }
                     else
                     {
-                        var window = new MainWindow();
-                        window.Activate();
-                        this.DispatcherQueue.TryEnqueue(() =>
-                        {
-                            this.Close();
-                        });//尝试修复竞争条件
+                        Link.IsChecked = false;
+                        Link.ShowError = true;
+                        Flower.Play(FlowStatus.Fail, res.Description);
                     }
-
-                }
-                else
-                {
+                    break;
+                case VPNLoginStatus.NeedCaptcha:
+                    Link.IsChecked = false;
+                    de.Visibility = Visibility.Collapsed;
+                    string captchaId = res.Description;
+                    long timeStamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+                    string captchaUrl = $"{VpnService.Base}/captcha/{captchaId}.png?reload={timeStamp}";
+                    captcha.Source = new BitmapImage(new Uri(captchaUrl));
+                    captchabox.Visibility = Visibility.Visible;
+                    Flower.Play(FlowStatus.Fail, res.Message??"需要验证码");
+                    break;
+                default:
                     Link.IsChecked = false;
                     Link.ShowError = true;
-                    Flower.Play("\uEA39", r);
-                }
-
+                    Flower.Play(FlowStatus.Fail, res.Description);
+                    break;
+            }
+        }
+        private void SaveToken(string id,string pass)
+        {
+            Set.Values["IsVpnUsable"] = "1";
+            var ticket = LoginService.vpn.Ticket;
+            var route = LoginService.vpn.Route;
+            string ticket_value = ticket.Value;
+            string route_value = route.Value;
+            
+            PasswordManager.SavePassword(id, "VpnUserName");
+            PasswordManager.SavePassword(pass, "VpnPassWord");
+            if (!string.IsNullOrEmpty(ticket_value) && (!string.IsNullOrEmpty(route_value)))
+            {
+                PasswordManager.SavePassword(ticket_value, "Ticket");
+                PasswordManager.SavePassword(route_value, "Route");
+                Flower.Play(FlowStatus.Success, "已保存VPN凭据");
+            }//保存失败或者token为空时，会出现VPN启用但找不到令牌的情况。
+            else
+            {
+                Flower.Play(FlowStatus.Fail, "未保存VPN凭据");
+            }
+        }
+        private void GoBackOrLaunchApp ()
+        {
+            if (mode == 0)
+            {
+                VpnPane.Visibility = Visibility.Collapsed;
+                GuidePane.Visibility = Visibility.Collapsed;
+                LoginPane.Visibility = Visibility.Visible;
             }
             else
             {
-                Flower.Play("\uEA39", "凭据不完整");
-            }
-        }
-        private async Task<string> SetupVPN(string id,string pass)
-        {
-            try
-            {
-                string vpn_res = await LoginService.vpn.LoginAsync(id, pass);
-                if (vpn_res == "1")
+                var window = new MainWindow();
+                window.Activate();
+                this.DispatcherQueue.TryEnqueue(() =>
                 {
-                    Set.Values["IsVpnUsable"] = "1";
-                    var ticket = LoginService.vpn.Ticket;
-                    var route=LoginService.vpn.Route;
-                    string ticket_value = ticket.Value;
-                    string route_value=route.Value;
-                    LoginService.vpn.IsVpnEnabled = true;
-                    PasswordManager.SavePassword(idbox.Text, "VpnUserName");
-                    PasswordManager.SavePassword(passbox.Password, "VpnPassWord");
-                    if (!string.IsNullOrEmpty(ticket_value)&&(!string.IsNullOrEmpty(route_value)))
-                    {
-                        PasswordManager.SavePassword(ticket_value, "Ticket");
-                        PasswordManager.SavePassword(route_value, "Route");
-                        return "1";
-                    }//保存失败或者token为空时，会出现VPN启用但找不到令牌的情况。
-                    else
-                    {
-                        return "2:保存Ticket失败";
-                    }
-                }
-                else
-                {
-                    return vpn_res;
-                }
-            }
-            catch(Exception ex)
-            {
-                return $"3:{ex.Message}";
+                    this.Close();
+                });//尝试修复竞争条件
             }
         }
 
@@ -418,6 +452,11 @@ namespace CC98
             VpnPane.Visibility = Visibility.Collapsed;
             GuidePane.Visibility = Visibility.Collapsed;
             LoginPane.Visibility = Visibility.Visible;
+        }
+
+        private void captchabox_TextChanged(object sender, Microsoft.UI.Xaml.Controls.TextChangedEventArgs e)
+        {
+            LoginService.vpn.CaptchaValue= captchabox.Text;
         }
     }
     

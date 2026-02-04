@@ -115,20 +115,21 @@ namespace CC98
         private async void LoadProfile()
         {
             string port = ValidationHelper.GetValue(Set, "Portrait");
-            if (port != "0")
+            if (port == "0")
             {
-                try
+                string profileUrl = ApiEndpoints.User.UserProfile(true, 0);
+                var profileResult = await RequestSender.Fetch<UserInfo>(profileUrl);
+                if (!profileResult.IsSuccess || profileResult.Data == null)
                 {
-                    MyPicture.ProfilePicture = await ImageResolver.LoadWebImage(port);
+                    return;
                 }
-                catch { }
+                var data = profileResult.Data;
+                port = data.PortraitUrl;
+                Set.Values["Portrait"] = data.PortraitUrl;
             }
-            else
-            {
-               MyPicture.ProfilePicture = new BitmapImage(new Uri("ms-appx:///Assets/cc98.png"));
-            }
+            MyPicture.ProfilePicture = await ImageResolver.LoadWebImage(port);
 
-           
+
         }
         private void OnNavigationItemAdded(NavigationItem item)
         {
