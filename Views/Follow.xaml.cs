@@ -1,6 +1,7 @@
 using CC98.Kernel;
 using CC98.Kernel.ApiScope;
 using CC98.Objects;
+using CC98.Services.Extensions;
 using CommunityToolkit.Mvvm.ComponentModel;
 using DevWinUI;
 using Duende.IdentityModel.OidcClient;
@@ -50,11 +51,12 @@ namespace CC98
             base.OnNavigatedTo(e);
 
             // 获取传递的参数
-            var parameter = e.Parameter as string;
+            var parameter = e.TryGetParameter<string>();
 
             if (!string.IsNullOrEmpty(parameter))
             {
                 Set.Values["CurrentFriendType"] = parameter;
+                type= parameter;
                 if (parameter == "follower")
                 {
                     FriendType.Text = "粉丝";
@@ -106,17 +108,11 @@ namespace CC98
         private void TileContent_Click(object sender, RoutedEventArgs e)
         {
             var h = sender as HyperlinkButton;
-            if(h!= null)
-            {
-                var f = h?.DataContext as Friend;
-                if (f != null)
-                {
-                    var param = new ProfileNavigationInfo { IsMe=false,UserId=f.UserId};
-                    Frame.Navigate(typeof(Profile), param);
-                }
-            }
+            var tag = h?.Tag;
+            if (tag == null) return;
+            var param = new ProfileNavigationInfo { IsMe=false,UserId=tag.ToInt()};
+            Frame.Navigate(typeof(Profile), param);
         }
-        public int history = 0;
         
 
         private async void UnFollow_Click(object sender, RoutedEventArgs e)
@@ -138,7 +134,7 @@ namespace CC98
             var m= sender as MenuFlyoutItem;           
             var f = m?.DataContext as Friend;
             if (f == null) return;
-            var c = new ChatInfo { UserId = f.UserId, Name = f.Name, PortraitUrl = f.PortraitUrl };
+            var c = new ChatInfo { UserId = f.Id, Name = f.Name, PortraitUrl = f.PortraitUrl };
             var param = new MessageNavigationInfo { IsFromProfile = true, ChatUserInfo = c };
             Frame.Navigate(typeof(Message), param);
         }

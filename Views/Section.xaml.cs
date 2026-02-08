@@ -67,11 +67,9 @@ namespace CC98
         private void BoardButton_Click(object sender, RoutedEventArgs e)
         {
             var h = sender as HyperlinkButton;
-            var tag = h?.Tag as string;//当前绑定状态下，h没有DataContext.只能使用tag.
-            if(tag != null)
-            {
-                Frame.Navigate(typeof(Board),tag.ToInt()); 
-            }
+            var tag = h?.Tag;//当前绑定状态下，h没有DataContext.只能使用tag.
+            if (tag == null) return;
+            Frame.Navigate(typeof(Board),tag.ToInt()); 
         }
         private async Task LoadSection()
         {

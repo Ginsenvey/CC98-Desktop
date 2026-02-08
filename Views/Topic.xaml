@@ -88,7 +88,7 @@
         
         <ScrollViewer Grid.Row="1"   HorizontalScrollMode="Enabled" x:Name="RootViewer" >
             
-            <ItemsRepeater x:Name="TileList" VerticalCacheLength="48" >
+            <ItemsRepeater x:Name="ReplyRepeater" ItemsSource="{x:Bind replies}"  VerticalCacheLength="96">
                 
                 <ItemsRepeater.ItemTemplate>
                     <DataTemplate x:DataType="obj:Reply">

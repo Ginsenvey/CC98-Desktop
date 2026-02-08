@@ -193,7 +193,7 @@ public class LocalCache
         catch (Exception ex)
         {
             // 记录错误
-            System.Diagnostics.Debug.WriteLine($"写入文件失败: {ex.Message}");
+            Console.WriteLine($"写入文件失败: {ex.Message}");
             throw;
         }
     }

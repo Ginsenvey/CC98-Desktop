@@ -34,14 +34,14 @@ namespace CC98
     {
         public ApplicationDataContainer Set = ApplicationData.Current.LocalSettings;
         public ObservableCollection<SimpleTopicInfo> topics=new();
-        public Favorites selectedFavorites { get; set; }
+        public Favorites? selectedFavorites { get; set; }
         public ObservableCollection<Favorites> favoritesList = new()
         {
             new Favorites{Name="默认分组",Id=0}
         };
         public int sortId = 0;
         public int groupId = 0;
-        public int currentIndex = 0;
+        public Increment increment = new();
         public PostOrder currenOrder = PostOrder.Mark;
         public Favorite()
         {
@@ -71,60 +71,40 @@ namespace CC98
                 }   
             }
         }
-        private async void GetFavoriteTopic()
+        private async Task<bool> GetFavoriteTopic()
         {
-            string favoriteTopicUrl = ApiEndpoints.Topic.FavoriteTopicList(currentIndex,(int)currenOrder,groupId);
+            string favoriteTopicUrl = ApiEndpoints.Topic.FavoriteTopicList(increment.startIndex,(int)currenOrder,groupId);
             var favoriteTopicResult = await RequestSender.Fetch<List<SimpleTopicInfo>>(favoriteTopicUrl);
             if (!favoriteTopicResult.IsSuccess || favoriteTopicResult.Data == null)
             {
                 //
-                return;
-            }
-            
+                return false;
+            }          
             var data = favoriteTopicResult.Data;
-            
+            if(data.Count==11)data.RemoveAt(10);
+            increment.hasMore = data.Count == increment.pageSize;
             topics.AddRange(data);
+            return true;
         }
-        public int history = 0;
-        private void Collection_Loaded(object sender, RoutedEventArgs e)
-        {
-            Collection.ElementPrepared += (s, e) =>
-            {
-                if (Collection.ItemsSource != null)
-                {
-                    int current = e.Index;
-                    
-                    if ((current + 1) % 10 == 0&&current>history)
-                    {
-                        history = current;
-                        currentIndex = current + 1;
-                        GetFavoriteTopic();
-                    }
-                }
-            };
-        }
+        
 
         private void Content_Click(object sender, RoutedEventArgs e)
         {
-            var h = sender as HyperlinkButton;
-            if (h != null)
-            {
-                var t = h?.DataContext as SimpleTopicInfo;
-                if (t != null)
-                {
-                    Frame.Navigate(typeof(Topic), t.Id);
-                }
-            }
+            var h = sender as HyperlinkButton;            
+            var t = h?.DataContext as SimpleTopicInfo;
+            if (t == null) return;
+            var param = new TopicNavigationInfo { TopicId = t.Id };
+            Frame.Navigate(typeof(Topic), param);
         }
         
         
-        private void ChangeSort_Click(object sender, RoutedEventArgs e)
+        private async void ChangeSort_Click(object sender, RoutedEventArgs e)
         {
             currenOrder= (PostOrder)(((int)currenOrder + 1) % 3);
             topics.Clear();
-            history = 0;
+            increment.Clear();
 
-            GetFavoriteTopic();
+            await GetFavoriteTopic();
             string Sort_Method = string.Empty;
             if (currenOrder == PostOrder.Time)
             {
@@ -144,16 +124,16 @@ namespace CC98
             Flower.Play("\uE8CB", "切换为" + Sort_Method + "排序");
         }
 
-        private void FavoriteBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        private async void FavoriteBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             if (selectedFavorites != null)
             {
                 topics.Clear();
-                history = 0;
+                increment.Clear();
                 sortId = 0;
                 groupId = selectedFavorites.Id;
                 de.Text = selectedFavorites.Name;
-                GetFavoriteTopic();
+                await GetFavoriteTopic();
             }
         }
 
@@ -170,9 +150,9 @@ namespace CC98
                     if (res)
                     {
                         topics.Clear();
-                        history = 0;
+                        increment.Clear();
                         sortId = 0;
-                        GetFavoriteTopic();
+                        await GetFavoriteTopic();
                         Flower.Play("\uE930", "已取消收藏");
                     }
                     else
@@ -182,10 +162,10 @@ namespace CC98
                 }
             }
         }
-    }
-    public class FavoriteGroup
-    {
-        public string GroupName {  get; set; }
-        public string Id { get; set; }
+
+        private async void FavoriteTopicRepeater_ElementPrepared(ItemsRepeater sender, ItemsRepeaterElementPreparedEventArgs args)
+        {
+            await increment.LoadMore(args.Index, GetFavoriteTopic);
+        }
     }
 }

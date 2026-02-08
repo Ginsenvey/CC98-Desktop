@@ -14,7 +14,7 @@ public class VpnLoginResult
     [JsonIgnore]
     public bool NeedConfirm => Error == "NEED_CONFIRM";
     [JsonIgnore]
-    public bool CaptchaFail => Error == "CAPTCHA_FAILED";
+    public bool CaptchaFail => Error == "CAPTCHA_FAILED";//验证码错误
 
     [JsonPropertyName("success")]
     public bool IsSuccess { get; set; }

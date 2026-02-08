@@ -70,7 +70,7 @@ public partial class VpnService : IDisposable
             CookieContainer = Jar,
             UseCookies = true,
             AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate,
-            Proxy=new WebProxy("127.0.0.1:9000"), 
+            //Proxy=new WebProxy("127.0.0.1:9000")
         };
         
         client = new HttpClient(handler);
@@ -245,7 +245,7 @@ public partial class VpnService : IDisposable
     /// </summary>
     /// <param name="UseVpn"></param>
     /// <returns></returns>
-    public async Task<string> CheckNetwork(bool UseVpn)
+    public async Task<NetworkStatus> CheckNetwork(bool UseVpn)
     {
         
         string target_uri = UseVpn ? ConvertUrl(Mirror_Url) : Mirror_Url;
@@ -253,31 +253,38 @@ public partial class VpnService : IDisposable
         try
         {
             var response = await client.GetAsync(target_uri);
+            string res_text = await response.Content.ReadAsStringAsync();
             if (response.IsSuccessStatusCode)
             {
-                string res_text = await response.Content.ReadAsStringAsync();
                 if (res_text == "0")
                 {
-                    return "0";
+                    return NetworkStatus.NotInCampus;
                 }
                 else if (res_text == "1" || res_text == "2")
                 {
-                    return "1";
+                    return UseVpn?NetworkStatus.ByVPN:NetworkStatus.InCampus;
                 }
                 else
                 {
-                    App.Logger.Write("网络检查","请查看返回内容" ,$"{res_text}");
-                    return "404:非法返回";
+                    if (res_text.Length > 256)
+                    {
+                        //App.Logger.Write("网络检查", "VPN凭据过期", $"{res_text.Substring(0,32)}");
+                        return NetworkStatus.VpnDisabled;
+                    }
+                    App.Logger.Write("网络检查", "请查看返回内容", $"{res_text}");
+                    return NetworkStatus.UnknownError;
                 }
             }
             else
             {
-                return "404:请求失败";
+                App.Logger.Write("网络检查", "访问镜像站失败", $"{response.StatusCode}:{response.ReasonPhrase??""},响应正文{res_text}");
+                return NetworkStatus.MirrorError;
             }
         }
         catch (Exception ex)
         {
-            return $"404:{ex.Message}";
+            App.Logger.Write("网络检查", "错误", $"{ex.Message}");
+            return NetworkStatus.NoConnection;
         }
 
 

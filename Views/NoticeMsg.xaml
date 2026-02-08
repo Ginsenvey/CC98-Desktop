@@ -24,7 +24,7 @@
                     </Grid.RowDefinitions>
                     <TextBlock Text="{x:Bind Title}" Grid.Column="0" Grid.Row="0" Grid.RowSpan="2" FontWeight="Bold"></TextBlock>
                     <TextBlock Text="{x:Bind Time}" FontSize="12" Grid.Column="1" Grid.Row="0"  HorizontalAlignment="Right" Foreground="{ThemeResource TextFillColorSecondaryBrush}"></TextBlock>
-                    <TextBlock Text="{x:Bind Content}" FontSize="12" Grid.Column="0" Grid.ColumnSpan="2" Grid.Row="1" Foreground="{ThemeResource TextFillColorSecondaryBrush}"></TextBlock>
+                    <TextBlock Text="{x:Bind Content}" TextWrapping="Wrap" MaxLines="2" FontSize="12" Grid.Column="0" Grid.ColumnSpan="2" Grid.Row="1" Foreground="{ThemeResource TextFillColorSecondaryBrush}"></TextBlock>
                 </Grid>
             </HyperlinkButton>
         </DataTemplate>
@@ -41,7 +41,7 @@
                     </Grid.RowDefinitions>
                     <TextBlock Text="{x:Bind PostBasicInfo.UserName}" Grid.Column="0" Grid.Row="0" Grid.RowSpan="2" FontWeight="Bold"></TextBlock>
                     <TextBlock Text="{x:Bind Time}" FontSize="12" Grid.Column="1" Grid.Row="0"  HorizontalAlignment="Right" Foreground="{ThemeResource TextFillColorSecondaryBrush}"></TextBlock>
-                    <TextBlock Text="{x:Bind Content}" FontSize="12" Grid.Column="0" Grid.ColumnSpan="2" Grid.Row="1" Foreground="{ThemeResource TextFillColorSecondaryBrush}"></TextBlock>
+                    <TextBlock Text="{x:Bind Content}" TextWrapping="Wrap" MaxLines="2" FontSize="12" Grid.Column="0" Grid.ColumnSpan="2" Grid.Row="1" Foreground="{ThemeResource TextFillColorSecondaryBrush}"></TextBlock>
                 </Grid>
             </HyperlinkButton>
         </DataTemplate>

@@ -217,8 +217,8 @@ public class Friend : ObservableObject
         get => field;
         set => SetProperty(ref field, value);
     }
-    [JsonPropertyName("userId")]
-    public int UserId
+    [JsonPropertyName("id")]
+    public int Id
     {
         get => field;
         set => SetProperty(ref field, value);

@@ -67,7 +67,6 @@ namespace CC98
         {
             this.InitializeComponent();
             LoadSet();
-            TileList.ItemsSource = replies;
         }
 
 
@@ -79,9 +78,7 @@ namespace CC98
             {
                 _mediaPlayer.Dispose();
             }
-            TileList.ItemsSource = null;
             replies.Clear();
-            TileList = null;
         }
         protected override async void OnNavigatedTo(Microsoft.UI.Xaml.Navigation.NavigationEventArgs e)
         {
@@ -226,9 +223,9 @@ namespace CC98
         private void Person_Click(object sender, RoutedEventArgs e)
         {
             var h = sender as HyperlinkButton;
-            var t = h?.DataContext as Reply;
-            if (t == null)return;
-            if (t.IsAnonymous) return;
+            ProfileViewer.Target = h;
+            var t = h?.Tag as Reply;
+            if (t == null || t.IsAnonymous) return;
             var info = new ProfileNavigationInfo { IsMe = t.IsMe, UserId = t.UserId ?? 0 };
             Frame.Navigate(typeof(Profile), info);
         }
@@ -571,7 +568,7 @@ namespace CC98
 
         private void GoTo(int index)
         {
-            var element = TileList.GetOrCreateElement(index);
+            var element = ReplyRepeater.GetOrCreateElement(index);
             var options = new BringIntoViewOptions
             {
                 VerticalAlignmentRatio = 0.5, // 0=顶部对齐，0.5=居中，1=底部

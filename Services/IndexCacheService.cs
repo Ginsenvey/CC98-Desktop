@@ -361,7 +361,6 @@ public class CC98HomeDataManager
                 filePath,
                 json,
                 createDirectory: false);
-
             return result.Success;
         }
         catch (Exception ex)

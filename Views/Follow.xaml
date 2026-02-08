@@ -26,7 +26,7 @@
             <ItemsRepeater  x:Name="FriendRepeater"  ItemsSource="{x:Bind friends}" ElementPrepared="FriendRepeater_ElementPrepared">
                 <ItemsRepeater.ItemTemplate>
                     <DataTemplate x:DataType="obj:Friend">
-                        <HyperlinkButton HorizontalContentAlignment="Stretch" HorizontalAlignment="Stretch" CornerRadius="0" x:Name="TileContent" Click="TileContent_Click" BorderThickness="0.5" BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}" DataContext="{x:Bind}">
+                        <HyperlinkButton HorizontalContentAlignment="Stretch" HorizontalAlignment="Stretch" CornerRadius="0" x:Name="TileContent" Click="TileContent_Click" BorderThickness="0.5" BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}" Tag="{x:Bind Id}">
                             <HyperlinkButton.ContextFlyout>
                                 <MenuFlyout>
                                     <MenuFlyoutItem Text="私信"   Click="Chat_Click" >
@@ -34,7 +34,7 @@
                                             <ic:FluentIcon Icon="ChatAdd" ></ic:FluentIcon>
                                         </MenuFlyoutItem.Icon>
                                     </MenuFlyoutItem>
-                                    <MenuFlyoutItem Text="取关"  Click="UnFollow_Click" Tag="{x:Bind UserId}">
+                                    <MenuFlyoutItem Text="取关"  Click="UnFollow_Click" Tag="{x:Bind Id}">
                                         <MenuFlyoutItem.Icon>
                                             <ic:FluentIcon Icon="PersonDelete" ></ic:FluentIcon>
                                         </MenuFlyoutItem.Icon>

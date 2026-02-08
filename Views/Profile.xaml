@@ -107,7 +107,7 @@
                 <TextBlock Text="主题" FontSize="23" FontWeight="Bold" Foreground="#A9A9A9" x:Name="de" IsTextSelectionEnabled="True"></TextBlock>
                 <Border Height="1" BorderBrush="{ThemeResource DividerBrush}" HorizontalAlignment="Stretch" BorderThickness="1"></Border>
                 <Border Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1" CornerRadius="5">
-                    <ItemsRepeater x:Name="SimpleTile" Loaded="SimpleTile_Loaded" ItemsSource="{x:Bind recentTopics}">
+                    <ItemsRepeater x:Name="RecentTopicRepeater"  ItemsSource="{x:Bind recentTopics}" ElementPrepared="RecentTopicRepeater_ElementPrepared">
                         <ItemsRepeater.ItemTemplate>
                             <DataTemplate x:DataType="obj:SimpleTopicInfo">
                                 <HyperlinkButton HorizontalContentAlignment="Stretch" HorizontalAlignment="Stretch" CornerRadius="0" x:Name="TileContent" Click="STileButton_Click" DataContext="{x:Bind}">

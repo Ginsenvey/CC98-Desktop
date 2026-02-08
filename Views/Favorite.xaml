@@ -28,8 +28,8 @@
             <TextBlock Grid.Column="0" Text="收藏集" FontSize="20" FontWeight="Bold" x:Name="de"  Foreground="LightSeaGreen" VerticalAlignment="Center" HorizontalAlignment="Left" ></TextBlock>
             <ComboBox x:Name="FavoriteBox" Grid.Column="1" HorizontalAlignment="Right" Margin="0,0,20,0" PlaceholderText="切换收藏夹" Background="Transparent" ItemsSource="{x:Bind favoritesList}"  SelectionChanged="FavoriteBox_SelectionChanged" SelectedItem="{x:Bind selectedFavorites,Mode=TwoWay}" Height="35.5">
                 <ComboBox.ItemTemplate>
-                    <DataTemplate x:DataType="local:FavoriteGroup">
-                        <TextBlock Text="{x:Bind GroupName}"></TextBlock>
+                    <DataTemplate x:DataType="obj:Favorites">
+                        <TextBlock Text="{x:Bind Name}"></TextBlock>
                     </DataTemplate>
                 </ComboBox.ItemTemplate>
             </ComboBox>
@@ -42,7 +42,7 @@
         </Grid>
         
         <ScrollViewer Grid.Row="1"  Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" CornerRadius="7" Margin="0,0,0,15" >
-            <ItemsRepeater ItemsSource="{x:Bind topics}" x:Name="Collection" Loaded="Collection_Loaded">
+            <ItemsRepeater ItemsSource="{x:Bind topics}" x:Name="FavoriteTopicRepeater" ElementPrepared="FavoriteTopicRepeater_ElementPrepared">
                 <ItemsRepeater.ItemTemplate>
                     <DataTemplate x:DataType="obj:SimpleTopicInfo">
                         <HyperlinkButton HorizontalContentAlignment="Stretch" HorizontalAlignment="Stretch" CornerRadius="0" x:Name="Content" Click="Content_Click" BorderThickness="0.5" BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}" DataContext="{x:Bind}">

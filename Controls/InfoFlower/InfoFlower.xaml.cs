@@ -29,7 +29,7 @@ public sealed partial class InfoFlower : UserControl
         FlowStatus.Warning => "\uE7BA",
         FlowStatus.Success => "\uE930",
         FlowStatus.Fail => "\uEA39",
-        FlowStatus.Info => "\uE779",
+        FlowStatus.Info => "\uE946",
         _ => "\uE779",
     };
 

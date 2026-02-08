@@ -38,9 +38,7 @@ namespace CC98
         };
         public bool isMe=false;
         public int userId = 0;
-        public int currentIndex = 0;
-        public int history = 0;
-        public bool hasMore = true;
+        public Increment increment = new();
         public Profile()
         {
             this.InitializeComponent();
@@ -111,20 +109,21 @@ namespace CC98
             InfoContent.DataContext = profile;
             SignBoard.DataContext = profile; 
         }
-        private async Task LoadRecentTopic()
+        private async Task<bool> LoadRecentTopic()
         {
-            string RecentTopicUrl = ApiEndpoints.Topic.RecentTopic(isMe, userId, currentIndex);
+            string RecentTopicUrl = ApiEndpoints.Topic.RecentTopic(isMe, userId, increment.startIndex);
             var RecentTopicResult = await RequestSender.Fetch<List<SimpleTopicInfo>>(RecentTopicUrl);
             if (!RecentTopicResult.IsSuccess||RecentTopicResult.Data==null)
             {
                 Flower.Play("\uE739", RecentTopicResult.Message);
-                return;
+                return false;
             }
             var data=RecentTopicResult.Data;
-            hasMore = data.Count == 11;
             //移除末尾
-            if(hasMore)data.RemoveAt(10);
+            if(data.Count==11)data.RemoveAt(10);
+            increment.hasMore = data.Count == increment.pageSize;
             recentTopics.AddRange(data);
+            return true;
         }
         private async void Drawer_ImageResolving(object sender, ImageResolvingEventArgs e)
         {
@@ -165,27 +164,7 @@ namespace CC98
         }
 
 
-        private void SimpleTile_Loaded(object sender, RoutedEventArgs e)
-        {
-            SimpleTile.ElementPrepared += async (s, e) =>
-            {
-                if (SimpleTile.ItemsSource != null)
-                {
-                    int current = e.Index;
-                    if (current > history && (current + 1) % 10 == 0&&hasMore)
-                    {
-                        currentIndex = current;
-                        await LoadRecentTopic();
-                        //如果没有实际加载到数据，history不增加，下次滚动时继续触发加载
-                        //如果history仍增加，则界面卡死
-                        if (recentTopics.Count > currentIndex + 1)
-                        {
-                            history = currentIndex;
-                        }
-                    }
-                }
-            };
-        }
+        
 
         private async void SignBoard_LinkClicked(object sender, CommunityToolkit.WinUI.UI.Controls.LinkClickedEventArgs e)
         {
@@ -279,9 +258,14 @@ namespace CC98
             string mode=  flag?"0":"1";
             
         }
+
+        private async void RecentTopicRepeater_ElementPrepared(ItemsRepeater sender, ItemsRepeaterElementPreparedEventArgs args)
+        {
+            await increment.LoadMore(args.Index, LoadRecentTopic);
+        }
     }
-    
-    
+
+
     public partial class BooltoVisibilityConverter : IValueConverter
     {
         object IValueConverter.Convert(object value, Type targetType, object parameter, string language)
