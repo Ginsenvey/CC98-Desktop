@@ -66,20 +66,19 @@ namespace CC98
         private async void InitializeNetwork()
         {
             var network_status = await LoginService.vpn.CheckNetwork(false);
-            //App.Logger.Write("App", "初始化网络", network_status==NetworkStatus.NotInCampus ? "校外登录" : "其他错误");
             if (network_status == NetworkStatus.InCampus)
             {
                 //启动
-                StartUp();
+                await StartUp();
                 return;
             }
             if (network_status == NetworkStatus.NotInCampus)//在校外
             {
-                //App.Logger.Write("App", "初始化网络", "测试");
+                await Logger.WriteAsync("App", "初始化网络", "检测VPN可用性");
                 if (ValidationHelper.GetValue(Set, "IsVpnUsable") != "1")
                 {
                     //打开VPN配置设置
-                    App.Logger.Write("App", "初始化网络", "未配置VPN,跳转登录");
+                    await Logger.WriteAsync("App", "初始化网络", "未配置VPN,跳转登录");
                     ActivateLogin(1);
                     return;
                 }
@@ -87,41 +86,50 @@ namespace CC98
                 if (!PasswordManager.PasswordExists("Ticket") || !PasswordManager.PasswordExists("Route"))
                 {
                     //报错
-                    App.Logger.Write("App", "初始化网络", "VPN凭据中，有至少一个没有保存");
+                    await Logger.WriteAsync("App", "初始化网络", "VPN凭据中，有至少一个没有保存");
                     ShowError("VPN凭据不完整");
                     return;
                 }
                 if (!InjectTokenFromVault())
                 {
                     //报错
-                    App.Logger.Write("App", "初始化网络", "已保存的凭据中，有至少一个内容是空文本");
+                    await Logger.WriteAsync("App", "初始化网络", "已保存的凭据中，有至少一个内容是空文本");
                     ShowError("VPN凭据不完整");
                     return;
                 }
-                //App.Logger.Write("App", "初始化网络", "注入已有Cookie成功,启用VPN模式检查网络");
+                await Logger.WriteAsync("App", "初始化网络", "注入已有Cookie成功,启用VPN模式检查网络");
                 var new_status = await LoginService.vpn.CheckNetwork(true);
-                //App.Logger.Write("App", "初始化网络", network_status == NetworkStatus.ByVPN ? "Cookie有效" : "VPN凭据过期");
+                await Logger.WriteAsync("App", "初始化网络", $"新的网络状态为：{new_status.ToString()}");
                 if (new_status == NetworkStatus.ByVPN)
                 {
                     LoginService.vpn.Logined = true;
                     LoginService.vpn.IsVpnEnabled = true;
-                    StartUp();
+                    await StartUp();
                     //启动
                     return;
                 }
                 bool success = await ReloginVPN();
-                App.Logger.Write("App", "初始化网络", success ? "重连成功": "重连失败");
+                await Logger.WriteAsync("App", "初始化网络", success ? "重连成功": "重连失败");
                 if (success)
                 {
                     LoginService.vpn.IsVpnEnabled = true;
                     SaveToken();
                     //此时vpn应该可用
-                    //App.Logger.Write("App", "初始化网络", "启动");
-                    StartUp();
+                    await StartUp();
                 }
             }
-            
-            //App.Logger.Write("App", "初始化网络", "异常");
+            if (network_status == NetworkStatus.MirrorError)
+            {
+                ShowError("出错", "连接镜像站失败", "日志已记录");
+            }
+            if (network_status == NetworkStatus.UnknownError)
+            {
+                ShowError("出错", "IP可能被镜像站拦截", "日志已记录");
+            }
+            if (network_status == NetworkStatus.NoConnection)
+            {
+                ShowError("出错", "无互联网连接", "日志已记录");
+            }
             return;
         }
 
@@ -195,9 +203,9 @@ namespace CC98
             return true;
             //保存失败或者token为空时，会出现VPN启用但找不到令牌的情况。
         }
-        protected override  void OnLaunched(Microsoft.UI.Xaml.LaunchActivatedEventArgs args)
+        protected override  async void OnLaunched(Microsoft.UI.Xaml.LaunchActivatedEventArgs args)
         {
-            InitializeAppLog();
+            await InitializeAppLog();
             var e= AppInstance.GetActivatedEventArgs();
             if (e.Kind == ActivationKind.Protocol)
             {
@@ -225,7 +233,7 @@ namespace CC98
 
         }
 
-        private async void InitializeAppLog()
+        private async Task InitializeAppLog()
         {
             try
             {
@@ -239,26 +247,27 @@ namespace CC98
                 System.Diagnostics.Debug.WriteLine(ex.Message);
                 throw;
             }
-            AppDomain.CurrentDomain.UnhandledException += (s, e) =>
+            AppDomain.CurrentDomain.UnhandledException += async (s, e) =>
             {
-                Logger.Write("crash.log", $"未处理异常: {e.ExceptionObject}");
+                await Logger.WriteAsync("全局异常捕获", $"未处理异常: {e.ExceptionObject}");
             };
 
             
         }
-        private void StartUp()
+        private async Task StartUp()
         {
             try
             {
                 //必须在构造函数前加上异常处理
                 m_window = new MainWindow();
+                await Logger.WriteAsync("App", "应用主窗口启动");
                 m_window.Closed += M_window_Closed;
                 m_window.Activate();
                 DisplayTrayIcon();
             }
             catch (Exception ex)
             {
-                App.Logger.Write("App", "窗口启动",ex.Message);
+                await Logger.WriteAsync("App", "主窗口启动出错",ex.Message);
             }
             
         }
@@ -416,7 +425,7 @@ namespace CC98
         }
         private void ActivateLogin(int mode)
         {
-            loginpage = new login(mode);
+            loginpage = new Login(mode);
             var hWnd = WinRT.Interop.WindowNative.GetWindowHandle(loginpage);
             var windowStyle = Win32Interop.GetWindowLong(hWnd, Win32Interop.GWL_STYLE);
             Win32Interop.SetWindowLong(hWnd, Win32Interop.GWL_STYLE, windowStyle & ~Win32Interop.WS_THICKFRAME);

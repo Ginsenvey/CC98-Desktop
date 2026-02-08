@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
@@ -45,7 +46,7 @@ public class AppLog
     #region 核心日志记录方法
 
     /// <summary>
-    /// 写入日志（异步）
+    /// 写入日志（异步）。禁止使用同步方法读写文件。
     /// </summary>
     /// <param name="domain">事件发生域</param>
     /// <param name="info">事件简述</param>
@@ -76,17 +77,6 @@ public class AppLog
         await SaveToFileAsync();
     }
 
-    /// <summary>
-    /// 写入日志（同步版本）
-    /// </summary>
-    public void Write(
-        string domain,
-        string info,
-        string message="")
-    {
-        // 同步方法内部使用异步，但阻塞等待完成
-        WriteAsync(domain, info, message).GetAwaiter().GetResult();
-    }
 
     /// <summary>
     /// 批量写入日志
@@ -179,6 +169,7 @@ public class AppLog
             var jsonOptions = new JsonSerializerOptions
             {
                 WriteIndented = true,
+                Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
                 PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
                 Converters = { new BeijingTimeConverter() }
             };

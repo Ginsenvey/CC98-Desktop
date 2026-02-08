@@ -177,7 +177,7 @@ namespace CC98
             if (!replyResult.IsSuccess || replyResult.Data == null)
             {
                 //
-                App.Logger.Write("Topic","加载回帖失败", replyResult.Message);
+                await App.Logger.WriteAsync("Topic","加载回帖失败", replyResult.Message);
                 return;
             }
             var data= replyResult.Data;
@@ -861,7 +861,7 @@ namespace CC98
             }
             catch (Exception ex)
             {
-                App.Logger.Write("Topic", "加载用户信息预览失败", ex.Message);
+                await App.Logger.WriteAsync("Topic", "加载用户信息预览失败", ex.Message);
             }
         }
     }

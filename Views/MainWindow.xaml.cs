@@ -408,7 +408,7 @@ namespace CC98
             var result = await RequestSender.Fetch<UnreadMessageInfo>(url);
             if (!result.IsSuccess || result.Data == null)
             {
-                App.Logger.Write("MainWindow","刷新未读消息失败", $"{result.StatusCode}:{result.Message}");
+                await App.Logger.WriteAsync("MainWindow", "刷新未读消息失败", $"{result.StatusCode}:{result.Message}");
                 return;
             }
             var data = result.Data;

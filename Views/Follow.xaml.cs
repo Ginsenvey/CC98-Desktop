@@ -80,7 +80,7 @@ namespace CC98
             {
                 //
                 Flower.Play(FlowStatus.Fail, "加载好友Id列表失败");
-                App.Logger.Write("Follow", "加载好友Id列表失败",friendIdsResult.Message);
+                await App.Logger.WriteAsync("Follow", "加载好友Id列表失败", friendIdsResult.Message);
                 return false;
             }
             var ids = friendIdsResult.Data;
@@ -98,7 +98,7 @@ namespace CC98
             {
                 //
                 Flower.Play(FlowStatus.Fail, "加载好友信息失败");
-                App.Logger.Write("NoticeMsg", "加载好友信息失败", friendsResult.Message);
+                await App.Logger.WriteAsync("NoticeMsg", "加载好友信息失败", friendsResult.Message);
                 return false;
             }
             friends.AddRange(friendsResult.Data); 

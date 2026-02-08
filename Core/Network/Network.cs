@@ -266,24 +266,25 @@ public partial class VpnService : IDisposable
                 }
                 else
                 {
+                    //vpn过期时会返回非常长的html
                     if (res_text.Length > 256)
                     {
-                        //App.Logger.Write("网络检查", "VPN凭据过期", $"{res_text.Substring(0,32)}");
+                        await App.Logger.WriteAsync("网络检查", "VPN凭据过期", $"{res_text.Substring(0,32)}");
                         return NetworkStatus.VpnDisabled;
                     }
-                    App.Logger.Write("网络检查", "请查看返回内容", $"{res_text}");
+                    await App.Logger.WriteAsync("网络检查", "镜像站返回了意外的内容。请查看正文", $"{res_text}");
                     return NetworkStatus.UnknownError;
                 }
             }
             else
             {
-                App.Logger.Write("网络检查", "访问镜像站失败", $"{response.StatusCode}:{response.ReasonPhrase??""},响应正文{res_text}");
+                await App.Logger.WriteAsync("网络检查", "访问镜像站失败", $"{response.StatusCode}:{response.ReasonPhrase??""},响应正文{res_text}");
                 return NetworkStatus.MirrorError;
             }
         }
         catch (Exception ex)
         {
-            App.Logger.Write("网络检查", "错误", $"{ex.Message}");
+            await App.Logger.WriteAsync("网络检查", "错误", $"{ex.Message}");
             return NetworkStatus.NoConnection;
         }
 

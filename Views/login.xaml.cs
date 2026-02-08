@@ -26,10 +26,10 @@ namespace CC98
     /// An empty window that can be used on its own or navigated to within a Frame.
     /// </summary>
     
-    public sealed partial class login : Window
+    public sealed partial class Login : Window
     {
         public ApplicationDataContainer Set;
-        public login(int mode)
+        public Login(int mode)
         {
             this.InitializeComponent();
             this.ExtendsContentIntoTitleBar= true;
@@ -114,6 +114,18 @@ namespace CC98
                     //此时vpn应该可用
                     OpenPasswordLoginPane();
                 }
+            }
+            if (network_status == NetworkStatus.MirrorError)
+            {
+                Flower.Play(FlowStatus.Fail, "连接镜像站失败");
+            }
+            if (network_status == NetworkStatus.UnknownError)
+            {
+                Flower.Play(FlowStatus.Fail, "IP被镜像站拦截");
+            }
+            if (network_status == NetworkStatus.NoConnection)
+            {
+                Flower.Play(FlowStatus.Fail, "无互联网连接");
             }
         }
         private bool SaveVpnToken()
@@ -368,7 +380,7 @@ namespace CC98
             }
             catch(Exception ex)
             {
-                App.Logger.Write("Login", "网络初始化出错", ex.Message);
+                await App.Logger.WriteAsync("Login", "网络初始化出错", ex.Message);
                 debug("日志已记录。");
             }
             

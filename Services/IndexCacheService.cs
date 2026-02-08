@@ -87,7 +87,7 @@ public class CC98HomeDataManager
         }
         catch (Exception ex)
         {
-            App.Logger.Write("IndexDataService","获取首页失败",ex.Message);
+            await App.Logger.WriteAsync("IndexDataService","获取首页失败",ex.Message);
             return false;
         }
     }

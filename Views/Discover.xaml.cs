@@ -57,7 +57,7 @@ namespace CC98
             if (!newTopicResult.IsSuccess || newTopicResult.Data == null)
             {
                 Flower.Play(FlowStatus.Fail, "加载新帖失败");
-                App.Logger.Write("Discover","加载新帖失败", newTopicResult.Message);
+                await App.Logger.WriteAsync("Discover", "加载新帖失败", newTopicResult.Message);
                 return false;
             }
             var data= newTopicResult.Data;

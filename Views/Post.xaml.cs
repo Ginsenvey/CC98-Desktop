@@ -230,7 +230,7 @@ namespace CC98
             }
             catch (Exception ex)
             {
-                App.Logger.Write("UBBEditor","文件上传出错", ex.Message);
+                await App.Logger.WriteAsync("UBBEditor", "文件上传出错", ex.Message);
                 status.Text = "上传失败:" + ex.Message;
             }
             return "0";
@@ -293,7 +293,7 @@ namespace CC98
                     else if(MyReplyId.StartsWith("400:"))
                     {
                         status.Text = "发生错误。请向开发者报告此问题，日志已记录";
-                        App.Logger.Write("UBBEditor",$"向主题发送回复出错", MyReplyId.Split(":")[1]);
+                        await App.Logger.WriteAsync("UBBEditor",$"向主题发送回复出错", MyReplyId.Split(":")[1]);
                     }
                     else
                     {

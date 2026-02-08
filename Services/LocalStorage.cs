@@ -13,6 +13,9 @@ namespace CC98.Services;
 /// <summary>
 /// 用于缓存大型json数据，标记数据读取状态。
 /// </summary>
+/// <remark>
+/// 请谨慎使用同步方法。
+/// </remark>
 public class LocalCache
 {
     private readonly string _content;

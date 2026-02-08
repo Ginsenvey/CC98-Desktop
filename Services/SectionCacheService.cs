@@ -60,7 +60,7 @@ public class BoardSectionManager
         }
         catch (Exception ex)
         {
-            App.Logger.Write("SectionInfoManager","刷新全部版面信息失败",ex.Message);
+            await App.Logger.WriteAsync("SectionInfoManager","刷新全部版面信息失败",ex.Message);
             return false;
         }
     }

@@ -35,6 +35,7 @@ using Windows.Storage;
 using System.Text.Json;
 using CC98.Services;
 using CC98.Services.Extensions;
+using CC98.Objects;
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
 
@@ -339,6 +340,19 @@ namespace CC98
             else
             {
                 Set.Values["IsTailVisible"] = 2;
+            }
+        }
+
+        private async void ExportLog_Click(object sender, RoutedEventArgs e)
+        {
+            var r= await App.Logger.SaveToDesktopAsync();
+            if (r.Success)
+            {
+                Flower.Play(FlowStatus.Success, "导出日志成功");
+            }
+            else
+            {
+                Flower.Play(FlowStatus.Fail, "导出失败");
             }
         }
     }

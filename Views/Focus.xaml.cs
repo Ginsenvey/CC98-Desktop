@@ -61,7 +61,7 @@ namespace CC98
             {
                 //
                 Flower.Play(FlowStatus.Fail, "º”‘ÿ∂ØÃ¨ ß∞‹");
-                App.Logger.Write("Focus","º”‘ÿ∂ØÃ¨ ß∞‹", result.Message);
+                await App.Logger.WriteAsync("Focus", "º”‘ÿ∂ØÃ¨ ß∞‹", result.Message);
                 return false;
             }
             var data=result.Data;

@@ -59,11 +59,16 @@ namespace CC98
         {
             this.InitializeComponent();
             _dataManager=CC98HomeDataManager.Instance;
-            LoadFromCacheAsync();
+            
             LoadSet();
         }
-       
-        
+
+        protected override async void OnNavigatedTo(Microsoft.UI.Xaml.Navigation.NavigationEventArgs e)
+        {
+            base.OnNavigatedTo(e);
+            await LoadFromCacheAsync();
+        }
+
         private void LoadSet()
         {
             var _Theme = ValidationHelper.GetValue(Set, "ThemePic");
@@ -90,7 +95,7 @@ namespace CC98
             var recommendations = await _dataManager.GetRecommendationReadingAsync();
             if (recommendations == null)
             {
-                App.Logger.Write("Index", "获取推荐阅读列表失败");
+                await App.Logger.WriteAsync("Index", "获取推荐阅读列表失败");
                 return;
             }
             foreach (var item in recommendations)

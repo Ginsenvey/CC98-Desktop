@@ -48,7 +48,7 @@ namespace CC98
             {
                 //
                 Flower.Play(FlowStatus.Fail, "加载通知失败");
-                App.Logger.Write("NoticeMsg","加载通知失败", result.Message);
+                await App.Logger.WriteAsync("NoticeMsg", "加载通知失败", result.Message);
                 return false;
             }
             var data= result.Data;
@@ -87,7 +87,7 @@ namespace CC98
             {
                 //
                 Flower.Play(FlowStatus.Fail, "获取帖子基本信息失败");
-                App.Logger.Write("通知","获取帖子基本信息失败", result.Message);
+                await App.Logger.WriteAsync("NoticeMsg", "获取帖子基本信息失败", result.Message);
                 return [];
             }
             var data= result.Data;

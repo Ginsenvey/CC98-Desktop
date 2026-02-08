@@ -222,25 +222,14 @@ namespace CC98
 
         private void FollowList_Click(object sender, RoutedEventArgs e)
         {
+            if (!isMe) return;
             var h = sender as HyperlinkButton;
-
-            if (h != null)
+            var tag = h?.Tag as string;
+            if (!string.IsNullOrEmpty(tag))
             {
-                var i = h.DataContext as UserInfo;
-                if (i != null)
-                {
-                    if (!i.IsOthers)
-                    {
-                        string tag = h.Tag as string;
-                        if (!string.IsNullOrEmpty(tag))
-                        {
-                            Frame.Navigate(typeof(Follow), tag);
-                        }
-                    }
-                }
-
-
+                Frame.Navigate(typeof(Follow), tag);
             }
+            
         }
         
         
