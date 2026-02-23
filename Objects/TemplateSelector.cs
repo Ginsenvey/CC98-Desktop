@@ -2,7 +2,7 @@
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 
-namespace CC98.Services;
+namespace CC98.Objects;
 
 public partial class NavigationTemplateSelector : DataTemplateSelector
 {
@@ -45,5 +45,23 @@ public partial class NoticeTemplateSelector : DataTemplateSelector
             }
         }
         return ReplyOrAtTemplate;
+    }
+}
+
+public partial class ReplyTemplateSelector : DataTemplateSelector
+{
+    public DataTemplate UBBTemplate { get; set; }
+    public DataTemplate MarkdownTemplate { get; set; }
+
+    protected override DataTemplate SelectTemplateCore(object item)
+    {
+        if (item is Reply reply)
+        {
+            if (reply.ContentType == 0)
+            {
+                return UBBTemplate;
+            }
+        }
+        return MarkdownTemplate;
     }
 }

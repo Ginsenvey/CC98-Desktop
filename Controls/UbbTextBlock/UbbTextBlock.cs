@@ -1,22 +1,24 @@
+using CC98.Share.Controls.Primitives;
 using Microsoft.UI;
 using Microsoft.UI.Text;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Documents;
 using Microsoft.UI.Xaml.Media;
+using Microsoft.UI.Xaml.Media.Imaging;
 using System;
 using System.Collections.Generic;
-using Windows.UI.Text;
 using System.Linq;
 using System.Text.RegularExpressions;
+using UbbRender.Common;
+using UbbRender.Parser;
 using Windows.UI;
-using Microsoft.UI.Xaml.Media.Imaging;
-using CC98.Controls.UbbRenderer.Common;
-namespace CC98.Controls
+using Windows.UI.Text;
+namespace UbbRender.Render
 {
     public sealed partial class UbbTextBlock : Control
     {
-        // 依赖属性
+        #region 依赖属性
 
         public static readonly DependencyProperty UbbTextProperty =
             DependencyProperty.Register(
@@ -32,7 +34,7 @@ namespace CC98.Controls
                 typeof(UbbTextBlock),
                 new PropertyMetadata(14.0, OnFontSizeChanged));
 
-        public static readonly DependencyProperty ForegroundProperty =
+        public static new readonly DependencyProperty ForegroundProperty =
             DependencyProperty.Register(
                 nameof(Foreground),
                 typeof(Brush),
@@ -58,16 +60,16 @@ namespace CC98.Controls
                 nameof(ImageMaxWidth),
                 typeof(double),
                 typeof(UbbTextBlock),
-                new PropertyMetadata(300.0));
+                new PropertyMetadata(400.0));
 
-        // 属性
+        
         public string UbbText
         {
             get => (string)GetValue(UbbTextProperty);
             set => SetValue(UbbTextProperty, value);
         }
 
-        public double FontSize
+        public new double FontSize
         {
             get => (double)GetValue(FontSizeProperty);
             set => SetValue(FontSizeProperty, value);
@@ -97,25 +99,31 @@ namespace CC98.Controls
             set => SetValue(ImageMaxWidthProperty, value);
         }
 
-        // 内部控件
-        private ScrollViewer _scrollViewer;
+        
         private StackPanel _rootPanel;
         private UbbDocument _document;
         public Dictionary<UbbNodeType, IRenderStrategy> renderStrategies;
 
-        // 构造函数
+        #endregion
+
+        
         public UbbTextBlock()
         {
             this.DefaultStyleKey = typeof(UbbTextBlock);
             InitializeRenderStrategies();
         }
+        #region 事件
+        public event EventHandler<MediaClickEventArgs> MediaClicked;
+        public void OnMediaClicked(string src,MediaType mediaType)
+        {
+            MediaClicked?.Invoke(this, new MediaClickEventArgs(src,mediaType));
+        }
 
+        #endregion
         // 应用模板
         protected override void OnApplyTemplate()
         {
             base.OnApplyTemplate();
-
-            _scrollViewer = GetTemplateChild("PART_ScrollViewer") as ScrollViewer;
             _rootPanel = GetTemplateChild("PART_RootPanel") as StackPanel;
 
             if (_rootPanel != null)
@@ -140,19 +148,23 @@ namespace CC98.Controls
                 [UbbNodeType.Color] = new ColorRenderStrategy(),
                 [UbbNodeType.Url] = new UrlRenderStrategy(),
                 [UbbNodeType.Image] = new ImageRenderStrategy(),
-                //[UbbNodeType.Audio] = new AudioRenderStrategy(),
-                //[UbbNodeType.Video] = new VideoRenderStrategy(),
+                [UbbNodeType.Audio] = new AudioRenderStrategy(),
+                [UbbNodeType.Video] = new VideoRenderStrategy(),
                 [UbbNodeType.Code] = new CodeRenderStrategy(),
-                [UbbNodeType.Quote] = new QuoteRenderStrategy(),
+                [UbbNodeType.Quote] = new FlatQuoteRenderStrategy(),
                 [UbbNodeType.Align] = new AlignRenderStrategy(),
                 [UbbNodeType.Left] = new LeftRenderStrategy(),
                 [UbbNodeType.Center] = new CenterRenderStrategy(),
                 [UbbNodeType.Right] = new RightRenderStrategy(),
-                //[UbbNodeType.List] = new ListRenderStrategy(),
-                //[UbbNodeType.ListItem] = new ListItemRenderStrategy(),
+                [UbbNodeType.Table] = new TableRenderStrategy(),
+                [UbbNodeType.TableRow] = new TableRowRenderStrategy(),
+                [UbbNodeType.TableCell] = new TableCellRenderStrategy(),
                 [UbbNodeType.Paragraph] = new ParagraphRenderStrategy(),
                 [UbbNodeType.LineBreak] = new LineBreakRenderStrategy(),
-                [UbbNodeType.Emoji]=new EmojiRenderStrategy()
+                [UbbNodeType.Emoji]=new EmojiRenderStrategy(),
+                [UbbNodeType.Latex]=new LatexRenderStrategy(),
+                [UbbNodeType.Divider]=new DividerRenderStrategy(),
+                [UbbNodeType.Markdown]=new MarkdownRenderStrategy()
             };
         }
 
@@ -193,22 +205,26 @@ namespace CC98.Controls
             try
             {
                 // 解析UBB为文档树
-                _document = UbbParser.Parse(UbbText);
+                _document =UbbRender.Common.Parser.Parse(UbbText);
 
                 // 创建渲染上下文
-                var context = new RenderContext
-                {
-                    Control = this,
-                    Container = _rootPanel,
-                    Properties =
-                    {
-                        ["FontSize"] = FontSize,
-                        ["Foreground"] = Foreground ?? new SolidColorBrush(Colors.Gray),
-                        ["CodeBackground"] = CodeBackground ?? new SolidColorBrush(Color.FromArgb(20, 0, 0, 0)),
-                        ["QuoteBackground"] = QuoteBackground ?? new SolidColorBrush(Color.FromArgb(20, 0, 120, 215)),
-                        ["ImageMaxWidth"] = ImageMaxWidth
-                    }
-                };
+                var context = new RenderContext();
+                context.Control = this;
+                context.Container = _rootPanel;
+
+                // Defensive initialization: ensure Properties and stacks are non-null
+                if (context.Properties == null)
+                    context.Properties = new Dictionary<string, object>();
+                if (context.PanelStack == null)
+                    context.PanelStack = new Stack<Panel>();
+
+                // 填充默认属性
+                context.Properties["FontSize"] = FontSize;
+                context.Properties["Foreground"] = Foreground ?? new SolidColorBrush(Colors.Gray);
+
+                context.Properties["CodeBackground"] = CodeBackground ?? new SolidColorBrush(Color.FromArgb(0xff,0xe8,0xf4,0xf9));
+                context.Properties["QuoteBackground"] = QuoteBackground ?? new SolidColorBrush(Color.FromArgb(20,0,120,215));
+                context.Properties["ImageMaxWidth"] = ImageMaxWidth;
 
                 // 渲染文档
                 context.RenderNode(_document.Root);

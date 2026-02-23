@@ -1,24 +1,54 @@
 ﻿using Microsoft.UI.Xaml.Navigation;
 using System;
+using Windows.Networking.NetworkOperators;
 
 namespace CC98.Objects;
 
 //导航参数类型
 //对于只有一个参数的页面，不提供专有类型
 
-public class TopicNavigationInfo
+
+
+/// <summary>
+/// 导航信息的基类，提供一个属性以标识是否使用该导航信息。
+/// 导航时上一次导航将会被全局保留，直到下一次导航时被覆盖或者被标记为不使用。
+/// </summary>
+public abstract class NavigationInfo
 {
+    public abstract bool ShouldUseThisInfo { get; set; }
+    
+    public Type PageType { get; set; }
+    
+}
+
+
+
+public class TopicNavigationInfo: NavigationInfo
+{
+   
     public bool IsJumpingMode { get; set; } = false;
     public int TargetFloor { get; set; } = 0;
     public int TopicId {  get; set; }
+    public override bool ShouldUseThisInfo { get; set; }=true;
+
+    public TopicNavigationInfo()
+    {
+        PageType = typeof(Topic);
+    }
 }
 
-public class ProfileNavigationInfo
+public class ProfileNavigationInfo: NavigationInfo
 {
+
     public int UserId {  get; set; }
     public bool IsMe {  get; set; }
+    public override bool ShouldUseThisInfo { get; set; } = true;
+    public ProfileNavigationInfo()
+    {
+        PageType = typeof(Profile);
+    }
 }
-public class MessageNavigationInfo
+public class MessageNavigationInfo: NavigationInfo
 {
     /// <summary>
     /// 标注以何种方式跳转到私信页面，从而让Chat页面做出响应。
@@ -26,22 +56,26 @@ public class MessageNavigationInfo
     /// </summary>
     public bool IsFromProfile { get; set; } = false;
     public ChatInfo ChatUserInfo {  get; set; } = new ChatInfo();
-    
+    public override bool ShouldUseThisInfo { get; set; } = true;
+    public MessageNavigationInfo()
+    {
+        PageType = typeof(Message);
+    }
+
 }
-public enum SearchType
-{
-    Topic,
-    User,
-    Board,
-    Guide //使用指南
-}
-public class SearchNavigationInfo
+
+public class SearchNavigationInfo: NavigationInfo
 {
     public SearchType SearchType { get; set; }
     public string Key { get; set; } = string.Empty;
+    public override bool ShouldUseThisInfo { get; set; } = true;
+    public SearchNavigationInfo()
+    {
+        PageType = typeof(Search);
+    }
 }
 
-public class EditorNavigationInfo
+public class EditorNavigationInfo: NavigationInfo
 {
     public EditorMode EditorMode { get; set;} = EditorMode.ReplyToPost;
     public int TopicId { get; set;} = 0;
@@ -58,6 +92,12 @@ public class EditorNavigationInfo
     //回复主题的标题,其他提示信息
     public string HintText { get; set; }= string.Empty;
 
+    public override bool ShouldUseThisInfo { get; set; } = true;
+
+    public EditorNavigationInfo()
+    {
+        PageType = typeof(UBBEditor);
+    }
 }
 
 

@@ -21,7 +21,7 @@
             <SelectorBarItem Text="回复"  Tag="2"></SelectorBarItem>
             <SelectorBarItem Text="@我的" Tag="3"></SelectorBarItem>
         </SelectorBar>
-        
+        <TextBlock x:Name="MsgCount" Grid.Row="0" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,3,0" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="0条未读信息"></TextBlock>
         <Grid  Grid.Row="1" CornerRadius="6" BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}" BorderThickness="1">
             <Frame x:Name="MsgFrame"></Frame>
         </Grid>

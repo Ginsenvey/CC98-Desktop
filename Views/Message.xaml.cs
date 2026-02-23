@@ -1,4 +1,5 @@
 using CC98.Objects;
+using CC98.Services;
 using CC98.Services.Extensions;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -32,6 +33,7 @@ namespace CC98
     {
         public MessageNavigationInfo NavigationInfo { get; set; }=new MessageNavigationInfo();
         public ApplicationDataContainer Set = ApplicationData.Current.LocalSettings;
+        public GlobalService GlobalService =GlobalService.Instance;
         public Message()
         {
             this.InitializeComponent();
@@ -58,18 +60,22 @@ namespace CC98
                     if (tag == "0")//私信
                     {
                         MsgFrame.Navigate(typeof(Chat), NavigationInfo);
+                        MsgCount.Text = $"{GlobalService.MessageCount}条未读信息";
                     }
                     else if (tag == "1")//系统通知
                     {
                         MsgFrame.Navigate(typeof(NoticePage), NoticeType.System);
+                        MsgCount.Text = $"{GlobalService.SystemCount}条未读信息";
                     }
                     else if (tag == "2")//回复我的
                     {
                         MsgFrame.Navigate(typeof(NoticePage), NoticeType.Reply);
+                        MsgCount.Text = $"{GlobalService.ReplyCount}条未读信息";
                     }
                     else if (tag == "3")//提到我的
                     {
                         MsgFrame.Navigate(typeof(NoticePage), NoticeType.At);
+                        MsgCount.Text = $"{GlobalService.AtCount}条未读信息";
                     }
                 }
                 

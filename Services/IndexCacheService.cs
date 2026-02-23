@@ -9,22 +9,22 @@ using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
 
-public class CC98HomeDataManager
+public class IndexDataService
 {
-    private static CC98HomeDataManager? _instance;
+    private static IndexDataService? _instance;
     private static readonly object _lock = new();
 
-    public static CC98HomeDataManager Instance
+    public static IndexDataService Instance
     {
         get
         {
             lock (_lock)
             {
-                return _instance ??= new CC98HomeDataManager();
+                return _instance ??= new IndexDataService();
             }
         }
     }
-    private CC98HomeDataManager() { }
+    private IndexDataService() { }
 
     private const string CacheFileName = "index_data.json";
     private static readonly JsonSerializerOptions JsonOptions = new()

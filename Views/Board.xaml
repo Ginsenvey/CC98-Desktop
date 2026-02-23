@@ -11,6 +11,7 @@
     xmlns:ic="using:FluentIcons.WinUI"
     xmlns:tool="using:CommunityToolkit.WinUI.UI.Controls"
     xmlns:dev="using:DevWinUI"
+    xmlns:ubb="using:UbbRender.Render"
     xmlns:obj="using:CC98.Objects"
     xmlns:cv="using:CC98.Services.Converters"
     Background="{ThemeResource DesktopAcrylicTransparentBrush}">
@@ -49,7 +50,7 @@
             </Expander.Header>
             <Expander.Content>
                 <ScrollViewer MaxHeight="240">
-                    <tool:MarkdownTextBlock x:Name="Banner" Text="{x:Bind boardData.BannerText,Mode=OneWay}" CornerRadius="10"  Background="Transparent" LinkClicked="MarkdownTextBlock_LinkClicked" ImageMaxHeight="100" ImageStretch="Uniform" ImageResolving="Drawer_ImageResolving"></tool:MarkdownTextBlock>
+                    <ubb:UbbTextBlock x:Name="Banner" UbbText="{x:Bind boardData.BigPaper,Mode=OneWay}" CornerRadius="10"  />
                 </ScrollViewer>
                 
             </Expander.Content>

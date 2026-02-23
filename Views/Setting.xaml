@@ -164,11 +164,12 @@
                     <tool:SettingsExpander.Items>
                         <tool:SettingsCard ContentAlignment="Left">
                             <tool:WrapPanel Margin="10,10,10,20" HorizontalSpacing="10" VerticalSpacing="8">
-                                <HyperlinkButton Content="NewtonSoft.Json"></HyperlinkButton>
+                                <HyperlinkButton Content="SkiaSharp"></HyperlinkButton>
+                                <HyperlinkButton Content="CsharpMath"></HyperlinkButton>
                                 <HyperlinkButton Content="Community ToolKit"></HyperlinkButton>
                                 <HyperlinkButton Content="Dev WinUI"></HyperlinkButton>
-                                <HyperlinkButton Content="API For CC98"></HyperlinkButton>
-                                <HyperlinkButton Content="FluentIcons.WinUI"></HyperlinkButton>
+                                <HyperlinkButton Content="Verrickt.UbbRender"></HyperlinkButton>
+                                <HyperlinkButton Content="FluentIcons"></HyperlinkButton>
                                 <HyperlinkButton Content="Windows App SDK"></HyperlinkButton>
                                 <HyperlinkButton Content="HtmlAgilityPack"></HyperlinkButton>
                                 <HyperlinkButton Content="ZJU-WebVPN"></HyperlinkButton>

@@ -171,7 +171,7 @@ namespace CC98.Kernel.UserExperience//用户体验模型，包括:版面图标�
                 return false;
             }
         }
-        public static async Task<BitmapSource> LoadWebImage(string url)
+        public static async Task<BitmapSource> LoadWebImage(string url,bool lowRes=false)
         {
             if (!LoginService.vpn.IsVpnEnabled)
             {
@@ -181,7 +181,7 @@ namespace CC98.Kernel.UserExperience//用户体验模型，包括:版面图标�
 
             // 使用WebVPN加载
             byte[] imageBytes = await LoginService.vpn.GetByteArrayAsync(url);
-            return await LoadFromBytes(imageBytes);
+            return await LoadFromBytes(imageBytes,lowRes);
         }
         public static async Task<BitmapSource> LoadLocalImage(string path)
         {
@@ -212,19 +212,24 @@ namespace CC98.Kernel.UserExperience//用户体验模型，包括:版面图标�
 
             var bitmapImage = new BitmapImage();
             await bitmapImage.SetSourceAsync(ras);
-
+            bitmapImage.DecodePixelHeight = 48;
+            bitmapImage.DecodePixelWidth = 48;
             return bitmapImage;
         }
 
-        public static async Task<BitmapSource> LoadFromBytes(byte[] bytes)
+        public static async Task<BitmapSource> LoadFromBytes(byte[] bytes,bool lowRes=false)
         {
             using var ras = new InMemoryRandomAccessStream();
             await ras.WriteAsync(bytes.AsBuffer());
             ras.Seek(0);
-
             var bitmapImage = new BitmapImage();
+            if (lowRes)
+            {
+                bitmapImage.DecodePixelHeight = 64;
+                bitmapImage.DecodePixelWidth = 64;
+            }
             await bitmapImage.SetSourceAsync(ras);
-
+            
             return bitmapImage;
         }
     }

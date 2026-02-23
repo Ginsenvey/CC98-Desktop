@@ -1,13 +1,15 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
-    <TargetFramework>net8.0-windows10.0.26100.0</TargetFramework>
+    <TargetFramework>net8.0-windows10.0.22621.0</TargetFramework>
 	<LangVersion>preview</LangVersion>
     <TargetPlatformMinVersion>10.0.17763.0</TargetPlatformMinVersion>
     <RootNamespace>CC98</RootNamespace>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <Platforms>x86;x64;ARM64</Platforms>
     <RuntimeIdentifiers>win-x86;win-x64;win-arm64</RuntimeIdentifiers>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <Platform>x64</Platform>
     <PublishProfile>win-$(Platform).pubxml</PublishProfile>
     <UseWinUI>true</UseWinUI>
     <EnableMsixTooling>true</EnableMsixTooling>
@@ -165,6 +167,7 @@
   </ItemGroup>
   <ItemGroup>
 	<TrimmerRootAssembly Include="CommunityToolkit.WinUI.UI.Controls.Markdown" />
+	<PackageReference Include="CommunityToolkit.Labs.WinUI.Controls.Shimmer" Version="0.1.260203-build.2518" />
     <PackageReference Include="CommunityToolkit.Labs.WinUI.Ribbon" Version="0.1.250721-build.2183" />
     <PackageReference Include="CommunityToolkit.Labs.WinUI.TokenView" Version="0.1.250721-build.2183" />
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
@@ -172,6 +175,7 @@
     <PackageReference Include="CommunityToolkit.WinUI.Controls.Primitives" Version="8.2.251219" />
     <PackageReference Include="CommunityToolkit.WinUI.Controls.SettingsControls" Version="8.2.251219" />
     <PackageReference Include="CommunityToolkit.WinUI.UI.Controls.Markdown" Version="7.1.2" />
+    <PackageReference Include="CSharpMath.SkiaSharp" Version="0.5.1" />
     <PackageReference Include="DevWinUI" Version="9.8.1" />
     <PackageReference Include="DevWinUI.Controls" Version="9.8.1" />
     <PackageReference Include="Duende.IdentityModel.OidcClient" Version="7.0.0" />
@@ -180,6 +184,7 @@
     <PackageReference Include="Microsoft.Windows.CsWinRT" Version="2.2.0" />
     <PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.26100.7175" />
     <PackageReference Include="Microsoft.WindowsAppSDK" Version="1.8.251106002" />
+    <PackageReference Include="SkiaSharp.Views.WinUI" Version="3.119.2" />
   </ItemGroup>
 	
   <ItemGroup>
@@ -323,8 +328,9 @@
     <AppxPackageDir>C:\Users\Ansherly\Downloads\</AppxPackageDir>
     <GenerateTemporaryStoreCertificate>True</GenerateTemporaryStoreCertificate>
     <AppxBundlePlatforms>x64</AppxBundlePlatforms>
-    <PublishAot>False</PublishAot>
-	<PublishTrimmed>False</PublishTrimmed>
+    <PublishAot>True</PublishAot>
+	<PublishTrimmed>True</PublishTrimmed>
+	<TrimMode>full</TrimMode>
     <ApplicationIcon>Assets\cc98.ico</ApplicationIcon>
     <AllowUnsafeBlocks>False</AllowUnsafeBlocks>
     

@@ -11,7 +11,7 @@ namespace CC98.Kernel.Network;
 
 public partial class VpnService
 {
-    public async Task<MediaSource> GetSourceAsync(string url)
+    public async Task<MediaSource?> GetSourceAsync(string url)
     {
         try
         {
@@ -31,29 +31,22 @@ public partial class VpnService
                 else if (res.StatusCode == HttpStatusCode.Unauthorized)
                 {
                     var r = await Coordinator.SafeSlientAuth();
-                    if (r)
+                    if (!r) return null;
+                    using (var res1 = await LoginService.vpn.client.GetAsync(targeturl, HttpCompletionOption.ResponseHeadersRead))
                     {
-                        using (var res1 = await LoginService.vpn.client.GetAsync(targeturl, HttpCompletionOption.ResponseHeadersRead))
+                        if (!res1.IsSuccessStatusCode) return null;
+                        var memory_stream = new InMemoryRandomAccessStream();
+                        using (var content_stream = await res1.Content.ReadAsStreamAsync())
                         {
-                            if (res1.IsSuccessStatusCode)
-                            {
-                                var memory_stream = new InMemoryRandomAccessStream();
-                                using (var content_stream = await res1.Content.ReadAsStreamAsync())
-                                {
-                                    await ValidationHelper.CopyStreamToRandomAccessStream(content_stream, memory_stream);
-                                }
-                                var source = MediaSource.CreateFromStream(memory_stream, res1.Content.Headers.ContentType?.MediaType);
-                                return source;
-                            }
+                            await ValidationHelper.CopyStreamToRandomAccessStream(content_stream, memory_stream);
                         }
+                        var source = MediaSource.CreateFromStream(memory_stream, res1.Content.Headers.ContentType?.MediaType);
+                        return source;
                     }
                 }
-
             }
-
-
         }
-        catch { }
+        catch {}
         return null;
 
     }

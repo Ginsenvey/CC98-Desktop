@@ -3,6 +3,7 @@
     x:Class="CC98.NoticePage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    NavigationCacheMode="Enabled"
     xmlns:local="using:CC98"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -45,7 +46,7 @@
                 </Grid>
             </HyperlinkButton>
         </DataTemplate>
-        <sv:NoticeTemplateSelector x:Key="Selector" SystemTemplate="{StaticResource SystemNoticeTemplate}" ReplyOrAtTemplate="{StaticResource ReplyOrAtNoticeTemplate}" ></sv:NoticeTemplateSelector>
+        <obj:NoticeTemplateSelector x:Key="Selector" SystemTemplate="{StaticResource SystemNoticeTemplate}" ReplyOrAtTemplate="{StaticResource ReplyOrAtNoticeTemplate}" ></obj:NoticeTemplateSelector>
     </Page.Resources>
     <Grid>
         <ScrollViewer x:Name="NoticeViewer">

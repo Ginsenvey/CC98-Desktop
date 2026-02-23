@@ -164,13 +164,7 @@ public partial class BoardData:ObservableObject
     public required string BigPaper
     {
         get => _bigPaper;
-        set 
-        { 
-            if(SetProperty(ref _bigPaper, value))
-            {
-                OnPropertyChanged(nameof(BannerText));
-            }
-        }
+        set => SetProperty(ref _bigPaper, value);
     }
     
     [JsonPropertyName("todayCount")]
@@ -203,7 +197,7 @@ public partial class BoardData:ObservableObject
     public string TodayCountString=> $"今日帖数：{TodayCount}";
     public string TopicCountString=> $"总话题数：{TopicCount}";
 
-    public string BannerText => UBBConverter.Convert(BigPaper, true);
+    
 }
 /// <summary>
 /// 关注的人和被关注的人的详细信息，用于好友列表
@@ -417,6 +411,7 @@ public partial class Reply : ObservableObject
         get => field??"";
         set => SetProperty(ref field, value);
     }
+    [JsonIgnore]
     public string PortraitUrl
     {
         get => field ?? "";
@@ -458,6 +453,12 @@ public partial class Reply : ObservableObject
         set => SetProperty(ref field, value);
     }
     public bool IsMe
+    {
+        get => field;
+        set => SetProperty(ref field, value);
+    }
+
+    public int ContentType
     {
         get => field;
         set => SetProperty(ref field, value);

@@ -135,6 +135,7 @@ public partial class VpnService : IDisposable
                 result.Status = VPNLoginStatus.NeedCaptcha;
                 return result;
             }
+            Logined = true;
             return VpnLoginResult.Success();
         }
         catch (HttpRequestException ex)
@@ -167,6 +168,7 @@ public partial class VpnService : IDisposable
             }
             if (result.IsSuccess)
             {
+                Logined = true;
                 return VpnLoginResult.Success();
             }
             return VpnLoginResult.Failure(result.Error ?? "确认登录失败");

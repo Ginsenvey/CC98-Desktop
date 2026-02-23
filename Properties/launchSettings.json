@@ -2,7 +2,7 @@
   "profiles": {
     "App3 (Package)": {
       "commandName": "MsixPackage",
-      "hotReloadEnabled": false
+      "hotReloadEnabled": true
     },
     "App3 (Unpackaged)": {
       "commandName": "Project"

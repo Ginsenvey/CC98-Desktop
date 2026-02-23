@@ -5,8 +5,9 @@ using Microsoft.UI.Xaml.Documents;
 using Microsoft.UI.Xaml.Media;
 using System.Collections.Generic;
 using System.Linq;
-
-namespace CC98.Controls.UbbRenderer.Common;
+using UbbRender.Parser;
+using UbbRender.Render;
+namespace UbbRender.Common;
 public class RenderContext
 {
     public UbbTextBlock Control { get; set; }

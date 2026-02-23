@@ -2,6 +2,7 @@
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:local="using:CC98.Controls"
+    xmlns:ubb="using:UbbRender.Render"
     xmlns:render="using:CC98.Controls">
 
     <Style TargetType="local:SmartImage" >
@@ -18,26 +19,18 @@
         </Setter>
     </Style>
 
-    <Style TargetType="local:UbbTextBlock">
+    <Style TargetType="ubb:UbbTextBlock">
         <Setter Property="Background" Value="Transparent"/>
-        <Setter Property="Foreground" Value="{ThemeResource TextFillColorPrimaryBrush}"/>
+       
         <Setter Property="Template">
             <Setter.Value>
-                <ControlTemplate TargetType="local:UbbTextBlock">
+                <ControlTemplate TargetType="ubb:UbbTextBlock">
                     <Border
                     Background="{TemplateBinding Background}"
                     BorderBrush="{TemplateBinding BorderBrush}"
                     BorderThickness="{TemplateBinding BorderThickness}">
 
-                        <ScrollViewer x:Name="PART_ScrollViewer"
-                        VerticalScrollBarVisibility="Auto"
-                        HorizontalScrollBarVisibility="Disabled"
-                        ZoomMode="Disabled">
-
-                            <StackPanel x:Name="PART_RootPanel"
-                            Margin="{TemplateBinding Padding}"/>
-
-                        </ScrollViewer>
+                        <StackPanel x:Name="PART_RootPanel" Margin="{TemplateBinding Padding}"/>
                     </Border>
                 </ControlTemplate>
             </Setter.Value>

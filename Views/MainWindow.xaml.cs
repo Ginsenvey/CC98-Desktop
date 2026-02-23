@@ -67,7 +67,7 @@ namespace CC98
         public Frame RootFrame => contentframe;//用于在嵌套的Frame中导航
         public ApplicationDataContainer Set = ApplicationData.Current.LocalSettings;
         public ObservableCollection<string> collections=[];
-
+        public GlobalService GlobalService = GlobalService.Instance;
         public int UnreadCount { get; set; }
         public MainWindow()
         {
@@ -82,7 +82,7 @@ namespace CC98
             LoadSettings();
             App.ThemeChanged += OnAppThemeChanged;
             Messenger.Instance.NavigationItemAdded += OnNavigationItemAdded;
-            var dataManager = CC98HomeDataManager.Instance;
+            var dataManager = IndexDataService.Instance;
             Surfing();
         }
 
@@ -306,7 +306,7 @@ namespace CC98
         private async Task<bool> FetchIndex()
         {
             string url = ApiEndpoints.Forum.Index();
-            return await CC98HomeDataManager.Instance.RefreshFromApiAsync(url);
+            return await IndexDataService.Instance.RefreshFromApiAsync(url);
         }
         private  void LoadSettings()
         {
@@ -359,9 +359,7 @@ namespace CC98
                 var file = Files[0];
                 Set.Values["Themepic"]= file;
             }
-            //string color = "CardGradient1Brush";
-            //GridTitleBar.Background = (Brush)Application.Current.Resources[color];
-            //Navi.Background= (Brush)Application.Current.Resources[color];
+
         }
         
         private DispatcherTimer SyncTimer { get; set; }
@@ -393,6 +391,8 @@ namespace CC98
                 return;
             }
             var data= result.Data;
+            GlobalService.AtCount = data.AtCount; GlobalService.ReplyCount = data.ReplyCount;
+            GlobalService.SystemCount = data.SystemCount; GlobalService.MessageCount = data.MessageCount;
             UnreadCount = data.MessageCount + data.AtCount + data.ReplyCount + data.SystemCount;
             BadgeNotificationManager.Current.SetBadgeAsCount((uint)UnreadCount);
             GetFocusBoards();
@@ -412,6 +412,8 @@ namespace CC98
                 return;
             }
             var data = result.Data;
+            GlobalService.AtCount = data.AtCount;GlobalService.ReplyCount = data.ReplyCount;
+            GlobalService.SystemCount = data.SystemCount;GlobalService.MessageCount = data.MessageCount;
             UnreadCount = data.MessageCount + data.AtCount + data.ReplyCount + data.SystemCount;
             BadgeNotificationManager.Current.SetBadgeAsCount((uint)UnreadCount);
         }

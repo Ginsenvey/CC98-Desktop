@@ -69,9 +69,10 @@ public class Increment
 {
     public int pageSize;
     public int currentPage;
+    //应假定没有更多项，由返回项项数决定是否还有更多
     public bool hasMore;
     public int startIndex => currentPage * pageSize;
-    public Increment(int pageSize = 10,int currentPage = 0, bool hasMore = true)
+    public Increment(int pageSize = 10,int currentPage = 0, bool hasMore = false)
     {
         this.pageSize = pageSize;
         this.currentPage = currentPage;
@@ -81,17 +82,18 @@ public class Increment
     public void Clear()
     {
         currentPage = 0;
-        hasMore = true;
+        hasMore = false;
     }
     public async Task LoadMore(int currentIndex, Func<Task<bool>> load)
     {
         if (hasMore&&(currentIndex + 1) % pageSize == 0)
         {
+            currentPage++;
             var success = await load();
-            //成功则翻页
-            if (success)
+            //如果没有成功，则回退页码，等待下一次尝试
+            if (!success)
             {
-                currentPage++;
+                currentPage--;
             }
         }
 

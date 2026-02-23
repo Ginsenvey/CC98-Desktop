@@ -79,8 +79,7 @@ namespace CC98.Controls
         {
             if (d is SmartImage control)
             {
-                control.LoadImage();
-                
+                control.LoadImage();  
             }
         }
 

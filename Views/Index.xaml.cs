@@ -51,14 +51,14 @@ namespace CC98
     {
         public ObservableCollection<SectionCard> sections=[];
         public ObservableCollection<FlipTopic> flipTopics=[];
-        public CC98HomeDataManager.HomeStatistics? Statistics { get; private set; }
+        public IndexDataService.HomeStatistics? Statistics { get; private set; }
         public ApplicationDataContainer Set=ApplicationData.Current.LocalSettings;
-        private readonly CC98HomeDataManager _dataManager;
+        private readonly IndexDataService _dataManager;
         public ImageSource? ThemePic;
         public Index()
         {
             this.InitializeComponent();
-            _dataManager=CC98HomeDataManager.Instance;
+            _dataManager=IndexDataService.Instance;
             
             LoadSet();
         }

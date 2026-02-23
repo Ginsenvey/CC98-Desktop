@@ -3,7 +3,9 @@ using CC98.Kernel.ApiScope;
 using CC98.Kernel.Network;
 using CC98.Kernel.UserExperience;
 using CC98.Objects;
+using CC98.Services;
 using CC98.Services.Extensions;
+using CC98.Share.Controls.Primitives;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.WinUI.UI.Controls;
 using DevWinUI;
@@ -34,16 +36,9 @@ using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using UbbRender.Common;
 using Windows.ApplicationModel.DataTransfer;
-using Windows.Devices.SmartCards;
-using Windows.Foundation;
-using Windows.Foundation.Collections;
-using Windows.Media.Core;
-using Windows.Media.Playback;
-using Windows.Media.Protection.PlayReady;
 using Windows.Storage;
-using Windows.Storage.Streams;
-using Windows.System;
 using static CC98.Kernel.ApiScope.ApiEndpoints;
 namespace CC98
 {
@@ -62,22 +57,19 @@ namespace CC98
         public int topicId = 0;
         public int currentPage = 0;
         public int pageSize = 10;
-        private MediaPlayer _mediaPlayer;
+        public GlobalService globalService= GlobalService.Instance;
         public Topic()
         {
             this.InitializeComponent();
             LoadSet();
+            LoadFavorites();
         }
 
 
         protected override void OnNavigatedFrom(NavigationEventArgs e)
         {
             //释放资源
-            base.OnNavigatedFrom(e);
-            if (_mediaPlayer != null)
-            {
-                _mediaPlayer.Dispose();
-            }
+            base.OnNavigatedFrom(e);   
             replies.Clear();
         }
         protected override async void OnNavigatedTo(Microsoft.UI.Xaml.Navigation.NavigationEventArgs e)
@@ -87,12 +79,20 @@ namespace CC98
             var args = e.TryGetParameter<TopicNavigationInfo>();
             if (args != null)
             {
-                Set.Values["CurrentTopicId"]=args.TopicId;
-                topicId=args.TopicId;
+                globalService.NavigationInfo = args;
+                topicId =args.TopicId;
                 await LoadTopicInfo();
+                if (args.IsJumpingMode)
+                {
+                    isJumping = true;
+                    TP(args.TargetFloor);
+                    return;
+                }
+                
                 await LoadReply();
-                LoadFavorites();
+                
             }
+            
             
         }
         private void LoadSet()
@@ -133,7 +133,36 @@ namespace CC98
                 }
             }
         }
-        
+        //当jumping mode=true时响应。响应包括两种，来自外部页面导航的跳转和用户点击帖子内链接的跳转。
+        //floor如17824L，则page为1782，sort为4，此时目标楼层的index是3.sort=1时目标index为0。如果sort=0,则目标页码在上一页。
+        private void TP(int floor)
+        {
+            int page = floor / 10;
+            int sort= floor%10;
+            //如果当前页就是目标页，并且楼层号大于0
+            //直接跳转
+            
+            if (Pager.SelectedPageIndex  == page && sort > 0)
+            {
+                ScrollTo(sort - 1);
+            }
+            else if (Pager.SelectedPageIndex == page - 1 && sort == 0)
+            {
+                ScrollTo(9);
+            }
+            //整十楼在上一页的最后一个项
+            //如果不在当前页面，先翻页，再跳转
+            else if (sort == 0)
+            {
+                Pager.SelectedPageIndex = page - 1;
+                JumpToFloor = 9;
+            }
+            else
+            {
+                Pager.SelectedPageIndex = page;
+                JumpToFloor = sort - 1;
+            }
+        }
         private async Task LoadTopicInfo()
         {
             string topicInfoUrl = ApiEndpoints.Topic.TopicInfo(topicId);
@@ -182,7 +211,7 @@ namespace CC98
             }
             var data= replyResult.Data;
             
-            var param = string.Join("&", data.Where(x=>!x.IsAnonymous).Select(x => $"id={x.UserId}").ToHashSet());
+            var param = string.Join("&", data.Where(x=>!x.IsAnonymous&&x.UserId.HasValue).Select(x => $"id={x.UserId}").ToHashSet());
             string userInfoUrl = ApiEndpoints.User.BasicUserInfoList(param);
             var userInfoResult = await RequestSender.Fetch<List<BasicUserInfo>>(userInfoUrl);
             if (!userInfoResult.IsSuccess || userInfoResult.Data == null)
@@ -200,6 +229,9 @@ namespace CC98
                 {
                     reply.UserName = "CC98 Deleter";
                     reply.Content = "<--该回复已被管理员或发布者删除-->";
+                    reply.PortraitUrl = "ms-appx:///Assets/deleter.png";
+                    //跳过
+                    continue;
                 }
                 if (reply.IsAnonymous)
                 {
@@ -238,7 +270,6 @@ namespace CC98
             PagerFix();
             if (args.PreviousPageIndex != -1)
             {
-                de.Text += "trigged";
                 int index = Pager.SelectedPageIndex;
                 currentPage = index;
                 if (index >= 0)
@@ -246,7 +277,7 @@ namespace CC98
                     await LoadReply();
                     if (isJumping && JumpToFloor != -1)
                     {
-                        GoTo(JumpToFloor);
+                        ScrollTo(JumpToFloor);
                         isJumping = false;
                         JumpToFloor = -1;
                     }
@@ -256,17 +287,7 @@ namespace CC98
         }
 
         
-        private void InitializeMediaPlayer()
-        {
-            _mediaPlayer = new MediaPlayer
-            {
-                AutoPlay = true,
-                Volume = 0.8 // 默认音量 (0.0 ~ 1.0)
-            };
-
-            // 监听关键事件
-
-        }
+        
         private async void MarkdownTextBlock_LinkClicked(object sender, CommunityToolkit.WinUI.UI.Controls.LinkClickedEventArgs e)
         {
             var url = e.Link.ToString();
@@ -304,7 +325,7 @@ namespace CC98
                         {
                             if (Pager.SelectedPageIndex + 1 == page && floor > 0)
                             {
-                                GoTo(floor - 1);
+                                ScrollTo(floor - 1);
                             }
                             else
                             {
@@ -341,38 +362,10 @@ namespace CC98
 
                         }
                     }
-                    else if (result.Value == "audio")
-                    {
-                        AudioPlayer.Visibility = Visibility.Visible;
-                        InitializeMediaPlayer();
-                        AudioName.Text = url;
-                        var source = await LoginService.vpn.GetSourceAsync(url);
-                        if (source != null)
-                        {
-                            _mediaPlayer.Source = source;
-                            _mediaPlayer.Play();
-                            Play.Visibility = Visibility.Collapsed;
-                            Pause.Visibility = Visibility.Visible;
-                        }
-                        else
-                        {
-                            Flower.Play("\uEA39", "音频下载出错");
-                        }
-                    }
-                    else if (result.Value == "video")
-                    {
-                        var param = new Dictionary<string, string>()
-                            {
-                                {"url",url },
-                                {"type","video" }
-                             };
-                        var picviewer = new MediaViewer(param);
-                        picviewer.Activate();
-                    }
                     else if (result.Value == "doc")//无法预览的媒体文件类
                     {
-                        var Operation = await DownLoadDialog.ShowAsync();
-                        if (Operation == ContentDialogResult.Primary)
+                        //var Operation = await DownLoadDialog.ShowAsync();
+                        if (true)
                         {
 
                             string UserProfile = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
@@ -389,7 +382,6 @@ namespace CC98
                             {
                                 DownloadLocation = System.IO.Path.Combine(DownloadsFolder, "CC98_Download_" + DateTime.Now.ToString("yyyyMMdd_HHmmss") + ".pdf");
                             }
-                            ShowTips("开始下载附件到:", DownloadLocation);
                             try
                             {
                                 string target_url = LoginService.vpn.IsVpnEnabled ? VpnService.ConvertUrl(url) : url;
@@ -413,7 +405,6 @@ namespace CC98
                                 Flower.Play("\uEA39", ex.Message);
                             }
                         }
-
                     }
                     break;
                 case "backlink":
@@ -435,16 +426,7 @@ namespace CC98
 
         }
         
-        private void ShowTips(string title, string content)
-        {
-            if (msg.IsOpen == true)
-            {
-                msg.IsOpen = false;
-            }
-            msg.Title = title;
-            msg.Content = content;
-            msg.IsOpen = true;
-        }
+        
         private void writereply_Click(object sender, RoutedEventArgs e)
         {
             var param = new Dictionary<string, string>()
@@ -519,59 +501,20 @@ namespace CC98
             Flower.Play("\uE930", "已收藏");
         }
 
-        private void Pause_Click(object sender, RoutedEventArgs e)
-        {
-            if (_mediaPlayer != null)
-            {
-                if (_mediaPlayer.PlaybackSession.PlaybackState == MediaPlaybackState.Playing)
-                {
-                    _mediaPlayer.Pause();
-                    Play.Visibility = Visibility.Visible;
-                    Pause.Visibility = Visibility.Collapsed;
-                }
-            }
-        }
+        
 
-        private void Play_Click(object sender, RoutedEventArgs e)
-        {
-            if (_mediaPlayer != null)
-            {
-                if (_mediaPlayer.PlaybackSession.PlaybackState == MediaPlaybackState.Paused)
-                {
-                    _mediaPlayer.Play();
-                    Play.Visibility = Visibility.Collapsed;
-                    Pause.Visibility = Visibility.Visible;
-                }
+        
 
-            }
-        }
+        
 
-        private void RePlay_Click(object sender, RoutedEventArgs e)
-        {
-            if (_mediaPlayer != null)
-            {
-                _mediaPlayer.Pause();
-                _mediaPlayer.PlaybackSession.Position = TimeSpan.Zero;
-                _mediaPlayer.Play();
-            }
-        }
+        
 
-        private void close_Click(object sender, RoutedEventArgs e)
-        {
-            AudioPlayer.Visibility = Visibility.Collapsed;
-            if (_mediaPlayer != null)
-            {
-                _mediaPlayer.Pause();
-                _mediaPlayer.Dispose();
-            }
-        }
-
-        private void GoTo(int index)
+        private void ScrollTo(int index)
         {
             var element = ReplyRepeater.GetOrCreateElement(index);
             var options = new BringIntoViewOptions
             {
-                VerticalAlignmentRatio = 0.5, // 0=顶部对齐，0.5=居中，1=底部
+                VerticalAlignmentRatio = 0, // 0=顶部对齐，0.5=居中，1=底部
                 AnimationDesired = true       // 启用平滑滚动动画
             };
             element.StartBringIntoView(options);
@@ -855,7 +798,7 @@ namespace CC98
                 profile.Popularity = data.Popularity;
                 profile.FanCount = data.FanCount;
                 profile.PortraitUrl = data.PortraitUrl;
-                profile.SignatureCode = UBBConverter.Convert(data.SignatureCode, true);
+                profile.SignatureCode = data.SignatureCode;
                 profile.PostCount = data.PostCount;
                 ProfileViewer.IsOpen = true;
             }
@@ -863,6 +806,13 @@ namespace CC98
             {
                 await App.Logger.WriteAsync("Topic", "加载用户信息预览失败", ex.Message);
             }
+        }
+
+        
+
+        private void UbbTextBlock_MediaClicked(object sender, MediaClickEventArgs e)
+        {
+            de.Text = $"链接：{e.Source}，类型：{e.MediaType}";
         }
     }
 }

@@ -37,7 +37,7 @@ namespace CC98
         public Favorites? selectedFavorites { get; set; }
         public ObservableCollection<Favorites> favoritesList = new()
         {
-            new Favorites{Name="Ä¬ÈÏ·Ö×é",Id=0}
+            
         };
         public int sortId = 0;
         public int groupId = 0;
@@ -49,13 +49,13 @@ namespace CC98
         }
         
         
-        protected override void OnNavigatedTo(Microsoft.UI.Xaml.Navigation.NavigationEventArgs e)
+        protected override async void OnNavigatedTo(Microsoft.UI.Xaml.Navigation.NavigationEventArgs e)
         {
             base.OnNavigatedTo(e);
 
             LoadFavorites();
 
-            GetFavoriteTopic();
+            await GetFavoriteTopic();
         }
         private void LoadFavorites()
         {

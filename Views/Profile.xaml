@@ -7,6 +7,7 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d"
+    xmlns:ubb="using:UbbRender.Render"
     xmlns:lab="using:CommunityToolkit.WinUI"
     xmlns:tool="using:CommunityToolkit.WinUI.UI.Controls"
     xmlns:dev="using:DevWinUI"
@@ -16,10 +17,10 @@
     xmlns:cv="using:CC98.Services.Converters"
     Background="{ThemeResource DesktopAcrylicTransparentBrush}">
     <Page.Resources>
-        <local:BooltoVisibilityConverter x:Key="BoolToVisibility"></local:BooltoVisibilityConverter>
-        <local:RBooltoVisibilityConverter x:Key="RBoolToVisibility"></local:RBooltoVisibilityConverter>
-        <local:BooltoVariantConverter x:Key="BoolToVariant"></local:BooltoVariantConverter>
-        <local:BoolToFollowTextConverter x:Key="FollowConverter"/>
+        <cv:BooltoVisibilityConverter x:Key="BoolToVisibility"></cv:BooltoVisibilityConverter>
+        <cv:RBooltoVisibilityConverter x:Key="RBoolToVisibility"></cv:RBooltoVisibilityConverter>
+        <cv:BooltoVariantConverter x:Key="BoolToVariant"></cv:BooltoVariantConverter>
+        <cv:BoolToFollowTextConverter x:Key="FollowConverter"/>
     </Page.Resources>
     <Grid>
         <ScrollViewer>
@@ -103,7 +104,7 @@
                 <TextBlock Text="签名档" FontSize="23" FontWeight="Bold" Foreground="#A9A9A9" Margin="0,5,0,0"></TextBlock>
                 
                 <Border Height="1" BorderBrush="{ThemeResource DividerBrush}" HorizontalAlignment="Stretch" BorderThickness="1"></Border>
-                <tool:MarkdownTextBlock x:Name="SignBoard" Text="{x:Bind profile.SignatureCode,Mode=OneWay}"  LinkClicked="SignBoard_LinkClicked" Background="Transparent" ImageStretch="UniformToFill" ImageMaxWidth="450" ImageMaxHeight="450" ImageResolving="Drawer_ImageResolving" ></tool:MarkdownTextBlock>
+                <ubb:UbbTextBlock x:Name="SignBoard" UbbText="{x:Bind profile.SignatureCode,Mode=OneWay}"></ubb:UbbTextBlock>
                 <TextBlock Text="主题" FontSize="23" FontWeight="Bold" Foreground="#A9A9A9" x:Name="de" IsTextSelectionEnabled="True"></TextBlock>
                 <Border Height="1" BorderBrush="{ThemeResource DividerBrush}" HorizontalAlignment="Stretch" BorderThickness="1"></Border>
                 <Border Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1" CornerRadius="5">

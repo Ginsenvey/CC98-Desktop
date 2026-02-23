@@ -1,4 +1,5 @@
 ﻿using CC98.Objects;
+using Microsoft.UI.Dispatching;
 using Microsoft.UI.Xaml.Navigation;
 using System;
 using System.Text.Json.Serialization;
@@ -154,3 +155,31 @@ public static class LocalCacheExtensions
     }
 }
 
+// 定义自己的扩展方法来避免冲突
+public static class DispatcherQueueExtensions
+{
+    public static async Task EnqueueAsync(this DispatcherQueue dispatcher,
+        Action action,
+        DispatcherQueuePriority priority = DispatcherQueuePriority.Normal)
+    {
+        var tcs = new TaskCompletionSource<bool>();
+
+        if (!dispatcher.TryEnqueue(priority, () =>
+        {
+            try
+            {
+                action();
+                tcs.TrySetResult(true);
+            }
+            catch (Exception ex)
+            {
+                tcs.TrySetException(ex);
+            }
+        }))
+        {
+            tcs.TrySetException(new InvalidOperationException("Failed to enqueue the action"));
+        }
+
+        await tcs.Task;
+    }
+}

@@ -60,15 +60,15 @@ public static class RequestSender
         }
         catch (JsonException ex)
         {
-            return ApiResponse<T>.Fail($"数据解析错误: {ex.Message}", 0);
+            return ApiResponse<T>.Fail($"数据解析错误: {ex.Message}",0);
         }
         catch (TaskCanceledException)
         {
-            return ApiResponse<T>.Fail("请求超时", 0);
+            return ApiResponse<T>.Fail("请求超时",0);
         }
         catch (Exception ex)
         {
-            return ApiResponse<T>.Fail($"系统错误: {ex.Message}", 0);
+            return ApiResponse<T>.Fail($"系统错误: {ex.Message}",0);
         }
 
     }
@@ -162,13 +162,24 @@ public static class RequestSender
         var json = await res.Content.ReadAsStringAsync();
         if (res.IsSuccessStatusCode)
         {
-            var options = new JsonSerializerOptions
+            // 首先尝试使用源生成上下文以获得更好性能与 AOT 支持
+            try
             {
-                PropertyNameCaseInsensitive = true
-            };
+                var obj = JsonSerializer.Deserialize(json, typeof(T), CC98JsonContext.Default);
+                var data = (T?)obj;
+                return ApiResponse<T>.Success(data!);
+            }
+            catch (Exception)
+            {
+                // 回退到运行时反射式反序列化（保持原有大小写不敏感选项）
+                var options = new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true
+                };
 
-            var data = JsonSerializer.Deserialize<T>(json, options);
-            return ApiResponse<T>.Success(data!);
+                var data = JsonSerializer.Deserialize<T>(json, options);
+                return ApiResponse<T>.Success(data!);
+            }
         }
         else
         {
@@ -983,6 +994,10 @@ public static class LinkAnalyzer
 
     }
 }
+
+
+
+
 
 
 

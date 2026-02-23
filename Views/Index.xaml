@@ -7,6 +7,7 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d"
+    NavigationCacheMode="Disabled"
     xmlns:ic="using:FluentIcons.WinUI"
     xmlns:lab="using:CommunityToolkit.Labs.WinUI"
     xmlns:obj="using:CC98.Objects"
@@ -15,6 +16,7 @@
     
     Background="{ThemeResource CardGradient1Brush}">
     <Page.Resources>
+        
         <cv:HexToBrushConverter x:Key="HexToColorBrush"/>
         <DataTemplate x:Key="Presenter" x:DataType="obj:IndexTopic">
             <HyperlinkButton  PointerEntered="ContentCard_PointerEntered" PointerExited="ContentCard_PointerExited" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch" x:Name="TopicItem" Click="TopicItem_Click" Tag="{x:Bind Id}" CornerRadius="0" Height="53" >

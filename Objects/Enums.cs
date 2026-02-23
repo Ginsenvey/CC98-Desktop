@@ -55,3 +55,11 @@ public enum FlowStatus
     Fail=2,
     Info=3,
 }
+
+public enum SearchType
+{
+    Topic,
+    User,
+    Board,
+    Guide //使用指南
+}

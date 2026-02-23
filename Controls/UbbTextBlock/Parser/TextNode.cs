@@ -1,0 +1,16 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace UbbRender.Parser;
+
+//UBB类型
+
+// 文本节点：用于存放纯文本内容
+public class TextNode(string content) : UbbNode
+{
+    public string Content { get; } = content;
+    public override UbbNodeType Type => UbbNodeType.Text;
+}

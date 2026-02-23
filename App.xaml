@@ -56,27 +56,28 @@
             </ResourceDictionary.ThemeDictionaries>
             <SolidColorBrush x:Key="MarkdownBackgroudBrush" Color="{ThemeResource MarkdownBackgroudColor}"></SolidColorBrush>
             <SolidColorBrush x:Key="DividerBrush" Color="{ThemeResource DividerColor}"></SolidColorBrush>
-            <SolidColorBrush x:Key="pinkgreen" Color="{ThemeResource pink-green}"></SolidColorBrush>
-            <SolidColorBrush x:Key="0" Color="{ThemeResource trans-plain}"></SolidColorBrush>
-            <SolidColorBrush x:Key="skyblue" Color="{ThemeResource sky-blue}"></SolidColorBrush>
-            <SolidColorBrush x:Key="yellow" Color="{ThemeResource yel-low}" ></SolidColorBrush>
+            <SolidColorBrush x:Key="FancyButtonBrush" Color="{ThemeResource pink-green}"></SolidColorBrush>
             <SolidColorBrush x:Key="QuoteBorderBrush" Color="{ThemeResource QuoteBorderColor}"></SolidColorBrush>
             <SolidColorBrush x:Key="StandardBrush" Color="{ThemeResource Standard}"></SolidColorBrush>
             <AcrylicBrush x:Key="AcrylicCardBrush" TintOpacity="0.4" TintColor="{ThemeResource AcrylicTintColor}" AlwaysUseFallback="False"/>
+            <FontFamily x:Key="HarmonySans">/Assets/Fonts/HarmonyOS_Sans_SC_Regular.ttf#HarmonyOS Sans SC</FontFamily>
             <Style TargetType="TextBlock">
-                <Setter Property="FontFamily" Value="/Assets/Fonts/HarmonyOS_Sans_SC_Regular.ttf#HarmonyOS Sans SC"></Setter>
+                <Setter Property="FontFamily" Value="{StaticResource HarmonySans}"></Setter>
             </Style>
             <Style TargetType="RichTextBlock">
-                <Setter Property="FontFamily" Value="/Assets/Fonts/HarmonyOS_Sans_SC_Regular.ttf#HarmonyOS Sans SC"></Setter>
+                <Setter Property="FontFamily" Value="{StaticResource HarmonySans}"></Setter>
+            </Style>
+            <Style TargetType="md:MarkdownTextBlock">
+                <Setter Property="FontFamily" Value="{StaticResource HarmonySans}"></Setter>
             </Style>
             <Style TargetType="tool:SettingsCard">
-                <Setter Property="FontFamily" Value="/Assets/Fonts/HarmonyOS_Sans_SC_Regular.ttf#HarmonyOS Sans SC"></Setter>
+                <Setter Property="FontFamily" Value="{StaticResource HarmonySans}"></Setter>
             </Style>
             <Style TargetType="tool:SettingsExpander">
-                <Setter Property="FontFamily" Value="/Assets/Fonts/HarmonyOS_Sans_SC_Regular.ttf#HarmonyOS Sans SC"></Setter>
+                <Setter Property="FontFamily" Value="{StaticResource HarmonySans}"></Setter>
             </Style>
             <Style TargetType="AppBarButton">
-                <Setter Property="FontFamily" Value="/Assets/Fonts/HarmonyOS_Sans_SC_Regular.ttf#HarmonyOS Sans SC"></Setter>
+                <Setter Property="FontFamily" Value="{StaticResource HarmonySans}"></Setter>
                 <Setter Property="CornerRadius" Value="3"></Setter>
             </Style>
             

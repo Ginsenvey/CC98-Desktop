@@ -135,7 +135,7 @@
                         </StackPanel>
                     </NavigationViewItem>
                 </DataTemplate>
-                <sv:NavigationTemplateSelector 
+                <obj:NavigationTemplateSelector 
             x:Key="TemplateSelector"
             GroupTemplate="{StaticResource GroupTemplate}"
             PinnedItemTemplate="{StaticResource PinnedItemTemplate}"

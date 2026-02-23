@@ -115,7 +115,7 @@ namespace CC98
             var RecentTopicResult = await RequestSender.Fetch<List<SimpleTopicInfo>>(RecentTopicUrl);
             if (!RecentTopicResult.IsSuccess||RecentTopicResult.Data==null)
             {
-                Flower.Play("\uE739", RecentTopicResult.Message);
+                Flower.Play(FlowStatus.Fail, RecentTopicResult.Message);
                 return false;
             }
             var data=RecentTopicResult.Data;
@@ -255,78 +255,6 @@ namespace CC98
     }
 
 
-    public partial class BooltoVisibilityConverter : IValueConverter
-    {
-        object IValueConverter.Convert(object value, Type targetType, object parameter, string language)
-        {
-            if (value is bool flag)
-            {
-                return flag ? Visibility.Visible : Visibility.Collapsed;
-            }
-            else
-            {
-                return Visibility.Collapsed;
-            }
-        }
-
-        object IValueConverter.ConvertBack(object value, Type targetType, object parameter, string language)
-        {
-            throw new NotImplementedException();
-        }
-    }
-    public partial class BooltoVariantConverter : IValueConverter
-    {
-        object IValueConverter.Convert(object value, Type targetType, object parameter, string language)
-        {
-            if (value is bool flag)
-            {
-                return flag ? IconVariant.Filled : IconVariant.Regular;
-            }
-            else
-            {
-                return IconVariant.Regular;
-            }
-        }
-
-        object IValueConverter.ConvertBack(object value, Type targetType, object parameter, string language)
-        {
-            throw new NotImplementedException();
-        }
-    }
-    public partial class RBooltoVisibilityConverter : IValueConverter
-    {
-        object IValueConverter.Convert(object value, Type targetType, object parameter, string language)
-        {
-            if (value is bool flag)
-            {
-                return flag ? Visibility.Collapsed : Visibility.Visible;
-            }
-            else
-            {
-                return Visibility.Collapsed;
-            }
-        }
-
-        object IValueConverter.ConvertBack(object value, Type targetType, object parameter, string language)
-        {
-            throw new NotImplementedException();
-        }
-    }
-    public partial class BoolToFollowTextConverter : IValueConverter
-    {
-        public object Convert(object value, Type targetType, object parameter, string language)
-        {
-            if (value is bool isFollowing)
-            {
-                return isFollowing ? "取消关注" : "关注";
-            }
-            return "关注";
-        }
-
-        public object ConvertBack(object value, Type targetType, object parameter, string language)
-        {
-            throw new NotImplementedException();
-        }
-    }
+    
 
 }
