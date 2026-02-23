@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using UbbRender.Tokenizer;
 
 namespace UbbRender.Parser;
@@ -60,11 +61,6 @@ public class UBBParser
             if (node != null)
             {
                 parent.AddChild(node);
-                //不存在子节点，跳过
-                if (node.Type==UbbNodeType.LineBreak)
-                {
-                    continue;
-                }
 
                 if (node is TagNode tag && !IsSelfClosing(tag.Type))
                 {
@@ -96,9 +92,6 @@ public class UBBParser
             case TokenType.Text:
                 Consume();
                 return new TextNode(token.Value);
-            case TokenType.Enter:
-                Consume();
-                return TagNode.Create(UbbNodeType.LineBreak); 
             case TokenType.Dollar:
             case TokenType.DoubleDollar:
                 return ParseLatex();
@@ -209,7 +202,7 @@ public class UBBParser
     };
     private void ParseVerbatimContent(TagNode parent)
     {
-        var sb = new System.Text.StringBuilder();
+        var sb = new StringBuilder();
         // 确定我们要找的闭合标签名（统一转小写处理）
         UbbNodeType targetType = GetVerbatimTagType(parent.Type);
 
@@ -277,7 +270,6 @@ public class UBBParser
         return type switch
         {
             UbbNodeType.Divider => true, // [line]
-            UbbNodeType.LineBreak => true, // [\n,\r]
             UbbNodeType.Emoji => true, // [ac01]
             _ => false
         };
@@ -293,6 +285,7 @@ public class UBBParser
             _ => throw new InvalidOperationException()
         };
     }
+    //注册新标签节点必要的映射
     private UbbNodeType MapToNodeType(string tagName)
     {
         tagName = tagName.ToLower();
@@ -325,7 +318,6 @@ public class UBBParser
             "td" => UbbNodeType.TableCell,
             "hr" => UbbNodeType.Divider,
             "line"=>UbbNodeType.Divider,
-            "br" => UbbNodeType.LineBreak,
             "math"=>UbbNodeType.Latex,
             "bili" => UbbNodeType.Bilibili,
             "upload" =>UbbNodeType.Upload,

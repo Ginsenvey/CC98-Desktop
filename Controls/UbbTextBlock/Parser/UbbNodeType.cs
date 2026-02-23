@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+
 namespace UbbRender.Parser;
 
 public enum UbbNodeType
@@ -25,7 +27,6 @@ public enum UbbNodeType
     TableRow,      // 表格行 [tr]
     TableCell,     // 表格单元格 [td]
     Paragraph,     // 段落（自动生成）
-    LineBreak,      // 换行
     Divider,        // 分隔线 [line]
     Emoji,          // 表情 [em]
     Latex,           // 公式
@@ -35,4 +36,33 @@ public enum UbbNodeType
     Markdown, //markdown内容
     NeedReply, //需要回复
     ReplyView, //设置回复可见
+}
+
+public static class UbbNodeTypeExtensions
+{
+    private static readonly HashSet<UbbNodeType> _blockTypes = new()
+    {
+        UbbNodeType.Code,
+        UbbNodeType.Quote,
+        UbbNodeType.Table,
+        UbbNodeType.TableRow,
+        UbbNodeType.TableCell,
+        UbbNodeType.Paragraph,
+        UbbNodeType.Divider,
+        UbbNodeType.Align,
+        UbbNodeType.Left,
+        UbbNodeType.Center,
+        UbbNodeType.Right,
+        UbbNodeType.NoUBB,
+        UbbNodeType.Markdown,
+        UbbNodeType.NeedReply,
+        UbbNodeType.ReplyView,
+    };
+
+    // 使用 HashSet 的 Contains 方法判断
+    public static bool IsBlock(this UbbNodeType type)
+    {
+        return _blockTypes.Contains(type);
+    }
+
 }

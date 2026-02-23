@@ -137,7 +137,6 @@ namespace UbbRender.Render
         {
             renderStrategies = new Dictionary<UbbNodeType, IRenderStrategy>
             {
-                //[UbbNodeType.Document] = new DocumentRenderStrategy(),
                 [UbbNodeType.Text] = new TextRenderStrategy(),
                 [UbbNodeType.Bold] = new BoldRenderStrategy(),
                 [UbbNodeType.Italic] = new ItalicRenderStrategy(),
@@ -160,7 +159,6 @@ namespace UbbRender.Render
                 [UbbNodeType.TableRow] = new TableRowRenderStrategy(),
                 [UbbNodeType.TableCell] = new TableCellRenderStrategy(),
                 [UbbNodeType.Paragraph] = new ParagraphRenderStrategy(),
-                [UbbNodeType.LineBreak] = new LineBreakRenderStrategy(),
                 [UbbNodeType.Emoji]=new EmojiRenderStrategy(),
                 [UbbNodeType.Latex]=new LatexRenderStrategy(),
                 [UbbNodeType.Divider]=new DividerRenderStrategy(),

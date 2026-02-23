@@ -43,11 +43,24 @@ public class TextRenderStrategy : IRenderStrategy
         if (node is TextNode textNode && !string.IsNullOrWhiteSpace(textNode.Content))
         {
             string content = textNode.Content;
+            if (node.Parent.Type == UbbNodeType.Document)
+            {
+                var prevIsBlock = node.PreviousSibling?.Type.IsBlock() ?? false;
+                var nextIsBlock = node.NextSibling?.Type.IsBlock() ?? false;
+
+                if (prevIsBlock)
+                {
+                    content = content.TrimStart('\r', '\n');
+                }
+                if (nextIsBlock)
+                {
+                    content = content.TrimEnd('\r', '\n');
+                }
+            }
             var run = new Run { Text = content };
             context.AddInline(run);
         }
     }
-    
 }
 
 // 粗体渲染策略
@@ -460,228 +473,9 @@ public class ParagraphRenderStrategy : IRenderStrategy
     public void Render(UbbNode node, RenderContext context)
     {
         context.FinalizeCurrentTextBlock();
-
     }
 }
 
-// 换行渲染策略
-public class LineBreakRenderStrategy : IRenderStrategy
-{
-    public void Render(UbbNode node, RenderContext context)
-    {
-        var breakContext = AnalyzeContext(node);
-
-        // 决策树：根据上下文决定如何处理
-        if (ShouldIgnore(breakContext))
-        {
-            // 完全忽略，不渲染任何内容
-            return;
-        }
-        else if (ShouldCreateParagraphBreak(breakContext))
-        {
-            // 创建段落分隔（结束当前文本块）
-            context.FinalizeCurrentTextBlock();
-        }
-        else if (ShouldCreateSoftLineBreak(breakContext))
-        {
-            // 创建软换行（在当前文本块内）
-            CreateSoftLineBreak(context);
-        }
-        else
-        {
-            // 默认：创建标准换行
-            CreateHardLineBreak(context);
-        }
-    }
-    private static HashSet<UbbNodeType> paragraphTypes = new HashSet<UbbNodeType> 
-    {   
-        UbbNodeType.Paragraph, 
-        UbbNodeType.Left, 
-        UbbNodeType.Center, 
-        UbbNodeType.Right, 
-        UbbNodeType.Align 
-    };
-    private static HashSet<UbbNodeType> blockContainers = new HashSet<UbbNodeType>
-    {
-        UbbNodeType.Code,
-        UbbNodeType.Quote,
-        UbbNodeType.Left,
-        UbbNodeType.Center,
-        UbbNodeType.Right,
-        UbbNodeType.Align,
-        UbbNodeType.Table
-    };
-    private class LineBreakContext
-    {
-        public bool IsInsideQuote { get; set; }
-        public bool IsInsideParagraph { get; set; }
-        public bool IsInsideBlockContainer { get; set; }
-        public bool IsDocumentRoot { get; set; }
-        public bool IsFirstInParent { get; set; }
-        public bool IsLastInParent { get; set; }
-        public bool IsBeforeBlock { get; set; }
-        public bool AfterBlockClose { get; set; } // 是否在块级标签关闭后
-        public int ConsecutiveLineBreaks { get; set; } // 连续换行符数量
-    }
-    /// <summary>
-    /// 换行处理逻辑的统一入口点
-    /// </summary>
-    /// <param name="node"></param>
-    /// <returns></returns>
-    private LineBreakContext AnalyzeContext(UbbNode node)
-    {
-        var context = new LineBreakContext();
-
-        // 分析节点位置
-        var current = node;
-        
-        while (current.Parent != null)
-        {
-            if (current.Parent.Type == UbbNodeType.Quote)
-                context.IsInsideQuote = true;
-            if (paragraphTypes.Contains(current.Parent.Type))
-                context.IsInsideParagraph = true;
-            if (IsBlockContainer(current.Parent.Type))
-                context.IsInsideBlockContainer = true;
-            if (current.Parent.Type == UbbNodeType.Document)
-                context.IsDocumentRoot = true;
-
-            current = current.Parent;
-        }
-
-        // 分析兄弟节点关系
-        if (node.Parent != null)
-        {
-            var siblings = node.Parent.Children; 
-            int index = -1;
-            for (int i = 0; i < siblings.Count; i++)
-            {
-                if (siblings[i] == node)
-                {
-                    index = i;
-                    break;
-                }
-            }
-
-            if (index >= 0)
-            {
-                context.IsFirstInParent = index == 0;
-                context.IsLastInParent = index == siblings.Count - 1;
-
-                // 检查是否在块级标签关闭后
-                if (index > 0)
-                {
-                    var prevSibling = siblings[index - 1];
-                    if (index > siblings.Count - 1)
-                    {
-                        var nextSibling = siblings[index + 1];
-                        context.IsBeforeBlock=IsBeforeBlock(prevSibling,nextSibling);
-                    }
-                    
-                    //context.AfterBlockClose = IsBlockClosingTag(prevSibling);
-                }
-            }
-        }
-
-        //计算连续换行符数量
-        context.ConsecutiveLineBreaks = CountConsecutiveLineBreaks(node);
-
-        return context;
-    }
-    private bool ShouldIgnore(LineBreakContext context)
-    {
-        
-        // 规则1：在文档根节点下，且是第一个或最后一个换行
-        if (context.IsDocumentRoot && (context.IsFirstInParent || context.IsLastInParent))
-            return true;
-            
-        // 规则2：紧跟在块级标签关闭后的第一个换行
-        if (context.AfterBlockClose && context.IsFirstInParent)
-            return true;
-            
-        // 规则3：在引用块内，但前面已经有换行了
-        if (context.IsInsideQuote && context.ConsecutiveLineBreaks > 1)
-            return true; // 忽略多余的换行
-
-        
-        return false;
-    }
-    
-    private bool ShouldCreateParagraphBreak(LineBreakContext context)
-    {
-        // 规则1：在文档根节点下，有两个以上连续换行
-        if (context.IsDocumentRoot && context.ConsecutiveLineBreaks >= 2)
-            return true;
-            
-        // 规则2：不在任何容器内，且是显著的分隔
-        if (!context.IsInsideQuote && !context.IsInsideParagraph && 
-            !context.IsInsideBlockContainer)
-            return true;
-        return false;
-    }
-    
-    private bool ShouldCreateSoftLineBreak(LineBreakContext context)
-    {
-        // 规则1：在段落内
-        if (context.IsInsideParagraph)
-            return true;
-            
-        // 规则2：在引用块或代码块内
-        if (context.IsInsideQuote || context.IsInsideBlockContainer)
-            return true;
-            
-        return false;
-    }
-    
-    private void CreateSoftLineBreak(RenderContext context)
-    {
-        context.AddInline(new LineBreak());
-    }
-    
-    private void CreateHardLineBreak(RenderContext context)
-    {
-        // 结束当前文本块，开始新的文本块
-        context.FinalizeCurrentTextBlock();
-    }
-    
-    private int CountConsecutiveLineBreaks(UbbNode node)
-    {
-        if (node.Parent == null)
-            return 1;
-            
-        var siblings = node.Parent.Children.ToList();
-        var index = siblings.IndexOf(node);
-        int count = 1;
-        
-        // 向前查找连续的换行节点
-        for (int i = index - 1; i >= 0; i--)
-        {
-            if (siblings[i].Type == UbbNodeType.LineBreak)
-                count++;
-            else
-                break;
-        }
-        
-        // 向后查找连续的换行节点
-        for (int i = index + 1; i < siblings.Count; i++)
-        {
-            if (siblings[i].Type == UbbNodeType.LineBreak)
-                count++;
-            else
-                break;
-        }
-        
-        return count;
-    }
-    private bool IsBeforeBlock(UbbNode last,UbbNode next)
-    {
-        return last.Type == UbbNodeType.Text && IsBlockContainer(next.Type);
-    }
-    private bool IsBlockContainer(UbbNodeType type)
-    {
-        return blockContainers.Contains(type);
-    }  
-}
 
 
 // 对齐渲染策略
@@ -1068,10 +862,6 @@ public class RenderHelper
             if (child is TextNode textNode)
             {
                 sb.Append(textNode.Content);
-            }
-            else if (child is TagNode tagNode && tagNode.Type == UbbNodeType.LineBreak)
-            {
-                sb.Append("\n"); // 换行
             }
             else
             {

@@ -20,6 +20,5 @@ public enum TokenType
     AttrValue,      // 属性值
     AutoLink,       // 自动识别的链接
     Text,           // 普通文本
-    Enter,          // 换行符
     EOF             // 结束符
 }

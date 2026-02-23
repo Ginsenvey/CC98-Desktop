@@ -18,4 +18,38 @@ public abstract class UbbNode
         child.Parent = this;
         _children.Add(child);
     }
+
+    public UbbNode? PreviousSibling
+    {
+        get
+        {
+            if (Parent == null)
+                return null;
+
+            var siblings = Parent._children; // 直接访问私有字段避免创建新列表
+            var currentIndex = siblings.IndexOf(this);
+
+            if (currentIndex > 0)
+                return siblings[currentIndex - 1];
+
+            return null;
+        }
+    }
+
+    public UbbNode? NextSibling
+    {
+        get
+        {
+            if (Parent == null)
+                return null;
+
+            var siblings = Parent._children; // 直接访问私有字段避免创建新列表
+            var currentIndex = siblings.IndexOf(this);
+
+            if (currentIndex >= 0 && currentIndex < siblings.Count - 1)
+                return siblings[currentIndex + 1];
+
+            return null;
+        }
+    }
 }

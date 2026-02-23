@@ -33,10 +33,6 @@ public class UBBTokenizer(string input)
                 {
                     token = ScanMathDelimiter();
                 }
-                else if (c == '\n' || c == '\r')
-                {
-                    token = ScanEnter();
-                }
                 else if (IsAtAutoLinkStart())
                 {
                     token = ScanAutoLink();
@@ -110,7 +106,7 @@ public class UBBTokenizer(string input)
     private Token ScanText()
     {
         int start = _pos;
-        while (_pos < _input.Length && Peek() != '[' && Peek() != '$' && Peek() != '\n' && Peek() != '\r')
+        while (_pos < _input.Length && Peek() != '[' && Peek() != '$' )
         {
             Advance();
             // 如果在文本中遇到自动链接的起始位置，则停止以便让 ScanAutoLink 处理它
@@ -118,24 +114,7 @@ public class UBBTokenizer(string input)
         }
         return new Token(TokenType.Text, _input[start.._pos], start);
     }
-    // 新增：专门处理换行符的方法
-    private Token ScanEnter()
-    {
-        int start = _pos;
-        char c = Peek();
-
-        // 处理 \r\n 组合（Windows风格换行）
-        if (c == '\r' && _pos + 1 < _input.Length && _input[_pos + 1] == '\n')
-        {
-            Advance(); // 消费 \r
-            Advance(); // 消费 \n
-            return new Token(TokenType.Enter, "\r\n", start);
-        }
-
-        // 处理单独的 \n 或 \r
-        Advance();
-        return new Token(TokenType.Enter, c.ToString(), start);
-    }
+    
     private Token ScanMathDelimiter()
     {
         int start = _pos;
