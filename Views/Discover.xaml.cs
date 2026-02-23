@@ -92,10 +92,10 @@ namespace CC98
             if (ImageFrame != null)
             {
                 string url = ImageFrame.Tag.ToString();
-                var param = new Dictionary<string, string>()
+                var param = new ViewerNavigationInfo
                 {
-                    {"url",url },
-                    {"type","image" }
+                    Type = "image",
+                    Urls = new List<string> { url }
                 };
                 var picviewer = new MediaViewer(param);
                 picviewer.Activate();

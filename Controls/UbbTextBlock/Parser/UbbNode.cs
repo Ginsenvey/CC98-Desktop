@@ -52,4 +52,44 @@ public abstract class UbbNode
             return null;
         }
     }
+
+    /// <summary>
+    /// 取得所有后代节点中指定类型的节点列表。可以选择是否包含当前节点本身。
+    /// </summary>
+    /// <param name="nodeType"></param>
+    /// <param name="includeSelf"></param>
+    /// <returns></returns>
+    public List<UbbNode> GetDescendantsByType(UbbNodeType nodeType, bool includeSelf = false)
+    {
+        var result = new List<UbbNode>();
+
+        if (includeSelf && this.Type == nodeType)
+        {
+            result.Add(this);
+        }
+
+        CollectDescendantsByType(this, nodeType, result);
+
+        return result;
+    }
+
+    private static void CollectDescendantsByType(UbbNode node, UbbNodeType targetType, List<UbbNode> result)
+    {
+        foreach (var child in node._children)
+        {
+            if (child.Type == targetType)
+            {
+                result.Add(child);
+            }
+
+            CollectDescendantsByType(child, targetType, result);
+        }
+    }
+    public UbbNode? FirstChild
+    {
+        get
+        {
+            return _children.Count > 0 ? _children[0] : null;
+        }
+    }
 }

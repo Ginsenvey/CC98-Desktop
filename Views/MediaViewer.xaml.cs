@@ -26,6 +26,7 @@ using Windows.Media.Core;
 
 using CC98.Kernel;
 using CC98.Kernel.UserExperience;
+using CC98.Objects;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -38,14 +39,16 @@ namespace CC98
     
     public sealed partial class MediaViewer : Window
     {
-        private string _url;
-        private string _type;
-        public MediaViewer(Dictionary<string,string> param)
+        public List<string> pictures = [];
+        public int currentIndex = 0;
+        private string _type = "";
+        private string _url = "";
+        public MediaViewer(ViewerNavigationInfo info)
         {
             this.InitializeComponent();
-            _url = param["url"];
-            MediaInfo.Text = _url;
-            _type=param["type"];
+            _type=info.Type;
+            pictures.AddRange(info.Urls);
+            currentIndex = info.CurrentIndex;
             this.Title = "资源预览";
             this.ExtendsContentIntoTitleBar = true;
             this.SetTitleBar(GridTitleBar);
@@ -53,7 +56,7 @@ namespace CC98
             var iconPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "cc98.ico");
             AppWindow.SetIcon(iconPath);
             AppWindow.SetTaskbarIcon(iconPath);
-            this.SystemBackdrop=new AcrylicSystemBackdrop();
+            this.SystemBackdrop=new MicaBackdrop();
             Activated += MediaViewer_Activated;
             this.Closed += MediaViewer_Closed;
         }
@@ -75,11 +78,12 @@ namespace CC98
             }
             else if (_type == "image")
             {
-                ImageControl.Visibility = Visibility.Visible;
-                zoomer.Visibility = Visibility.Visible;
+                ImageControl.Visibility = Visibility.Collapsed;
+                //zoomer.Visibility = Visibility.Visible;
                 VideoPlayer.Visibility = Visibility.Collapsed;
-                PicViewer.Source=_url;
-                zoomer.ZoomToFactor(0.6f);
+
+                //PicViewer.Source=_url;
+                //zoomer.ZoomToFactor(0.6f);
             }
                 
             
@@ -260,6 +264,12 @@ namespace CC98
         {
             // 释放资源示例
             VideoPlayer.Source = null;
+        }
+
+        private void FlipView_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            MediaInfo.Text = pictures[currentIndex];
+            Posi.Text= $"{currentIndex + 1} / {pictures.Count}";
         }
     }
 }

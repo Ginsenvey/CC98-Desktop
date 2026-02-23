@@ -4,6 +4,7 @@ using CC98.Share.Controls.Primitives.LatexBlock;
 using CC98.Share.Extensions;
 using ColorCode;
 using CommunityToolkit.WinUI.UI.Controls;
+using DevWinUI;
 using Microsoft.UI;
 using Microsoft.UI.Text;
 using Microsoft.UI.Xaml;
@@ -242,13 +243,10 @@ public class ImageRenderStrategy : IRenderStrategy
             if (string.IsNullOrEmpty(value) || value == "1")
             {
                 // 尝试从子节点获取URL（对于 [img]url[/img] 格式）
-                foreach (var child in node.Children)
+                var first=node.FirstChild;
+                if (first is TextNode textNode)
                 {
-                    if (child is TextNode textNode)
-                    {
-                        src = textNode.Content;
-                        break;
-                    }
+                    src = textNode.Content;
                 }
             }
             else
@@ -1163,6 +1161,7 @@ public class VideoRenderStrategy : IRenderStrategy
                 {
                     LoadVideoCallback = new SmartMediaLoader(),
                     Src = src,
+                    MaxHeight = 400,
                     Margin = new Thickness(10),
                     AutoPlay = false,
                 };

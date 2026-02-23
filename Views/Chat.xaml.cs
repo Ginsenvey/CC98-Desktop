@@ -151,6 +151,7 @@ namespace CC98
             }
             foreach(var message in data)
             {
+                message.IsMe = message.ReceiverId == currentUserId;
                 messages.Insert(0, message);
             }
         }
@@ -185,18 +186,7 @@ namespace CC98
                 await GetMessageList();
             }
         }
-        private void Drawer_ImageClicked(object sender, CommunityToolkit.WinUI.UI.Controls.LinkClickedEventArgs e)
-        {
-            string ImageUrl = e.Link.ToString();
-            var param = new Dictionary<string, string>()
-{
-    {"url",ImageUrl },
-    {"type","image" }
-};
-            var picviewer = new MediaViewer(param);
-            picviewer.Activate();
-
-        }
+        
 
         private async void Drawer_ImageResolving(object sender, ImageResolvingEventArgs e)
         {

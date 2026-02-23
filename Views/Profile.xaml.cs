@@ -166,60 +166,7 @@ namespace CC98
 
         
 
-        private async void SignBoard_LinkClicked(object sender, CommunityToolkit.WinUI.UI.Controls.LinkClickedEventArgs e)
-        {
-            string link = e.Link;
-            var result = LinkAnalyzer.Parse(link);
-            switch (result.Key)
-            {
-                case "topic":
-                    Frame.Navigate(typeof(Topic), result.Value);
-                    break;
-                case "user":
-                    {
-                        string _url = "https://api.cc98.org/user/name/" + result.Value;
-                        
-
-                        break;
-                    }
-                //using语句不能在switch语句中直接出现。因此，使用大括号包围这个case.
-                case "board":
-                    Frame.Navigate(typeof(Board), result.Value);
-                    break;
-                case "file":
-                    if (result.Value == "image")
-                    {
-                        try
-                        {
-                            var param = new Dictionary<string, string>()
-                            {
-                                {"url",link },
-                                {"type","image" }
-                             };
-                            var picviewer = new MediaViewer(param);
-                            picviewer.Activate();
-                        }
-                        catch
-                        {
-
-                        }
-                    }   
-                    break;
-                case "backlink":
-                    if (result.Value == "bili")
-                    {
-                        Flower.Play("\uE930", "已复制Bili外链");
-                    }
-                    break;
-                default://自动复制到用户剪切板
-                    var datapackage = new DataPackage();
-                    datapackage.SetText(result.Value);
-                    Clipboard.SetContent(datapackage);
-                    Flower.Play("\uE930", "已复制外部链接");
-                    break;
-            }
-        }
-
+       
         private void FollowList_Click(object sender, RoutedEventArgs e)
         {
             if (!isMe) return;

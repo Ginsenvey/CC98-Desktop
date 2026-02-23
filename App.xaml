@@ -7,6 +7,7 @@
     xmlns:dev="using:DevWinUI"
     xmlns:tool="using:CommunityToolkit.WinUI.Controls"
     xmlns:md="using:CommunityToolkit.WinUI.UI.Controls"
+    xmlns:pr="using:CC98.Share.Controls.Primitives"
     xmlns:local="using:CC98">
     <Application.Resources>
         <ResourceDictionary >
@@ -54,6 +55,7 @@
                 <ResourceDictionary x:Key="Tint"></ResourceDictionary>
 
             </ResourceDictionary.ThemeDictionaries>
+            
             <SolidColorBrush x:Key="MarkdownBackgroudBrush" Color="{ThemeResource MarkdownBackgroudColor}"></SolidColorBrush>
             <SolidColorBrush x:Key="DividerBrush" Color="{ThemeResource DividerColor}"></SolidColorBrush>
             <SolidColorBrush x:Key="FancyButtonBrush" Color="{ThemeResource pink-green}"></SolidColorBrush>
@@ -80,7 +82,7 @@
                 <Setter Property="FontFamily" Value="{StaticResource HarmonySans}"></Setter>
                 <Setter Property="CornerRadius" Value="3"></Setter>
             </Style>
-            
+            <pr:SmartImageLoader x:Key="CustomPortraitLoader" LowRes="False"></pr:SmartImageLoader>
         </ResourceDictionary>
         
     </Application.Resources>

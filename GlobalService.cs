@@ -28,6 +28,6 @@ public class GlobalService
     public int AtCount = 0;
     public int ReplyCount = 0;
     public int SystemCount = 0;
-    public NavigationInfo? NavigationInfo { get; set; }
+    
 
 }

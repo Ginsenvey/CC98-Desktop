@@ -37,6 +37,8 @@ using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using UbbRender.Common;
+using UbbRender.Parser;
+using UbbRender.Render;
 using Windows.ApplicationModel.DataTransfer;
 using Windows.Storage;
 using static CC98.Kernel.ApiScope.ApiEndpoints;
@@ -79,7 +81,6 @@ namespace CC98
             var args = e.TryGetParameter<TopicNavigationInfo>();
             if (args != null)
             {
-                globalService.NavigationInfo = args;
                 topicId =args.TopicId;
                 await LoadTopicInfo();
                 if (args.IsJumpingMode)
@@ -290,7 +291,7 @@ namespace CC98
         
         private async void MarkdownTextBlock_LinkClicked(object sender, CommunityToolkit.WinUI.UI.Controls.LinkClickedEventArgs e)
         {
-            var url = e.Link.ToString();
+            var url = e.Link;
             var result = LinkAnalyzer.Parse(url);
             switch (result.Key)
             {
@@ -347,20 +348,7 @@ namespace CC98
                 case "file":
                     if (result.Value == "image")
                     {
-                        try
-                        {
-                            var param = new Dictionary<string, string>()
-                            {
-                                {"url",url },
-                                {"type","image" }
-                             };
-                            var picviewer = new MediaViewer(param);
-                            picviewer.Activate();
-                        }
-                        catch
-                        {
-
-                        }
+                        
                     }
                     else if (result.Value == "doc")//无法预览的媒体文件类
                     {
@@ -520,18 +508,7 @@ namespace CC98
             element.StartBringIntoView(options);
             //对于没有页码的跳转链接暂时没有处理
         }
-        private void Drawer_ImageClicked(object sender, CommunityToolkit.WinUI.UI.Controls.LinkClickedEventArgs e)
-        {
-            string ImageUrl = e.Link.ToString();
-            var param = new Dictionary<string, string>()
-{
-    {"url",ImageUrl },
-    {"type","image" }
-};
-            var picviewer = new MediaViewer(param);
-            picviewer.Activate();
-
-        }
+        
 
 
 
@@ -813,6 +790,61 @@ namespace CC98
         private void UbbTextBlock_MediaClicked(object sender, MediaClickEventArgs e)
         {
             de.Text = $"链接：{e.Source}，类型：{e.MediaType}";
+            switch (e.MediaType)
+            {
+                case MediaType.Image:
+                    var u=sender as UbbTextBlock;
+                    if (u == null) return;
+                    string ubb = u.UbbText;
+                    var doc= Parser.Parse(ubb);
+                    if (doc == null) return;
+                    var list=new List<string>();
+                    var nodes = doc.Root.GetDescendantsByType(UbbNodeType.Image);
+                    foreach(var node in nodes)
+                    {
+                        list.Add(ExtractImageUrl(node));
+                    }
+                    int anchor = list.IndexOf(e.Source);
+                    var info = new ViewerNavigationInfo
+                    {
+                        Type = "image",
+                        Urls = list,
+                        CurrentIndex=anchor
+                    };
+                    var viewer=new MediaViewer(info);
+                    viewer.Activate();
+                    break;
+                case MediaType.Video:
+                    var vinfo = new ViewerNavigationInfo
+                    {
+                        Type = "video",
+                        Urls = new List<string> { e.Source }
+                    };
+                    Frame.Navigate(typeof(MediaViewer), vinfo);
+                    break;
+            }
+        }
+        private string ExtractImageUrl(UbbNode node)
+        {
+            string src = "";
+            if (node is TagNode tagNode)
+            {
+                var value = tagNode.GetAttribute("value");
+                if (string.IsNullOrEmpty(value) || value == "1")
+                {
+                    // 尝试从子节点获取URL（对于 [img]url[/img] 格式）
+                    var first = node.FirstChild;
+                    if (first is TextNode textNode)
+                    {
+                        src = textNode.Content;
+                    }
+                }
+                else
+                {
+                    src = value;
+                }
+            }
+            return src;
         }
     }
 }

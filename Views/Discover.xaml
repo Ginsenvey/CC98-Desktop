@@ -27,18 +27,18 @@
                     <TextBlock Text="{x:Bind UserName}" VerticalAlignment="Center" FontSize="12"></TextBlock>
                 </HyperlinkButton>
                 <TextBlock Grid.Row="0" HorizontalAlignment="Right" Text="{x:Bind Time}"  FontSize="10"   Foreground="{ThemeResource TextFillColorSecondaryBrush}"></TextBlock>
-                <StackPanel Grid.Row="1" Padding="10" CornerRadius="4" Height="Auto" Orientation="Vertical" Spacing="15">
+                <StackPanel Grid.Row="1" Padding="10" CornerRadius="4" Spacing="15" Height="Auto" Orientation="Vertical">
                     <HyperlinkButton Padding="10"  Height="Auto" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" Tag="{x:Bind Id}" x:Name="MainText" Click="MainText_Click">
                         <TextBlock Text="{x:Bind Title}"  TextWrapping="Wrap" Foreground="{ThemeResource TextFillColorSecondaryBrush}"></TextBlock>
                     </HyperlinkButton>
 
-                    <ItemsView ItemsSource="{x:Bind MediaContent.Thumbnail}" >
+                    <ItemsView ItemsSource="{x:Bind MediaContent.Thumbnail}">
                         <ItemsView.Layout>
                             <UniformGridLayout  MaximumRowsOrColumns="3" ItemsJustification="Start"  MinColumnSpacing="15" MinRowSpacing="15" ></UniformGridLayout>
                         </ItemsView.Layout>
                         <ItemsView.ItemTemplate>
                             <DataTemplate x:DataType="x:String">
-                                <ItemContainer CacheMode="BitmapCache" >
+                                <ItemContainer CacheMode="BitmapCache">
                                     <image:SmartImage Source="{x:Bind}" Tag="{x:Bind}" Stretch="UniformToFill" MaxWidth="300" Tapped="Image_Tapped" ></image:SmartImage>
                                 </ItemContainer>
                             </DataTemplate>
