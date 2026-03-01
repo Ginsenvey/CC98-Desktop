@@ -17,7 +17,7 @@ public static class ApiEndpoints
         public static string AllBoards() => $"{Base}/Board/all";
         public static string Index() => $"{Base}/config/index";
         public static string CardStat() => $"{Card}/api/collection/stat";
-        public static string DraWCard(int rule) => $"{Card}/api/draw/{rule}";
+        public static string DrawCard(int rule) => $"{Card}/api/draw/{rule}";
         public static string DestoryAllCards() => $"{Card}/api/collection/all-rest";
     }
     /// <summary>

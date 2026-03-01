@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
-    <TargetFramework>net8.0-windows10.0.22621.0</TargetFramework>
+    <TargetFramework>net10.0-windows10.0.26100.0</TargetFramework>
 	<LangVersion>preview</LangVersion>
     <TargetPlatformMinVersion>10.0.17763.0</TargetPlatformMinVersion>
     <RootNamespace>CC98</RootNamespace>
@@ -166,7 +166,6 @@
     <ProjectCapability Include="Msix" />
   </ItemGroup>
   <ItemGroup>
-	<TrimmerRootAssembly Include="CommunityToolkit.WinUI.UI.Controls.Markdown" />
 	<PackageReference Include="CommunityToolkit.Labs.WinUI.Controls.Shimmer" Version="0.1.260203-build.2518" />
     <PackageReference Include="CommunityToolkit.Labs.WinUI.Ribbon" Version="0.1.250721-build.2183" />
     <PackageReference Include="CommunityToolkit.Labs.WinUI.TokenView" Version="0.1.250721-build.2183" />
@@ -174,6 +173,7 @@
     <PackageReference Include="CommunityToolkit.WinUI.Controls.ColorPicker" Version="8.2.251219" />
     <PackageReference Include="CommunityToolkit.WinUI.Controls.Primitives" Version="8.2.251219" />
     <PackageReference Include="CommunityToolkit.WinUI.Controls.SettingsControls" Version="8.2.251219" />
+    <PackageReference Include="CommunityToolkit.WinUI.Controls.Sizers" Version="8.3.260211-preview1" />
     <PackageReference Include="CommunityToolkit.WinUI.UI.Controls.Markdown" Version="7.1.2" />
     <PackageReference Include="CSharpMath.SkiaSharp" Version="0.5.1" />
     <PackageReference Include="DevWinUI" Version="9.8.1" />

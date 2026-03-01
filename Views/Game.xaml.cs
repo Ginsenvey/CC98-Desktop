@@ -82,18 +82,18 @@ namespace CC98
         private async void StartDraw(int rule)
         {
             cards.Clear();
-            string drawUrl = ApiEndpoints.Forum.DraWCard(rule);
-            var drawResult = await RequestSender.Fetch<List<Objects.Card>>(drawUrl);
+            string drawUrl = ApiEndpoints.Forum.DrawCard(rule);
+            var drawResult = await RequestSender.Submit<List<Objects.Card>>(drawUrl,null);
             if (!drawResult.IsSuccess || drawResult.Data == null)
             {
                 //
+                Flower.Play(FlowStatus.Fail, drawResult.Message);
                 return;
             }
             var data=drawResult.Data;
             foreach(var card in data)
             {
                 card.ImageUri = $"https://card.cc98.org{card.ImageUri.Substring(1, card.ImageUri.Length - 1)}";
-
             }
             cards.AddRange(data);
             

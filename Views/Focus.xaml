@@ -24,7 +24,7 @@
             <SelectorBarItem Text="收藏更新" Tag="1"></SelectorBarItem>
         </SelectorBar>
 
-        <ScrollViewer Grid.Row="1"   BorderThickness="1" BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}" CornerRadius="5" >
+        <ScrollViewer Grid.Row="1"   BorderThickness="1" BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}" CornerRadius="4" >
             <ItemsRepeater x:Name="MomentRepeater" ItemsSource="{x:Bind topics}" ElementPrepared="MomentRepeater_ElementPrepared">
                 <ItemsRepeater.ItemTemplate>
                     <DataTemplate x:DataType="obj:TopicInfo">

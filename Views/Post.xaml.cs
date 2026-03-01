@@ -81,7 +81,7 @@ namespace CC98
                     status.Text = "回复帖子:" + parameter["ParentId"];
                     Id = parameter["Pid"];
                     Editor.Text = parameter["BaseText"];
-                    Previewer.Text = UBBConverter.Convert(Editor.Text.Replace("\r\n", "  \n").Replace("\r", "  \n"), false);
+                    Previewer.UbbText = Editor.Text.Replace("\r\n", "  \n").Replace("\r", "  \n");
                     //UbbViewer.UbbText = Editor.Text;
                     Editor.SelectionStart = Editor.Text.Length;
                     Parent_Id = parameter["ParentId"];
@@ -103,7 +103,7 @@ namespace CC98
                     Id = parameter["Pid"];//当前主题Pid
                     Editor.Text = parameter["BaseText"];
                     SetTitle.Text= parameter["Title"];
-                    Previewer.Text = UBBConverter.Convert(Editor.Text.Replace("\r\n", "  \n").Replace("\r", "  \n"), false);
+                    Previewer.UbbText = Editor.Text.Replace("\r\n", "  \n").Replace("\r", "  \n");
                     //UbbViewer.UbbText = Editor.Text;
                     Editor.SelectionStart = Editor.Text.Length;
                     replyselector.IsSelected = true;
@@ -256,7 +256,7 @@ namespace CC98
         }
         private void Editor_TextChanged(object sender, TextChangedEventArgs e)
         {
-            Previewer.Text = UBBConverter.Convert(Editor.Text.Replace("\r\n", "  \n").Replace("\r","  \n"),false);
+            Previewer.UbbText = Editor.Text.Replace("\r\n", "  \n").Replace("\r", "  \n");
             //UbbViewer.UbbText = Editor.Text;
         }
         //以下方法用于创建Md的代码块,但是UBB编辑器不需要支持这个操作。

@@ -17,7 +17,7 @@
     xmlns:pr="using:CC98.Share.Controls.Primitives"
     xmlns:obj="using:CC98.Objects"
     xmlns:cv="using:CC98.Services.Converters"
-    Background="{ThemeResource AcrylicBackgroundFillColorDefaultBrush}">
+    Background="{ThemeResource DesktopAcrylicTransparentBrush}">
 
 
     <Page.Resources>

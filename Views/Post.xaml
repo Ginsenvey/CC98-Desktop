@@ -11,6 +11,7 @@
     xmlns:controls="using:CommunityToolkit.WinUI.Controls"
     xmlns:tool="using:CommunityToolkit.WinUI.UI.Controls"
     xmlns:dev="using:DevWinUI"
+    xmlns:ubb="using:UbbRender.Render"
     xmlns:c="using:CC98.Controls"
     Background="{ThemeResource DesktopAcrylicTransparentBrush}">
 
@@ -114,7 +115,7 @@
                 </StackPanel>
             </ContentDialog.Content>
         </ContentDialog>
-        <controls:Ribbon HorizontalAlignment="Stretch" Grid.Row="0" CornerRadius="0" BorderThickness="0" FontFamily="/Assets/Fonts/HarmonyOS_Sans_SC_Regular.ttf#HarmonyOS Sans SC"> 
+        <controls:Ribbon HorizontalAlignment="Stretch" Grid.Row="0" CornerRadius="0" BorderThickness="0,0,0,1" FontFamily="{StaticResource HarmonySans}"> 
 
                 <controls:RibbonCollapsibleGroup AccessKey="AB"
                                              CollapsedAccessKey="AA"
@@ -325,21 +326,24 @@
                 </controls:RibbonGroup>
             </controls:Ribbon>
 
-            <SplitView Grid.Row="1" PanePlacement="Right" DisplayMode="Inline" IsPaneOpen="True" x:Name="EditArea" PaneBackground="{ThemeResource CardBackgroundFillColorDefaultBrush}">
-                <SplitView.Pane>
+        <SplitView Grid.Row="1" PanePlacement="Left" DisplayMode="Inline" IsPaneOpen="True" x:Name="EditArea" PaneBackground="{ThemeResource CardBackgroundFillColorDefaultBrush}">
+            <SplitView.Pane>
                 <ScrollViewer>
-                    <tool:MarkdownTextBlock x:Name="Previewer"/> 
+                    <ubb:UbbTextBlock ImageMaxWidth="320"  x:Name="Previewer"/>
                 </ScrollViewer>
-                   
-                </SplitView.Pane>
-                <SplitView.Content>
-                    <Grid>
-                        <TextBox AcceptsReturn="True" CornerRadius="0" Background="Transparent" x:Name="Editor" TextChanged="Editor_TextChanged" TextWrapping="Wrap"></TextBox>
-                    </Grid>
-                    
-                </SplitView.Content>
-            </SplitView>
-            <Grid Grid.Row="2" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1">
+            </SplitView.Pane>
+            <SplitView.Content>
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <controls:PropertySizer  Binding="{x:Bind EditArea.OpenPaneLength,Mode=TwoWay}"></controls:PropertySizer>
+                    <TextBox Grid.Column="1" AcceptsReturn="True" CornerRadius="0" BorderThickness="1,0,0,0" Background="Transparent" x:Name="Editor" TextChanged="Editor_TextChanged" TextWrapping="Wrap"></TextBox>
+                </Grid>
+            </SplitView.Content>
+        </SplitView>
+        <Grid Grid.Row="2" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1">
                 <TextBlock Margin="10,0,10,0" HorizontalAlignment="Left" Text="状态" x:Name="status" Foreground="{ThemeResource TextFillColorSecondaryBrush}"></TextBlock>
                 <HyperlinkButton Padding="0" HorizontalAlignment="Right" CornerRadius="0" VerticalAlignment="Stretch" x:Name="SwitchContentType" Click="SwitchContentType_Click" ToolTipService.ToolTip="切换UBB/MD"> 
                     <StackPanel Orientation="Horizontal" Spacing="10" Margin="3">

@@ -31,7 +31,7 @@ namespace CC98.Kernel.UserExperience//用户体验模型，包括:版面图标�
                     {
                         return FluentIcons.Common.Symbol.Teaching;
                     }
-                    else if (Name.Contains("学院"))
+                    else if (Name.Contains("院"))
                     {
                         return FluentIcons.Common.Symbol.ChartPerson;
                     }

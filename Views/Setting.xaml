@@ -99,7 +99,7 @@
                                 <RadioButton Content="Mica(云母)" Tag="0" x:Name="Mica" Checked="Effect_Checked"/>
                                 <RadioButton Content="Mica Alt(薄云母)" Tag="1" x:Name="MicaAlt" Checked="Effect_Checked"></RadioButton>
                                 <RadioButton Content="Acrylic(亚克力)" Tag="2" x:Name="AcrylicBase" Checked="Effect_Checked"/>
-                                <RadioButton Content="薄亚克力" Tag="3" x:Name="AcrylicThin" Checked="Effect_Checked"></RadioButton>
+                                <RadioButton Content="Acrylic Thin(薄亚克力)" Tag="3" x:Name="AcrylicThin" Checked="Effect_Checked"></RadioButton>
                                 
                             </StackPanel>
                         </tool:SettingsCard>

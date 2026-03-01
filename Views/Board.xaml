@@ -15,14 +15,34 @@
     xmlns:obj="using:CC98.Objects"
     xmlns:cv="using:CC98.Services.Converters"
     Background="{ThemeResource DesktopAcrylicTransparentBrush}">
-    <Grid x:Name="RootGrid">
-        <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"></RowDefinition>
-            <RowDefinition Height="*"></RowDefinition>
-          
-        </Grid.RowDefinitions>
-        <Expander Grid.Row="0" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch"  x:Name="BoardBanner" VerticalContentAlignment="Stretch" CornerRadius="6" >
-            <Expander.Header>
+    <Page.BottomAppBar>
+        <CommandBar>
+            <AppBarButton Label="在浏览器中打开">
+                <AppBarButton.Icon>
+                    <FontIcon Glyph="&#xEB41;" />
+                </AppBarButton.Icon>
+            </AppBarButton>
+            <AppBarButton Label="固定">
+                <AppBarButton.Icon>
+                    <ic:SymbolIcon Symbol="Pin"></ic:SymbolIcon>
+                </AppBarButton.Icon>
+            </AppBarButton>
+            <AppBarButton Label="发投票">
+                <AppBarButton.Icon>
+                    <ic:SymbolIcon Symbol="Vote"></ic:SymbolIcon>
+                </AppBarButton.Icon>
+            </AppBarButton>
+            <AppBarButton Label="发主题">
+                <AppBarButton.Icon>
+                    <ic:SymbolIcon Symbol="Drafts"></ic:SymbolIcon>
+                </AppBarButton.Icon>
+            </AppBarButton>
+            
+        </CommandBar>
+    </Page.BottomAppBar>
+    <ScrollViewer Padding="15,0,15,0">
+        <Grid>
+            <StackPanel x:Name="RootGrid">
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto" MinHeight="45"></RowDefinition>
@@ -34,7 +54,7 @@
                         <ColumnDefinition Width="3*"></ColumnDefinition>
                         <ColumnDefinition Width="3*"></ColumnDefinition>
                     </Grid.ColumnDefinitions>
-                    <ic:SymbolIcon Symbol="Chat" Grid.Row="0" Grid.RowSpan="2" FontSize="22" Grid.Column="0" Foreground="{ThemeResource AccentAAFillColorDefaultBrush}"></ic:SymbolIcon>
+                    <ic:SymbolIcon x:Name="BoardSymbol" Symbol="Chat" Grid.Row="0" Grid.RowSpan="2" FontSize="22" Grid.Column="0" Foreground="{ThemeResource AccentAAFillColorDefaultBrush}"></ic:SymbolIcon>
                     <TextBlock Grid.Row="0" Grid.RowSpan="2" Grid.Column="1" Text="{x:Bind boardData.Name,Mode=OneWay}" FontSize="20" FontWeight="Bold" Foreground="{ThemeResource AccentAAFillColorDefaultBrush}" VerticalAlignment="Center"></TextBlock>
                     <TextBlock Grid.Row="0" Grid.Column="2" Text="{x:Bind boardData.Description,Mode=OneWay}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" VerticalAlignment="Center" TextWrapping="Wrap" Margin="0,10,10,0"></TextBlock>
                     <TextBlock Grid.Row="1" Grid.Column="2" Text="{x:Bind boardData.BoardMastersString,Mode=OneWay}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" VerticalAlignment="Bottom" Margin="0,0,10,10"></TextBlock>
@@ -47,86 +67,53 @@
                         </lab:TokenItem>
                     </lab:TokenView>
                 </Grid>
-            </Expander.Header>
-            <Expander.Content>
-                <ScrollViewer MaxHeight="240">
-                    <ubb:UbbTextBlock x:Name="Banner" UbbText="{x:Bind boardData.BigPaper,Mode=OneWay}" CornerRadius="10"  />
-                </ScrollViewer>
-                
-            </Expander.Content>
-        </Expander>
-        <ScrollViewer Grid.Row="1" Margin="0,10,0,10">
-            <ItemsRepeater x:Name="STileList" Loaded="STileList_Loaded">
-                <ItemsRepeater.ItemTemplate>
-                    <DataTemplate x:DataType="obj:SimpleTopicInfo">
-                        <HyperlinkButton HorizontalContentAlignment="Stretch" HorizontalAlignment="Stretch" CornerRadius="0" x:Name="TileContent" DataContext="{x:Bind}" Click="TileContent_Click">
-                            <Grid Padding="5">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="50"></ColumnDefinition>
-                                    <ColumnDefinition Width="4*"></ColumnDefinition>
-                                    <ColumnDefinition Width="*"></ColumnDefinition>
-                                    <ColumnDefinition Width="*"></ColumnDefinition>
-                                </Grid.ColumnDefinitions>
-                                <ic:SymbolIcon Symbol="{x:Bind symbol}" Grid.Column="0" Foreground="{ThemeResource AccentAAFillColorDefaultBrush}"></ic:SymbolIcon>
-                                <TextBlock Text="{x:Bind Title}" Grid.Column="1" VerticalAlignment="Center" Foreground="{ThemeResource TextFillColorSecondaryBrush}"></TextBlock>
-                                <TextBlock Text="{x:Bind UserName}" Grid.Column="2" VerticalAlignment="Center" Foreground="{ThemeResource TextFillColorSecondaryBrush}"></TextBlock>
-                                <StackPanel Orientation="Horizontal" Grid.Column="3" Spacing="10" VerticalAlignment="Center" >
-                                    <Button Background="Transparent"  HorizontalAlignment="Left" >
-                                        <StackPanel Orientation="Horizontal" Spacing="5" >
+
+                <Border Padding="10">
+                    <ubb:UbbTextBlock x:Name="Banner" UbbText="{x:Bind boardData.BigPaper,Mode=OneWay}" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                </Border>
+
+                <SelectorBar>
+                    <SelectorBarItem Text="最新" IsSelected="True"></SelectorBarItem>
+                    <SelectorBarItem Text="置顶"></SelectorBarItem>
+                    <SelectorBarItem  Text="精华"></SelectorBarItem>
+                </SelectorBar>
+                <Border Margin="0,10,0,0" BorderThickness="1" BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}" CornerRadius="4" >
+                    <ItemsRepeater x:Name="TopicRepeater" ElementPrepared="TopicRepeater_ElementPrepared" ItemsSource="{x:Bind topics}">
+                        <ItemsRepeater.ItemTemplate>
+                            <DataTemplate x:DataType="obj:SimpleTopicInfo">
+                                <HyperlinkButton HorizontalContentAlignment="Stretch" HorizontalAlignment="Stretch" CornerRadius="0" x:Name="TileContent" DataContext="{x:Bind}" Click="TileContent_Click">
+                                    <Grid Padding="5" ColumnSpacing="8">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="30"></ColumnDefinition>
+                                            <ColumnDefinition Width="*"></ColumnDefinition>
+                                            <ColumnDefinition Width="120"></ColumnDefinition>
+                                            <ColumnDefinition Width="60"></ColumnDefinition>
+                                            <ColumnDefinition Width="72"></ColumnDefinition>
+                                        </Grid.ColumnDefinitions>
+                                        <ic:SymbolIcon Symbol="ChevronRight" Grid.Column="0" FontSize="14" Foreground="{ThemeResource AccentAAFillColorDefaultBrush}"></ic:SymbolIcon>
+                                        <TextBlock Text="{x:Bind Title}" Grid.Column="1" VerticalAlignment="Center" Foreground="{ThemeResource TextFillColorSecondaryBrush}" MaxLines="2"></TextBlock>
+                                        <TextBlock Text="{x:Bind UserName}" FontSize="13" Grid.Column="2" VerticalAlignment="Center" Foreground="{ThemeResource TextFillColorSecondaryBrush}"></TextBlock>
+                                        <StackPanel Grid.Column="3" Orientation="Horizontal" Spacing="5" >
                                             <ic:SymbolIcon Symbol="Chat" FontSize="11"></ic:SymbolIcon>
-                                            <TextBlock Text="{x:Bind ReplyCount}" Grid.Row="2"  HorizontalAlignment="Right" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}"></TextBlock>
+                                            <TextBlock Text="{x:Bind ReplyCount}" Grid.Row="2"  VerticalAlignment="Center"  FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}"></TextBlock>
                                         </StackPanel>
-                                    </Button>
 
-                                    <Button Background="Transparent"  HorizontalAlignment="Left" >
-                                        <StackPanel Orientation="Horizontal" Spacing="5" >
+                                        <StackPanel Grid.Column="4" Orientation="Horizontal" Spacing="5" >
                                             <ic:SymbolIcon Symbol="Fire" FontSize="11"></ic:SymbolIcon>
-                                            <TextBlock Text="{x:Bind HitCount}"   HorizontalAlignment="Right" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}"></TextBlock>
+                                            <TextBlock Text="{x:Bind HitCount}"  VerticalAlignment="Center" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}"></TextBlock>
                                         </StackPanel>
-                                    </Button>
-                                </StackPanel>
-                            </Grid>
-                        </HyperlinkButton>
+                                    </Grid>
+                                </HyperlinkButton>
 
-                    </DataTemplate>
-                </ItemsRepeater.ItemTemplate>
-            </ItemsRepeater>
+                            </DataTemplate>
+                        </ItemsRepeater.ItemTemplate>
+                    </ItemsRepeater>
+                </Border>
 
-        </ScrollViewer>
-        <Button x:Name="BackFromBest" Grid.Row="1" HorizontalAlignment="Right" VerticalAlignment="Bottom" CornerRadius="9999"  Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"  Width="50" Height="50" Margin="0,0,60,60" Visibility="Collapsed" Click="BackFromBest_Click">
-            <ic:SymbolIcon Symbol="ArrowLeft"></ic:SymbolIcon>
-        </Button>
-        <dev:GooeyButton x:Name="GooeyGroup" Grid.Row="1" HorizontalAlignment="Right" VerticalAlignment="Bottom"    Background="{ThemeResource AccentAAFillColorDefaultBrush}" Width="50" Height="50" Margin="0,0,60,60">
-            <dev:GooeyButton.Content>
-                <SymbolIcon Symbol="Add"/>
-            </dev:GooeyButton.Content>
-            <dev:GooeyButton.Items>
-
-                <dev:GooeyButtonItem  Background="LightSeaGreen" Width="50" Height="50" Click="Gooey_Click" x:Name="Gooey" Tag="Best" ToolTipService.ToolTip="精华帖">
-                    <ic:SymbolIcon Symbol="Sparkle"></ic:SymbolIcon>
-                </dev:GooeyButtonItem >
-                <dev:GooeyButtonItem Background="LightBlue" Width="50" Height="50" Click="Gooey_Click" Tag="Pin" ToolTipService.ToolTip="固定到导航栏">
-                    <ic:SymbolIcon Symbol="Pin" ></ic:SymbolIcon>
-
-                </dev:GooeyButtonItem>
-                <dev:GooeyButtonItem Background="LightSteelBlue" Width="50" Height="50" Click="Gooey_Click" Tag="Send" ToolTipService.ToolTip="发帖">
-                    <ic:SymbolIcon Symbol="Send" ></ic:SymbolIcon>
-                </dev:GooeyButtonItem>
-            </dev:GooeyButton.Items>
-        </dev:GooeyButton>
-
-        <ContentDialog Title="发表主题" x:Name="PostPanel" HorizontalAlignment="Center" VerticalAlignment="Center">
-            <ContentDialog.Content>
-                <StackPanel Orientation="Vertical" Spacing="10">
-                    <SelectorBar HorizontalAlignment="Center" >
-                        <SelectorBarItem Text="话题"></SelectorBarItem>
-                        <SelectorBarItem Text="投票"></SelectorBarItem>
-                    </SelectorBar>
-                    <TextBox  Header="标题"></TextBox>
-                </StackPanel>
-            </ContentDialog.Content>
-        </ContentDialog>
-        <local:InfoFlower x:Name="Flower" Grid.Row="0" Grid.RowSpan="3" HorizontalAlignment="Center" VerticalAlignment="Bottom"></local:InfoFlower>
-  
-    </Grid>
+            </StackPanel>
+            <local:InfoFlower x:Name="Flower"  HorizontalAlignment="Center" VerticalAlignment="Bottom"></local:InfoFlower>
+        </Grid>
+        
+    </ScrollViewer>
+    
 </Page>

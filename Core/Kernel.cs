@@ -160,6 +160,7 @@ public static class RequestSender
     public static async Task<ApiResponse<T>> Deserialize<T>(HttpResponseMessage res)
     {
         var json = await res.Content.ReadAsStringAsync();
+        await App.Logger.WriteAsync("Request", res.StatusCode.ToString(),json);
         if (res.IsSuccessStatusCode)
         {
             // 首先尝试使用源生成上下文以获得更好性能与 AOT 支持

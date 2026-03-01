@@ -57,6 +57,7 @@
                 </DataTemplate>
             </FlipView.ItemTemplate>
         </FlipView>
+        
         <ScrollViewer Grid.Row="1" ZoomMode="Enabled"  Padding="20" x:Name="zoomer" ViewChanged="zoomer_ViewChanged" HorizontalContentAlignment="Center" VerticalAlignment="Stretch" HorizontalScrollMode="Enabled" HorizontalScrollBarVisibility="Visible" HorizontalAlignment="Stretch" Visibility="Collapsed">
             <image:SmartImage Stretch="None" x:Name="PicViewer" HorizontalAlignment="Center" RenderTransformOrigin="0.5,0.5">
                 <image:SmartImage.RenderTransform>

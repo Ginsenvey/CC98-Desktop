@@ -86,7 +86,7 @@ namespace CC98
                 if (args.IsJumpingMode)
                 {
                     isJumping = true;
-                    TP(args.TargetFloor);
+                    await TP(args.TargetFloor);
                     return;
                 }
                 
@@ -136,28 +136,50 @@ namespace CC98
         }
         //当jumping mode=true时响应。响应包括两种，来自外部页面导航的跳转和用户点击帖子内链接的跳转。
         //floor如17824L，则page为1782，sort为4，此时目标楼层的index是3.sort=1时目标index为0。如果sort=0,则目标页码在上一页。
-        private void TP(int floor)
+        private async Task TP(int floor)
         {
             int page = floor / 10;
             int sort= floor%10;
-            //如果当前页就是目标页，并且楼层号大于0
-            //直接跳转
-            
-            if (Pager.SelectedPageIndex  == page && sort > 0)
+            //如果当前页就是目标页      
+            if (Pager.SelectedPageIndex  == page)
             {
-                ScrollTo(sort - 1);
+                //楼层大于0，则
+                if (sort > 0)
+                {
+                    //判断是否已经加载
+                    Pager.SelectedPageIndex = page;
+                    if (replies.Count > sort - 1)
+                    {
+                        ScrollTo(sort - 1);
+                    }
+                    else
+                    {
+                        await LoadReply();
+                        ScrollTo(sort - 1);
+                    }
+                }
+                //如果楼层为0，说明是整十楼，目标在上一页的最后一个
+                else
+                {
+                    Pager.SelectedPageIndex = page - 1;
+                    JumpToFloor = 9;
+                }
             }
-            else if (Pager.SelectedPageIndex == page - 1 && sort == 0)
+            //这种情况也不用翻页
+            else if (Pager.SelectedPageIndex == page - 1&&sort==0)
             {
-                ScrollTo(9);
+                Pager.SelectedPageIndex = page;
+                if (replies.Count == 10)
+                {
+                    ScrollTo(9);
+                }
+                else
+                {
+                    await LoadReply();
+                    ScrollTo(9);
+                }
             }
-            //整十楼在上一页的最后一个项
             //如果不在当前页面，先翻页，再跳转
-            else if (sort == 0)
-            {
-                Pager.SelectedPageIndex = page - 1;
-                JumpToFloor = 9;
-            }
             else
             {
                 Pager.SelectedPageIndex = page;
@@ -499,14 +521,18 @@ namespace CC98
 
         private void ScrollTo(int index)
         {
-            var element = ReplyRepeater.GetOrCreateElement(index);
-            var options = new BringIntoViewOptions
+            try
             {
-                VerticalAlignmentRatio = 0, // 0=顶部对齐，0.5=居中，1=底部
-                AnimationDesired = true       // 启用平滑滚动动画
-            };
-            element.StartBringIntoView(options);
-            //对于没有页码的跳转链接暂时没有处理
+                var element = ReplyRepeater.GetOrCreateElement(index);
+                var options = new BringIntoViewOptions
+                {
+                    VerticalAlignmentRatio = 0, // 0=顶部对齐，0.5=居中，1=底部
+                    AnimationDesired = true       // 启用平滑滚动动画
+                };
+                element.StartBringIntoView(options);
+                //对于没有页码的跳转链接暂时没有处理
+            }
+            catch { }
         }
         
 

@@ -61,13 +61,12 @@ namespace CC98
         //是否精华帖
         public bool isBest = false;
         public int boardId = 0;
-        public int currentIndex = 0;
+        public Increment increment = new(20);
 
         public BoardData boardData = new BoardData() { BoardMasters = [],Id=0,BigPaper="",Description="", Name = "版面", TodayCount = 9898, TopicCount = 9898 };
         public Board()
         {
             this.InitializeComponent();
-            STileList.ItemsSource = topics;
         }
 
         protected override async void OnNavigatedTo(Microsoft.UI.Xaml.Navigation.NavigationEventArgs e)
@@ -75,6 +74,7 @@ namespace CC98
             base.OnNavigatedTo(e);
             var args = e.TryGetParameter<int>();
             boardId = args;
+            BoardSymbol.Symbol=BoardIcon.GetSymbol(boardId,"");
             await GetData();
             await LoadTopics();
         }
@@ -98,28 +98,35 @@ namespace CC98
             boardData.TodayCount = data.TodayCount;   
         }
 
-        private async Task LoadTopics()
+        private async Task<bool> LoadTopics()
         {
-            string topicUrl = ApiEndpoints.Board.TopicList(isBest, boardId, currentIndex);
+            string topicUrl = ApiEndpoints.Board.TopicList(isBest, boardId, increment.startIndex);
             if (isBest)
             {
                 var result = await RequestSender.Fetch<BoardBest>(topicUrl);
                 if (result.IsNotValid)
                 {
-                    Flower.Play("\uEA39", result.Message);
-                    return;
+                    Flower.Play(FlowStatus.Fail, result.Message);
+                    return false;
                 }
                 var bests= result.Data?.Topics;
+                increment.hasMore= bests.Count == increment.pageSize;
                 topics.AddRange(bests);
+                return true;
             }
-            var topicResult = await RequestSender.Fetch<List<SimpleTopicInfo>>(topicUrl);
-            if (topicResult.IsNotValid)
+            else
             {
-                Flower.Play("\uEA39", topicResult.Message);
-                return;
+                var topicResult = await RequestSender.Fetch<List<SimpleTopicInfo>>(topicUrl);
+                if (topicResult.IsNotValid)
+                {
+                    Flower.Play(FlowStatus.Fail, topicResult.Message);
+                    return false;
+                }
+                var data = topicResult.Data;
+                increment.hasMore = data.Count == increment.pageSize;
+                topics.AddRange(data);
+                return true;
             }
-            var data= topicResult.Data;
-            topics.AddRange(data); 
         }
 
 
@@ -130,26 +137,6 @@ namespace CC98
             if (t == null) return;
             var param = new TopicNavigationInfo { TopicId = t.Id };
             Frame.Navigate(typeof(Topic), param);
-        }
-
-        int history = 0; 
-
-        private void STileList_Loaded(object sender, RoutedEventArgs e)
-        {
-            STileList.ElementPrepared += async (s, e) =>
-            {
-                if (STileList.ItemsSource != null)
-                {
-                    int current = e.Index;
-
-                    if (current > 0 && (current + 1) % 20 == 0 && current > history)
-                    {
-                        history = current;
-                        currentIndex = current+1;
-                        await LoadTopics();
-                    }
-                }
-            };
         }
 
         private async void Gooey_Click(object sender, RoutedEventArgs e)
@@ -189,12 +176,12 @@ namespace CC98
                             Messenger.Instance.AddNavigationItem(i);
                             break;
                         case "Best":
-                            GooeyGroup.Visibility = Visibility.Collapsed;
-                            BackFromBest.Visibility = Visibility.Visible;
-                            history = 0;
+                            //GooeyGroup.Visibility = Visibility.Collapsed;
+                            //BackFromBest.Visibility = Visibility.Visible;
+                            increment.Clear();
                             topics.Clear();
                             isBest = true;
-                            currentIndex = 0;
+                            
                             await LoadTopics();
                             break;
                     }
@@ -206,41 +193,19 @@ namespace CC98
 
         private async void BackFromBest_Click(object sender, RoutedEventArgs e)
         {
-            BackFromBest.Visibility = Visibility.Collapsed;
-            GooeyGroup.Visibility = Visibility.Visible;
+            //BackFromBest.Visibility = Visibility.Collapsed;
+            //GooeyGroup.Visibility = Visibility.Visible;
             isBest = false;
-            history = 0;
+            increment.Clear();
             topics.Clear();
             await LoadTopics();
         }
 
-        private async void Drawer_ImageResolving(object sender, ImageResolvingEventArgs e)
+        
+
+        private async void TopicRepeater_ElementPrepared(ItemsRepeater sender, ItemsRepeaterElementPreparedEventArgs args)
         {
-            var defr = e.GetDeferral();
-            var Source = e.Url;
-            if (Source == null) return;
-
-            try
-            {
-                switch (Source)
-                {
-                    case string url when ImageResolver.IsWebUrl(url):
-                        e.Image = await ImageResolver.LoadWebImage(url);
-                        break;
-
-                    case string path when ImageResolver.IsLocalPath(path):
-                        e.Image = await ImageResolver.LoadLocalImage(path);
-                        break;
-                }
-            }
-            catch
-            {
-                e.Image = null;
-            }
-            e.Handled = true;
-            defr.Complete();
-
+            await increment.LoadMore(args.Index,LoadTopics);
         }
-
     }
 }
