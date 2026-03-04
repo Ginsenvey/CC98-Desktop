@@ -4,7 +4,6 @@ using CC98.Kernel.UserExperience;
 using CC98.Objects;
 using CC98.Services.Extensions;
 using CommunityToolkit.Mvvm.ComponentModel;
-using CommunityToolkit.WinUI.UI.Controls;
 using DevWinUI;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -188,33 +187,7 @@ namespace CC98
         }
         
 
-        private async void Drawer_ImageResolving(object sender, ImageResolvingEventArgs e)
-        {
-            var defr = e.GetDeferral();
-            var Source = e.Url;
-            if (Source == null) return;
-
-            try
-            {
-                switch (Source)
-                {
-                    case string url when ImageResolver.IsWebUrl(url):
-                        e.Image = await ImageResolver.LoadWebImage(url);
-                        break;
-
-                    case string path when ImageResolver.IsLocalPath(path):
-                        e.Image = await ImageResolver.LoadLocalImage(path);
-                        break;
-                }
-            }
-            catch
-            {
-                e.Image = null;
-            }
-            e.Handled = true;
-            defr.Complete();
-
-        }
+        
         private async void Send_Click(object sender, RoutedEventArgs e)
         {
             if (!string.IsNullOrEmpty(ReplyBody.Text))
@@ -241,42 +214,7 @@ namespace CC98
             RefreshMessageList();
         }
 
-        private async void Drawer_LinkClicked(object sender, LinkClickedEventArgs e)
-        {
-            var url = e.Link.ToString();
-            var result = LinkAnalyzer.Parse(url);
-            switch (result.Key)
-            {
-                case "topic":
-                    if((App.Current as App).m_window is MainWindow mainwindow)
-                    mainwindow.RootFrame.Navigate(typeof(Topic), result.Value);
-                    break;
-                case "user":
-                    {
-                        string _url = "https://api.cc98.org/user/name/" + result.Value;
-                        
-
-                        break;
-                    }
-                //using语句不能在switch语句中直接出现。因此，使用大括号包围这个case.
-                   
-                case "backlink":
-                    if (result.Value == "bili")
-                    {
-                        var _datapackage = new DataPackage();
-                        _datapackage.SetText(url);
-                        Clipboard.SetContent(_datapackage);
-                        Flower.Play("\uE930", "已复制Bili外链");
-                    }
-                    break;
-                default://自动复制到用户剪切板
-                    var datapackage = new DataPackage();
-                    datapackage.SetText(url);
-                    Clipboard.SetContent(datapackage);
-                    Flower.Play("\uE930", "已复制外部链接");
-                    break;
-            }
-        }
+        
     }
 
     

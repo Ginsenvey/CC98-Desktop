@@ -1,4 +1,5 @@
-﻿using System;
+﻿using CC98.Services.Extensions;
+using System;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -90,11 +91,8 @@ public class LocalCache
 
         try
         {
-            var options = new JsonSerializerOptions
-            {
-                PropertyNameCaseInsensitive = true
-            };
-            return JsonSerializer.Deserialize<T>(_content, options)!;
+            
+            return JsonSerialize.Deserialize<T>(_content)!;
         }
         catch (JsonException ex)
         {
@@ -257,7 +255,7 @@ public class LocalCache
 
         try
         {
-            File.WriteAllText(tempPath, content, System.Text.Encoding.UTF8);
+            File.WriteAllText(tempPath, content, Encoding.UTF8);
 
             if (File.Exists(path))
                 File.Replace(tempPath, path, $"{path}.bak");

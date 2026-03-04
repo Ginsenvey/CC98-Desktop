@@ -361,10 +361,5 @@ namespace CC98
         public string FileName { get; set; }
         public string FilePath { get; set; }
     }
-    public class User
-    {
-        public string Name { get; set; }
-        public string Portrait { get; set; }
-        
-    }
+    
 }

@@ -3,6 +3,7 @@ using CC98.Kernel.ApiScope;
 using CC98.Kernel.UserExperience;
 using CC98.Objects;
 using CC98.Services;
+using CC98.Services.Extensions;
 using CommunityToolkit.WinUI.Converters;
 using DevWinUI;
 using FluentIcons.Common;
@@ -99,12 +100,6 @@ namespace CC98
             }
         }
 
-        private void ShowTips(string title,string content)
-        {
-            StatusReport.Title = title;
-            StatusReport.Content = content;
-            StatusReport.IsOpen = true;
-        }
         private void Surfing()
         {
             CheckLoginStatus();
@@ -178,7 +173,7 @@ namespace CC98
             string custom_boards = ValidationHelper.GetValue(Set, "CustomBoards");
             if (custom_boards != "0")
             {
-                var boardinfo = JsonSerializer.Deserialize<Dictionary<string, string>>(custom_boards);
+                var boardinfo = JsonSerialize.Deserialize<Dictionary<string, string>>(custom_boards);
                 if (boardinfo != null)
                 {
                     if (boardinfo.ContainsKey(tag))
@@ -197,7 +192,7 @@ namespace CC98
             string custom_boards = ValidationHelper.GetValue(Set, "CustomBoards");
             if (custom_boards!="0")
             {
-                memory = JsonSerializer.Deserialize<Dictionary<int, string>>(custom_boards)??new Dictionary<int, string>();
+                memory = JsonSerialize.Deserialize<Dictionary<int, string>>(custom_boards)??new Dictionary<int, string>();
             }
             else
             {
@@ -240,7 +235,7 @@ namespace CC98
                 var data=boardDataResult.Data;
                 memory.Add(boardId, data.Name);
                 MenuItems.Add(new NavigationItem { Name = data.Name, IconSymbol = BoardIcon.GetSymbol(boardId, data.Name), Tag = boardId.ToString(), IsEditable = true });
-                string boardjsontext = JsonSerializer.Serialize(memory);
+                string boardjsontext = JsonSerialize.Serialize(memory);
                 Set.Values["CustomBoards"] = boardjsontext;
                
             }
@@ -433,7 +428,7 @@ namespace CC98
             if (groups.Count > 0)
             {
                 //临时存储收藏夹列表
-                string FavoJson = JsonSerializer.Serialize(groups);
+                string FavoJson = JsonSerialize.Serialize(groups);
                 Set.Values["Favorites"] = FavoJson;
                 return true;
             }

@@ -1,5 +1,4 @@
-﻿using CommunityToolkit.WinUI.UI.Controls.TextToolbarSymbols;
-using Microsoft.UI.Xaml.Navigation;
+﻿using Microsoft.UI.Xaml.Navigation;
 using System;
 using System.Collections.Generic;
 using Windows.Networking.NetworkOperators;

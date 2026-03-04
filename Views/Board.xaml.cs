@@ -6,7 +6,6 @@ using CC98.Objects;
 using CC98.Services;
 using CC98.Services.Extensions;
 using CommunityToolkit.Mvvm.ComponentModel;
-using CommunityToolkit.WinUI.UI.Controls;
 using DevWinUI;
 using FluentIcons.Common;
 using Microsoft.UI.Xaml;

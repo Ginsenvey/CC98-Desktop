@@ -7,8 +7,8 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:ic="using:FluentIcons.WinUI"
-    xmlns:tool="using:CommunityToolkit.WinUI.UI.Controls"
     xmlns:dev="using:DevWinUI"
+    xmlns:tool="using:CommunityToolkit.WinUI.Controls"
     mc:Ignorable="d"
     >
     <Window.SystemBackdrop>
@@ -55,7 +55,7 @@
             </StackPanel>
             
             <ScrollViewer Grid.Row="1" Padding="5">
-                <tool:MarkdownTextBlock x:Name="GuidePresenter" Background="Transparent" Foreground="{ThemeResource TextFillColorSecondaryBrush}" FontSize="12" LinkClicked="MarkdownTextBlock_LinkClicked" ></tool:MarkdownTextBlock>
+                <tool:MarkdownTextBlock x:Name="GuidePresenter" Background="Transparent" Foreground="{ThemeResource TextFillColorSecondaryBrush}" FontSize="12" ></tool:MarkdownTextBlock>
             </ScrollViewer>
         </Grid>
         <Grid x:Name="PasswordLoginPane" Grid.Column="2" Grid.Row="1" Padding="20" RowSpacing="15" Visibility="Collapsed">
@@ -122,7 +122,7 @@
             </Grid.RowDefinitions>
             
             <TextBlock Text="欢迎回家。" FontWeight="Bold" FontSize="18" Foreground="LightSeaGreen"></TextBlock>
-            <tool:MarkdownTextBlock x:Name="tip" Grid.Row="1"  Text="" Background="Transparent" Foreground="{ThemeResource TextFillColorSecondaryBrush}" FontSize="12" LinkClicked="MarkdownTextBlock_LinkClicked"></tool:MarkdownTextBlock>
+            <tool:MarkdownTextBlock x:Name="tip" Grid.Row="1"  Text="" Background="Transparent" Foreground="{ThemeResource TextFillColorSecondaryBrush}" FontSize="12"></tool:MarkdownTextBlock>
             <Button Grid.Row="2"  Click="OIDC_Click" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch">
                 <Grid>
                     <Grid.ColumnDefinitions>

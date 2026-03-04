@@ -2,6 +2,7 @@
 using Microsoft.UI.Dispatching;
 using Microsoft.UI.Xaml.Navigation;
 using System;
+using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
@@ -181,5 +182,35 @@ public static class DispatcherQueueExtensions
         }
 
         await tcs.Task;
+    }
+}
+public class JsonSerialize
+{
+    
+    public static T? Deserialize<T>(string json)
+    {
+        try 
+        {
+            var obj = JsonSerializer.Deserialize(json, typeof(T), CC98JsonContext.Default);
+            return obj is T result ? result : default;
+        }
+        catch 
+        {
+            return default;
+        }
+    }
+    public static string Serialize<T>(T obj)
+    {
+        try
+        {
+            // 先尝试使用默认的序列化方法
+            return JsonSerializer.Serialize(obj, typeof(T), CC98JsonContext.Default);
+        }
+        catch (Exception ex)
+        {
+            // 如果序列化失败，记录错误并返回一个空字符串
+            Console.WriteLine($"序列化失败: {ex.Message}");
+            return string.Empty;
+        }
     }
 }

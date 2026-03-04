@@ -21,6 +21,7 @@ using CC98.Objects;
 using System.Text.Json;
 using DevWinUI;
 using CC98.Kernel.ApiScope;
+using CC98.Services.Extensions;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -63,7 +64,7 @@ namespace CC98
             if (f != "0")
             {
                 //likecollection.MenuItems.Clear();
-                var data = JsonSerializer.Deserialize<List<Favorites>>(f);
+                var data = JsonSerialize.Deserialize<List<Favorites>>(f);
                 if(data != null)
                 {
                     favoritesList.Clear();

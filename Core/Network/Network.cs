@@ -26,6 +26,7 @@ using Windows.Storage.Streams;
 using System.Text.Json;
 using Microsoft.Extensions.Logging;
 using System.Text.Json.Serialization;
+using CC98.Services.Extensions;
 
 namespace CC98.Kernel.Network;
 /// <summary>
@@ -120,7 +121,7 @@ public partial class VpnService : IDisposable
                 return VpnLoginResult.Failure($"网络请求失败:{login_res.StatusCode}");
             }
             string text = await login_res.Content.ReadAsStringAsync();
-            var result = JsonSerializer.Deserialize<VpnLoginResult>(text);
+            var result = JsonSerialize.Deserialize<VpnLoginResult>(text);
             if (result == null)
             {
                 return VpnLoginResult.Failure("登录结果为空");

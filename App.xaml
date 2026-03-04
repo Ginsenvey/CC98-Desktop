@@ -6,7 +6,6 @@
     xmlns:lab="using:CommunityToolkit.Labs.WinUI"
     xmlns:dev="using:DevWinUI"
     xmlns:tool="using:CommunityToolkit.WinUI.Controls"
-    xmlns:md="using:CommunityToolkit.WinUI.UI.Controls"
     xmlns:pr="using:CC98.Share.Controls.Primitives"
     xmlns:local="using:CC98">
     <Application.Resources>
@@ -69,7 +68,7 @@
             <Style TargetType="RichTextBlock">
                 <Setter Property="FontFamily" Value="{StaticResource HarmonySans}"></Setter>
             </Style>
-            <Style TargetType="md:MarkdownTextBlock">
+            <Style TargetType="tool:MarkdownTextBlock">
                 <Setter Property="FontFamily" Value="{StaticResource HarmonySans}"></Setter>
             </Style>
             <Style TargetType="tool:SettingsCard">
