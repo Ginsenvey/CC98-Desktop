@@ -3,7 +3,6 @@ using CC98.Kernel;
 using CC98.Kernel.UserExperience;
 using ColorCode.Compilation.Languages;
 using CommunityToolkit.WinUI.Controls;
-using CommunityToolkit.WinUI.UI.Controls;
 using DevWinUI;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -585,33 +584,7 @@ namespace CC98
                 
             }
         }
-        private async void Drawer_ImageResolving(object sender, ImageResolvingEventArgs e)
-        {
-            var defr = e.GetDeferral();
-            var Source = e.Url;
-            if (Source == null) return;
-
-            try
-            {
-                switch (Source)
-                {
-                    case string url when ImageResolver.IsWebUrl(url):
-                        e.Image = await ImageResolver.LoadWebImage(url);
-                        break;
-
-                    case string path when ImageResolver.IsLocalPath(path):
-                        e.Image = await ImageResolver.LoadLocalImage(path);
-                        break;
-                }
-            }
-            catch
-            {
-                e.Image = null;
-            }
-            e.Handled = true;
-            defr.Complete();
-
-        }
+        
 
         private void MapContainer_ItemClick(object sender, ItemClickEventArgs e)
         {

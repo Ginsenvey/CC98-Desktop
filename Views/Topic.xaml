@@ -10,7 +10,6 @@
     xmlns:ic="using:FluentIcons.WinUI"
     xmlns:tool="using:CommunityToolkit.WinUI.Controls"
     xmlns:dev="using:DevWinUI"
-    xmlns:md="using:CommunityToolkit.WinUI.UI.Controls"
     xmlns:image="using:CC98.Controls"
     xmlns:ubb="using:UbbRender.Render"
     xmlns:share="using:CC98.Share.Controls"
@@ -117,7 +116,7 @@
                 </HyperlinkButton>
 
                 <Border  Grid.Row="1" Padding="10" CornerRadius="4" Background="{ThemeResource MarkdownBackgroudBrush}">
-                    <md:MarkdownTextBlock Text="{x:Bind Content,Mode=OneWay}" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                    <tool:MarkdownTextBlock Text="{x:Bind Content,Mode=OneWay}" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
                 </Border>
 
                 <StackPanel Orientation="Vertical" Grid.Row="0" Margin="5,5,10,0" HorizontalAlignment="Right">

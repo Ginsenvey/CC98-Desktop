@@ -7,7 +7,6 @@ using CC98.Services;
 using CC98.Services.Extensions;
 using CC98.Share.Controls.Primitives;
 using CommunityToolkit.Mvvm.ComponentModel;
-using CommunityToolkit.WinUI.UI.Controls;
 using DevWinUI;
 using FluentIcons.Common;
 using FluentIcons.WinUI;
@@ -114,7 +113,7 @@ namespace CC98
             {
                 Flower.Play("\uEA39", " ’≤ÿº–Œ¥ª∫¥Ê");
             }
-            var favoritesList = JsonSerializer.Deserialize<List<Favorites>>(favoritesJson);
+            var favoritesList =(List<Favorites>?)JsonSerializer.Deserialize(favoritesJson,typeof(List<Favorites>),CC98JsonContext.Default);
             if (favoritesList == null)
             {
                 Flower.Play("\uEA39", "Ω‚Œˆ ’≤ÿº–ª∫¥Ê≥ˆ¥Ì");
@@ -210,7 +209,7 @@ namespace CC98
             {
                 topicInfo.IsFavorite = isFavoriteResult.Data;
             }
-            Pager.NumberOfPages = (Convert.ToInt32(topicInfo.ReplyCount) / 10) + 1;
+            Pager.NumberOfPages = (topicInfo.ReplyCount/ 10) + 1;
             PagerFix();
             isVote = topicInfo.IsVote;
             if (isVote)
@@ -311,9 +310,9 @@ namespace CC98
 
         
         
-        private async void MarkdownTextBlock_LinkClicked(object sender, CommunityToolkit.WinUI.UI.Controls.LinkClickedEventArgs e)
+        private async void MarkdownTextBlock_LinkClicked(object sender)
         {
-            var url = e.Link;
+            var url = "";
             var result = LinkAnalyzer.Parse(url);
             switch (result.Key)
             {
@@ -629,33 +628,7 @@ namespace CC98
         }
 
 
-        private async void Drawer_ImageResolving(object sender, ImageResolvingEventArgs e)
-        {
-            var defr=e.GetDeferral();
-            var Source=e.Url;
-            if (Source == null) return;
-
-            try
-            {
-                switch (Source)
-                {
-                    case string url when ImageResolver.IsWebUrl(url):
-                        e.Image=await ImageResolver.LoadWebImage(url);
-                        break;
-
-                    case string path when ImageResolver.IsLocalPath(path):
-                        e.Image= await ImageResolver.LoadLocalImage(path);
-                        break;
-                }
-            }
-            catch
-            {
-                e.Image = null;
-            }
-            e.Handled = true;
-            defr.Complete();
-            
-        }
+        
 
         private async void SmallProfile_Loaded(object sender, RoutedEventArgs e)
         {
@@ -680,14 +653,7 @@ namespace CC98
             }
         }
 
-        private void Drawer_Unloaded(object sender, RoutedEventArgs e)
-        {
-            var mt = sender as MarkdownTextBlock;
-            if (mt != null)
-            {
-                mt.Text = string.Empty;
-            }
-        }
+        
         private async Task InitializeVote()
         {
             if (isVote)

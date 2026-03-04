@@ -2,6 +2,7 @@
 using CC98.Kernel;
 using CC98.Objects;
 using CC98.Services;
+using CC98.Services.Extensions;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -79,8 +80,7 @@ public class BoardSectionManager
 
             if (cache.IsAvailable && !string.IsNullOrWhiteSpace(cache.Content))
             {
-                return JsonSerializer.Deserialize<List<SectionInfo>>(
-                    cache.Content, JsonOptions) ?? new List<SectionInfo>();
+                return JsonSerialize.Deserialize<List<SectionInfo>>(cache.Content)!;
             }
         }
         catch (Exception ex)
@@ -222,7 +222,7 @@ public class BoardSectionManager
     {
         try
         {
-            var json = JsonSerializer.Serialize(sections, JsonOptions);
+            var json = JsonSerialize.Serialize(sections);
 
             var folder = Windows.Storage.ApplicationData.Current.LocalCacheFolder;
             var filePath = Path.Combine(folder.Path, CacheFileName);

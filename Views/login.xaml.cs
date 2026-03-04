@@ -227,10 +227,7 @@ namespace CC98
             }
         }
 
-        private async void MarkdownTextBlock_LinkClicked(object sender, CommunityToolkit.WinUI.UI.Controls.LinkClickedEventArgs e)
-        {
-            await Launcher.LaunchUriAsync(new Uri(e.Link));
-        }
+        
 
         private void GuideBack_Click(object sender, RoutedEventArgs e)
         {

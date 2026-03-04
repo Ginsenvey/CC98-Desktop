@@ -12,7 +12,6 @@
     xmlns:cv="using:CC98.Services.Converters"
     xmlns:obj="using:CC98.Objects"
     xmlns:ubb="using:UbbRender.Render"
-    xmlns:tool="using:CommunityToolkit.WinUI.UI.Controls"
     Background="Transparent">
     <Page.Resources>
         <cv:AlignmentConverter x:Key="AlignmentConverter"/>

@@ -2,7 +2,6 @@
 using CC98.Kernel.Network;
 using CC98.Objects;
 using CC98.Services;
-using CommunityToolkit.WinUI.UI.Controls.TextToolbarSymbols;
 using FluentIcons.Common;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Hosting;
@@ -153,6 +152,7 @@ public static class RequestSender
         }
         catch (Exception ex)
         {
+             await App.Logger.WriteAsync("AOT", "其他错误", ex.Message);
             return ApiResponse<T>.Fail($"系统错误: {ex.Message}", 0);
         }
 
@@ -163,24 +163,9 @@ public static class RequestSender
         await App.Logger.WriteAsync("Request", res.StatusCode.ToString(),json);
         if (res.IsSuccessStatusCode)
         {
-            // 首先尝试使用源生成上下文以获得更好性能与 AOT 支持
-            try
-            {
-                var obj = JsonSerializer.Deserialize(json, typeof(T), CC98JsonContext.Default);
-                var data = (T?)obj;
-                return ApiResponse<T>.Success(data!);
-            }
-            catch (Exception)
-            {
-                // 回退到运行时反射式反序列化（保持原有大小写不敏感选项）
-                var options = new JsonSerializerOptions
-                {
-                    PropertyNameCaseInsensitive = true
-                };
-
-                var data = JsonSerializer.Deserialize<T>(json, options);
-                return ApiResponse<T>.Success(data!);
-            }
+            var obj = JsonSerializer.Deserialize(json, typeof(T), CC98JsonContext.Default);
+            var data = (T?)obj;
+            return ApiResponse<T>.Success(data!);
         }
         else
         {

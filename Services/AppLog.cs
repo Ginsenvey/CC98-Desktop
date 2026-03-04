@@ -1,4 +1,5 @@
 ﻿using CC98.Services;
+using CC98.Services.Extensions;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -134,7 +135,7 @@ public class AppLog
                 Converters = { new BeijingTimeConverter() }
             };
 
-            string json = JsonSerializer.Serialize(logsToSave, jsonOptions);
+            string json = JsonSerialize.Serialize(logsToSave);
 
             await LocalCache.SaveJsonAsync(filePath, json, validateJson: false);
 
@@ -182,7 +183,7 @@ public class AppLog
                 Logs = logsToSave
             };
 
-            string json = JsonSerializer.Serialize(exportData, jsonOptions);
+            string json = JsonSerialize.Serialize(exportData);
 
             var result = await LocalCache.SaveJsonAsync(
                 targetPath, json, validateJson: false);

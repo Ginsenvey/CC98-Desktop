@@ -3,7 +3,6 @@ using CC98.Kernel.ApiScope;
 using CC98.Kernel.UserExperience;
 using CC98.Objects;
 using CC98.Services.Extensions;
-using CommunityToolkit.WinUI.UI.Controls;
 using DevWinUI;
 using FluentIcons.Common;
 using Microsoft.UI.Xaml;
@@ -125,33 +124,7 @@ namespace CC98
             recentTopics.AddRange(data);
             return true;
         }
-        private async void Drawer_ImageResolving(object sender, ImageResolvingEventArgs e)
-        {
-            var defr = e.GetDeferral();
-            var Source = e.Url;
-            if (Source == null) return;
-
-            try
-            {
-                switch (Source)
-                {
-                    case string url when ImageResolver.IsWebUrl(url):
-                        e.Image = await ImageResolver.LoadWebImage(url);
-                        break;
-
-                    case string path when ImageResolver.IsLocalPath(path):
-                        e.Image = await ImageResolver.LoadLocalImage(path);
-                        break;
-                }
-            }
-            catch
-            {
-                e.Image = null;
-            }
-            e.Handled = true;
-            defr.Complete();
-
-        }
+        
         private void STileButton_Click(object sender, RoutedEventArgs e)
         {
             var h = sender as HyperlinkButton;
