@@ -440,17 +440,6 @@ namespace CC98
             
         }
         
-        
-        
-        
-        
-
-        private void msgflyout_Click(object sender, RoutedEventArgs e)
-        {
-            contentframe.Navigate(typeof(Message),"0");
-        }
-
-        
 
         private void search_TextChanged(AutoSuggestBox sender, AutoSuggestBoxTextChangedEventArgs args)
         {
@@ -706,39 +695,18 @@ namespace CC98
 
         private async Task LoadForumStat()
         {
-            //由于此方法只需要缓存文件中极小的一部分，使用jsonreader读取整个文件会浪费内存。
-            string jpath = System.IO.Path.Combine(ApplicationData.Current.LocalCacheFolder.Path, "IndexCache.json");
-            if (File.Exists(jpath))
-            {
-                var file = await StorageFile.GetFileFromPathAsync(jpath);
-
-                await using var stream = await file.OpenStreamForReadAsync();
-                using var doc = await JsonDocument.ParseAsync(stream);
-                var root = doc.RootElement;
-                var stats = new
-                {
-                    todayCount = ValidationHelper.GetPropertyAsInt(root, "todayCount"),
-                    todayTopicCount = ValidationHelper.GetPropertyAsInt(root, "todayTopicCount"),
-                    topicCount = ValidationHelper.GetPropertyAsInt(root, "topicCount"),
-                    userCount = ValidationHelper.GetPropertyAsInt(root, "userCount"),
-                    onlineUserCount = ValidationHelper.GetPropertyAsInt(root, "onlineUserCount"),
-                    postCount = ValidationHelper.GetPropertyAsInt(root, "postCount"),
-                    lastUserName = ValidationHelper.GetPropertyAsString(root, "lastUserName")
-                };
-
-                // 直接使用提取的数据
-                welcome.Text = $"欢迎新用户 {stats.lastUserName}";
-                ForumStatList.ItemsSource = new List<CardStatInfoPair>
+            var stats= await IndexDataService.Instance.GetStatisticsAsync();
+            if (stats == null) return;
+            ForumStatList.ItemsSource = new List<CardStatInfoPair>
     {
-        new() { StatItem = "今日帖数", Value = stats.todayCount },
-        new() { StatItem = "今日主题数", Value = stats.todayTopicCount },
-        new() { StatItem = "全站帖数", Value = stats.postCount },
-        new() { StatItem = "全站话题", Value = stats.topicCount },
-        new() { StatItem = "在线用户", Value = stats.onlineUserCount },
-        new() { StatItem = "全站用户", Value = stats.userCount }
+        new() { StatItem = "今日帖数", Value = stats.TodayCount },
+        new() { StatItem = "今日主题数", Value = stats.TodayTopicCount },
+        new() { StatItem = "全站帖数", Value = stats.PostCount },
+        new() { StatItem = "全站话题", Value = stats.TopicCount },
+        new() { StatItem = "在线用户", Value = stats.OnlineUserCount },
+        new() { StatItem = "全站用户", Value = stats.UserCount }
     };
-            }
-            
+            welcome.Text = $"欢迎新用户 {stats.LastUserName}";
         }
 
         private void ForumStat_Unloaded(object sender, RoutedEventArgs e)

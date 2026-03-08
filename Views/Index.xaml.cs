@@ -51,7 +51,7 @@ namespace CC98
     {
         public ObservableCollection<SectionCard> sections=[];
         public ObservableCollection<FlipTopic> flipTopics=[];
-        public IndexDataService.HomeStatistics? Statistics { get; private set; }
+        public IndexDataService.ForumStatistics? Statistics { get; private set; }
         public ApplicationDataContainer Set=ApplicationData.Current.LocalSettings;
         private readonly IndexDataService _dataManager;
         public ImageSource? ThemePic;

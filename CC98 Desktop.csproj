@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
-    <TargetFramework>net10.0-windows10.0.26100.0</TargetFramework>
+    <TargetFramework>net8.0-windows10.0.19041.0</TargetFramework>
 	<LangVersion>preview</LangVersion>
     <TargetPlatformMinVersion>10.0.17763.0</TargetPlatformMinVersion>
     <RootNamespace>CC98</RootNamespace>
@@ -314,7 +314,7 @@
 
   <!-- Publish Properties -->
   <PropertyGroup>
-    <PublishReadyToRun>False</PublishReadyToRun>
+    <PublishReadyToRun>false</PublishReadyToRun>
     <DefaultLanguage>zh-cn</DefaultLanguage>
     <GenerateAppInstallerFile>False</GenerateAppInstallerFile>
     <AppxPackageSigningEnabled>True</AppxPackageSigningEnabled>
@@ -329,7 +329,7 @@
     <GenerateTemporaryStoreCertificate>True</GenerateTemporaryStoreCertificate>
     <AppxBundlePlatforms>x64</AppxBundlePlatforms>
     <PublishAot>True</PublishAot>
-	<PublishTrimmed>True</PublishTrimmed>
+	<PublishTrimmed>true</PublishTrimmed>
 	<TrimMode>full</TrimMode>
     <ApplicationIcon>Assets\cc98.ico</ApplicationIcon>
     <AllowUnsafeBlocks>False</AllowUnsafeBlocks>
@@ -343,10 +343,14 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <Optimize>True</Optimize>
     <IsPublishable>True</IsPublishable>
+	  <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+	  <PlatformTarget>x64</PlatformTarget>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'">
     <Optimize>True</Optimize>
     <IsPublishable>True</IsPublishable>
+	  <RuntimeIdentifier>win-arm64</RuntimeIdentifier>
+	  <PlatformTarget>ARM64</PlatformTarget>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x86'">
     <IsPublishable>True</IsPublishable>

@@ -160,7 +160,7 @@ public static class RequestSender
     public static async Task<ApiResponse<T>> Deserialize<T>(HttpResponseMessage res)
     {
         var json = await res.Content.ReadAsStringAsync();
-        await App.Logger.WriteAsync("Request", res.StatusCode.ToString(),json);
+        //await App.Logger.WriteAsync("Request", res.StatusCode.ToString(),json);
         if (res.IsSuccessStatusCode)
         {
             var obj = JsonSerializer.Deserialize(json, typeof(T), CC98JsonContext.Default);

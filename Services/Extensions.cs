@@ -203,13 +203,10 @@ public class JsonSerialize
     {
         try
         {
-            // 先尝试使用默认的序列化方法
             return JsonSerializer.Serialize(obj, typeof(T), CC98JsonContext.Default);
         }
-        catch (Exception ex)
+        catch
         {
-            // 如果序列化失败，记录错误并返回一个空字符串
-            Console.WriteLine($"序列化失败: {ex.Message}");
             return string.Empty;
         }
     }

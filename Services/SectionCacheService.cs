@@ -13,11 +13,6 @@ using System.Threading.Tasks;
 public class BoardSectionManager
 {
     private const string CacheFileName = "board_sections.json";
-    private static readonly JsonSerializerOptions JsonOptions = new()
-    {
-        PropertyNameCaseInsensitive = true,
-        WriteIndented = false
-    };
 
     // 单例实现
     private static BoardSectionManager? _instance;

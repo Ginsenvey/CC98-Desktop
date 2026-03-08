@@ -28,23 +28,18 @@ public class IndexDataService
     private IndexDataService() { }
 
     private const string CacheFileName = "index_data.json";
-    private static readonly JsonSerializerOptions JsonOptions = new()
-    {
-        PropertyNameCaseInsensitive = true,
-        WriteIndented = false  // 压缩存储，节省空间
-    };
 
     // 缓存数据结构（只包含需要的字段）
-    public class CachedHomeData
+    public class CachedIndexData
     {
         public Dictionary<string, List<IndexTopic>> TopicPartitions { get; set; } = new();
         public List<FlipTopic> RecommendationReading { get; set; } = new();
-        public HomeStatistics Statistics { get; set; } = new();
+        public ForumStatistics Statistics { get; set; } = new();
         public DateTime LastUpdateTime { get; set; }
     }
 
     // 统计数据模型
-    public class HomeStatistics
+    public class ForumStatistics
     {
         public int TodayCount { get; set; }
         public int TodayTopicCount { get; set; }
@@ -96,7 +91,7 @@ public class IndexDataService
     /// <summary>
     /// 从缓存读取数据
     /// </summary>
-    public async Task<CachedHomeData?> LoadFromCacheAsync()
+    public async Task<CachedIndexData?> LoadFromCacheAsync()
     {
         try
         {
@@ -107,7 +102,7 @@ public class IndexDataService
 
             if (cache.IsAvailable && !string.IsNullOrWhiteSpace(cache.Content))
             {
-                return JsonSerialize.Deserialize<CachedHomeData>(cache.Content);
+                return JsonSerialize.Deserialize<CachedIndexData>(cache.Content);
             }
         }
         catch (Exception ex)
@@ -161,7 +156,7 @@ public class IndexDataService
     /// <summary>
     /// 获取统计数据
     /// </summary>
-    public async Task<HomeStatistics?> GetStatisticsAsync()
+    public async Task<ForumStatistics?> GetStatisticsAsync()
     {
         var cachedData = await LoadFromCacheAsync();
         return cachedData?.Statistics;
@@ -215,12 +210,12 @@ public class IndexDataService
     /// <summary>
     /// 解析JSON并提取所需数据
     /// </summary>
-    private CachedHomeData ParseAndExtractData(string jsonResponse)
+    private CachedIndexData ParseAndExtractData(string jsonResponse)
     {
         using var doc = JsonDocument.Parse(jsonResponse);
         var root = doc.RootElement;
 
-        var result = new CachedHomeData
+        var result = new CachedIndexData
         {
             LastUpdateTime = DateTime.Now
         };
@@ -240,9 +235,9 @@ public class IndexDataService
     /// <summary>
     /// 提取统计数据
     /// </summary>
-    private HomeStatistics ExtractStatistics(JsonElement root)
+    private ForumStatistics ExtractStatistics(JsonElement root)
     {
-        var stats = new HomeStatistics();
+        var stats = new ForumStatistics();
 
         if (root.TryGetProperty("todayCount", out var todayCount))
             stats.TodayCount = todayCount.GetInt32();
@@ -349,11 +344,11 @@ public class IndexDataService
     /// <summary>
     /// 保存到缓存
     /// </summary>
-    private async Task<bool> SaveToCacheAsync(CachedHomeData data)
+    private async Task<bool> SaveToCacheAsync(CachedIndexData data)
     {
         try
         {
-            var json = JsonSerialize.Serialize<CachedHomeData>(data);
+            var json = JsonSerialize.Serialize<CachedIndexData>(data);
 
             var folder = Windows.Storage.ApplicationData.Current.LocalCacheFolder;
             var filePath = Path.Combine(folder.Path, CacheFileName);

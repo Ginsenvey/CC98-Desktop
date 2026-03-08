@@ -207,9 +207,9 @@ public class UrlRenderStrategy : IRenderStrategy
         {
             var hyperlink = new Hyperlink();
             var url = tagNode.GetAttribute("href");
-            if (!url.IsValidUrl()&&node.Children.Count>0)
+            if (!url.IsValidUrl())
             {
-                var child = node.Children[0] as TextNode;
+                var child = node.FirstChild as TextNode;
                 if (child != null) url = child.Content;
             }
             // 设置样式
@@ -1105,14 +1105,8 @@ public class AudioRenderStrategy : IRenderStrategy
             if (!src.IsValidUrl())
             {
                 // 尝试从子节点获取URL
-                foreach (var child in node.Children)
-                {
-                    if (child is TextNode textNode)
-                    {
-                        src = textNode.Content;
-                        break;
-                    }
-                }
+                var child = node.FirstChild as TextNode;
+                if (child != null) src = child.Content;
             }
 
             if (src.IsValidUrl())
@@ -1144,14 +1138,8 @@ public class VideoRenderStrategy : IRenderStrategy
             if (string.IsNullOrEmpty(src))
             {
                 // 尝试从子节点获取URL
-                foreach (var child in node.Children)
-                {
-                    if (child is TextNode textNode)
-                    {
-                        src = textNode.Content;
-                        break;
-                    }
-                }
+                var child = node.FirstChild as TextNode;
+                if (child != null) src = child.Content;
             }
 
             if (!string.IsNullOrEmpty(src))

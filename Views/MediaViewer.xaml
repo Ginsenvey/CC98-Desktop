@@ -21,50 +21,55 @@
             <RowDefinition Height="25"></RowDefinition>
         </Grid.RowDefinitions>
         <Grid Grid.Row="0" x:Name="GridTitleBar">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="120"></ColumnDefinition>
+                <ColumnDefinition Width="*"></ColumnDefinition>
+                <ColumnDefinition Width="120"></ColumnDefinition>
+            </Grid.ColumnDefinitions>
+            
             <TextBlock Text="CC98 预览"  Margin="10,0,5,0" HorizontalAlignment="Left" VerticalAlignment="Center" FontSize="15" x:Name="de"></TextBlock>
+            <StackPanel Grid.Column="1" Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="5" >
+                <Button Background="Transparent"  Height="37" x:Name="zoomin" Click="zoomin_Click">
+                    <ic:SymbolIcon Symbol="ZoomIn"></ic:SymbolIcon>
+                </Button>  
+                <TextBlock Text="100%" VerticalAlignment="Center" Width="90" HorizontalAlignment="Center" TextAlignment="Center" x:Name="zoomfactor"></TextBlock>
+                <Button Background="Transparent"  Height="37" x:Name="zoomout" Click="zoomout_Click">
+                    <ic:SymbolIcon Symbol="ZoomOut"></ic:SymbolIcon>
+                </Button>
+                <AppBarSeparator></AppBarSeparator>
+                <Button Background="Transparent" Height="37" x:Name="Rotate" Click="Rotate_Click">
+                    <ic:SymbolIcon Symbol="RotateRight"></ic:SymbolIcon>
+                </Button>
+                <Button Background="Transparent" Height="37" x:Name="CopyPic" Click="CopyPic_Click" ToolTipService.ToolTip="复制">
+                    <ic:SymbolIcon Symbol="Copy" ></ic:SymbolIcon>
+                </Button>
+                <Button Background="Transparent"  x:Name="AddAsEmoji" Click="AddAsEmoji_Click" ToolTipService.ToolTip="添加到表情">
+                    <ic:SymbolIcon Symbol="StarAdd" ></ic:SymbolIcon>
+                </Button>
+                <Button Background="Transparent"  Height="37" x:Name="SavePic"  ToolTipService.ToolTip="保存">
+                    <ic:SymbolIcon Symbol="Save" ></ic:SymbolIcon>
+                </Button>
+               
+            </StackPanel>
         </Grid>
         <Border Grid.Row="2" Width="100" Height="32" CornerRadius="16" Background="{ThemeResource AcrylicCardBrush}">
             <TextBlock x:Name="Posi" Text="1/1" HorizontalAlignment="Center" VerticalAlignment="Center"/>
         </Border>
-        <Border Grid.Row="2" HorizontalAlignment="Center" CornerRadius="8" Background="{ThemeResource LayerOnMicaBaseAltFillColorDefaultBrush}" BorderThickness="1" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" x:Name="ImageControl">
-            <StackPanel Orientation="Horizontal" Spacing="5" Padding="10">
-                <Button Height="45" Width="45" BorderThickness="0" x:Name="zoomin" Click="zoomin_Click">
-                    <ic:SymbolIcon Symbol="ZoomIn"></ic:SymbolIcon>
-                </Button>
-                <TextBlock Text="100%" VerticalAlignment="Center" Width="90" HorizontalAlignment="Center" TextAlignment="Center" x:Name="zoomfactor"></TextBlock>
-                <Button Height="45" Width="45" BorderThickness="0" x:Name="zoomout" Click="zoomout_Click">
-                    <ic:SymbolIcon Symbol="ZoomOut"></ic:SymbolIcon>
-                </Button>
-                <AppBarSeparator></AppBarSeparator>
-                <Button Height="45" Width="45" BorderThickness="0" x:Name="Rotate" Click="Rotate_Click">
-                    <ic:SymbolIcon Symbol="RotateRight"></ic:SymbolIcon>
-                </Button>
-                <dev:CopyButton Width="45" Height="45" BorderThickness="0" x:Name="CopyPic" Click="SavePic_Click" ToolTipService.ToolTip="复制"></dev:CopyButton>
-                <Button Height="45" Width="45" BorderThickness="0" x:Name="AddAsEmoji" Click="AddAsEmoji_Click" ToolTipService.ToolTip="添加到表情">
-                    <ic:SymbolIcon Symbol="StarAdd" ></ic:SymbolIcon>
-                </Button>
-                <Button Height="45" Width="45" BorderThickness="0" x:Name="SavePic" Click="SavePic_Click_1" ToolTipService.ToolTip="保存">
-                    <ic:SymbolIcon Symbol="Save" ></ic:SymbolIcon>
-                </Button>
-                <TeachingTip x:Name="msg" Target="{x:Bind SavePic}" IsLightDismissEnabled="True"></TeachingTip>
-            </StackPanel>
+        
+        <FlipView x:Name="flipview" Grid.Row="1" ItemsSource="{x:Bind pictures,Mode=OneWay}"  SelectionChanged="FlipView_SelectionChanged" Margin="0,20,0,0" >
             
-        </Border>
-        <FlipView Grid.Row="1" ItemsSource="{x:Bind pictures,Mode=OneWay}" SelectedIndex="{x:Bind currentIndex,Mode=TwoWay}" SelectionChanged="FlipView_SelectionChanged">
             <FlipView.ItemTemplate>
                 <DataTemplate x:DataType="x:String">
-                    <share:Picture Src="{x:Bind}" LoadImageCallback="{ThemeResource CustomPortraitLoader}"></share:Picture>
+                    <share:Picture Src="{x:Bind}" Stretch="Uniform" LoadImageCallback="{ThemeResource CustomPortraitLoader}" RenderTransformOrigin="0.5,0.5">
+                        <share:Picture.RenderTransform>
+                            <CompositeTransform x:Name="ImageTransform" ScaleX="1" ScaleY="1" Rotation="0"/>
+                        </share:Picture.RenderTransform>
+                    </share:Picture>
                 </DataTemplate>
             </FlipView.ItemTemplate>
         </FlipView>
         
-        <ScrollViewer Grid.Row="1" ZoomMode="Enabled"  Padding="20" x:Name="zoomer" ViewChanged="zoomer_ViewChanged" HorizontalContentAlignment="Center" VerticalAlignment="Stretch" HorizontalScrollMode="Enabled" HorizontalScrollBarVisibility="Visible" HorizontalAlignment="Stretch" Visibility="Collapsed">
-            <image:SmartImage Stretch="None" x:Name="PicViewer" HorizontalAlignment="Center" RenderTransformOrigin="0.5,0.5">
-                <image:SmartImage.RenderTransform>
-                    <RotateTransform x:Name="ImageRotationTransform" Angle="0"/>
-                </image:SmartImage.RenderTransform>
-            </image:SmartImage>
-        </ScrollViewer>
+        
         <MediaPlayerElement Grid.Row="1" x:Name="VideoPlayer" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"  AreTransportControlsEnabled="True"  AutoPlay="False" Visibility="Collapsed" Margin="20" >
             <MediaPlayerElement.TransportControls>
                 <MediaTransportControls IsCompact="False"/>

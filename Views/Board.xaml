@@ -9,7 +9,6 @@
     mc:Ignorable="d"
     xmlns:lab="using:CommunityToolkit.Labs.WinUI"
     xmlns:ic="using:FluentIcons.WinUI"
-    xmlns:tool="using:CommunityToolkit.WinUI.UI.Controls"
     xmlns:dev="using:DevWinUI"
     xmlns:ubb="using:UbbRender.Render"
     xmlns:obj="using:CC98.Objects"

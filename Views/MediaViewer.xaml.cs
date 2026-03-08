@@ -1,32 +1,35 @@
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Runtime.InteropServices.WindowsRuntime;
-using Windows.Foundation;
-using Windows.Foundation.Collections;
+using CC98.Kernel;
+using CC98.Kernel.UserExperience;
+using CC98.Objects;
+using CC98.Share.Controls;
+using DevWinUI;
+using Microsoft.UI.Composition.SystemBackdrops;
+using Microsoft.UI.Input;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Controls.Primitives;
 using Microsoft.UI.Xaml.Data;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
-using Microsoft.UI.Xaml.Navigation;
 using Microsoft.UI.Xaml.Media.Imaging;
-using Microsoft.UI.Composition.SystemBackdrops;
-using DevWinUI;
+using Microsoft.UI.Xaml.Navigation;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 using System.Net.Http;
+using System.Runtime.InteropServices.WindowsRuntime;
 using System.Threading.Tasks;
 using Windows.ApplicationModel.DataTransfer;
+using Windows.Foundation;
+using Windows.Foundation.Collections;
 using Windows.Graphics.Imaging;
-using Windows.Storage.Streams;
-using static System.Net.Mime.MediaTypeNames;
-using Windows.Storage;
 using Windows.Media.Core;
-
-using CC98.Kernel;
-using CC98.Kernel.UserExperience;
-using CC98.Objects;
+using Windows.Storage;
+using Windows.Storage.Streams;
+using Windows.System;
+using Windows.UI.Core;
+using static System.Net.Mime.MediaTypeNames;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -43,12 +46,18 @@ namespace CC98
         public int currentIndex = 0;
         private string _type = "";
         private string _url = "";
+
+        private double _currentScale = 1.0;
+        private double _currentRotation = 0;
+        private const double ScaleStep = 0.1;
+        private const double MinScale = 0.5;
+        private const double MaxScale = 3.0;
         public MediaViewer(ViewerNavigationInfo info)
         {
             this.InitializeComponent();
             _type=info.Type;
             pictures.AddRange(info.Urls);
-            currentIndex = info.CurrentIndex;
+            flipview.SelectedIndex = info.CurrentIndex;
             this.Title = "资源预览";
             this.ExtendsContentIntoTitleBar = true;
             this.SetTitleBar(GridTitleBar);
@@ -59,14 +68,66 @@ namespace CC98
             this.SystemBackdrop=new MicaBackdrop();
             Activated += MediaViewer_Activated;
             this.Closed += MediaViewer_Closed;
+            this.Content.PointerWheelChanged += OnPointerWheelChanged;
+           
         }
 
-        private async void MediaViewer_Activated(object sender, WindowActivatedEventArgs args)
+        
+
+        private void OnPointerWheelChanged(object sender, PointerRoutedEventArgs e)
+        {
+            try
+            {
+                // 使用正确的方法检测 Ctrl 键
+                bool isCtrlPressed = InputKeyboardSource.GetKeyStateForCurrentThread(VirtualKey.Control)
+                    .HasFlag(CoreVirtualKeyStates.Down);
+
+                if (!isCtrlPressed)
+                    return;
+
+                // 获取当前图片
+                var picture = GetCurrentPicture();
+                if (picture == null)
+                    return;
+
+                // 获取变换
+                var transform = picture.RenderTransform as CompositeTransform;
+                if (transform == null)
+                    return;
+
+                var properties = e.GetCurrentPoint(null).Properties;
+
+                // 调整缩放
+                if (properties.MouseWheelDelta > 0)
+                {
+                    _currentScale = Math.Min(_currentScale + ScaleStep, MaxScale);
+                }
+                else
+                {
+                    _currentScale = Math.Max(_currentScale - ScaleStep, MinScale);
+                }
+
+                transform.ScaleX = _currentScale;
+                transform.ScaleY = _currentScale;
+
+                if (zoomfactor != null)
+                {
+                    zoomfactor.Text = $"{_currentScale * 100:F0}%";
+                }
+
+                e.Handled = true;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error: {ex.Message}");
+            }
+        }
+
+        private async void MediaViewer_Activated(object sender, Microsoft.UI.Xaml.WindowActivatedEventArgs args)
         {
             if (_type == "video")
             {
-                ImageControl.Visibility = Visibility.Collapsed;
-                zoomer.Visibility = Visibility.Collapsed;
+
                 VideoPlayer.Visibility = Visibility.Visible;
                 Grid.SetRow(VideoPlayer,1);
                 Grid.SetRowSpan(VideoPlayer, 2);
@@ -78,7 +139,7 @@ namespace CC98
             }
             else if (_type == "image")
             {
-                ImageControl.Visibility = Visibility.Collapsed;
+                
                 //zoomer.Visibility = Visibility.Visible;
                 VideoPlayer.Visibility = Visibility.Collapsed;
 
@@ -89,157 +150,47 @@ namespace CC98
             
         }
 
-        private void zoomer_ViewChanged(object sender, ScrollViewerViewChangedEventArgs e)
+        private Picture? GetCurrentPicture()
         {
-            zoomfactor.Text=(zoomer.ZoomFactor*100).ToString("F2")+"%";
-        }
+            if (flipview.SelectedItem == null) return null;
 
-        private void zoomin_Click(object sender, RoutedEventArgs e)
-        {
-            zoomer.ZoomToFactor(zoomer.ZoomFactor + 0.1f);
-        }
+            // 获取当前 FlipView 项的容器
+            var container = flipview.ContainerFromIndex(flipview.SelectedIndex) as FlipViewItem;
+            if (container == null) return null;
 
-        private void zoomout_Click(object sender, RoutedEventArgs e)
-        {
-            zoomer.ZoomToFactor(zoomer.ZoomFactor - 0.1f);
+            // 查找 Picture 控件
+            return FindDescendant<Picture>(container);
         }
-
-        private async void SavePic_Click(object sender, RoutedEventArgs e)
+        private static T? FindDescendant<T>(DependencyObject parent) where T : DependencyObject
         {
-            string r = await ProcessImage(false);
-            if (!r.Contains("200"))
+            if (parent == null) return null;
+
+            for (int i = 0; i < VisualTreeHelper.GetChildrenCount(parent); i++)
             {
-                msg.Title = "复制失败";
-                if (r == "100")
-                {
-                    msg.Content = "图片源错误";
-                }
-                else if (r.Contains("101"))
-                {
-                    msg.Content = "复制失败，错误信息：" + r.Split(':')[1];
-                }
-                else
-                {
-                    msg.Content = "复制失败，请重试";
-                }
-                msg.IsOpen = true;
+                var child = VisualTreeHelper.GetChild(parent, i);
+                if (child is T t)
+                    return t;
+
+                var result = FindDescendant<T>(child);
+                if (result != null)
+                    return result;
             }
-        }
-        private async Task<string> ProcessImage(bool mode)
-        {
-            if (PicViewer.ImageSource is BitmapSource bitmapSource)
-            {
-                try
-                {
-                    // 1. 将 Image 控件渲染到位图
-                    var renderTargetBitmap = new RenderTargetBitmap();
-                    await renderTargetBitmap.RenderAsync(PicViewer);
-
-                    // 2. 获取像素缓冲区
-                    var pixelBuffer = await renderTargetBitmap.GetPixelsAsync();
-                    if (mode)
-                    {
-                        StorageFolder downloadsFolder = KnownFolders.PicturesLibrary;
-                        StorageFile file = await downloadsFolder.CreateFileAsync(
-                            $"CC98Picture_{DateTime.Now:yyyyMMddHHmmss}.png",
-                            CreationCollisionOption.ReplaceExisting);
-
-                        // 4. 编码为 PNG 并保存
-                        using (IRandomAccessStream stream = await file.OpenAsync(FileAccessMode.ReadWrite))
-                        {
-                            var encoder = await BitmapEncoder.CreateAsync(BitmapEncoder.PngEncoderId, stream);
-                            encoder.SetPixelData(
-                                BitmapPixelFormat.Bgra8,
-                                BitmapAlphaMode.Premultiplied,
-                                (uint)renderTargetBitmap.PixelWidth,
-                                (uint)renderTargetBitmap.PixelHeight,
-                                96.0, // 水平 DPI
-                                96.0, // 垂直 DPI
-                                pixelBuffer.ToArray());
-
-                            await encoder.FlushAsync();
-                        }
-                        return "200:"+downloadsFolder.DisplayName;
-                    }
-                    else
-                    {
-                        // 3. 将像素数据转换为 SoftwareBitmap
-                        using (var softwareBitmap = new SoftwareBitmap(
-                            BitmapPixelFormat.Bgra8,
-                            renderTargetBitmap.PixelWidth,
-                            renderTargetBitmap.PixelHeight,
-                            BitmapAlphaMode.Premultiplied))
-                        {
-                            softwareBitmap.CopyFromBuffer(pixelBuffer);
-
-                            // 4. 将 SoftwareBitmap 编码为 PNG 流
-                            var stream = new InMemoryRandomAccessStream();
-                            var encoder = await BitmapEncoder.CreateAsync(BitmapEncoder.PngEncoderId, stream);
-                            encoder.SetSoftwareBitmap(softwareBitmap);
-                            await encoder.FlushAsync();
-
-                            // 5. 创建 DataPackage 并设置剪贴板内容
-                            var dataPackage = new DataPackage();
-                            dataPackage.SetBitmap(RandomAccessStreamReference.CreateFromStream(stream));
-                            Clipboard.SetContent(dataPackage);
-
-                            // 提示复制成功
-                            return "200:复制成功";
-                        }
-                        
-                    }
-
-                }
-                catch (Exception ex)
-                {
-                    return "101:"+ ex.Message;
-                }
-            }
-            else
-            {
-                return "100";
-            }
+            return null;
         }
         
-        
 
-        private async void SavePic_Click_1(object sender, RoutedEventArgs e)
-        {
-            string r=await ProcessImage(true);
-            msg.Title= "下载提示";
-            if(r.Contains("200"))
-            {
-                msg.Content = "已保存到图片文件夹。";
-                msg.IsOpen = true;
-            }
-            else if (r.Contains("101"))
-            {
-                msg.Content = "下载失败，错误信息：" + r.Split(':')[1];
-                msg.IsOpen = true;
-            }
-            else
-            {
-                msg.Content = "下载失败，请重试";
-                msg.IsOpen = true;
-            }
-        }
-        public double angle = 0;
         private void Rotate_Click(object sender, RoutedEventArgs e)
         {
-            
-            if (angle<270)
-            {
-                angle += 90;
-                ImageRotationTransform.Angle = angle;
-            }
-            else
-            {
-                angle = 0;
-                ImageRotationTransform.Angle = angle;
-            }
-            
-            
 
+            var picture = GetCurrentPicture();
+            if (picture == null) return;
+
+            var transform = picture.RenderTransform as CompositeTransform;
+            if (transform == null) return;
+
+            // 每次点击旋转 90 度
+            _currentRotation = (_currentRotation + 90) % 360;
+            transform.Rotation = _currentRotation;
         }
 
         private async void AddAsEmoji_Click(object sender, RoutedEventArgs e)
@@ -247,17 +198,11 @@ namespace CC98
             if (_type == "image" && !_url.StartsWith("ms-appx"))
             {
                 await CustomEmoji.SaveEmojiAsync(_url);
-                msg.Target = sender as Button;
-                msg.Title = "提示";
-                msg.Content = "已添加到自定义表情";
-                msg.IsOpen = true;
+               
             }
             else
             {
-                msg.Target = sender as Button;
-                msg.Title = "提示";
-                msg.Content = "错误的媒体类型" ;
-                msg.IsOpen = true;
+                
             }
         }
         private void MediaViewer_Closed(object sender, WindowEventArgs e)
@@ -268,8 +213,40 @@ namespace CC98
 
         private void FlipView_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
+            _currentScale = 1.0;
+            _currentRotation = 0;
+            zoomfactor.Text = "100%";
+            //实现双向绑定
+            currentIndex = flipview.SelectedIndex;
             MediaInfo.Text = pictures[currentIndex];
             Posi.Text= $"{currentIndex + 1} / {pictures.Count}";
+
+            var picture = GetCurrentPicture();
+            if (picture != null)
+            {
+                var transform = picture.RenderTransform as CompositeTransform;
+                if (transform != null)
+                {
+                    transform.ScaleX = 1;
+                    transform.ScaleY = 1;
+                    transform.Rotation = 0;
+                }
+            }
+        }
+
+        private void zoomout_Click(object sender, RoutedEventArgs e)
+        {
+
+        }
+
+        private void zoomin_Click(object sender, RoutedEventArgs e)
+        {
+
+        }
+
+        private void CopyPic_Click(object sender, RoutedEventArgs e)
+        {
+
         }
     }
 }

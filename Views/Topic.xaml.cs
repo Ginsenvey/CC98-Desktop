@@ -43,9 +43,6 @@ using Windows.Storage;
 using static CC98.Kernel.ApiScope.ApiEndpoints;
 namespace CC98
 {
-    /// <summary>
-    /// An empty page that can be used on its own or navigated to within a Frame.
-    /// </summary>
     public sealed partial class Topic : Page
     {
         public ObservableCollection<Reply> replies=[];
@@ -113,7 +110,7 @@ namespace CC98
             {
                 Flower.Play("\uEA39", " ’≤ÿº–Œ¥ª∫¥Ê");
             }
-            var favoritesList =(List<Favorites>?)JsonSerializer.Deserialize(favoritesJson,typeof(List<Favorites>),CC98JsonContext.Default);
+            var favoritesList =JsonSerialize.Deserialize<List<Favorites>>(favoritesJson);
             if (favoritesList == null)
             {
                 Flower.Play("\uEA39", "Ω‚Œˆ ’≤ÿº–ª∫¥Ê≥ˆ¥Ì");

@@ -317,7 +317,7 @@
                 <TextBlock Grid.Row="0" Grid.Column="1" Text="{x:Bind profile.PostCount,Mode=OneWay}" FontWeight="SemiBold" HorizontalAlignment="Center"></TextBlock>
                 <TextBlock Grid.Row="0" Grid.Column="2" Text="{x:Bind profile.FanCount,Mode=OneWay}" FontWeight="SemiBold" HorizontalAlignment="Center"></TextBlock>
                 <TextBlock Grid.Row="0" Grid.Column="3" Text="{x:Bind profile.Popularity,Mode=OneWay}" FontWeight="SemiBold" HorizontalAlignment="Center" ></TextBlock>
-                <TextBlock Grid.Row="1" Grid.Column="1" Text="主题数"  Foreground="{ThemeResource TextFillColorSecondaryBrush}" FontSize="12" HorizontalAlignment="Center"></TextBlock>
+                <TextBlock Grid.Row="1" Grid.Column="1" Text="发帖"  Foreground="{ThemeResource TextFillColorSecondaryBrush}" FontSize="12" HorizontalAlignment="Center"></TextBlock>
                 <TextBlock Grid.Row="1" Grid.Column="2" Text="粉丝"  Foreground="{ThemeResource TextFillColorSecondaryBrush}" FontSize="12" HorizontalAlignment="Center"></TextBlock>
                 <TextBlock Grid.Row="1" Grid.Column="3" Text="风评" Foreground="{ThemeResource TextFillColorSecondaryBrush}" FontSize="12" HorizontalAlignment="Center"></TextBlock>
                 <StackPanel Orientation="Horizontal" Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="4" Spacing="15">
