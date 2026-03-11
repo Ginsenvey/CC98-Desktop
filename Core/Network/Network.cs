@@ -48,7 +48,7 @@ public partial class VpnService : IDisposable
     private const string Key0 = "wrdvpnisawesome!";
     //用于转写链接的IV和Key
     private const string Key1 = "wrdvpnisthebest!";
-    private string CaptchaUrl(string imageUrl) => $"{Base}/captcha/{imageUrl}";
+    private static string CaptchaUrl(string imageUrl) => $"{Base}/captcha/{imageUrl}";
     private const string RouteCookieName = "route";
     private const string TicketCookieName = "wengine_vpn_ticketwebvpn_zju_edu_cn";
     public HttpClient client;
@@ -162,7 +162,7 @@ public partial class VpnService : IDisposable
                 return VpnLoginResult.Failure($"网络请求失败:{res.StatusCode}");
             }
             var content = await res.Content.ReadAsStringAsync();
-            var result = JsonSerializer.Deserialize<VpnLoginResult>(content);
+            var result = JsonSerialize.Deserialize<VpnLoginResult>(content);
             if (result == null)
             {
                 return VpnLoginResult.Failure("登录结果为空");
@@ -228,11 +228,11 @@ public partial class VpnService : IDisposable
 
         string vpn_scheme = "https";
         string vpn_host = "webvpn.zju.edu.cn";
-        string[] pathSegments = new[]
-        {
+        string[] pathSegments =
+        [
             property,
             BuildPassword(Key1,host),
-        };
+        ];
         var builder = new UriBuilder(vpn_scheme, vpn_host);
         var sb = new System.Text.StringBuilder();
         foreach (var seg in pathSegments)
@@ -272,7 +272,7 @@ public partial class VpnService : IDisposable
                     //vpn过期时会返回非常长的html
                     if (res_text.Length > 256)
                     {
-                        await App.Logger.WriteAsync("网络检查", "VPN凭据过期", $"{res_text.Substring(0,32)}");
+                        await App.Logger.WriteAsync("网络检查", "VPN凭据过期", $"{res_text[..32]}");
                         return NetworkStatus.VpnDisabled;
                     }
                     await App.Logger.WriteAsync("网络检查", "镜像站返回了意外的内容。请查看正文", $"{res_text}");

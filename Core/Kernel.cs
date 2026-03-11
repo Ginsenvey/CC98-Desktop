@@ -23,6 +23,7 @@ using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Net.Mime;
 using System.Text;
+using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
@@ -67,6 +68,7 @@ public static class RequestSender
         }
         catch (Exception ex)
         {
+            await App.Logger.WriteAsync("AOT", "其他错误", ex.Message);
             return ApiResponse<T>.Fail($"系统错误: {ex.Message}",0);
         }
 
@@ -152,7 +154,7 @@ public static class RequestSender
         }
         catch (Exception ex)
         {
-             await App.Logger.WriteAsync("AOT", "其他错误", ex.Message);
+            await App.Logger.WriteAsync("AOT", "其他错误", ex.Message);
             return ApiResponse<T>.Fail($"系统错误: {ex.Message}", 0);
         }
 
@@ -160,7 +162,6 @@ public static class RequestSender
     public static async Task<ApiResponse<T>> Deserialize<T>(HttpResponseMessage res)
     {
         var json = await res.Content.ReadAsStringAsync();
-        //await App.Logger.WriteAsync("Request", res.StatusCode.ToString(),json);
         if (res.IsSuccessStatusCode)
         {
             var obj = JsonSerializer.Deserialize(json, typeof(T), CC98JsonContext.Default);

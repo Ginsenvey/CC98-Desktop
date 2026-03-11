@@ -255,10 +255,7 @@ namespace CC98
             VpnPane.Visibility = Visibility.Collapsed;
             LoginPane.Visibility = Visibility.Visible;
         }
-        private void OpenVpnPane()
-        {
-
-        }
+      
         private  async void Link_Click(object sender, RoutedEventArgs e)
         {
             if (string.IsNullOrEmpty(idbox.Text) || string.IsNullOrEmpty(passbox.Password))
@@ -403,9 +400,12 @@ namespace CC98
             {
                 LoginWithPassword.IsChecked = true;
                 var result = await LoginService.LoginAsync(ccidbox.Text, ccpassbox.Password);
+                LoginWithPassword.IsChecked = false;
                 if (!result.IsSuccess)
                 {
                     //
+                    await App.Logger.WriteAsync("Login", "µÇÂ¼Ê§°Ü", result.Message);
+                    LoginWithPassword.ShowError = true;
                     Flower.Play(FlowStatus.Fail,result.Message);
                     return;
                 }
@@ -413,6 +413,8 @@ namespace CC98
                 if (token == null)
                 {
                     //
+                    await App.Logger.WriteAsync("Login", "µÇÂ¼Ê§°Ü,ÁîÅÆÎª¿Õ", result.Message);
+                    LoginWithPassword.ShowError = true;
                     Flower.Play(FlowStatus.Fail, "·¢Éú´íÎó¡£Çë±¨¸æ¿ª·¢Õß");
                     return;
                 }
@@ -422,7 +424,7 @@ namespace CC98
                 }
                 else
                 {
-                    LoginWithPassword.IsChecked = false;
+                    await App.Logger.WriteAsync("Login", "µÇÂ¼Ê§°Ü", token.Message);
                     LoginWithPassword.ShowError = true;
                     Flower.Play(FlowStatus.Fail, token.Message);
                     Set.Values["IsActive"] = "0";

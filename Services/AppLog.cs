@@ -128,13 +128,6 @@ public class AppLog
 
             var logsToSave = GetRecentLogs(maxCount: null); // 保存所有日志
 
-            var jsonOptions = new JsonSerializerOptions
-            {
-                WriteIndented = true,
-                Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
-                Converters = { new BeijingTimeConverter() }
-            };
-
             string json = JsonSerialize.Serialize(logsToSave);
 
             await LocalCache.SaveJsonAsync(filePath, json, validateJson: false);

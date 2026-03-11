@@ -54,6 +54,7 @@ namespace CC98.Objects;
 [JsonSerializable(typeof(List<BasicUserInfo>))]
 [JsonSerializable(typeof(List<ChatInfo>))]
 [JsonSerializable(typeof(List<LogEntry>))]
+[JsonSerializable(typeof(List<Friend>))]
 [JsonSerializable(typeof(List<SimpleTopicInfo>))]
 [JsonSerializable(typeof(List<IndexTopic>))]
 [JsonSerializable(typeof(List<FlipTopic>))]

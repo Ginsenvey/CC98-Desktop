@@ -2,6 +2,7 @@
 using Microsoft.UI.Dispatching;
 using Microsoft.UI.Xaml.Navigation;
 using System;
+using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
@@ -186,12 +187,17 @@ public static class DispatcherQueueExtensions
 }
 public class JsonSerialize
 {
-    
+    private static readonly JsonSerializerOptions LogOptions = new()
+    {
+        Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
+        WriteIndented = true,
+        TypeInfoResolver = CC98JsonContext.Default 
+    };
     public static T? Deserialize<T>(string json)
     {
         try 
         {
-            var obj = JsonSerializer.Deserialize(json, typeof(T), CC98JsonContext.Default);
+            var obj = JsonSerializer.Deserialize<T>(json, LogOptions);
             return obj is T result ? result : default;
         }
         catch 
@@ -203,7 +209,7 @@ public class JsonSerialize
     {
         try
         {
-            return JsonSerializer.Serialize(obj, typeof(T), CC98JsonContext.Default);
+            return JsonSerializer.Serialize(obj, LogOptions);
         }
         catch
         {
