@@ -44,6 +44,9 @@ namespace CC98
     /// </summary>
     public partial class App : Application
     {
+        public Window m_window { get; set; }
+
+        private Window loginPage;
         public ApplicationDataContainer Set = ApplicationData.Current.LocalSettings;
         public static event Action<ElementTheme> ThemeChanged;
         public static new App Current => (App)Application.Current;
@@ -386,7 +389,7 @@ namespace CC98
                     m_window.DispatcherQueue.TryEnqueue(() =>
                     {
                         m_window.Close();
-                        loginpage?.Close();
+                        loginPage?.Close();
                     });
 
                     // 隐藏并释放托盘对象
@@ -425,8 +428,8 @@ namespace CC98
         }
         private void ActivateLogin(int mode)
         {
-            loginpage = new Login(mode);
-            var hWnd = WinRT.Interop.WindowNative.GetWindowHandle(loginpage);
+            loginPage = new Login(mode);
+            var hWnd = WinRT.Interop.WindowNative.GetWindowHandle(loginPage);
             var windowStyle = Win32Interop.GetWindowLong(hWnd, Win32Interop.GWL_STYLE);
             Win32Interop.SetWindowLong(hWnd, Win32Interop.GWL_STYLE, windowStyle & ~Win32Interop.WS_THICKFRAME);
             var desiredWidth = 720;  // 逻辑像素
@@ -440,11 +443,9 @@ namespace CC98
                 (int)(desiredWidth * scalingFactor),
                 (int)(desiredHeight * scalingFactor),
                 Win32Interop.SWP_NOMOVE | Win32Interop.SWP_NOZORDER);
-            loginpage.Title = "登录";
-            loginpage.Activate();
+            loginPage.Title = "登录";
+            loginPage.Activate();
         }
-        public  Window m_window { get; private set; }
         
-        private Window loginpage;
     }
 }

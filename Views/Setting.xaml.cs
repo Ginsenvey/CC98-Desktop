@@ -186,24 +186,23 @@ namespace CC98
                 {
                     case "0":
                         Mica.IsChecked = true;
-                        (App.Current as App).m_window.SystemBackdrop = new MicaSystemBackdrop();
+                        App.Current.m_window.SystemBackdrop = new MicaSystemBackdrop();
                         break;
                     case "1":
                         MicaAlt.IsChecked = true;
-                        (App.Current as App).m_window.SystemBackdrop = new MicaSystemBackdrop(MicaKind.BaseAlt);
+                        App.Current.m_window.SystemBackdrop = new MicaSystemBackdrop(MicaKind.BaseAlt);
                         break;
                     case "2":
                         AcrylicBase.IsChecked = true;
-                        (App.Current as App).m_window.SystemBackdrop = new AcrylicSystemBackdrop();
+                        App.Current.m_window.SystemBackdrop = new AcrylicSystemBackdrop();
                         break;
                     case "3":
                         AcrylicThin.IsChecked = true;
-                        (App.Current as App).m_window.SystemBackdrop = new AcrylicSystemBackdrop(DesktopAcrylicKind.Thin);
+                        App.Current.m_window.SystemBackdrop = new AcrylicSystemBackdrop(DesktopAcrylicKind.Thin);
                         break;
-
                     default:
                         Mica.IsChecked = true;
-                        (App.Current as App).m_window.SystemBackdrop = new MicaSystemBackdrop();
+                        App.Current.m_window.SystemBackdrop = new MicaSystemBackdrop();
                         break;
                 }
             }

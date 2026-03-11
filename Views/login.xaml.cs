@@ -443,8 +443,8 @@ namespace CC98
             PasswordManager.SavePassword(result.RefreshToken, "Refresh");
             LoginWithPassword.IsChecked = false;
             Set.Values["IsActive"] = "2";
-            var window = new MainWindow();
-            window.Activate();
+            App.Current.m_window = new MainWindow();
+            App.Current.m_window.Activate();
             this.DispatcherQueue.TryEnqueue(() =>
             {
                 this.Close();
