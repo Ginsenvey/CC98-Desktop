@@ -5,6 +5,7 @@ using Microsoft.UI.Xaml.Documents;
 using Microsoft.UI.Xaml.Media;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using UbbRender.Parser;
 using UbbRender.Render;
 namespace UbbRender.Common;
@@ -189,7 +190,7 @@ public class RenderContext
         InlineStack.Clear();
         CurrentInline = null;
     }
-
+    
     public void StartNewTextBlock()
     {
         FinalizeCurrentTextBlock();
@@ -198,9 +199,39 @@ public class RenderContext
         {
             FontSize = Control.FontSize,
             Foreground = Control.Foreground ?? new SolidColorBrush(Colors.Black),
-            TextWrapping = TextWrapping.Wrap
+            TextWrapping = TextWrapping.Wrap,
+            ContextFlyout=CreateCustomContextMenu()
         };
+
         CurrentParagraph = new Paragraph();
         CurrentRichTextBlock.Blocks.Add(CurrentParagraph);
     }
+    #region 自定义右键菜单
+    private MenuFlyout CreateCustomContextMenu()
+    {
+        var menu = new MenuFlyout();
+
+        // 添加复制菜单项
+        var copyItem = new MenuFlyoutItem
+        {
+            Text = "复制",
+            Icon = new SymbolIcon(Symbol.Copy)
+        };
+        //copyItem.Click += OnCopyClicked;
+        menu.Items.Add(copyItem);
+
+        // 可以添加其他自定义项
+        menu.Items.Add(new MenuFlyoutSeparator());
+
+        var selectAllItem = new MenuFlyoutItem
+        {
+            Text = "全选",
+            Icon = new SymbolIcon(Symbol.SelectAll)
+        };
+        //selectAllItem.Click += OnSelectAllClicked;
+        menu.Items.Add(selectAllItem);
+
+        return menu;
+    }
+    #endregion
 }

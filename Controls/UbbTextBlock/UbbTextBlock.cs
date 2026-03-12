@@ -146,6 +146,7 @@ namespace UbbRender.Render
                 [UbbNodeType.Font] = new FontRenderStrategy(),
                 [UbbNodeType.Color] = new ColorRenderStrategy(),
                 [UbbNodeType.Url] = new UrlRenderStrategy(),
+                [UbbNodeType.Topic] = new TopicRenderStrategy(),
                 [UbbNodeType.Image] = new ImageRenderStrategy(),
                 [UbbNodeType.Audio] = new AudioRenderStrategy(),
                 [UbbNodeType.Video] = new VideoRenderStrategy(),

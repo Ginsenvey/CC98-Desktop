@@ -260,7 +260,6 @@ public class UBBParser
         return new LatexNode(latex, isBlock);
     }
     private bool IsKnownType(UbbNodeType type) => type != UbbNodeType.Text && type != UbbNodeType.Document;
-    #region 辅助工具
 
     private Token PeekNext() => PeekOffset(1);
     private Token PeekOffset(int offset) => (_index + offset < _tokens.Count) ? _tokens[_index + offset] : null;
@@ -304,11 +303,13 @@ public class UBBParser
             "font" => UbbNodeType.Font,
             "color" => UbbNodeType.Color,
             "url" => UbbNodeType.Url,
+            "topic"=> UbbNodeType.Topic,
             "img" => UbbNodeType.Image,
             "audio"=>UbbNodeType.Audio,
             "video"=>UbbNodeType.Video,
             "code" => UbbNodeType.Code,
             "quote" => UbbNodeType.Quote,
+            "quotex"=>UbbNodeType.Quote,
             "align" => UbbNodeType.Align,
             "left" => UbbNodeType.Left,
             "center"=>UbbNodeType.Center,
@@ -329,7 +330,6 @@ public class UBBParser
         };
     }
 
-    #region 辅助探测方法
 
     // 判断当前 Token 位置是否是一个特定的标签 [tag] 或 [/tag]
     private bool IsSpecificTag(bool targetIsClosing, string tagName)
@@ -363,7 +363,6 @@ public class UBBParser
         return sb.ToString();
     }
 
-    #endregion
     // 辅助方法：将当前解析进度涉及的所有 Token 还原为原始文本
     private TextNode FallbackToText(int startIndex)
     {
@@ -375,5 +374,5 @@ public class UBBParser
         }
         return new TextNode(sb.ToString());
     }
-    #endregion
+
 }

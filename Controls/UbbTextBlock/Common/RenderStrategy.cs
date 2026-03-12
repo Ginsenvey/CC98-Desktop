@@ -1347,3 +1347,34 @@ public class TableCellRenderStrategy : IRenderStrategy
         }
     }
 }
+
+public class TopicRenderStrategy : IRenderStrategy
+{
+    public void Render(UbbNode node, RenderContext context)
+    {
+        if (node is TagNode tagNode)
+        {
+            var hyperlink = new Hyperlink();
+            var topicId = tagNode.GetAttribute("value");
+            if (!topicId.All(char.IsDigit))
+            {
+                //必须是纯数字，否则不渲染
+                return;
+            }
+            // 设置样式
+            hyperlink.Foreground = new SolidColorBrush(Colors.LightSeaGreen);
+            hyperlink.TextDecorations = TextDecorations.Underline;
+            // 点击事件
+            hyperlink.Click += (sender, e) =>
+            {
+                context.Control.OnMediaClicked($"https://www.cc98.org/topic/{topicId}", MediaType.Link);
+            };
+            context.BeginInlineContainer(hyperlink);
+            foreach (var child in node.Children)
+            {
+                context.RenderNode(child);
+            }
+            context.EndInlineContainer();
+        }
+    }
+}

@@ -453,7 +453,8 @@ namespace CC98
                 if (tag == "0")
                 {
                     await LoadTopicInfo();
-                    Flower.Play("\uE930", "刷新标题栏成功");
+                    await LoadReply();
+                    Flower.Play("\uE930", "刷新成功");
                 }
                 else if (tag == "1")
                 {

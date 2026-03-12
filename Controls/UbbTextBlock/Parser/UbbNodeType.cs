@@ -14,6 +14,7 @@ public enum UbbNodeType
     Font,          // 字体 [font]
     Color,         // 颜色 [color]
     Url,           // 链接 [url]
+    Topic,         // 话题 [topic]
     Image,         // 图片 [img]
     Audio,         // 音频 [audio]
     Video,         // 视频 [video]

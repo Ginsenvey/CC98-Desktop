@@ -8,7 +8,6 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d"
     xmlns:tool="using:CommunityToolkit.WinUI.Controls"
-    xmlns:lab="using:CommunityToolkit.WinUI.UI.Controls"
     xmlns:ic="using:FluentIcons.WinUI"
     Background="{ThemeResource DesktopAcrylicTransparentBrush}">
 
@@ -140,11 +139,17 @@
                     </tool:SettingsExpander.Items>
                 </tool:SettingsExpander>
                 <TextBlock  Text="浏览" FontSize="16" Margin="5,2,0,5"></TextBlock>
-                <tool:SettingsCard Header="帖子显示图片">
+                <tool:SettingsCard Header="显示图片">
                     <tool:SettingsCard.HeaderIcon>
-                        <ic:SymbolIcon Symbol="Frame"></ic:SymbolIcon>
+                        <ic:SymbolIcon Symbol="Image"></ic:SymbolIcon>
                     </tool:SettingsCard.HeaderIcon>
                     <ToggleSwitch x:Name="IsImageVisible" Toggled="IsImageVisible_Toggled"></ToggleSwitch>
+                </tool:SettingsCard>
+                <tool:SettingsCard Header="显示版面通告">
+                    <tool:SettingsCard.HeaderIcon>
+                        <ic:SymbolIcon Symbol="News"></ic:SymbolIcon>
+                    </tool:SettingsCard.HeaderIcon>
+                    <ToggleSwitch></ToggleSwitch>
                 </tool:SettingsCard>
                 <tool:SettingsCard Header="发帖展示小尾巴" Description="展示客户端平台标识">
                     <tool:SettingsCard.HeaderIcon>
