@@ -113,6 +113,7 @@ public static class ApiEndpoints
         public static string AddIntoFavorites(int topicId,int groupId) => $"{Base}/me/favorite/{topicId}?groupid={groupId}";
 
         public static string BasicTopicInfoList(string param) => $"{Base}/topic/basic?{param}";
+        public static string SendReply(int topicId)=> $"{Base}/topic/{topicId}/post";
     }
 
     public static class OpenID

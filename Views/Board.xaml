@@ -14,34 +14,13 @@
     xmlns:obj="using:CC98.Objects"
     xmlns:cv="using:CC98.Services.Converters"
     Background="{ThemeResource DesktopAcrylicTransparentBrush}">
-    <Page.BottomAppBar>
-        <CommandBar>
-            <AppBarButton Label="在浏览器中打开">
-                <AppBarButton.Icon>
-                    <FontIcon Glyph="&#xEB41;" />
-                </AppBarButton.Icon>
-            </AppBarButton>
-            <AppBarButton Label="固定">
-                <AppBarButton.Icon>
-                    <ic:SymbolIcon Symbol="Pin"></ic:SymbolIcon>
-                </AppBarButton.Icon>
-            </AppBarButton>
-            <AppBarButton Label="发投票">
-                <AppBarButton.Icon>
-                    <ic:SymbolIcon Symbol="Vote"></ic:SymbolIcon>
-                </AppBarButton.Icon>
-            </AppBarButton>
-            <AppBarButton Label="发主题">
-                <AppBarButton.Icon>
-                    <ic:SymbolIcon Symbol="Drafts"></ic:SymbolIcon>
-                </AppBarButton.Icon>
-            </AppBarButton>
-            
-        </CommandBar>
-    </Page.BottomAppBar>
-    <ScrollViewer Padding="15,0,15,0">
-        <Grid>
-            <StackPanel x:Name="RootGrid">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*"></RowDefinition>
+            <RowDefinition Height="Auto"></RowDefinition>
+        </Grid.RowDefinitions>
+        <ScrollViewer Grid.Row="0" Padding="15,0,15,0">
+            <StackPanel>
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto" MinHeight="45"></RowDefinition>
@@ -110,9 +89,31 @@
                 </Border>
 
             </StackPanel>
-            <local:InfoFlower x:Name="Flower"  HorizontalAlignment="Center" VerticalAlignment="Bottom"></local:InfoFlower>
-        </Grid>
-        
-    </ScrollViewer>
-    
+        </ScrollViewer>
+
+        <CommandBar Grid.Row="1">
+            <AppBarButton Label="在浏览器中打开">
+                <AppBarButton.Icon>
+                    <FontIcon Glyph="&#xEB41;" />
+                </AppBarButton.Icon>
+            </AppBarButton>
+            <AppBarButton Label="固定">
+                <AppBarButton.Icon>
+                    <ic:SymbolIcon Symbol="Pin"></ic:SymbolIcon>
+                </AppBarButton.Icon>
+            </AppBarButton>
+            <AppBarButton Label="发投票">
+                <AppBarButton.Icon>
+                    <ic:SymbolIcon Symbol="Vote"></ic:SymbolIcon>
+                </AppBarButton.Icon>
+            </AppBarButton>
+            <AppBarButton Label="发主题">
+                <AppBarButton.Icon>
+                    <ic:SymbolIcon Symbol="Drafts"></ic:SymbolIcon>
+                </AppBarButton.Icon>
+            </AppBarButton>
+
+        </CommandBar>
+        <local:InfoFlower Grid.Row="0" Grid.RowSpan="2" x:Name="Flower"  HorizontalAlignment="Center" VerticalAlignment="Bottom"></local:InfoFlower>
+    </Grid>
 </Page>

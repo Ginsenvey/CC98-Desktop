@@ -9,7 +9,6 @@
     mc:Ignorable="d"
     xmlns:ic="using:FluentIcons.WinUI"
     xmlns:controls="using:CommunityToolkit.WinUI.Controls"
-    xmlns:tool="using:CommunityToolkit.WinUI.UI.Controls"
     xmlns:dev="using:DevWinUI"
     xmlns:ubb="using:UbbRender.Render"
     xmlns:c="using:CC98.Controls"
@@ -107,7 +106,7 @@
                     </ComboBox>
                     <TextBox AcceptsReturn="True"  x:Name="SetTitle"></TextBox>
                     <CheckBox Content="接收消息提醒" IsChecked="True"  Checked="ReceiveNotice_Checked" Unchecked="ReceiveNotice_Unchecked" x:Name="ReceiveNotice"></CheckBox>
-                    <RadioButtons Header="发帖类型"  x:Name="SetContentType">
+                    <RadioButtons Header="发帖类型"  x:Name="SetPostType">
                         <RadioButton Content="普通" IsChecked="True" x:Name="PostType" Checked="PostType_Checked" Tag="0"></RadioButton>
                         <RadioButton Content="学术通知" Checked="PostType_Checked" Tag="1"></RadioButton>
                     </RadioButtons>

@@ -2,6 +2,7 @@
 using CC98.Kernel.Network;
 using CC98.Objects;
 using CC98.Services;
+using CC98.Services.Extensions;
 using FluentIcons.Common;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Hosting;
@@ -250,12 +251,12 @@ public static class RequestSender
                 {"title",title },
                 {"type",post_type }
             };
-        string post_text =JsonSerializer.Serialize(post);
+        string post_text =JsonSerialize.Serialize(post);
         var request_body = new StringContent(post_text, Encoding.UTF8, "application/json");
         var r = await LoginService.vpn.PostAsync(url, request_body);
         return await ValidationHelper.AutoResponse(r);
     }
-    public static async Task<string> SendReplyToTopic(string replyid, string content, bool is_anonymous, bool notify_replier, int content_type, bool canbe_traced, string parent_id)//canbe_traced表明这是一个楼中楼，可以被追踪
+    public static async Task<string> SendReplyToTopic(string replyid, string content, bool isAnonymous, bool notifyAllReplier, int contentType, bool canbe_traced, string parentId)//canbe_traced表明这是一个楼中楼，可以被追踪
     {
         string url = "https://api.cc98.org/topic/" + replyid + "/post";
         var reply = new Dictionary<string, object>();
@@ -265,12 +266,11 @@ public static class RequestSender
             {
                 {"clientType",1 },
                 {"content",content },
-                {"contentType",content_type },
-                {"isAnonymous",is_anonymous },
-                {"notifyAllReplier",notify_replier },
+                {"contentType",contentType },
+                {"isAnonymous",isAnonymous },
+                {"notifyAllReplier",notifyAllReplier },
                 {"title","" },
-                {"parentId",parent_id }
-
+                {"parentId",parentId }
             };
         }
         else
@@ -279,13 +279,13 @@ public static class RequestSender
             {
                 {"clientType",1 },
                 {"content",content },
-                {"contentType",content_type },
-                {"isAnonymous",is_anonymous },
-                {"notifyAllReplier",notify_replier },
+                {"contentType",contentType },
+                {"isAnonymous",isAnonymous },
+                {"notifyAllReplier",notifyAllReplier },
                 {"title","" }
             };
         }
-        string reply_text = JsonSerializer.Serialize(reply);
+        string reply_text = JsonSerialize.Serialize(reply);
         var request_body = new StringContent(reply_text, Encoding.UTF8, "application/json");
         try
         {
@@ -315,7 +315,7 @@ public static class RequestSender
                 {"notifyPoster",notifyPoster },//常为true
                 {"title",title }
             };
-        string reply_text = JsonSerializer.Serialize(reply);
+        string reply_text = JsonSerialize.Serialize(reply);
         var request_body = new StringContent(reply_text, Encoding.UTF8, "application/json");
         try
         {
@@ -336,7 +336,7 @@ public static class RequestSender
                 {"receiverId",receiver_id},
                 {"content",content}
             };
-        string post_text = JsonSerializer.Serialize(post);
+        string post_text = JsonSerialize.Serialize(post);
         var request_body = new StringContent(post_text, Encoding.UTF8, "application/json");
         var r = await LoginService.vpn.PostAsync(url, request_body);
         if (r.IsSuccessStatusCode)
@@ -355,7 +355,7 @@ public static class RequestSender
             {
                 {"items",list}
             };
-        string post_text = JsonSerializer.Serialize(post);
+        string post_text = JsonSerialize.Serialize(post);
         var request_body = new StringContent(post_text, Encoding.UTF8, "application/json");
         var r = await LoginService.vpn.PostAsync(url, request_body);
         if (r.IsSuccessStatusCode)

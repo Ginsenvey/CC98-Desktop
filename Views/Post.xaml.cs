@@ -1,6 +1,8 @@
 
 using CC98.Kernel;
 using CC98.Kernel.UserExperience;
+using CC98.Objects;
+using CC98.Services.Extensions;
 using ColorCode.Compilation.Languages;
 using CommunityToolkit.WinUI.Controls;
 using DevWinUI;
@@ -56,13 +58,16 @@ namespace CC98
         public List<Emoji> emojis;
         public List<Emoji> CustomEmojiList;
         public string Parent_Id = "";
-        
+        public EditorNavigationInfo NavigationInfo { get; set; }
+
         protected override void OnNavigatedTo(Microsoft.UI.Xaml.Navigation.NavigationEventArgs e)
         {
             base.OnNavigatedTo(e);
 
             var parameter = e.Parameter as Dictionary<string,string>;
-
+            var args = e.TryGetParameter<EditorNavigationInfo>();
+            if (args == null) return;
+            NavigationInfo = args;
             if (parameter != null)
             {
                 string mode= parameter["Mode"];
@@ -73,7 +78,7 @@ namespace CC98
                     Id= parameter["Pid"];
                     replyselector.IsSelected = true;
                     SetTitle.IsEnabled = false;
-                    SetContentType.IsEnabled = false;
+                    SetPostType.IsEnabled = false;
                 }
                 else if(mode == "1")//引用回复
                 {
@@ -86,7 +91,7 @@ namespace CC98
                     Parent_Id = parameter["ParentId"];
                     replyselector.IsSelected = true;
                     SetTitle.IsEnabled = false;
-                    SetContentType.IsEnabled = false;
+                    SetPostType.IsEnabled = false;
                 }
                 else if(mode == "2")//发帖
                 {
@@ -107,12 +112,50 @@ namespace CC98
                     Editor.SelectionStart = Editor.Text.Length;
                     replyselector.IsSelected = true;
                     SetTitle.IsEnabled = false;
-                    SetContentType.IsEnabled = false;
+                    SetPostType.IsEnabled = false;
                 }
             }
             else
             {
 
+            }
+        }
+
+        private void ApplyEditorEnv()
+        {
+            switch (NavigationInfo.EditorMode)
+            {
+                case EditorMode.ReplyToTopic:
+                    status.Text = $"回复主题:{NavigationInfo.HintText}";
+                    replyselector.IsSelected = true;
+                    //回复主题不需要设置标题和帖子类型
+                    SetTitle.IsEnabled = false;
+                    SetPostType.IsEnabled = false;
+                    break;
+                case EditorMode.ReplyToPost:
+                    status.Text = $"回复帖子:{NavigationInfo.HintText}";
+                    Editor.Text = NavigationInfo.BaseText;
+                    Previewer.UbbText = Editor.Text.Replace("\r\n", "  \n").Replace("\r", "  \n");
+                    Editor.SelectionStart = Editor.Text.Length;
+                    replyselector.IsSelected = true;
+                    SetTitle.IsEnabled = false;
+                    SetPostType.IsEnabled = false;
+                    break;
+                case EditorMode.DraftNewTopic:
+                    status.Text = $"发表新主题";
+                    SetTitle.IsEnabled = true;
+                    topicselector.IsSelected = true;
+                    break;
+                case EditorMode.EditMyPost:
+                    status.Text = $"编辑帖子:{NavigationInfo.HintText}";
+                    Editor.Text = NavigationInfo.BaseText;
+                    SetTitle.Text = NavigationInfo.HintText;
+                    Previewer.UbbText = Editor.Text.Replace("\r\n", "  \n").Replace("\r", "  \n");
+                    Editor.SelectionStart = Editor.Text.Length;
+                    replyselector.IsSelected = true;
+                    SetTitle.IsEnabled = false;
+                    SetPostType.IsEnabled = false;
+                    break;
             }
         }
         private void ClosePanel_Click(object sender, RoutedEventArgs e)
@@ -255,8 +298,8 @@ namespace CC98
         }
         private void Editor_TextChanged(object sender, TextChangedEventArgs e)
         {
+            if (!EditArea.IsPaneOpen) return;
             Previewer.UbbText = Editor.Text.Replace("\r\n", "  \n").Replace("\r", "  \n");
-            //UbbViewer.UbbText = Editor.Text;
         }
         //以下方法用于创建Md的代码块,但是UBB编辑器不需要支持这个操作。
         private void InsertCodeBlock()
