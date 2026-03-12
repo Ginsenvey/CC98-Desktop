@@ -435,11 +435,11 @@ namespace CC98
         
         private void writereply_Click(object sender, RoutedEventArgs e)
         {
-            var param = new Dictionary<string, string>()
+            var param = new EditorNavigationInfo
             {
-                {"Mode","0"},//回复主题为0，回帖为1，发主题、投票为2
-                {"Pid",ValidationHelper.GetValue(Set,"CurrentTopicId") },
-
+                EditorMode=EditorMode.ReplyToTopic,
+                TopicId=topicId,
+                HintText= topicInfo.Title,
             };
             Frame.Navigate(typeof(UBBEditor), param);
         }
@@ -567,7 +567,9 @@ namespace CC98
                             EditorMode = EditorMode.ReplyToPost,
                             TopicId = topicId,
                             QuoteHeader = $"[quote]{header}{reply.Content}[/quote]",
-                            ParentId = reply.Id
+                            ParentId = reply.Id,
+                            HintText=$"引用{reply.UserName}的回复",
+                            Floor=floor
                         };
                         Frame.Navigate(typeof(UBBEditor), param);
                     }

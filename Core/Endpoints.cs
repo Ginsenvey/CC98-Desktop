@@ -19,6 +19,7 @@ public static class ApiEndpoints
         public static string CardStat() => $"{Card}/api/collection/stat";
         public static string DrawCard(int rule) => $"{Card}/api/draw/{rule}";
         public static string DestoryAllCards() => $"{Card}/api/collection/all-rest";
+        public static string UploadFile()=> $"{Base}/file";
     }
     /// <summary>
     /// 用户个人信息

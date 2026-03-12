@@ -46,7 +46,7 @@ public class EditorNavigationInfo
     public EditorMode EditorMode { get; set;} = EditorMode.ReplyToPost;
     public int TopicId { get; set;} = 0;
     public int PostId {  get; set;} = 0;
-
+    public int Floor {  get; set;} = 0;
     public int BoardId { get; set; } = 0;
     //所回复的帖子Id
     public int ParentId {  get; set;} = 0;
