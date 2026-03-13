@@ -12,6 +12,7 @@
     xmlns:dev="using:DevWinUI"
     xmlns:ubb="using:UbbRender.Render"
     xmlns:c="using:CC98.Controls"
+    xmlns:obj="using:CC98.Objects"
     Background="{ThemeResource DesktopAcrylicTransparentBrush}">
 
    
@@ -80,7 +81,7 @@
                     </ItemsPanelTemplate>
                 </GridView.ItemsPanel>
                 <GridView.ItemTemplate>
-                    <DataTemplate x:DataType="local:Emoji">
+                    <DataTemplate x:DataType="obj:Emoji">
                         <Border  CornerRadius="3">
                             <c:SmartImage Source="{x:Bind EmojiPath}" Width="80" Height="80"   Tag="{x:Bind EmojiName}" x:Name="EmojiCell" ></c:SmartImage>
                         </Border>
@@ -212,7 +213,7 @@
                     <FontIconSource Glyph="&#xED58;"></FontIconSource>
                     </controls:RibbonCollapsibleGroup.IconSource>
                     <StackPanel Orientation="Vertical" Spacing="8">
-                        <GridView Height="80" x:Name="EmojiContainer"    
+                        <GridView Height="80" x:Name="EmojiContainer"  
                                   ItemClick="EmojiContainer_ItemClick"
                                   IsItemClickEnabled="True"
                                  
@@ -225,7 +226,7 @@
       ScrollViewer.HorizontalScrollMode="Disabled"
       ScrollViewer.VerticalScrollBarVisibility="Auto">
                             <GridView.ItemTemplate>
-                                <DataTemplate x:DataType="local:Emoji">
+                                <DataTemplate x:DataType="obj:Emoji">
                                     <Border  CornerRadius="2">
                                         <Image Source="{x:Bind EmojiPath}" Width="32" Height="32"  ToolTipService.ToolTip="{x:Bind EmojiName}" Tag="{x:Bind EmojiName}" x:Name="EmojiCell" ></Image>
                                     </Border>

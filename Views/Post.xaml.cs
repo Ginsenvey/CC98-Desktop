@@ -44,11 +44,14 @@ namespace CC98
     /// </summary>
     public sealed partial class UBBEditor : Page
     {
-        public ApplicationDataContainer Set;
+        public ApplicationDataContainer Set=ApplicationData.Current.LocalSettings;
         public UBBEditor()
         {
             this.InitializeComponent();
-            Set = ApplicationData.Current.LocalSettings;
+            if (App.Current.m_window is MainWindow mainwindow)
+            {
+                mainwindow.NavigationView.IsPaneOpen = false;
+            }
             LoadEmojiSet("CC98");
         }
         //约定:所有参数必须与json中的实际类型一致
@@ -57,16 +60,17 @@ namespace CC98
         public int contentType = 0;//UBB
         public int postType = 0;//普通帖子
         public bool isAnonymous = false;
-        public bool NotifyPoster = true;
+        public bool notifyPoster = true;
         public bool notifyAllReplier = false;
         public List<Emoji> emojis = [];
         public List<Emoji> CustomEmojiList = [];
         public string content = "";
         public bool isTailVisible = false;
+        public string currentLabel = "";//记录实时指令
         public const string tail = "[align=right][size=3][color=gray]——来自「[b][color=purple]CC98 For Windows[/color][/b]」[/color][/size][/align]";
-        public EditorNavigationInfo NavigationInfo { get; set; }
+        public EditorNavigationInfo NavigationInfo { get; set;}
 
-        protected override void OnNavigatedTo(Microsoft.UI.Xaml.Navigation.NavigationEventArgs e)
+        protected override void OnNavigatedTo(NavigationEventArgs e)
         {
             base.OnNavigatedTo(e);
 
@@ -76,6 +80,22 @@ namespace CC98
             NavigationInfo = args;
             ApplyEditorEnv();
         }
+
+        #region 初始化环境
+        private void LoadEmojiSet(string type)
+        {
+            EmojiContainer.ItemsSource = null;
+            emojis.Clear();
+            string EmojiPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Emoji", type);
+            var Files = Directory.GetFiles(EmojiPath, "*", SearchOption.TopDirectoryOnly);
+            foreach (var file in Files)
+            {
+                string filename = Path.GetFileName(file);
+                emojis.Add(new Emoji { EmojiName = filename.Split(".")[0].ToLower(), EmojiPath = file });
+            }
+            EmojiContainer.ItemsSource = emojis;
+        }
+
         //将编辑器模式应用到UI
         private void ApplyEditorEnv()
         {
@@ -95,6 +115,10 @@ namespace CC98
                 case EditorMode.ReplyToPost:
                     status.Text = NavigationInfo.HintText;
                     Editor.Text = NavigationInfo.QuoteHeader;
+                    if (!Editor.Text.EndsWith(Environment.NewLine))
+                    {
+                        Editor.Text += Environment.NewLine;
+                    }
                     Previewer.UbbText = Editor.Text.Replace("\r\n", "  \n").Replace("\r", "  \n");
                     Editor.SelectionStart = Editor.Text.Length;
                     replyselector.IsSelected = true;
@@ -110,132 +134,122 @@ namespace CC98
                     status.Text = $"编辑帖子:{NavigationInfo.HintText}";
                     Editor.Text = NavigationInfo.BaseText;
                     SetTitle.Text = NavigationInfo.HintText;
+                    if (!Editor.Text.EndsWith(Environment.NewLine))
+                    {
+                        Editor.Text += Environment.NewLine;
+                    }
                     Previewer.UbbText = Editor.Text.Replace("\r\n", "  \n").Replace("\r", "  \n");
                     Editor.SelectionStart = Editor.Text.Length;
                     replyselector.IsSelected = true;
+                    //编辑非主题帖不允许修改标题和帖子类型
                     SetTitle.IsEnabled = false;
+                    SetPostType.IsEnabled = false;
+                    break;
+                case EditorMode.EditMyTopic:
+                    status.Text = $"编辑主题:{NavigationInfo.HintText}";
+                    Editor.Text = NavigationInfo.BaseText;
+                    SetTitle.Text = NavigationInfo.HintText;
+                    if (!Editor.Text.EndsWith(Environment.NewLine))
+                    {
+                        Editor.Text += Environment.NewLine;
+                    }
+                    Previewer.UbbText = Editor.Text.Replace("\r\n", "  \n").Replace("\r", "  \n");
+                    Editor.SelectionStart = Editor.Text.Length;
+                    topicselector.IsSelected = true;
+                    SetTitle.IsEnabled = true;
                     SetPostType.IsEnabled = false;
                     break;
             }
         }
-        private void ClosePanel_Click(object sender, RoutedEventArgs e)
-        {
-            EditArea.IsPaneOpen = false;
-        }
-        public string currentLabel = "";//记录实时指令
+        #endregion
+
+        
+        #region 编辑器
+
         private async void AppBarButton_Click(object sender, RoutedEventArgs e)
         {
             var b = sender as AppBarButton;
-            if (b != null)
+            if (b == null) return;
+            switch (b.Label)
             {
-                switch (b.Label)
-                {
-                    case "预览":
-                        EditArea.IsPaneOpen = true;
-                        break;
-                    case "粗体":
-                        InsertTag("b", "b", "");
-                        break;
-                    case "斜体":
-                        InsertTag("i", "i", "");
-                        break;
-                    case "删除线":
-                        InsertTag("del", "del", "");
-                        break;
-                    case "下划线":
-                        InsertTag("u", "u", "");
-                        break;
-                    case "左对齐":
-                        InsertTag("align=left", "align", "");
-                        break;
-                    case "居中":
-                        InsertTag("align=center", "align", "");
-                        break;
-                    case "右对齐":
-                        InsertTag("align=right", "align", "");
-                        break;
-                    case "引用":
-                        InsertTag("quote", "quote", "");
-                        break;
-                    case "代码":
-                        InsertTag("code", "code", "");
-                        break;
-                    case "链接":
-                        InsertTag("url", "url", "");
-                        break;
-                    case "颜色":
-                        var r = await ColorPanel.ShowAsync();
-                        if (r == ContentDialogResult.Primary)
-                        {
-                            string colorwithalpha = Colors.Color.ToString().ToLower();
-                            string color = colorwithalpha.Substring(0, 1) + colorwithalpha.Substring(3, 6);
-                            InsertTag("color=" + color, "color", "");
-                        }
-                        break;
-                    case "图片":
-                        currentLabel = "img";
-                        FileHelper.XamlRoot = this.XamlRoot;
-                        await FileHelper.ShowAsync();
-                        break;
-                    case "视频":
-                        currentLabel = "video";
-                        FileHelper.XamlRoot = this.XamlRoot;
-                        await FileHelper.ShowAsync();
-                        break;
-                    case "音频":
-                        currentLabel = "audio";
-                        FileHelper.XamlRoot = this.XamlRoot;
-                        await FileHelper.ShowAsync();
-                        break;
-                    case "哔哩":
-                        InsertTag("bili", "bili", "");
-                        break;
-                    case "文档":
-                        currentLabel = "upload";
-                        FileHelper.XamlRoot = this.XamlRoot;
-                        await FileHelper.ShowAsync();
-                        break;
-                    case "分割线":
-                        int selectionStart = Editor.SelectionStart;
-                        Editor.Text = Editor.Text.Insert(selectionStart, "[line]");
-                        Editor.SelectionStart = selectionStart + 6;
-                        Editor.Focus(FocusState.Programmatic);
-                        break;
-                    case "贴图":
-                        await MapPanel.ShowAsync();
-                        break;
-                    default:
-                        break;
-                }
+                case "预览":
+                    EditArea.IsPaneOpen = true;
+                    break;
+                case "粗体":
+                    InsertTag("b", "b", "");
+                    break;
+                case "斜体":
+                    InsertTag("i", "i", "");
+                    break;
+                case "删除线":
+                    InsertTag("del", "del", "");
+                    break;
+                case "下划线":
+                    InsertTag("u", "u", "");
+                    break;
+                case "左对齐":
+                    InsertTag("align=left", "align", "");
+                    break;
+                case "居中":
+                    InsertTag("align=center", "align", "");
+                    break;
+                case "右对齐":
+                    InsertTag("align=right", "align", "");
+                    break;
+                case "引用":
+                    InsertTag("quote", "quote", "");
+                    break;
+                case "代码":
+                    InsertTag("code", "code", "");
+                    break;
+                case "链接":
+                    InsertTag("url", "url", "");
+                    break;
+                case "颜色":
+                    var r = await ColorPanel.ShowAsync();
+                    if (r == ContentDialogResult.Primary)
+                    {
+                        string colorwithalpha = Colors.Color.ToString().ToLower();
+                        string color = colorwithalpha.Substring(0, 1) + colorwithalpha.Substring(3, 6);
+                        InsertTag("color=" + color, "color", "");
+                    }
+                    break;
+                case "图片":
+                    currentLabel = "img";
+                    FileHelper.XamlRoot = this.XamlRoot;
+                    await FileHelper.ShowAsync();
+                    break;
+                case "视频":
+                    currentLabel = "video";
+                    FileHelper.XamlRoot = this.XamlRoot;
+                    await FileHelper.ShowAsync();
+                    break;
+                case "音频":
+                    currentLabel = "audio";
+                    FileHelper.XamlRoot = this.XamlRoot;
+                    await FileHelper.ShowAsync();
+                    break;
+                case "哔哩":
+                    InsertTag("bili", "bili", "");
+                    break;
+                case "文档":
+                    currentLabel = "upload";
+                    FileHelper.XamlRoot = this.XamlRoot;
+                    await FileHelper.ShowAsync();
+                    break;
+                case "分割线":
+                    int selectionStart = Editor.SelectionStart;
+                    Editor.Text = Editor.Text.Insert(selectionStart, "[line]");
+                    Editor.SelectionStart = selectionStart + 6;
+                    Editor.Focus(FocusState.Programmatic);
+                    break;
+                case "贴图":
+                    await MapPanel.ShowAsync();
+                    break;
+                default:
+                    break;
             }
 
-        }
-        private async Task<string> PickAndUploadFile(IList<string> filter, PickerLocationId location)
-        {
-            try
-            {
-                var picker = new FileOpenPicker(this.XamlRoot.ContentIslandEnvironment.AppWindowId);
-                picker.CommitButtonText = "上传";
-                picker.SuggestedStartLocation = location;
-                picker.FileTypeFilter.AddRange(filter);
-                var file = await picker.PickSingleFileAsync();
-                if (file != null)
-                {
-                    status.Text = "正在上传文件。请稍作等待";
-                    string url = await UploadFileAsync(file.Path);
-                    if (url != "0" && url.Contains("file"))
-                    {
-                        status.Text = "上传成功:" + file.Path;
-                        return url;
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                await App.Logger.WriteAsync("UBBEditor", "文件上传出错", ex.Message);
-                status.Text = "上传失败:" + ex.Message;
-            }
-            return "0";
         }
         private void InsertTag(string ltag, string rtag, string input, int offset = 0, bool select = true)
         {
@@ -278,6 +292,70 @@ namespace CC98
             Editor.Focus(FocusState.Programmatic);
         }
 
+        private void EmojiContainer_ItemClick(object sender, ItemClickEventArgs e)
+        {
+            var i = e.ClickedItem;
+            if (i == null) return;
+            var index = EmojiContainer.Items.IndexOf(i);
+            if (emojis == null) return;
+            if (emojis.Count <= index) return;
+            var tag = emojis[index].EmojiName;
+            if (tag == null) return;
+            int selectionStart = Editor.SelectionStart;
+            string EmojiName = "[" + tag + "]";
+            Editor.Text = Editor.Text.Insert(selectionStart, EmojiName);
+            Editor.SelectionStart = selectionStart + EmojiName.Length;
+            Editor.Focus(FocusState.Programmatic);
+        }
+
+        private async void FileUploadChoice_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (FileUploadChoice.SelectedIndex != -1)
+            {
+                var item = FileUploadChoice.SelectedItem as ListViewItem;
+                if (item == null) return;
+                var tag = item?.Tag;
+                if (tag == null) return;
+                int operation = tag.ToInt();
+                if (operation == 1)
+                {
+                    var url = "";
+                    var filter = GetSuffixs(currentLabel);
+                    switch (currentLabel)
+                    {
+                        case "img":
+                            url = await PickAndUploadFile(filter, PickerLocationId.PicturesLibrary);
+                            break;
+                        case "video":
+                            url = await PickAndUploadFile(filter, PickerLocationId.VideosLibrary);
+                            break;
+                        case "audio":
+                            url = await PickAndUploadFile(filter, PickerLocationId.MusicLibrary);
+                            break;
+                    }
+                    FileHelper.Hide();
+                    if (url != "0")
+                    {
+                        InsertTag(currentLabel, currentLabel, url);
+                    }
+                    else
+                    {
+                        Flower.Play(FlowStatus.Info, "未上传文件");
+                    }
+                }
+                else if (operation == 2)
+                {
+                    FileHelper.Hide();
+                    InsertTag(currentLabel, currentLabel, "");
+                }
+                else
+                {
+                    CustomLink.Visibility = Visibility.Visible;
+                    CustomLink.Focus(FocusState.Keyboard);//自动聚焦，减少鼠标操作
+                }
+            }
+
+        }
         private async void SendButton_Click(object sender, RoutedEventArgs e)
         {
             var r = await SendDialog.ShowAsync();
@@ -291,9 +369,47 @@ namespace CC98
                     await SendReply();
                     break;
                 case EditorMode.EditMyPost:
+                    await EditPost();
+                    break;
+                case EditorMode.EditMyTopic:
+                    await EditPost();
                     break;
                 case EditorMode.DraftNewTopic:
+
                     break;
+            }
+        }
+        #endregion
+
+        #region 实现请求
+        private async Task EditPost()
+        {
+            string url = ApiEndpoints.Post.Edit(NavigationInfo.PostId);
+            var reply = new Dictionary<string, object>()
+            {
+                {"type",0 },
+                {"content",content },
+                {"contentType",contentType },
+                {"notifyPoster",notifyPoster },//常为true
+                {"title",SetTitle.Text}
+            };
+            string replyText = JsonSerialize.Serialize(reply);
+            var requestBody = new StringContent(replyText, Encoding.UTF8, "application/json");
+            var res = await RequestSender.Put(url, requestBody);
+            if (!res.IsSuccess)
+            {
+                status.Text = $"编辑失败:{res.Message}";
+                await App.Logger.WriteAsync("UBBEditor", "编辑帖子出错", res.Message);
+            }
+            else
+            {
+                var param = new TopicNavigationInfo
+                {
+                    IsJumpingMode = true,
+                    TopicId = NavigationInfo.TopicId,
+                    TargetFloor = NavigationInfo.Floor
+                };
+                Frame.Navigate(typeof(Topic), param);
             }
         }
         private async Task<string> UploadFileAsync(string filePath)
@@ -323,6 +439,43 @@ namespace CC98
                     return "";
                 }
             }
+        }
+        private List<string> GetSuffixs(string type)
+        {
+            return type switch
+            {
+                "img" => new List<string> { ".png", ".jpg", ".jpeg", ".bmp", ".gif", ".webp" },
+                "video" => new List<string> { ".mp4", ".mkv", ".avi", ".mov", ".wmv" },
+                "audio" => new List<string> { ".mp3", ".wav", ".m4a", ".flac", ".aac" },
+                _ => new List<string>()
+            };
+        }
+        private async Task<string> PickAndUploadFile(IList<string> filter, PickerLocationId location)
+        {
+            try
+            {
+                var picker = new FileOpenPicker(this.XamlRoot.ContentIslandEnvironment.AppWindowId);
+                picker.CommitButtonText = "上传";
+                picker.SuggestedStartLocation = location;
+                picker.FileTypeFilter.AddRange(filter);
+                var file = await picker.PickSingleFileAsync();
+                if (file != null)
+                {
+                    status.Text = "正在上传文件。请稍作等待";
+                    string url = await UploadFileAsync(file.Path);
+                    if (url != "0" && url.Contains("file"))
+                    {
+                        status.Text = "上传成功:" + file.Path;
+                        return url;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                await App.Logger.WriteAsync("UBBEditor", "文件上传出错", ex.Message);
+                status.Text = "上传失败:" + ex.Message;
+            }
+            return "0";
         }
         private async Task SendReply()
         {
@@ -378,133 +531,29 @@ namespace CC98
                 Frame.Navigate(typeof(Topic), param);
             }
         }
-        private List<string> GetSuffixs(string type)
-        {
-            return type switch
-            {
-                "img" => new List<string> { ".png", ".jpg", ".jpeg", ".bmp", ".gif", ".webp" },
-                "video" => new List<string> { ".mp4", ".mkv", ".avi", ".mov", ".wmv" },
-                "audio" => new List<string> { ".mp3", ".wav", ".m4a", ".flac", ".aac" },
-                _ => new List<string>()
-            };
-        }
-
-        private void LoadEmojiSet(string type)
-        {
-            EmojiContainer.ItemsSource = null;
-            string EmojiPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Emoji", type);
-            var Files = Directory.GetFiles(EmojiPath, "*", SearchOption.TopDirectoryOnly);
-            emojis = new List<Emoji>();
-            foreach (var file in Files)
-            {
-                string filename = Path.GetFileName(file);
-                emojis.Add(new Emoji { EmojiName = filename.Split(".")[0].ToLower(), EmojiPath = file });
-            }
-            EmojiContainer.ItemsSource = emojis;
-        }
-
-        private async void FileUploadChoice_SelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-            if (FileUploadChoice.SelectedIndex != -1)
-            {
-                var item = FileUploadChoice.SelectedItem as ListViewItem;
-                if (item == null) return;
-                var tag = item?.Tag;
-                if (tag == null) return;
-                int operation = tag.ToInt();
-                if (operation == 1)
-                {
-                    var url = "";
-                    var filter = GetSuffixs(currentLabel);
-                    switch (currentLabel)
-                    {
-                        case "img":
-                            url = await PickAndUploadFile(filter, PickerLocationId.PicturesLibrary);
-                            break;
-                        case "video":
-                            url = await PickAndUploadFile(filter, PickerLocationId.VideosLibrary);
-                            break;
-                        case "audio":
-                            url = await PickAndUploadFile(filter, PickerLocationId.MusicLibrary);
-                            break;
-                    }
-                    FileHelper.Hide();
-                    if (url != "0")
-                    {
-                        InsertTag(currentLabel, currentLabel, url);
-                    }
-                    else
-                    {
-                        Flower.Play(FlowStatus.Info, "未上传文件");
-                    }
-                }
-                else if (operation == 2)
-                {
-                    FileHelper.Hide();
-                    InsertTag(currentLabel, currentLabel, "");
-                }
-                else
-                {
-                    CustomLink.Visibility = Visibility.Visible;
-                    CustomLink.Focus(FocusState.Keyboard);//自动聚焦，减少鼠标操作
-                }
-            }
-
-        }
 
 
-
-
-
-        private void EmojiContainer_ItemClick(object sender, ItemClickEventArgs e)
-        {
-            var i = e.ClickedItem;
-            if (i != null)
-            {
-
-                var index = EmojiContainer.Items.IndexOf(i);
-                if (emojis != null)
-                {
-                    if (emojis.Count > index)
-                    {
-                        var tag = emojis[index].EmojiName;
-                        if (tag != null)
-                        {
-                            int selectionStart = Editor.SelectionStart;
-                            string EmojiName = "[" + tag + "]";
-                            Editor.Text = Editor.Text.Insert(selectionStart, EmojiName);
-                            Editor.SelectionStart = selectionStart + EmojiName.Length;
-                            Editor.Focus(FocusState.Programmatic);
-
-                        }
-                    }
-                }
-            }
-
-        }
-
-
+        #endregion
+        
 
         #region UI事件处理
         private void PriviewMode_Click(object sender, RoutedEventArgs e)
         {
             EditArea.IsPaneOpen = !EditArea.IsPaneOpen;
         }
-
+        private void ClosePanel_Click(object sender, RoutedEventArgs e)
+        {
+            EditArea.IsPaneOpen = false;
+        }
 
         private void EmojiType_PointerEntered(object sender, PointerRoutedEventArgs e)
         {
             var type = sender as SegmentedItem;
-            if (type != null)
-            {
-                type.IsSelected = true;
-                if (type.Tag.ToString() != null)
-                {
-                    LoadEmojiSet(type.Tag.ToString());
-                }
-
-
-            }
+            if (type == null) return;
+            type.IsSelected = true;
+            var tag= type.Tag as string;
+            if (tag == null) return;
+            LoadEmojiSet(tag);
         }
         private void SwitchContentType_Click(object sender, RoutedEventArgs e)
         {
@@ -526,12 +575,12 @@ namespace CC98
 
         private void ReceiveNotice_Unchecked(object sender, RoutedEventArgs e)
         {
-            NotifyPoster = false;
+            notifyPoster = false;
         }
 
         private void ReceiveNotice_Checked(object sender, RoutedEventArgs e)
         {
-            NotifyPoster = true;
+            notifyPoster = true;
         }
 
         private void PostType_Checked(object sender, RoutedEventArgs e)
@@ -601,14 +650,5 @@ namespace CC98
         }
         #endregion
     }
-    public class Emoji
-    {
-        public string EmojiName {  get; set; }
-        public string EmojiPath { get; set; }
-    }
-    public class PostTag
-    {
-        public string Name { get; set; }
-        public int Id { get; set; }
-    }
+    
 }

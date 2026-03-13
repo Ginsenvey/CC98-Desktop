@@ -59,9 +59,9 @@
             <RowDefinition Height="6*"></RowDefinition>
         </Grid.RowDefinitions>
 
-        <FlipView  Grid.Row="0"  x:Name="RecomList" ItemsSource="{x:Bind flipTopics}" VerticalAlignment="Top" CornerRadius="6">
+        <FlipView  Grid.Row="0"  x:Name="RecomList" ItemsSource="{x:Bind flipTopics}" VerticalAlignment="Top" CornerRadius="0,0,6,6">
             <FlipView.Background>
-                <ImageBrush x:Name="ThemePresenter" Opacity="0.4" Stretch="UniformToFill"></ImageBrush>
+                <ImageBrush x:Name="ThemePresenter" Opacity="0.6" Stretch="UniformToFill"></ImageBrush>
             </FlipView.Background>
             <FlipView.ItemTemplate>
                 <DataTemplate x:DataType="obj:FlipTopic">

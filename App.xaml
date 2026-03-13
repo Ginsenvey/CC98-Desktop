@@ -7,6 +7,7 @@
     xmlns:dev="using:DevWinUI"
     xmlns:tool="using:CommunityToolkit.WinUI.Controls"
     xmlns:pr="using:CC98.Share.Controls.Primitives"
+    xmlns:cv="using:CC98.Services.Converters"
     xmlns:local="using:CC98">
     <Application.Resources>
         <ResourceDictionary >
@@ -32,7 +33,7 @@
                     <Color x:Key="Standard">#FFFFFF</Color>
                     <Color x:Key="AcrylicTintColor">#66ccff</Color>
                     <Color x:Key="PortaitBackgroundColor">#62b3ae</Color>
-                    
+
                 </ResourceDictionary>
                 <ResourceDictionary x:Key="Dark">
                     <Color x:Key="CustomBackgroundColor">#2f2f2f</Color>
@@ -49,12 +50,11 @@
                     <Color x:Key="Standard">#000000</Color>
                     <Color x:Key="AcrylicTintColor">#000000</Color>
                     <Color x:Key="PortaitBackgroundColor">#004d9891</Color>
-                    
+
                 </ResourceDictionary>
                 <ResourceDictionary x:Key="Tint"></ResourceDictionary>
 
             </ResourceDictionary.ThemeDictionaries>
-            
             <SolidColorBrush x:Key="MarkdownBackgroudBrush" Color="{ThemeResource MarkdownBackgroudColor}"></SolidColorBrush>
             <SolidColorBrush x:Key="DividerBrush" Color="{ThemeResource DividerColor}"></SolidColorBrush>
             <SolidColorBrush x:Key="FancyButtonBrush" Color="{ThemeResource pink-green}"></SolidColorBrush>
@@ -81,8 +81,10 @@
                 <Setter Property="FontFamily" Value="{StaticResource HarmonySans}"></Setter>
                 <Setter Property="CornerRadius" Value="3"></Setter>
             </Style>
+            <pr:SmartImageLoader x:Key="PortraitLoader" LowRes="True"></pr:SmartImageLoader>
             <pr:SmartImageLoader x:Key="CustomPortraitLoader" LowRes="False"></pr:SmartImageLoader>
+            <cv:LikeToVariantConverter x:Key="LikeToVariantConverter"></cv:LikeToVariantConverter>
+            <cv:DisLikeToVariantConverter x:Key="DisLikeToVariantConverter"></cv:DisLikeToVariantConverter>
         </ResourceDictionary>
-        
     </Application.Resources>
 </Application>

@@ -19,7 +19,7 @@
             <RowDefinition Height="*"></RowDefinition>
         </Grid.RowDefinitions>
         <StackPanel Grid.Row="0" HorizontalAlignment="Left" Orientation="Vertical" Spacing="2">
-            <TextBlock x:Name="LanguageTag" Text="C#" FontSize="12" Margin="3,0,3,0"></TextBlock>
+            <TextBlock x:Name="LanguageTag" Text="C#" FontSize="12" Margin="3,0,3,0" CharacterSpacing="25"></TextBlock>
             <Border Background="{ThemeResource AccentAAFillColorDefaultBrush}" Height="3" CornerRadius="1.5"></Border>
         </StackPanel>
         <Button x:Name="CopyButton" Grid.Row="0" HorizontalAlignment="Right" Width="32" Height="32" Padding="0" Margin="0,0,8,0">

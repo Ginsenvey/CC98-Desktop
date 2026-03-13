@@ -67,7 +67,7 @@ namespace CC98
                     if (info != null)
                     {
                         string operation = type == NoticeType.Reply ? "回复" : "@";
-                        string content=$"在帖子《{info.Title}》{operation}了你。";
+                        string content=$"在帖子《{info.Title}》的{notice.PostBasicInfo?.Floor}L{operation}了你。";
                         notice.Content = content;
                     }
                 }

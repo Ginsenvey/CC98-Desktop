@@ -19,7 +19,7 @@
     <Page.Resources>
         <cv:BooltoVisibilityConverter x:Key="BoolToVisibility"></cv:BooltoVisibilityConverter>
         <cv:RBooltoVisibilityConverter x:Key="RBoolToVisibility"></cv:RBooltoVisibilityConverter>
-        <cv:BooltoVariantConverter x:Key="BoolToVariant"></cv:BooltoVariantConverter>
+        <cv:LikeToVariantConverter x:Key="BoolToVariant"></cv:LikeToVariantConverter>
         <cv:BoolToFollowTextConverter x:Key="FollowConverter"/>
     </Page.Resources>
     <Grid>

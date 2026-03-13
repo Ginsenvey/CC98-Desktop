@@ -134,53 +134,96 @@ namespace CC98
         //floor如17824L，则page为1782，sort为4，此时目标楼层的index是3.sort=1时目标index为0。如果sort=0,则目标页码在上一页。
         private async Task TP(int floor)
         {
+            // 解析楼层
             int page = floor / 10;
-            int sort= floor%10;
-            //如果当前页就是目标页      
-            if (Pager.SelectedPageIndex  == page)
+            int sort = floor % 10;
+            int currentPage = Pager.SelectedPageIndex;
+
+            // 情况1：目标就在当前页
+            if (currentPage == page)
             {
-                //楼层大于0，则
-                if (sort > 0)
-                {
-                    //判断是否已经加载
-                    Pager.SelectedPageIndex = page;
-                    if (replies.Count > sort - 1)
-                    {
-                        ScrollTo(sort - 1);
-                    }
-                    else
-                    {
-                        await LoadReply();
-                        ScrollTo(sort - 1);
-                    }
-                }
-                //如果楼层为0，说明是整十楼，目标在上一页的最后一个
-                else
-                {
-                    Pager.SelectedPageIndex = page - 1;
-                    JumpToFloor = 9;
-                }
+                await HandleSamePageJump(sort);
             }
-            //这种情况也不用翻页
-            else if (Pager.SelectedPageIndex == page - 1&&sort==0)
+            // 情况2：目标是上一页的最后一个（特殊边界情况）
+            else if (currentPage == page - 1 && sort == 0)
             {
-                Pager.SelectedPageIndex = page;
-                if (replies.Count == 10)
-                {
-                    ScrollTo(9);
-                }
-                else
-                {
-                    await LoadReply();
-                    ScrollTo(9);
-                }
+                await HandlePrevPageLastItem();
             }
-            //如果不在当前页面，先翻页，再跳转
+            // 情况3：需要翻页
             else
             {
-                Pager.SelectedPageIndex = page;
-                JumpToFloor = sort - 1;
+                HandlePageNavigation(page, sort);
             }
+        }
+
+        /// <summary>
+        /// 处理同一页内的跳转
+        /// </summary>
+        private async Task HandleSamePageJump(int sort)
+        {
+            if (sort == 0)
+            {
+                // 整十楼：跳转到上一页的最后一个
+                Pager.SelectedPageIndex--;
+                JumpToFloor = 9;
+            }
+            else
+            {
+                // 非整十楼：直接跳转到对应楼层
+                await EnsureReplyLoadedAndScroll(sort - 1);
+            }
+        }
+
+        /// <summary>
+        /// 处理跳转到上一页最后一个的情况
+        /// </summary>
+        private async Task HandlePrevPageLastItem()
+        {
+            Pager.SelectedPageIndex++;
+
+            // 判断第10楼是否已加载
+            if (replies.Count == 10)
+            {
+                ScrollTo(9);
+            }
+            else
+            {
+                await LoadReply();
+                ScrollTo(9);
+            }
+        }
+
+        /// <summary>
+        /// 处理需要翻页的跳转
+        /// </summary>
+        private void HandlePageNavigation(int targetPage, int targetSort)
+        {
+            if (targetSort == 0)
+            {
+                // 整十楼：目标在上一页
+                Pager.SelectedPageIndex = targetPage - 1;
+                JumpToFloor = 9;
+            }
+            else
+            {
+                // 非整十楼：目标在当前页
+                Pager.SelectedPageIndex = targetPage;
+                JumpToFloor = targetSort - 1;
+            }
+        }
+
+        /// <summary>
+        /// 确保指定索引的回复已加载并滚动到该位置
+        /// </summary>
+        private async Task EnsureReplyLoadedAndScroll(int targetIndex)
+        {
+            // 如果目标索引尚未加载，先加载数据
+            if (replies.Count <= targetIndex)
+            {
+                await LoadReply();
+            }
+
+            ScrollTo(targetIndex);
         }
         private async Task LoadTopicInfo()
         {
@@ -560,8 +603,8 @@ namespace CC98
                     {
                         int floor = reply.Floor;
                         int page = 1 + floor / 10;
-                        int loc = floor % 10;
-                        string header = $"[b]以下是引用{floor}楼：用户{reply.UserName}在{reply.Time}的发言：[url=/topic/{ValidationHelper.GetValue(Set, "CurrentTopicId")}/{page}#{loc}]>>查看原帖<<[/url][/b]\r\n";
+                        int location = floor % 10;
+                        string header = $"[b]以下是引用{floor}楼：用户{reply.UserName}在{reply.Time}的发言：[url=/topic/{ValidationHelper.GetValue(Set, "CurrentTopicId")}/{page}#{location}]>>查看原帖<<[/url][/b]\r\n";
                         var param = new EditorNavigationInfo
                         {
                             EditorMode = EditorMode.ReplyToPost,
@@ -577,11 +620,12 @@ namespace CC98
                 case "EDIT":
                     var _param = new EditorNavigationInfo
                     {
-                        EditorMode = EditorMode.EditMyPost,
+                        EditorMode = reply.Floor==0?EditorMode.EditMyTopic:EditorMode.EditMyPost,
                         TopicId = topicId,
                         BaseText = reply.Content,
                         PostId = reply.Id,
                         HintText = topicInfo.Title,
+                        Floor=reply.Floor
                     };
                     Frame.Navigate(typeof(UBBEditor), _param);
                     break;

@@ -76,6 +76,7 @@ public static class ApiEndpoints
         /// </summary>
         public static string ReactionState(int postId) => $"{Base}/post/{postId}/like";
         public static string React(int postId) => $"{Base}/post/{postId}/like";
+        public static string Edit(int postId) => $"{Base}/post/{postId}";
     }
     public static class Board
     {

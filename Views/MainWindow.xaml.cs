@@ -66,6 +66,7 @@ namespace CC98
         public ObservableCollection<CategoryBase> MenuItems { get; } = new ObservableCollection<CategoryBase>();
         public ObservableCollection<CategoryBase> FooterMenuItems { get; } = new ObservableCollection<CategoryBase>();
         public Frame RootFrame => contentframe;//用于在嵌套的Frame中导航
+        public NavigationView NavigationView => Navi;
         public ApplicationDataContainer Set = ApplicationData.Current.LocalSettings;
         public ObservableCollection<string> collections=[];
         public GlobalService GlobalService = GlobalService.Instance;

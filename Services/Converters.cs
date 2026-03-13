@@ -122,13 +122,40 @@ public partial class BooltoVisibilityConverter : IValueConverter
         throw new NotImplementedException();
     }
 }
-public partial class BooltoVariantConverter : IValueConverter
+public partial class LikeToVariantConverter : IValueConverter
 {
     object IValueConverter.Convert(object value, Type targetType, object parameter, string language)
     {
-        if (value is bool flag)
+        if (value is int state)
         {
-            return flag ? IconVariant.Filled : IconVariant.Regular;
+            return state switch
+            {
+                1 => IconVariant.Filled,
+                _ => IconVariant.Regular
+            };
+        }
+        else
+        {
+            return IconVariant.Regular;
+        }
+    }
+
+    object IValueConverter.ConvertBack(object value, Type targetType, object parameter, string language)
+    {
+        throw new NotImplementedException();
+    }
+}
+public partial class DisLikeToVariantConverter : IValueConverter
+{
+    object IValueConverter.Convert(object value, Type targetType, object parameter, string language)
+    {
+        if (value is int state)
+        {
+            return state switch
+            {
+                2 => IconVariant.Filled,
+                _ => IconVariant.Regular
+            };
         }
         else
         {
