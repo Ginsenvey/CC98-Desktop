@@ -54,9 +54,8 @@ namespace CC98
             }
             LoadEmojiSet("CC98");
         }
-        //约定:所有参数必须与json中的实际类型一致
-        public string Mode = "0";
-        public string Id = "-1";
+        //约定:可以在本页更改的环境量由以下字段表示，
+        //而不可变参数由NavigationInfo传入。
         public int contentType = 0;//UBB
         public int postType = 0;//普通帖子
         public bool isAnonymous = false;
@@ -84,6 +83,7 @@ namespace CC98
         #region 初始化环境
         private void LoadEmojiSet(string type)
         {
+            //存在问题，如果使用xaml绑定,向下滚动时会崩溃。因此使用代码。
             EmojiContainer.ItemsSource = null;
             emojis.Clear();
             string EmojiPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Emoji", type);
@@ -103,6 +103,7 @@ namespace CC98
             {
                 isTailVisible = true;
             }
+            contentType=NavigationInfo.ContentType;
             switch (NavigationInfo.EditorMode)
             {
                 case EditorMode.ReplyToTopic:
@@ -160,6 +161,8 @@ namespace CC98
                     SetPostType.IsEnabled = false;
                     break;
             }
+            //初始化内容
+            content = Editor.Text.Replace("\r\n", "\n").Replace("\r", "\n");
         }
         #endregion
 
@@ -168,6 +171,11 @@ namespace CC98
 
         private async void AppBarButton_Click(object sender, RoutedEventArgs e)
         {
+            if (contentType == (int)Objects.ContentType.Markdown)
+            {
+                Flower.Play(FlowStatus.Info, "当前处于Markdown模式下");
+                return;
+            }
             var b = sender as AppBarButton;
             if (b == null) return;
             switch (b.Label)
@@ -375,7 +383,7 @@ namespace CC98
                     await EditPost();
                     break;
                 case EditorMode.DraftNewTopic:
-
+                    await DraftNewTopic();
                     break;
             }
         }
@@ -490,7 +498,7 @@ namespace CC98
                 reply = new Dictionary<string, object>()
                 {
                 {"clientType",1 },
-                {"content",content },
+                {"content",content},
                 {"contentType",contentType },
                 {"isAnonymous",isAnonymous },
                 {"notifyAllReplier",notifyAllReplier },
@@ -511,7 +519,6 @@ namespace CC98
             };
             }
             string replyText = JsonSerialize.Serialize(reply);
-            await App.Logger.WriteAsync("Editor", "回复内容", replyText);
             var requestBody = new StringContent(replyText, Encoding.UTF8, "application/json");
             var res = await RequestSender.Submit<int>(url, requestBody);
             if (!res.IsSuccess)
@@ -531,7 +538,39 @@ namespace CC98
                 Frame.Navigate(typeof(Topic), param);
             }
         }
-
+        private async Task DraftNewTopic()
+        {
+            string url = ApiEndpoints.Board.SendNewTopic(NavigationInfo.BoardId);
+            var post = new Dictionary<string, object>()
+            {
+                {"clientType",1},
+                {"content",content},
+                {"contentType",contentType},
+                {"isAnonymous",isAnonymous},
+                {"notifyPoster",notifyPoster},
+                {"title",SetTitle.Text},
+                {"type",postType}
+            };
+            string text = JsonSerialize.Serialize(post);
+            var requestBody = new StringContent(text, Encoding.UTF8, "application/json");
+            var res = await RequestSender.Submit<int>(url, requestBody);
+            if (!res.IsSuccess)
+            {
+                //
+                status.Text = $"发送新主题失败:{res.Message}";
+                await App.Logger.WriteAsync("UBBEditor", "发送新主题失败", res.Message);
+            }
+            else
+            {
+                int newTopicId = res.Data;
+                var param = new TopicNavigationInfo
+                {
+                    IsJumpingMode = false,
+                    TopicId = newTopicId,
+                };
+                Frame.Navigate(typeof(Topic), param);
+            }
+        }
 
         #endregion
         
@@ -540,12 +579,12 @@ namespace CC98
         private void PriviewMode_Click(object sender, RoutedEventArgs e)
         {
             EditArea.IsPaneOpen = !EditArea.IsPaneOpen;
+            if (EditArea.IsPaneOpen)
+            {
+                Previewer.UbbText = content;
+            }
         }
-        private void ClosePanel_Click(object sender, RoutedEventArgs e)
-        {
-            EditArea.IsPaneOpen = false;
-        }
-
+       
         private void EmojiType_PointerEntered(object sender, PointerRoutedEventArgs e)
         {
             var type = sender as SegmentedItem;

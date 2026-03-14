@@ -8,14 +8,7 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d">
 
-    <Grid Width="300" Height="Auto" Padding="12"  BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1" CornerRadius="4" ToolTipService.ToolTip="{x:Bind Title, Mode=OneWay}">
-        <Grid.Background>
-            <LinearGradientBrush StartPoint="0,1" EndPoint="1, 0">
-                <GradientStop Offset="0" Color="#E6F0FC" />
-                <GradientStop Offset="0.4" Color="#E6F0FC" />
-                <GradientStop Offset="1" Color="#F0F0F7" />
-            </LinearGradientBrush>
-        </Grid.Background>
+    <Grid Width="300" Height="Auto" Padding="12"  BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" Background="{ThemeResource CardGradient1Brush}" BorderThickness="1" CornerRadius="4" ToolTipService.ToolTip="{x:Bind Title, Mode=OneWay}">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>

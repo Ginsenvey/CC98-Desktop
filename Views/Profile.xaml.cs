@@ -14,6 +14,9 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Net;
+using System.Net.Http;
+using System.Text;
 using System.Threading.Tasks;
 using Windows.ApplicationModel.DataTransfer;
 using Windows.Storage;
@@ -59,22 +62,33 @@ namespace CC98
         }
         private async void SignIn()
         {
-            string SignInResult = await RequestSender.SignIn();
-            if(SignInResult=="0")
-            {
-                SignStatus.Text = "签到失败";
-                SignStatusIcon.IconVariant = IconVariant.Regular;
-            }
-            else if (SignInResult == "1")
+            string url = ApiEndpoints.User.SignIn();
+            var content = new StringContent("", Encoding.UTF8, "application/json");
+            var result = await RequestSender.Submit<string>(url, content);
+            if (result.IsSuccess)
             {
                 SignStatus.Text = "签到中";
                 SignStatusIcon.IconVariant = IconVariant.Filled;
+                return;
             }
-            else
+            if (result.StatusCode == (int)HttpStatusCode.BadRequest)
             {
-                SignStatus.Text = "已签到";
-                SignStatusIcon.IconVariant = IconVariant.Filled;
+                var info = result.Data;
+                if (info == null)
+                {
+                    SignStatus.Text = "签到失败";
+                    SignStatusIcon.IconVariant = IconVariant.Regular;
+                    return;
+                }
+                if (info == "has_signed_in_today")
+                {
+                    SignStatus.Text = "已签到";
+                    SignStatusIcon.IconVariant = IconVariant.Filled;
+                    return;
+                }
             }
+            SignStatus.Text = "签到失败";
+            SignStatusIcon.IconVariant = IconVariant.Regular;
         }
         //用户个人页面检查跳转参数
         private async Task LoadProfile()

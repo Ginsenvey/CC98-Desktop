@@ -1,10 +1,12 @@
 ﻿using CC98.Kernel;
 using CommunityToolkit.Mvvm.ComponentModel;
+using Microsoft.Extensions.Logging.Abstractions;
 using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
+using static CC98.Services.AppLog;
 
 namespace CC98.Objects;
 /// <summary>
@@ -799,3 +801,10 @@ public class PostTag
     public int Id { get; set; }
 }
 
+public class ExportLog
+{
+    public string AppName { get; set; } = "";
+    public DateTime ExportTime { get; set; }
+    public int LogCount { get; set; }
+    public List<LogEntry> Logs { get; set; } = [];
+}

@@ -51,6 +51,7 @@ namespace CC98.Objects;
 [JsonSerializable(typeof(BasicTopicInfo))]
 [JsonSerializable(typeof(BoardInfo))]
 [JsonSerializable(typeof(SectionInfo))]
+[JsonSerializable(typeof(ExportLog))]
 // 常见 ApiResponse 泛型特化（按项目中常见返回类型预生成）
 [JsonSerializable(typeof(List<int>))] 
 [JsonSerializable(typeof(List<string>))]   
@@ -71,6 +72,7 @@ namespace CC98.Objects;
 [JsonSerializable(typeof(List<Notice>))]
 [JsonSerializable(typeof(List<BasicTopicInfo>))]
 [JsonSerializable(typeof(List<Card>))]
+[JsonSerializable(typeof(List<ExportLog>))]
 internal partial class CC98JsonContext : JsonSerializerContext
 {
 }

@@ -85,7 +85,7 @@ public static class RequestSender
             var json=await res.Content.ReadAsStringAsync();
             return res.IsSuccessStatusCode? 
                 ApiResponse.Success(json): 
-                ApiResponse.Fail(res.ReasonPhrase ?? "请求失败", (int)res.StatusCode);   
+                ApiResponse.Fail((res.ReasonPhrase ?? "响应失败") + ":" + json, (int)res.StatusCode);   
         }
         catch (HttpRequestException ex)
         {
@@ -115,7 +115,7 @@ public static class RequestSender
             var json = await res.Content.ReadAsStringAsync();
             return res.IsSuccessStatusCode ?
                 ApiResponse.Success(json) :
-                ApiResponse.Fail(res.ReasonPhrase ?? "请求失败", (int)res.StatusCode);
+                ApiResponse.Fail((res.ReasonPhrase ?? "响应失败") + ":" + json, (int)res.StatusCode);
         }
         catch (HttpRequestException ex)
         {
@@ -171,7 +171,8 @@ public static class RequestSender
         }
         else
         {
-            return ApiResponse<T>.Fail(res.ReasonPhrase ?? "请求失败", (int)res.StatusCode);
+            string message = (res.ReasonPhrase ?? "响应失败") +":"+ json;
+            return ApiResponse<T>.Fail(message, (int)res.StatusCode);
         }
     }
    
@@ -207,127 +208,8 @@ public static class RequestSender
         }
     }
     
-    public static async Task<string> SignIn()
-    {
-        string SignInUrl = "https://api.cc98.org/me/signin";
-        var request = new HttpRequestMessage(HttpMethod.Post, SignInUrl);
-        var content = new StringContent("", Encoding.UTF8, "application/json");
-        request.Content = content;//按照此格式发送空的post请求并设置请求头
-        var res = await LoginService.vpn.SendAsync(SignInUrl, request);
-        if (res.StatusCode == System.Net.HttpStatusCode.BadRequest)
-        {
-            string restext = await res.Content.ReadAsStringAsync();
-
-            if (restext == "has_signed_in_today")
-            {
-                return "2";
-            }
-            else
-            {
-                return "1";
-            }
-        }
-        else if (res.StatusCode == HttpStatusCode.OK)
-        {
-            return "1";
-        }
-        else
-        {
-            return "0";
-        }
-
-    }
+     
     
-    public static async Task<string> SendPost(string board_id, string content, string title, int content_type, bool notify_poster, int post_type, bool is_anonymous)
-    {
-        string url = "https://api.cc98.org/board/" + board_id + "/topic";
-        var post = new Dictionary<string, object>()
-            {
-                {"clientType",1 },
-                {"content",content },
-                {"contentType",content_type },
-                {"isAnonymous",is_anonymous },
-                {"notifyPoster",notify_poster },
-                {"title",title },
-                {"type",post_type }
-            };
-        string post_text =JsonSerialize.Serialize(post);
-        var request_body = new StringContent(post_text, Encoding.UTF8, "application/json");
-        var r = await LoginService.vpn.PostAsync(url, request_body);
-        return await ValidationHelper.AutoResponse(r);
-    }
-    public static async Task<string> SendReplyToTopic(string replyid, string content, bool isAnonymous, bool notifyAllReplier, int contentType, bool canbe_traced, string parentId)//canbe_traced表明这是一个楼中楼，可以被追踪
-    {
-        string url = "https://api.cc98.org/topic/" + replyid + "/post";
-        var reply = new Dictionary<string, object>();
-        if (canbe_traced)
-        {
-            reply = new Dictionary<string, object>()
-            {
-                {"clientType",1 },
-                {"content",content },
-                {"contentType",contentType },
-                {"isAnonymous",isAnonymous },
-                {"notifyAllReplier",notifyAllReplier },
-                {"title","" },
-                {"parentId",parentId }
-            };
-        }
-        else
-        {
-            reply = new Dictionary<string, object>()
-            {
-                {"clientType",1 },
-                {"content",content },
-                {"contentType",contentType },
-                {"isAnonymous",isAnonymous },
-                {"notifyAllReplier",notifyAllReplier },
-                {"title","" }
-            };
-        }
-        string reply_text = JsonSerialize.Serialize(reply);
-        var request_body = new StringContent(reply_text, Encoding.UTF8, "application/json");
-        try
-        {
-            var r = await LoginService.vpn.PostAsync(url, request_body);
-            if (r.StatusCode == System.Net.HttpStatusCode.OK)
-            {
-                return await r.Content.ReadAsStringAsync();
-            }
-            else
-            {
-                return "101:" + r.StatusCode.ToString();
-            }
-        }
-        catch (Exception ex)
-        {
-            return "400:" + ex.Message;
-        }
-    }
-    public static async Task<bool> EditReply(string replyid, string content, string title, int content_type, bool notifyPoster)
-    {
-        string url = $"https://api.cc98.org/post/{replyid}";
-        var reply = new Dictionary<string, object>()
-            {
-                {"type",0 },
-                {"content",content },
-                {"contentType",content_type },
-                {"notifyPoster",notifyPoster },//常为true
-                {"title",title }
-            };
-        string reply_text = JsonSerialize.Serialize(reply);
-        var request_body = new StringContent(reply_text, Encoding.UTF8, "application/json");
-        try
-        {
-            var r = await LoginService.vpn.PutAsync(url, request_body);
-            return r.IsSuccessStatusCode;
-        }
-        catch
-        {
-            //ValidationHelper.Log("编辑回复失败", $"请求地址：{url}\r\n请求内容：{reply_text}");
-            return false;
-        }
-    }
     public static async Task<string> SendPrivateMsg(int receiver_id, string content)
     {
         string url = "https://api.cc98.org/message";
@@ -399,54 +281,8 @@ public static class ValidationHelper
             await writer.FlushAsync();
         }
     }
-    public static bool IsValidResponse(string response)
-    {
-        if (string.IsNullOrEmpty(response))
-        {
-            return false; // 返回false表示响应内容为空
-        }
-        else
-        {
-            if (response.StartsWith("404:"))
-            {
-                return false; // 返回false表示响应内容包含错误代码
-            }
-            else
-            {
-                return true; // 返回true表示响应内容有效
-            }
-        }
-
-
-
-    }
-    public static async Task<string> AutoResponse(HttpResponseMessage res)
-    {
-        try
-        {
-            if (res.IsSuccessStatusCode)
-            {
-                string Text = await res.Content.ReadAsStringAsync();
-                if (IsValidResponse(Text))
-                {
-                    return Text;
-                }
-                else
-                {
-                    return "404:空返回";
-                }
-            }
-            else
-            {
-                string error = await res.Content.ReadAsStringAsync();
-                return $"404:请求失败，错误内容为{error}";
-            }
-        }
-        catch
-        {
-            return "404:连接出错";
-        }
-    }
+   
+    
     public static string GetValue(ApplicationDataContainer container, string key)
     {
         if (container.Values.TryGetValue(key, out var token))
@@ -516,42 +352,12 @@ public static class ValidationHelper
         }
         return "0";
     }
-    public static string GetPropertyAsString(JsonElement root, string key)
-    {
-        string defaultValue = "0";
-        if (root.TryGetProperty(key, out JsonElement element) &&
-        element.ValueKind != JsonValueKind.Null)
-        {
-            return element.ValueKind == JsonValueKind.String
-                ? element.GetString() ?? defaultValue
-                : defaultValue;
-        }
-        return defaultValue;
-    }
-    public static int GetPropertyAsInt(JsonElement root, string key)
-    {
-        int defaultValue = 0;
-        if (root.TryGetProperty(key, out JsonElement element) &&
-        element.ValueKind != JsonValueKind.Null)
-        {
-            return element.ValueKind == JsonValueKind.Number
-                ? element.GetInt32()
-                : defaultValue;
-        }
-        return defaultValue;
-    }
-    public static bool StringToBool(string input)
-    {
-        if (string.IsNullOrEmpty(input)) return false;
-        if (input != "0") return true;
-        return false;
-    }
+    
 }
 
 
-public static class UBBConverter
+public static class UbbToMd
 {
-
     public static string Convert(string ubbText, bool IsImageVisible, bool escapeMarkdown = false)
     {
         var text = Preprocess(ubbText);

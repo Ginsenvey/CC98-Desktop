@@ -329,7 +329,7 @@
         <SplitView Grid.Row="1" PanePlacement="Left" DisplayMode="Inline" IsPaneOpen="True" x:Name="EditArea" PaneBackground="{ThemeResource CardBackgroundFillColorDefaultBrush}">
             <SplitView.Pane>
                 <ScrollViewer>
-                    <ubb:UbbTextBlock ImageMaxWidth="320"  x:Name="Previewer"/>
+                    <ubb:UbbTextBlock ImageMaxWidth="320" Background="{ThemeResource MarkdownBackgroudBrush}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" x:Name="Previewer"/>
                 </ScrollViewer>
             </SplitView.Pane>
             <SplitView.Content>

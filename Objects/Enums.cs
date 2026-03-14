@@ -33,6 +33,7 @@ public enum EditorMode
     EditMyTopic = 4,
     EditSignatureCode = 5,//编辑签名档
     Chat = 6,//回复私信
+    Vote = 7,//发起投票
 }
 
 /// <summary>
@@ -62,4 +63,16 @@ public enum SearchType
     User,
     Board,
     Guide //使用指南
+}
+
+public enum ContentType
+{
+    UBB=0,
+    Markdown=1
+}
+
+public enum PostType
+{
+    Normal=0,
+    AcademicNotice=1
 }

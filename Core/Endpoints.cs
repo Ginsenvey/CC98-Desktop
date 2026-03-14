@@ -33,6 +33,8 @@ public static class ApiEndpoints
         {
             return isMe ? $"{Base}/me" : $"{Base}/user/{userId}";
         }
+
+        public static string SignIn() => $"{Base}/me/signin";
         /// <summary>
         /// 获取一系列用户的基本信息
         /// </summary>
@@ -77,6 +79,7 @@ public static class ApiEndpoints
         public static string ReactionState(int postId) => $"{Base}/post/{postId}/like";
         public static string React(int postId) => $"{Base}/post/{postId}/like";
         public static string Edit(int postId) => $"{Base}/post/{postId}";
+        
     }
     public static class Board
     {
@@ -92,6 +95,8 @@ public static class ApiEndpoints
         }
 
         public static string EditFocusBoards(int boardId) => $"{Base}/me/custom-board/{boardId}";
+        public static string WebUrl(int boardId) => $"https://www.cc98.org/board/{boardId}";
+        public static string SendNewTopic(int boardId) => $"{Base}/board/{boardId}/topic";
     }
     public static class Topic 
     {

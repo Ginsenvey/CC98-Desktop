@@ -1,4 +1,5 @@
-﻿using CC98.Services;
+﻿using CC98.Objects;
+using CC98.Services;
 using CC98.Services.Extensions;
 using System;
 using System.Collections.Generic;
@@ -168,7 +169,7 @@ public class AppLog
                 Converters = { new BeijingTimeConverter() }
             };
 
-            var exportData = new
+            var exportData = new ExportLog
             {
                 AppName = _appName,
                 ExportTime = GetBeijingTime(),

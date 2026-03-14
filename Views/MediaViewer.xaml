@@ -30,7 +30,7 @@
             <TextBlock Text="CC98 预览"  Margin="10,0,5,0" HorizontalAlignment="Left" VerticalAlignment="Center" FontSize="15" x:Name="de"></TextBlock>
             
         </Grid>
-        <Border Grid.Row="2" Width="100" Height="32" CornerRadius="16" Background="{ThemeResource AcrylicCardBrush}">
+        <Border Grid.Row="2" HorizontalAlignment="Center" MinWidth="80" Height="32" CornerRadius="16" Background="{ThemeResource AcrylicCardBrush}">
             <TextBlock x:Name="Posi" Text="1/1" HorizontalAlignment="Center" VerticalAlignment="Center"/>
         </Border>
         <Grid Grid.Row="1">
@@ -62,7 +62,6 @@
 
             </StackPanel>
             <FlipView x:Name="flipview" Grid.Column="1" ItemsSource="{x:Bind pictures,Mode=OneWay}"  SelectionChanged="FlipView_SelectionChanged">
-
                 <FlipView.ItemTemplate>
                     <DataTemplate x:DataType="x:String">
                         <share:Picture Src="{x:Bind}" Stretch="Uniform" LoadImageCallback="{ThemeResource CustomPortraitLoader}" RenderTransformOrigin="0.5,0.5">

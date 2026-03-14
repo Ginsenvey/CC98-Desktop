@@ -44,6 +44,7 @@ using Windows.Media.AppBroadcasting;
 using Windows.Media.Core;
 using Windows.Media.Playback;
 using Windows.Storage;
+using Windows.System;
 using Windows.UI.Core.Preview;
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -66,6 +67,7 @@ namespace CC98
         public Board()
         {
             this.InitializeComponent();
+            LoadSet();
         }
 
         protected override async void OnNavigatedTo(Microsoft.UI.Xaml.Navigation.NavigationEventArgs e)
@@ -77,7 +79,19 @@ namespace CC98
             await GetData();
             await LoadTopics();
         }
-        
+        private void LoadSet()
+        {
+            var showBigPaper = ValidationHelper.GetValue(Set, "ShowBigPaper");
+            if (showBigPaper== "0")
+            {
+                //赋予默认值：打开
+                Set.Values["ShowBigPaper"] = "1";
+            }
+            if (showBigPaper == "2")
+            {
+                BannerBox.Visibility = Visibility.Collapsed;
+            }
+        }
         private async Task GetData()
         {
             string boardDataUrl = ApiEndpoints.Board.BoardInfo(boardId);
@@ -205,6 +219,68 @@ namespace CC98
         private async void TopicRepeater_ElementPrepared(ItemsRepeater sender, ItemsRepeaterElementPreparedEventArgs args)
         {
             await increment.LoadMore(args.Index,LoadTopics);
+        }
+
+        private async void BoardAction_Click(object sender, RoutedEventArgs e)
+        {
+            var button = sender as AppBarButton;
+            if (button == null) return;
+            var tag= button.Tag as string;
+            if (tag == null) return;
+            switch (tag)
+            {
+                case "browse":
+                    await Launcher.LaunchUriAsync(new Uri(ApiEndpoints.Board.WebUrl(boardId)));
+                    break;
+                case "refresh":
+                    increment.Clear();
+                    topics.Clear();
+                    await GetData();
+                    await LoadTopics();
+                    break;
+                case "pin":
+                    await Pin();
+                    break;
+                case "draft":
+                    var param = new EditorNavigationInfo
+                    {
+                        EditorMode = EditorMode.DraftNewTopic,
+                        BoardId = boardId
+                    };
+                    Frame.Navigate(typeof(UBBEditor), param);
+                    break;
+                case "vote":
+                    var param2 = new EditorNavigationInfo
+                    {
+                        EditorMode = EditorMode.Vote,
+                        BoardId = boardId
+                    };
+                    Frame.Navigate(typeof(UBBEditor), param2);
+                    break;
+            }
+        }
+
+        private async Task Pin()
+        {
+            string url = ApiEndpoints.Board.EditFocusBoards(boardId);
+            var content = new StringContent("", Encoding.UTF8, "application/json");
+            var result = await RequestSender.Put(url, content);
+            if (!result.IsSuccess)
+            {
+                //
+                Flower.Play(FlowStatus.Fail, result.Message);
+                await App.Logger.WriteAsync("Board", "关注版面失败",result.Message);
+                return;
+            }
+            var i = new NavigationItem
+            {
+                IconSymbol = BoardIcon.GetSymbol(boardId, boardData.Name),
+                Name = boardData.Name,
+                IsEditable = true,
+                Tag = boardId.ToString()
+            };
+            Messenger.Instance.AddNavigationItem(i);
+            Flower.Play(FlowStatus.Success, "已关注");
         }
     }
 }

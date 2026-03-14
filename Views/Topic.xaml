@@ -198,7 +198,7 @@
                             <ic:FluentIcon Icon="ArrowSync"></ic:FluentIcon>
                         </MenuFlyoutItem.Icon>
                     </MenuFlyoutItem>
-                    <MenuFlyoutItem Text="分享链接"  Tag="1" Click="TileFlyout_Click">
+                    <MenuFlyoutItem Text="复制链接"  Tag="1" Click="TileFlyout_Click">
                         <MenuFlyoutItem.Icon>
                             <ic:FluentIcon Icon="Share"></ic:FluentIcon>
                         </MenuFlyoutItem.Icon>

@@ -165,6 +165,14 @@ namespace CC98
                     TailVisibility.IsOn = false;//2
                 }
             }
+            var showBigPaper = ValidationHelper.GetValue(Set, "ShowBigPaper");
+            if (showBigPaper == "0")
+            {
+                //赋予默认值：打开
+                showBigPaper = "1";
+                Set.Values["ShowBigPaper"] = "1";
+            }
+            ShowBigPaper.IsOn = showBigPaper == "1";
         }
         public string EffectHistory = "";
         public ApplicationDataContainer Set=ApplicationData.Current.LocalSettings;
@@ -308,38 +316,18 @@ namespace CC98
             if (c != -1)
             {
                 Set.Values["TitlePage"] = (c+1).ToString();
-             
             }
         }
 
         private void IsImageVisible_Toggled(object sender, RoutedEventArgs e)
         {
-            if(IsImageVisible.IsOn)
-            {
-                Set.Values["IsImageVisible"] = 1;
-            }
-            else
-            {
-                Set.Values["IsImageVisible"] = 2;
-            }
+            Set.Values["IsImageVisible"] = IsImageVisible.IsOn?1:2;
         }
 
-        
-
-      
-
-       
 
         private void TailVisibility_Toggled(object sender, RoutedEventArgs e)
         {
-            if (TailVisibility.IsOn)
-            {
-                Set.Values["IsTailVisible"] = 1;
-            }
-            else
-            {
-                Set.Values["IsTailVisible"] = 2;
-            }
+            Set.Values["IsTailVisible"] = TailVisibility.IsOn?1:2;
         }
 
         private async void ExportLog_Click(object sender, RoutedEventArgs e)
@@ -353,6 +341,11 @@ namespace CC98
             {
                 Flower.Play(FlowStatus.Fail, "导出失败");
             }
+        }
+
+        private void ShowBigPaper_Toggled(object sender, RoutedEventArgs e)
+        {
+            Set.Values["ShowBigPaper"] = ShowBigPaper.IsOn?1:2;
         }
     }
     public class Pic

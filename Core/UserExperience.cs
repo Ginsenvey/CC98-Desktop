@@ -1,4 +1,5 @@
 ﻿using CC98.Services;
+using CC98.Services.Extensions;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -47,7 +48,7 @@ public static class CustomEmoji
 
             // 3. 使用 LocalCache 保存
             var result = await LocalCache.SaveJsonAsync(FilePath,
-                JsonSerializer.Serialize(emojiList),
+                JsonSerialize.Serialize(emojiList),
                 createDirectory: false); // 不自动创建目录，因为路径已存在
 
             if (!result.Success)
@@ -77,7 +78,7 @@ public static class CustomEmoji
                 // 检查是否为有效的JSON（替代原来的 "10:" 检查）
                 try
                 {
-                    var emojiList = JsonSerializer.Deserialize<List<string>>(cache.Content);
+                    var emojiList = JsonSerialize.Deserialize<List<string>>(cache.Content);
                     return emojiList ?? new List<string>();
                 }
                 catch (JsonException)
@@ -128,7 +129,7 @@ public static class CustomEmoji
 
                 // 使用 LocalCache 保存更新后的列表
                 var result = await LocalCache.SaveJsonAsync(FilePath,
-                    JsonSerializer.Serialize(emojiList),
+                    JsonSerialize.Serialize(emojiList),
                     createDirectory: false);
 
                 if (!result.Success)
@@ -165,7 +166,7 @@ public static class CustomEmoji
         {
             // 保存空列表
             var result = await LocalCache.SaveJsonAsync(FilePath,
-                JsonSerializer.Serialize(new List<string>()),
+                JsonSerialize.Serialize(new List<string>()),
                 createDirectory: false);
 
             if (!result.Success)
@@ -210,7 +211,7 @@ public static class CustomEmoji
         if (addedCount > 0)
         {
             var result = await LocalCache.SaveJsonAsync(FilePath,
-                JsonSerializer.Serialize(emojiList),
+                JsonSerialize.Serialize(emojiList),
                 createDirectory: false);
 
             if (!result.Success)
@@ -264,7 +265,7 @@ public static class CustomEmoji
             emojiList[index] = newUrl;
 
             var result = await LocalCache.SaveJsonAsync(FilePath,
-                JsonSerializer.Serialize(emojiList),
+                JsonSerialize.Serialize(emojiList),
                 createDirectory: false);
 
             if (!result.Success)

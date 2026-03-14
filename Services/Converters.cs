@@ -20,7 +20,7 @@ public partial class UBBTextConverter : IValueConverter
             string input = value as string ?? string.Empty;
             if (!string.IsNullOrEmpty(input))
             {
-                return UBBConverter.Convert(input, ValidationHelper.GetValue(Set, "IsImageVisible") == "1");
+                return UbbToMd.Convert(input, ValidationHelper.GetValue(Set, "IsImageVisible") == "1");
             }
             else
             {

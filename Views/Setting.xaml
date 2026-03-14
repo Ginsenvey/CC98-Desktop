@@ -149,7 +149,7 @@
                     <tool:SettingsCard.HeaderIcon>
                         <ic:SymbolIcon Symbol="News"></ic:SymbolIcon>
                     </tool:SettingsCard.HeaderIcon>
-                    <ToggleSwitch></ToggleSwitch>
+                    <ToggleSwitch x:Name="ShowBigPaper" Toggled="ShowBigPaper_Toggled"></ToggleSwitch>
                 </tool:SettingsCard>
                 <tool:SettingsCard Header="发帖展示小尾巴" Description="展示客户端平台标识">
                     <tool:SettingsCard.HeaderIcon>

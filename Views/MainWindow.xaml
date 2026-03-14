@@ -120,7 +120,7 @@
                                 </MenuFlyoutItem>
                             </MenuFlyout>
                         </NavigationViewItem.ContextFlyout>
-                        <StackPanel Orientation="Horizontal" >
+                        <StackPanel Orientation="Horizontal" Spacing="5">
                             <ic:SymbolIcon Symbol="{x:Bind IconSymbol}" FontSize="20"  Margin="2,0,10,0"></ic:SymbolIcon>
                             <TextBlock Text="{x:Bind Name}"></TextBlock>
                         </StackPanel>
@@ -129,7 +129,7 @@
                 </DataTemplate>
                 <DataTemplate x:Key="ItemTemplate" x:DataType="local:NavigationItem">
                     <NavigationViewItem  Tag="{x:Bind Tag}" >
-                        <StackPanel Orientation="Horizontal" >
+                        <StackPanel Orientation="Horizontal" Spacing="5">
                             <ic:SymbolIcon Symbol="{x:Bind IconSymbol}" FontSize="20"  Margin="2,0,10,0"></ic:SymbolIcon>
                             <TextBlock Text="{x:Bind Name}" ></TextBlock>
                         </StackPanel>

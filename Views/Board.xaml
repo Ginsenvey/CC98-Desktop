@@ -46,7 +46,7 @@
                     </lab:TokenView>
                 </Grid>
 
-                <Border Padding="10">
+                <Border Padding="10,10,10,0" x:Name="BannerBox">
                     <ubb:UbbTextBlock x:Name="Banner" UbbText="{x:Bind boardData.BigPaper,Mode=OneWay}" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
                 </Border>
 
@@ -60,7 +60,7 @@
                         <ItemsRepeater.ItemTemplate>
                             <DataTemplate x:DataType="obj:SimpleTopicInfo">
                                 <HyperlinkButton HorizontalContentAlignment="Stretch" HorizontalAlignment="Stretch" CornerRadius="0" x:Name="TileContent" DataContext="{x:Bind}" Click="TileContent_Click">
-                                    <Grid Padding="5" ColumnSpacing="8">
+                                    <Grid Padding="0,6,0,6" ColumnSpacing="8">
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="30"></ColumnDefinition>
                                             <ColumnDefinition Width="*"></ColumnDefinition>
@@ -70,15 +70,15 @@
                                         </Grid.ColumnDefinitions>
                                         <ic:SymbolIcon Symbol="ChevronRight" Grid.Column="0" FontSize="14" Foreground="{ThemeResource AccentAAFillColorDefaultBrush}"></ic:SymbolIcon>
                                         <TextBlock Text="{x:Bind Title}" Grid.Column="1" VerticalAlignment="Center" Foreground="{ThemeResource TextFillColorSecondaryBrush}" MaxLines="2"></TextBlock>
-                                        <TextBlock Text="{x:Bind UserName}" FontSize="13" Grid.Column="2" VerticalAlignment="Center" Foreground="{ThemeResource TextFillColorSecondaryBrush}"></TextBlock>
-                                        <StackPanel Grid.Column="3" Orientation="Horizontal" Spacing="5" >
+                                        <TextBlock Text="{x:Bind UserName}" FontSize="12" Grid.Column="2" VerticalAlignment="Center" Foreground="{ThemeResource TextFillColorSecondaryBrush}"></TextBlock>
+                                        <StackPanel Grid.Column="3" Orientation="Horizontal" Spacing="5">
                                             <ic:SymbolIcon Symbol="Chat" FontSize="11"></ic:SymbolIcon>
-                                            <TextBlock Text="{x:Bind ReplyCount}" Grid.Row="2"  VerticalAlignment="Center"  FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}"></TextBlock>
+                                            <TextBlock Text="{x:Bind ReplyCount}" Grid.Row="2"  VerticalAlignment="Center"  FontSize="11" Foreground="{ThemeResource TextFillColorSecondaryBrush}"></TextBlock>
                                         </StackPanel>
 
-                                        <StackPanel Grid.Column="4" Orientation="Horizontal" Spacing="5" >
+                                        <StackPanel Grid.Column="4" Orientation="Horizontal" Spacing="5">
                                             <ic:SymbolIcon Symbol="Fire" FontSize="11"></ic:SymbolIcon>
-                                            <TextBlock Text="{x:Bind HitCount}"  VerticalAlignment="Center" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}"></TextBlock>
+                                            <TextBlock Text="{x:Bind HitCount}"  VerticalAlignment="Center" FontSize="11" Foreground="{ThemeResource TextFillColorSecondaryBrush}"></TextBlock>
                                         </StackPanel>
                                     </Grid>
                                 </HyperlinkButton>
@@ -92,22 +92,27 @@
         </ScrollViewer>
 
         <CommandBar Grid.Row="1">
-            <AppBarButton Label="在浏览器中打开">
+            <AppBarButton Label="刷新" Tag="refresh" Click="BoardAction_Click">
+                <AppBarButton.Icon>
+                    <FontIcon Glyph="&#xE72C;" />
+                </AppBarButton.Icon>
+            </AppBarButton>
+            <AppBarButton Label="在浏览器中打开" Tag="browse" Click="BoardAction_Click">
                 <AppBarButton.Icon>
                     <FontIcon Glyph="&#xEB41;" />
                 </AppBarButton.Icon>
             </AppBarButton>
-            <AppBarButton Label="固定">
+            <AppBarButton Label="关注" Tag="pin" Click="BoardAction_Click">
                 <AppBarButton.Icon>
                     <ic:SymbolIcon Symbol="Pin"></ic:SymbolIcon>
                 </AppBarButton.Icon>
             </AppBarButton>
-            <AppBarButton Label="发投票">
+            <AppBarButton Label="发投票" Tag="vote" Click="BoardAction_Click">
                 <AppBarButton.Icon>
                     <ic:SymbolIcon Symbol="Vote"></ic:SymbolIcon>
                 </AppBarButton.Icon>
             </AppBarButton>
-            <AppBarButton Label="发主题">
+            <AppBarButton Label="发主题" Tag="draft" Click="BoardAction_Click">
                 <AppBarButton.Icon>
                     <ic:SymbolIcon Symbol="Drafts"></ic:SymbolIcon>
                 </AppBarButton.Icon>

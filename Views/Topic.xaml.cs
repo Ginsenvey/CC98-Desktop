@@ -501,7 +501,7 @@ namespace CC98
                 }
                 else if (tag == "1")
                 {
-                    string shareurl = "https://www.cc98.org/topic/" + Set.Values["CurrentTopicId"] as string;
+                    string shareurl = $"https://www.cc98.org/topic/{topicId}";
                     var datapackage = new DataPackage();
                     datapackage.SetText(shareurl);
                     Clipboard.SetContent(datapackage);
@@ -594,7 +594,7 @@ namespace CC98
                     break;
                 case "MD":
                     var _pack = new DataPackage();
-                    _pack.SetText(UBBConverter.Convert(reply.Content, true));
+                    _pack.SetText(UbbToMd.Convert(reply.Content, true));
                     Clipboard.SetContent(_pack);
                     Flower.Play("\uE930", "已复制为Markdown文本");
                     break;
@@ -620,12 +620,13 @@ namespace CC98
                 case "EDIT":
                     var _param = new EditorNavigationInfo
                     {
-                        EditorMode = reply.Floor==0?EditorMode.EditMyTopic:EditorMode.EditMyPost,
+                        EditorMode = reply.Floor==1?EditorMode.EditMyTopic:EditorMode.EditMyPost,
                         TopicId = topicId,
                         BaseText = reply.Content,
                         PostId = reply.Id,
                         HintText = topicInfo.Title,
-                        Floor=reply.Floor
+                        Floor=reply.Floor,
+                        ContentType=reply.ContentType
                     };
                     Frame.Navigate(typeof(UBBEditor), _param);
                     break;
