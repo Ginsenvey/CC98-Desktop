@@ -808,3 +808,30 @@ public class ExportLog
     public int LogCount { get; set; }
     public List<LogEntry> Logs { get; set; } = [];
 }
+
+public class RatingReason
+{
+    public bool Enabled { get; set; }
+    public string Reason { get; set; } = "";
+    public int Id { get; set; }
+    //加风评为1，扣风评为2.
+    public int Type { get; set; } 
+
+}
+public class Rating
+{
+    public int ReasonId { get; set; }
+    public int Type { get; set; }
+}
+
+public class WealthTransferMessage
+{
+    public int Wealth {  get; set; }
+    public List<string> UserNames { get; set; } = [];
+    public string Reason { get; set; } = "";
+}
+
+public class BrowsingRecord
+{
+    public List<SimpleTopicInfo> Data { get; set; } = [];
+}

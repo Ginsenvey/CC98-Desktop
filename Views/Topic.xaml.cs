@@ -108,12 +108,12 @@ namespace CC98
             var favoritesJson = ValidationHelper.GetValue(Set, "Favorites");
             if (favoritesJson == "0")
             {
-                Flower.Play("\uEA39", "收藏夹未缓存");
+                Flower.Play(FlowStatus.Fail, "收藏夹未缓存");
             }
             var favoritesList =JsonSerialize.Deserialize<List<Favorites>>(favoritesJson);
             if (favoritesList == null)
             {
-                Flower.Play("\uEA39", "解析收藏夹缓存出错");
+                Flower.Play(FlowStatus.Fail, "解析收藏夹缓存出错");
                 return;
             }
             foreach (var favorites in favoritesList)
@@ -126,7 +126,7 @@ namespace CC98
                 }
                 catch (Exception ex)
                 {
-                    Flower.Play("\uEA39", ex.Message);
+                    Flower.Play(FlowStatus.Fail, ex.Message);
                 }
             }
         }
@@ -441,7 +441,7 @@ namespace CC98
                                     fileStream = new FileStream(DownloadLocation, FileMode.Create, FileAccess.Write, FileShare.None))
                                     {
                                         await contentStream.CopyToAsync(fileStream);
-                                        Flower.Play("\uE930", "下载文件成功");
+                                        Flower.Play(FlowStatus.Success, "下载文件成功");
                                     }
                                 }
                                 else
@@ -462,14 +462,14 @@ namespace CC98
                         var _datapackage = new DataPackage();
                         _datapackage.SetText(url);
                         Clipboard.SetContent(_datapackage);
-                        Flower.Play("\uE930", "已复制Bili外链");
+                        Flower.Play(FlowStatus.Success, "已复制Bili外链");
                     }
                     break ;
                 default://自动复制到用户剪切板
                     var datapackage = new DataPackage();
                     datapackage.SetText(url);
                     Clipboard.SetContent(datapackage);
-                    Flower.Play("\uE930", "已复制外部链接");
+                    Flower.Play(FlowStatus.Success, "已复制外部链接");
                     break;
             }
 
@@ -490,44 +490,38 @@ namespace CC98
         private async void TileFlyout_Click(object sender, RoutedEventArgs e)
         {
             var m = sender as MenuFlyoutItem;
-            if (m != null)
+            if (m == null) return;
+            var tag = m.Tag as string;
+            if (tag == "0")
             {
-                var tag = m.Tag as string;
-                if (tag == "0")
-                {
-                    await LoadTopicInfo();
-                    await LoadReply();
-                    Flower.Play("\uE930", "刷新成功");
-                }
-                else if (tag == "1")
-                {
-                    string shareurl = $"https://www.cc98.org/topic/{topicId}";
-                    var datapackage = new DataPackage();
-                    datapackage.SetText(shareurl);
-                    Clipboard.SetContent(datapackage);
-                    Flower.Play("\uE930", "已复制帖子链接");
-                }
-                else if (tag == "2")
-                {
-
-                }
-                else if (tag == "3")
-                {
-                    string _Visibility = ValidationHelper.GetValue(Set, "IsImageVisible");
-                    if (_Visibility == "1")
-                    {
-                        Set.Values["IsImageVisible"] = "2"; ;
-                    }
-                    else
-                    {
-                        Set.Values["IsImageVisible"] = "1";
-                    }
-                    await LoadReply();
-                }
+                await LoadTopicInfo();
+                await LoadReply();
+                Flower.Play(FlowStatus.Success, "刷新成功");
+            }
+            else if (tag == "1")
+            {
+                string shareurl = $"https://www.cc98.org/topic/{topicId}";
+                var datapackage = new DataPackage();
+                datapackage.SetText(shareurl);
+                Clipboard.SetContent(datapackage);
+                Flower.Play(FlowStatus.Success, "已复制帖子链接");
+            }
+            else if (tag == "2")
+            {
 
             }
-            else
+            else if (tag == "3")
             {
+                string _Visibility = ValidationHelper.GetValue(Set, "IsImageVisible");
+                if (_Visibility == "1")
+                {
+                    Set.Values["IsImageVisible"] = "2"; ;
+                }
+                else
+                {
+                    Set.Values["IsImageVisible"] = "1";
+                }
+                await LoadReply();
             }
 
         }
@@ -536,19 +530,19 @@ namespace CC98
         private async void CollectionItem_Click(object sender, RoutedEventArgs e)
         {
             var m = sender as MenuFlyoutItem;
-            var t = m?.Tag as string;
-            if (t == null) return;
-            var url = ApiEndpoints.Topic.AddIntoFavorites(topicId, int.Parse(t));
+            if (m == null) return;
+            var t = m.Tag.ToInt();
+            var url = ApiEndpoints.Topic.AddIntoFavorites(topicId, t);
             var content = new StringContent("", Encoding.UTF8, "application/json");
             var result=await RequestSender.Put(url, content);
             if (!result.IsSuccess)
             {
                 //
+                Flower.Play(FlowStatus.Fail, result.Message);
                 return;
             }
-            topicInfo.IsFavorite = true;
             await LoadTopicInfo();
-            Flower.Play("\uE930", "已收藏");
+            Flower.Play(FlowStatus.Success, "已收藏");
         }
 
         
@@ -590,13 +584,20 @@ namespace CC98
                     var pack = new DataPackage();
                     pack.SetText(reply.Content);
                     Clipboard.SetContent(pack);
-                    Flower.Play("\uE930", "已复制为UBB代码");
+                    Flower.Play(FlowStatus.Success, "已复制为原代码");
                     break;
                 case "MD":
                     var _pack = new DataPackage();
-                    _pack.SetText(UbbToMd.Convert(reply.Content, true));
+                    if (reply.ContentType == (int)ContentType.UBB)
+                    {
+                        _pack.SetText(UbbToMd.Convert(reply.Content, true));
+                    }
+                    else
+                    {
+                        _pack.SetText(reply.Content);
+                    }
                     Clipboard.SetContent(_pack);
-                    Flower.Play("\uE930", "已复制为Markdown文本");
+                    Flower.Play(FlowStatus.Success, "已复制为Markdown文本");
                     break;
                 case "QUOTE":
                     if (reply.Content != null)
@@ -778,7 +779,7 @@ namespace CC98
                 var r = await RequestSender.SendVoteResult(ValidationHelper.GetValue(Set, "CurrentTopicId"), list);
                 if (r == "1")
                 {
-                    Flower.Play("\uE930", "投票完成");
+                    Flower.Play(FlowStatus.Success, "投票完成");
                     await InitializeVote();
                 }
                 else

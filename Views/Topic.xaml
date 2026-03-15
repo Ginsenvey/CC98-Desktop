@@ -84,6 +84,11 @@
                                     <ic:FluentIcon Icon="GiftOpen"></ic:FluentIcon>
                                 </MenuFlyoutItem.Icon>
                             </MenuFlyoutItem>
+                            <MenuFlyoutItem  Text="风评" Click="PostOperation_Click" Tag="RATE" DataContext="{x:Bind}" Visibility="{x:Bind IsMe,Converter={StaticResource BoolToVisibilityReConverter}}">
+                                <MenuFlyoutItem.Icon>
+                                    <FontIcon Glyph="&#xF6B8;" />
+                                </MenuFlyoutItem.Icon>
+                            </MenuFlyoutItem>
                             <MenuFlyoutItem Text="复制为原代码" Click="PostOperation_Click" Tag="UBB" DataContext="{x:Bind}">
                                 <MenuFlyoutItem.Icon>
                                     <ic:FluentIcon Icon="Code"></ic:FluentIcon>

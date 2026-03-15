@@ -237,6 +237,7 @@ namespace CC98
                     topics.Clear();
                     await GetData();
                     await LoadTopics();
+                    Flower.Play(FlowStatus.Success, "Ë¢ÐÂ³É¹¦");
                     break;
                 case "pin":
                     await Pin();

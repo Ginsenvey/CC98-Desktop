@@ -357,8 +357,8 @@ namespace CC98
             }
             else
             {
-                var window = new MainWindow();
-                window.Activate();
+                App.Current.m_window= new MainWindow();
+                App.Current.m_window .Activate();
                 this.DispatcherQueue.TryEnqueue(() =>
                 {
                     this.Close();

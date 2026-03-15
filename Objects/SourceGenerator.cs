@@ -10,7 +10,7 @@ using static IndexDataService;
 
 namespace CC98.Objects;
 
-// 配置 System.Text.Json 的源生成器，提前为常用类型生成序列化器/反序列化器，保留与运行时选项一致的大小写不敏感行为。
+// 配置 System.Text.Json 的源生成器，提前为常用类型生成序列化器/反序列化器，大小写不敏感行为。
 [JsonSourceGenerationOptions(PropertyNameCaseInsensitive = true)]
 [JsonSerializable(typeof(bool))]  
 [JsonSerializable(typeof(int))]    
@@ -52,7 +52,11 @@ namespace CC98.Objects;
 [JsonSerializable(typeof(BoardInfo))]
 [JsonSerializable(typeof(SectionInfo))]
 [JsonSerializable(typeof(ExportLog))]
-// 常见 ApiResponse 泛型特化（按项目中常见返回类型预生成）
+[JsonSerializable(typeof(Rating))]
+[JsonSerializable(typeof(RatingReason))]
+[JsonSerializable(typeof(WealthTransferMessage))]
+[JsonSerializable(typeof(BrowsingRecord))]
+// 常见 ApiResponse 泛型特化
 [JsonSerializable(typeof(List<int>))] 
 [JsonSerializable(typeof(List<string>))]   
 [JsonSerializable(typeof(List<Reply>))]
@@ -73,6 +77,7 @@ namespace CC98.Objects;
 [JsonSerializable(typeof(List<BasicTopicInfo>))]
 [JsonSerializable(typeof(List<Card>))]
 [JsonSerializable(typeof(List<ExportLog>))]
+[JsonSerializable(typeof(List<RatingReason>))]
 internal partial class CC98JsonContext : JsonSerializerContext
 {
 }

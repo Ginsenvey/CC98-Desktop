@@ -1,4 +1,5 @@
-﻿using System.Data;
+﻿using Microsoft.Security.Authentication.OAuth;
+using System.Data;
 using System.Text.RegularExpressions;
 using static CC98.Kernel.ApiScope.ApiEndpoints;
 
@@ -70,6 +71,10 @@ public static class ApiEndpoints
         public static string UnreadMessage() => $"{Base}/me/unread-count";
         public static string SystemNotice(string typeName,int start) => $"{Base}/notification/{typeName}?from={start}&size=10";
         public static string EditFriends(int userId) => $"{Base}/me/followee/{userId}";
+
+        public static string TransferWealth() => $"{Base}/me/transfer-wealth";
+        public static string EnableBrowseHistory(bool value) => $"{Base}/me/browsing-history?enabled={value.ToString().ToLower()}";
+        public static string BrowseHistory(int start) => $"{Base}/me/browsing-record?from={start}&size=11";
     }
     public static class Post
     {
@@ -79,6 +84,8 @@ public static class ApiEndpoints
         public static string ReactionState(int postId) => $"{Base}/post/{postId}/like";
         public static string React(int postId) => $"{Base}/post/{postId}/like";
         public static string Edit(int postId) => $"{Base}/post/{postId}";
+        public static string Rate(int postId) => $"{Base}/post/{postId}/rating-v2";
+        public static string RateReason(int type) => $"{Base}/post/rating-reason?type={type}";
         
     }
     public static class Board

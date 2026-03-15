@@ -91,28 +91,28 @@
             </StackPanel>
         </ScrollViewer>
 
-        <CommandBar Grid.Row="1">
-            <AppBarButton Label="刷新" Tag="refresh" Click="BoardAction_Click">
+        <CommandBar Grid.Row="1" Background="{ThemeResource CardGradient1Brush}">
+            <AppBarButton Label="刷新" Tag="refresh" Click="BoardAction_Click" ToolTipService.ToolTip="刷新">
                 <AppBarButton.Icon>
                     <FontIcon Glyph="&#xE72C;" />
                 </AppBarButton.Icon>
             </AppBarButton>
-            <AppBarButton Label="在浏览器中打开" Tag="browse" Click="BoardAction_Click">
+            <AppBarButton Label="在浏览器中打开" Tag="browse" Click="BoardAction_Click" ToolTipService.ToolTip="在浏览器中打开">
                 <AppBarButton.Icon>
                     <FontIcon Glyph="&#xEB41;" />
                 </AppBarButton.Icon>
             </AppBarButton>
-            <AppBarButton Label="关注" Tag="pin" Click="BoardAction_Click">
+            <AppBarButton Label="关注" Tag="pin" Click="BoardAction_Click" ToolTipService.ToolTip="关注">
                 <AppBarButton.Icon>
                     <ic:SymbolIcon Symbol="Pin"></ic:SymbolIcon>
                 </AppBarButton.Icon>
             </AppBarButton>
-            <AppBarButton Label="发投票" Tag="vote" Click="BoardAction_Click">
+            <AppBarButton Label="发投票" Tag="vote" Click="BoardAction_Click" ToolTipService.ToolTip="发投票">
                 <AppBarButton.Icon>
                     <ic:SymbolIcon Symbol="Vote"></ic:SymbolIcon>
                 </AppBarButton.Icon>
             </AppBarButton>
-            <AppBarButton Label="发主题" Tag="draft" Click="BoardAction_Click">
+            <AppBarButton Label="发主题" Tag="draft" Click="BoardAction_Click" ToolTipService.ToolTip="发主题">
                 <AppBarButton.Icon>
                     <ic:SymbolIcon Symbol="Drafts"></ic:SymbolIcon>
                 </AppBarButton.Icon>
