@@ -69,6 +69,7 @@ public class BoldRenderStrategy : IRenderStrategy
     public void Render(UbbNode node, RenderContext context)
     {
         var bold = new Bold();
+        bold.FontFamily = (FontFamily)context.Properties["BoldFontFamily"];
         context.BeginInlineContainer(bold);
         foreach (var child in node.Children)
         {
@@ -215,6 +216,7 @@ public class UrlRenderStrategy : IRenderStrategy
             // 设置样式
             hyperlink.Foreground = new SolidColorBrush(Colors.LightSeaGreen);
             hyperlink.TextDecorations = TextDecorations.Underline;
+            
             // 点击事件
             hyperlink.Click += (sender, e) =>
             {

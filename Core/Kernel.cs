@@ -728,39 +728,7 @@ public static class LinkAnalyzer
                 }
                 return new KeyValuePair<string, string>("null", link);
             }
-            else if (link.Contains("file"))
-            {
-                string ext = Path.GetExtension(link)?.TrimStart('.').ToLowerInvariant();
-
-                HashSet<string> picformats = new() { "jpg", "jpeg", "png", "gif", "webp" };
-                HashSet<string> audioformats = new() { "mp3", "wav", "m4a", "ogg", "flac" };
-                HashSet<string> videofromats = new() { "mp4", "avi", "mkv", "mov", "wmv" };
-
-                if (!string.IsNullOrEmpty(ext))
-                {
-                    if (picformats.Contains(ext))
-                    {
-                        return new KeyValuePair<string, string>("file", "image");
-                    }
-                    else if (audioformats.Contains(ext))
-                    {
-                        return new KeyValuePair<string, string>("file", "audio");
-                    }
-                    else if (videofromats.Contains(ext))
-                    {
-                        return new KeyValuePair<string, string>("file", "video");
-                    }
-                    else
-                    {
-                        return new KeyValuePair<string, string>("file", "doc");
-                    }
-                }
-                else
-                {
-                    return new KeyValuePair<string, string>("null", link);
-                }
-
-            }
+            
             else if (link.Contains("https://www.bilibili.com/video"))
             {
                 return new KeyValuePair<string, string>("backlink", "bili");

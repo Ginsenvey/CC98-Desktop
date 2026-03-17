@@ -93,13 +93,18 @@ public partial class TopicInfo:ObservableObject
         get => field;
         set => SetProperty(ref field, value);
     }
-    [JsonPropertyName("mediaContent")]
+    
     public MediaContent MediaContent
     {
         get => field ?? new MediaContent();
         set => SetProperty(ref field, value);
     }
-
+    [JsonIgnore]
+    public string PortraitUrl
+    {
+        get=> field ?? string.Empty;
+        set => SetProperty(ref field, value);
+    }
     
 }
 

@@ -59,16 +59,50 @@ namespace CC98
         public Topic()
         {
             this.InitializeComponent();
+            var instanceId = Guid.NewGuid().ToString().Substring(0, 8);
+            this.Tag = instanceId;
+            System.Diagnostics.Debug.WriteLine($"Topic实例创建: {instanceId}");
             LoadSet();
             LoadFavorites();
+            this.Unloaded += Topic_Unloaded; 
         }
 
+        private void Topic_Unloaded(object sender, RoutedEventArgs e)
+        {
+            if (Pager != null)
+            {
+                Pager.SelectedIndexChanged -= Pager_SelectedIndexChanged;
+            }
+        }
 
         protected override void OnNavigatedFrom(NavigationEventArgs e)
         {
             //释放资源
             base.OnNavigatedFrom(e);   
             replies.Clear();
+            foreach (var item in CollectionMenu.Items.OfType<MenuFlyoutItem>())
+            {
+                item.Click -= CollectionItem_Click;  // 取消订阅
+            }
+            CollectionMenu.Items.Clear();
+            if (Pager != null)
+            {
+                Pager.SelectedIndexChanged -= Pager_SelectedIndexChanged;
+            }
+            if (VotePanel != null)
+            {
+                VotePanel.IsOpen = false;
+                VotePanel.Target = null;
+                VotePanel.Content = null;
+            }
+
+            if (ProfileViewer != null)
+            {
+                ProfileViewer.IsOpen = false;
+                ProfileViewer.Target = null;
+                ProfileViewer.Content = null;
+            }
+            
         }
         protected override async void OnNavigatedTo(Microsoft.UI.Xaml.Navigation.NavigationEventArgs e)
         {
@@ -138,7 +172,6 @@ namespace CC98
             int page = floor / 10;
             int sort = floor % 10;
             int currentPage = Pager.SelectedPageIndex;
-
             // 情况1：目标就在当前页
             if (currentPage == page)
             {
@@ -348,8 +381,59 @@ namespace CC98
            
         }
 
-        
-        
+        private async void UbbTextBlock_MediaClicked(object sender, MediaClickEventArgs e)
+        {
+            de.Text = $"链接：{e.Source}，类型：{e.MediaType}";
+            switch (e.MediaType)
+            {
+                case MediaType.Image:
+                    var u = sender as UbbTextBlock;
+                    if (u == null) return;
+                    string ubb = u.UbbText;
+                    var doc = Parser.Parse(ubb);
+                    if (doc == null) return;
+                    var list = new List<string>();
+                    var nodes = doc.Root.GetDescendantsByType(UbbNodeType.Image);
+                    foreach (var node in nodes)
+                    {
+                        list.Add(ExtractImageUrl(node));
+                    }
+                    int anchor = list.IndexOf(e.Source);
+                    var info = new ViewerNavigationInfo
+                    {
+                        Type = MediaType.Image,
+                        Urls = list,
+                        CurrentIndex = anchor
+                    };
+                    var viewer = new MediaViewer(info);
+                    viewer.Activate();
+                    break;
+                case MediaType.Video:
+                    var vinfo = new ViewerNavigationInfo
+                    {
+                        Type = MediaType.Video,
+                        Urls = new List<string> { e.Source }
+                    };
+                    Frame.Navigate(typeof(MediaViewer), vinfo);
+                    break;
+                case MediaType.Link:
+                    await HandleLink(e.Source);
+                    break;
+            }
+        }
+
+        private async Task HandleLink(string url)
+        {
+            Match match = Regex.Match(url, @"/topic/(\d{7})/(\d+)#(\d+)");
+            if (match.Success)
+            {
+                int before=Convert.ToInt32(match.Groups[2].Value);
+                int after=Convert.ToInt32((match.Groups[3].Value));
+                int floor=10*(before-1)+after;
+                isJumping = true;
+                await TP(floor);
+            }
+        }
         private async void MarkdownTextBlock_LinkClicked(object sender)
         {
             var url = "";
@@ -605,7 +689,7 @@ namespace CC98
                         int floor = reply.Floor;
                         int page = 1 + floor / 10;
                         int location = floor % 10;
-                        string header = $"[b]以下是引用{floor}楼：用户{reply.UserName}在{reply.Time}的发言：[url=/topic/{ValidationHelper.GetValue(Set, "CurrentTopicId")}/{page}#{location}]>>查看原帖<<[/url][/b]\r\n";
+                        string header = $"[b]以下是引用{floor}楼：用户{reply.UserName}在{reply.Time}的发言：[url=/topic/{floor}/{page}#{location}]>>查看原帖<<[/url][/b]\r\n";
                         var param = new EditorNavigationInfo
                         {
                             EditorMode = EditorMode.ReplyToPost,
@@ -825,43 +909,7 @@ namespace CC98
 
         
 
-        private void UbbTextBlock_MediaClicked(object sender, MediaClickEventArgs e)
-        {
-            de.Text = $"链接：{e.Source}，类型：{e.MediaType}";
-            switch (e.MediaType)
-            {
-                case MediaType.Image:
-                    var u=sender as UbbTextBlock;
-                    if (u == null) return;
-                    string ubb = u.UbbText;
-                    var doc= Parser.Parse(ubb);
-                    if (doc == null) return;
-                    var list=new List<string>();
-                    var nodes = doc.Root.GetDescendantsByType(UbbNodeType.Image);
-                    foreach(var node in nodes)
-                    {
-                        list.Add(ExtractImageUrl(node));
-                    }
-                    int anchor = list.IndexOf(e.Source);
-                    var info = new ViewerNavigationInfo
-                    {
-                        Type = "image",
-                        Urls = list,
-                        CurrentIndex=anchor
-                    };
-                    var viewer=new MediaViewer(info);
-                    viewer.Activate();
-                    break;
-                case MediaType.Video:
-                    var vinfo = new ViewerNavigationInfo
-                    {
-                        Type = "video",
-                        Urls = new List<string> { e.Source }
-                    };
-                    Frame.Navigate(typeof(MediaViewer), vinfo);
-                    break;
-            }
-        }
+        
         private string ExtractImageUrl(UbbNode node)
         {
             string src = "";
@@ -883,6 +931,12 @@ namespace CC98
                 }
             }
             return src;
+        }
+
+        private void ProfileViewer_Closed(TeachingTip sender, TeachingTipClosedEventArgs args)
+        {
+            ProfileViewer.Target = null;  // 关键：清理 Target 引用
+            ProfileViewer.Tag = null;
         }
     }
 }

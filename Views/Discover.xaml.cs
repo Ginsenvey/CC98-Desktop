@@ -4,6 +4,7 @@ using CC98.Kernel;
 using CC98.Kernel.ApiScope;
 using CC98.Objects;
 using CC98.Services.Extensions;
+using CC98.Share.Controls.Primitives;
 using DevWinUI;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -11,6 +12,7 @@ using Microsoft.UI.Xaml.Controls.Primitives;
 using Microsoft.UI.Xaml.Data;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
+using Microsoft.UI.Xaml.Media.Animation;
 using Microsoft.UI.Xaml.Media.Imaging;
 using Microsoft.UI.Xaml.Navigation;
 using System;
@@ -19,8 +21,10 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
+using System.Net.WebSockets;
 using System.Runtime.InteropServices.WindowsRuntime;
 using System.Threading.Tasks;
 using Windows.ApplicationModel.DataTransfer;
@@ -40,27 +44,72 @@ namespace CC98
         public ApplicationDataContainer Set=ApplicationData.Current.LocalSettings;
         public ObservableCollection<TopicInfo> topics=new();
         public ObservableCollection<SimpleTopicInfo> randomTopics = new();
-        public int currentPage = 0;
-        public int PageSize = 20;
+        public Increment increment = new(20);
         public Discover()
         {
             this.InitializeComponent();
-            Set = ApplicationData.Current.LocalSettings;
-            GetNewTopic();
-            GetRandomTile();
+            SizeChanged += Discover_SizeChanged;
+        }
+
+        private void Discover_SizeChanged(object sender, SizeChangedEventArgs e)
+        {
+            var size = e.NewSize;
+            bool isWidthEnough = size.Width > 800;
+            RefRandomTiles.Visibility = isWidthEnough ? Visibility.Visible : Visibility.Collapsed;
+            RandomTopicViewer.Visibility = isWidthEnough ? Visibility.Visible : Visibility.Collapsed;
+            Grid.SetColumnSpan(NewTopicViewer, isWidthEnough ? 1 : 2);
+        }
+
+        protected override async void OnNavigatedTo(NavigationEventArgs e)
+        {
+            base.OnNavigatedTo(e);
+            await GetNewTopic();
+            await GetRandomTile();
+        }
+
+        protected override void OnNavigatedFrom(NavigationEventArgs e)
+        {
+            base.OnNavigatedFrom(e);
+            SizeChanged-= Discover_SizeChanged;
         }
         
         private async Task<bool> GetNewTopic()
         {
-            string newTopicUrl = ApiEndpoints.Topic.NewTopicList(currentPage*PageSize);
+            string newTopicUrl = ApiEndpoints.Topic.NewTopicList(increment.startIndex);
             var newTopicResult = await RequestSender.Fetch<List<TopicInfo>>(newTopicUrl);
             if (!newTopicResult.IsSuccess || newTopicResult.Data == null)
             {
-                Flower.Play(FlowStatus.Fail, "加载新帖失败");
+                //忽略加载过快报错
+                if (newTopicResult.StatusCode == (int)HttpStatusCode.Forbidden) return false;
+                Flower.Play(FlowStatus.Fail,newTopicResult.Message);
                 await App.Logger.WriteAsync("Discover", "加载新帖失败", newTopicResult.Message);
                 return false;
             }
             var data= newTopicResult.Data;
+            increment.hasMore = data.Count == increment.pageSize;
+            var param = string.Join("&", data.Where(x => !x.IsAnonymous && x.UserId.HasValue).Select(x => $"id={x.UserId}").ToHashSet());
+            string userInfoUrl = ApiEndpoints.User.BasicUserInfoList(param);
+            var userInfoResult = await RequestSender.Fetch<List<BasicUserInfo>>(userInfoUrl);
+            if (!userInfoResult.IsSuccess || userInfoResult.Data == null)
+            {
+                //报错
+                Flower.Play(FlowStatus.Fail, "获取用户头像出错");
+            }
+            var userInfoList = userInfoResult.Data;
+            foreach(var topic in data)
+            {
+                if (topic.IsAnonymous)
+                {
+                    topic.PortraitUrl = "ms-appx:///Assets/hide.gif";
+                    //跳过
+                    continue;
+                }
+                var user = userInfoList?.First(x => x.Id == topic.UserId);
+                if (user != null)
+                {
+                    topic.PortraitUrl = user.PortraitUrl;
+                }
+            }
             topics.AddRange(data);   
             return true;
         }
@@ -86,59 +135,9 @@ namespace CC98
 
         
 
-        private void Image_Tapped(object sender, TappedRoutedEventArgs e)
-        {
-            var ImageFrame = sender as SmartImage;
-            if (ImageFrame != null)
-            {
-                string url = ImageFrame.Tag.ToString();
-                var param = new ViewerNavigationInfo
-                {
-                    Type = "image",
-                    Urls = new List<string> { url }
-                };
-                var picviewer = new MediaViewer(param);
-                picviewer.Activate();
-            }
-        }
-        public int current = 0;
+       
 
-        private async void NaviBar_Click(object sender, RoutedEventArgs e)
-        {
-            var b = sender as Button;
-            if (b != null)
-            {
-                string tag=b.Tag.ToString();
-                if (tag == "Back")
-                {
-                    if (current > 0)
-                    {
-                        current -= 20;
-                        if (!await GetNewTopic())
-                        {
-                            current += 20;
-                        }
-                        
-                    }
-                    else
-                    {
-                        current = 0;
-                        Flower.Play("\uE946", "已到达最新页面");
-                    }
-                }
-                else if (tag == "Forward")
-                {
-                    current += 20;
-                    if (!await GetNewTopic())
-                    {
-                        current -= 20;
-                    }
-                    
-                }
-                PageIndex.Text = "第 " + (current / 20 + 1).ToString() + " 页";
-                NewTopicViewer.ScrollToVerticalOffset(0);
-            }
-        }
+        
 
         private void RandomPost_Click(object sender, RoutedEventArgs e)
         {
@@ -154,40 +153,66 @@ namespace CC98
             }
         }
 
-        private void MainText_Click(object sender, RoutedEventArgs e)
+     
+
+   
+
+        private async void ItemsRepeater_ElementPrepared(ItemsRepeater sender, ItemsRepeaterElementPreparedEventArgs args)
         {
-            var h = sender as HyperlinkButton;
+            await increment.LoadMore(args.Index, GetNewTopic);
+        }
+
+       
+
+        private void ContentCard_PointerEntered(object sender, PointerRoutedEventArgs e)
+        {
+            var h = sender as Grid;
+            var translate = h?.RenderTransform as TranslateTransform;
+            AnimateCard(translate!, 0, -5); // 向上方移动
+        }
+
+        private void ContentCard_PointerExited(object sender, PointerRoutedEventArgs e)
+        {
+            var h = sender as Grid;
+            var translate = h?.RenderTransform as TranslateTransform;
+            AnimateCard(translate!, 0, 0); // 恢复原位
+        }
+        private void AnimateCard(TranslateTransform transform, double targetX, double targetY)
+        {
+            var storyboard = new Storyboard();
+
+            var animationX = new DoubleAnimation
+            {
+                To = targetX,
+                Duration = TimeSpan.FromSeconds(0.2),
+                EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
+            };
+            Storyboard.SetTarget(animationX, transform);
+            Storyboard.SetTargetProperty(animationX, "X");
+
+            var animationY = new DoubleAnimation
+            {
+                To = targetY,
+                Duration = TimeSpan.FromSeconds(0.2),
+                EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
+            };
+            Storyboard.SetTarget(animationY, transform);
+            Storyboard.SetTargetProperty(animationY, "Y");
+
+            storyboard.Children.Add(animationX);
+            storyboard.Children.Add(animationY);
+            storyboard.Begin();
+        }
+
+        private void ContentCard_Tapped(object sender, TappedRoutedEventArgs e)
+        {
+            var h = sender as Grid;
             var tag = h?.Tag;
             if (tag == null) return;
             var param = new TopicNavigationInfo { TopicId = tag.ToInt() };
             Frame.Navigate(typeof(Topic), param);
-           
         }
 
-        private void Person_Click(object sender, RoutedEventArgs e)
-        {
-            var h= sender as HyperlinkButton;
-            var tag = h?.Tag as TopicInfo;
-            if (tag == null) return;
-            if (tag.IsAnonymous) return;
-            var param = new ProfileNavigationInfo { IsMe = tag.IsMe, UserId = tag.UserId??0};
-            Frame.Navigate(typeof(Profile), param);
-        }
-
-        private void CopyId_Click(object sender, RoutedEventArgs e)
-        {
-            var m = sender as MenuFlyoutItem;
-            if (m != null)
-            {
-                var _tag = m.Tag;
-                if(_tag is string tag)
-                {
-                    var package = new DataPackage();
-                    package.SetText(tag);
-                    Clipboard.SetContent(package);
-                    Flower.Play("\uE930", "已复制帖子ID");
-                }
-            }
-        }       
+        
     } 
 }

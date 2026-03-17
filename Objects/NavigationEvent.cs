@@ -1,4 +1,5 @@
-﻿using Microsoft.UI.Xaml.Navigation;
+﻿using CC98.Share.Controls.Primitives;
+using Microsoft.UI.Xaml.Navigation;
 using System;
 using System.Collections.Generic;
 using Windows.Networking.NetworkOperators;
@@ -64,6 +65,6 @@ public class EditorNavigationInfo
 public  class ViewerNavigationInfo
 {
     public List<string> Urls { get; set; } = [];
-    public string Type { get; set; } = string.Empty;
+    public MediaType Type { get; set; } 
     public int CurrentIndex { get; set; } = 0;
 }

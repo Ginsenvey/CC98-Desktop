@@ -27,12 +27,18 @@ namespace UbbRender.Render
                 typeof(UbbTextBlock),
                 new PropertyMetadata(string.Empty, OnUbbTextChanged));
 
-        public static readonly DependencyProperty FontSizeProperty =
+        public static new readonly DependencyProperty FontSizeProperty =
             DependencyProperty.Register(
                 nameof(FontSize),
                 typeof(double),
                 typeof(UbbTextBlock),
                 new PropertyMetadata(14.0, OnFontSizeChanged));
+        public static readonly DependencyProperty BoldFontFamilyProperty =
+            DependencyProperty.Register(
+                nameof(BoldFontFamily),
+                typeof(FontFamily),
+                typeof(UbbTextBlock),
+                new PropertyMetadata(null));
 
         public static new readonly DependencyProperty ForegroundProperty =
             DependencyProperty.Register(
@@ -74,7 +80,11 @@ namespace UbbRender.Render
             get => (double)GetValue(FontSizeProperty);
             set => SetValue(FontSizeProperty, value);
         }
-
+        public FontFamily BoldFontFamily
+        {
+            get => (FontFamily)GetValue(BoldFontFamilyProperty);
+            set => SetValue(BoldFontFamilyProperty, value);
+        }
         public new Brush Foreground
         {
             get => (Brush)GetValue(ForegroundProperty);
@@ -220,7 +230,7 @@ namespace UbbRender.Render
                 // ÃÓ≥‰ƒ¨»œ Ù–‘
                 context.Properties["FontSize"] = FontSize;
                 context.Properties["Foreground"] = Foreground ?? new SolidColorBrush(Colors.Gray);
-
+                context.Properties["BoldFontFamily"] = BoldFontFamily ?? new FontFamily("HarmonyOS Sans SC Bold");
                 context.Properties["CodeBackground"] = CodeBackground ?? new SolidColorBrush(Color.FromArgb(0xff,0xe8,0xf4,0xf9));
                 context.Properties["QuoteBackground"] = QuoteBackground ?? new SolidColorBrush(Color.FromArgb(20,0,120,215));
                 context.Properties["ImageMaxWidth"] = ImageMaxWidth;

@@ -2,6 +2,7 @@ using CC98.Kernel;
 using CC98.Kernel.UserExperience;
 using CC98.Objects;
 using CC98.Share.Controls;
+using CC98.Share.Controls.Primitives;
 using DevWinUI;
 using Microsoft.UI.Composition.SystemBackdrops;
 using Microsoft.UI.Input;
@@ -44,7 +45,7 @@ namespace CC98
     {
         public List<string> pictures = [];
         public int currentIndex = 0;
-        private string _type = "";
+        private MediaType _type = MediaType.Image;
         private string _url = "";
 
         private double _currentScale = 1.0;
@@ -73,7 +74,6 @@ namespace CC98
         }
 
         
-
         private void OnPointerWheelChanged(object sender, PointerRoutedEventArgs e)
         {
             try
@@ -125,7 +125,7 @@ namespace CC98
 
         private async void MediaViewer_Activated(object sender, Microsoft.UI.Xaml.WindowActivatedEventArgs args)
         {
-            if (_type == "video")
+            if (_type == MediaType.Video)
             {
 
                 VideoPlayer.Visibility = Visibility.Visible;
@@ -137,14 +137,10 @@ namespace CC98
                     VideoPlayer.Source = source;
                 }
             }
-            else if (_type == "image")
+            else if (_type == MediaType.Image)
             {
                 
-                //zoomer.Visibility = Visibility.Visible;
                 VideoPlayer.Visibility = Visibility.Collapsed;
-
-                //PicViewer.Source=_url;
-                //zoomer.ZoomToFactor(0.6f);
             }
                 
             
@@ -195,10 +191,9 @@ namespace CC98
 
         private async void AddAsEmoji_Click(object sender, RoutedEventArgs e)
         {
-            if (_type == "image" && !_url.StartsWith("ms-appx"))
+            if (_type == MediaType.Image && !_url.StartsWith("ms-appx"))
             {
                 await CustomEmoji.SaveEmojiAsync(_url);
-               
             }
             else
             {

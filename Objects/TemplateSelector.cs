@@ -65,3 +65,21 @@ public partial class ReplyTemplateSelector : DataTemplateSelector
         return MarkdownTemplate;
     }
 }
+
+public partial class TopicTemplateSelector : DataTemplateSelector
+{
+    public DataTemplate ImageTemplate { get; set; }
+    public DataTemplate TextTemplate { get; set; }
+
+    protected override DataTemplate SelectTemplateCore(object item)
+    {
+        if (item is TopicInfo topic)
+        {
+            if (topic.MediaContent.Thumbnail.Count>0)
+            {
+                return ImageTemplate;
+            }
+        }
+        return TextTemplate;
+    }
+}

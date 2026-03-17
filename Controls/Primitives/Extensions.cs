@@ -39,7 +39,7 @@ public static class StringExtensions
     /// <param name="input">要检查的字符串</param>
     /// <param name="allowRelative">是否允许相对路径（如 "/Assets/image.jpg"）</param>
     /// <returns>是否为合法 URL</returns>
-    public static bool IsValidUrl(this string input, bool allowRelative = false)
+    public static bool IsValidUrl(this string input, bool allowRelative = true)
     {
         if (string.IsNullOrWhiteSpace(input))
             return false;

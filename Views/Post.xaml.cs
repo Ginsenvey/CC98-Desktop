@@ -104,6 +104,11 @@ namespace CC98
                 isTailVisible = true;
             }
             contentType=NavigationInfo.ContentType;
+            if (contentType == (int)Objects.ContentType.Markdown)
+            {
+                MdViewer.Visibility = Visibility.Visible;
+                UbbViewer.Visibility = Visibility.Collapsed;
+            }
             switch (NavigationInfo.EditorMode)
             {
                 case EditorMode.ReplyToTopic:
@@ -120,7 +125,7 @@ namespace CC98
                     {
                         Editor.Text += Environment.NewLine;
                     }
-                    Previewer.UbbText = Editor.Text.Replace("\r\n", "  \n").Replace("\r", "  \n");
+                    ApplyContentToViewer();
                     Editor.SelectionStart = Editor.Text.Length;
                     replyselector.IsSelected = true;
                     SetTitle.IsEnabled = false;
@@ -139,7 +144,7 @@ namespace CC98
                     {
                         Editor.Text += Environment.NewLine;
                     }
-                    Previewer.UbbText = Editor.Text.Replace("\r\n", "  \n").Replace("\r", "  \n");
+                    ApplyContentToViewer();
                     Editor.SelectionStart = Editor.Text.Length;
                     replyselector.IsSelected = true;
                     //编辑非主题帖不允许修改标题和帖子类型
@@ -154,15 +159,29 @@ namespace CC98
                     {
                         Editor.Text += Environment.NewLine;
                     }
-                    Previewer.UbbText = Editor.Text.Replace("\r\n", "  \n").Replace("\r", "  \n");
+                    ApplyContentToViewer();
                     Editor.SelectionStart = Editor.Text.Length;
                     topicselector.IsSelected = true;
                     SetTitle.IsEnabled = true;
                     SetPostType.IsEnabled = false;
                     break;
             }
-            //初始化内容
+            //初始化内容,以免由于xaml加载顺序content为空。有时候textchanged事件不会立即触发。
             content = Editor.Text.Replace("\r\n", "\n").Replace("\r", "\n");
+        }
+        //渲染实时预览
+        private void ApplyContentToViewer()
+        {
+            //关闭预览窗格可以避免卡顿，尤其是在内容较长时
+            if (!EditArea.IsPaneOpen) return;
+            if (contentType == (int)Objects.ContentType.UBB)
+            {
+                UbbViewer.UbbText = content;
+            }
+            else
+            {
+                MdViewer.Text = content;
+            }
         }
         #endregion
 
@@ -281,9 +300,7 @@ namespace CC98
         private void Editor_TextChanged(object sender, TextChangedEventArgs e)
         {
             content = Editor.Text.Replace("\r\n", "\n").Replace("\r", "\n");
-            //关闭预览窗格可以避免卡顿，尤其是在内容较长时
-            if (!EditArea.IsPaneOpen) return;
-            Previewer.UbbText = content;
+            ApplyContentToViewer();
         }
         //以下方法用于创建Md的代码块,但是UBB编辑器不需要支持这个操作。
         private void InsertCodeBlock()
@@ -581,7 +598,7 @@ namespace CC98
             EditArea.IsPaneOpen = !EditArea.IsPaneOpen;
             if (EditArea.IsPaneOpen)
             {
-                Previewer.UbbText = content;
+                ApplyContentToViewer();
             }
         }
        
@@ -601,6 +618,8 @@ namespace CC98
                 contentType = 1;
                 MD.Visibility = Visibility.Visible;
                 UBB.Visibility = Visibility.Collapsed;
+                MdViewer.Visibility = Visibility.Visible;
+                UbbViewer.Visibility = Visibility.Collapsed;
                 Flower.Play("\uE946", "切换到Markdown");
             }
             else
@@ -608,8 +627,11 @@ namespace CC98
                 contentType = 0;
                 MD.Visibility = Visibility.Collapsed;
                 UBB.Visibility = Visibility.Visible;
+                MdViewer.Visibility = Visibility.Collapsed;
+                UbbViewer.Visibility = Visibility.Visible;
                 Flower.Play("\uE946", "切换到UBB");
             }
+            ApplyContentToViewer();
         }
 
         private void ReceiveNotice_Unchecked(object sender, RoutedEventArgs e)

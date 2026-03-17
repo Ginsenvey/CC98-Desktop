@@ -16,6 +16,7 @@
     xmlns:pr="using:CC98.Share.Controls.Primitives"
     xmlns:obj="using:CC98.Objects"
     xmlns:cv="using:CC98.Services.Converters"
+    NavigationCacheMode="Disabled"
     Background="{ThemeResource DesktopAcrylicTransparentBrush}">
 
 
@@ -30,16 +31,16 @@
                 </Grid.RowDefinitions>
 
                 <HyperlinkButton Grid.Row="0" Margin="0,0,0,5"  x:Name="Person" Click="Person_Click" Tag="{x:Bind}" ContextRequested="Person_ContextRequested">
-                    <StackPanel Grid.Row="0"  Orientation="Horizontal" Spacing="10">
-                        <Border Width="30" Height="30" CornerRadius="9999" Background="{ThemeResource PortaitBackgroundColor}">
+                    <StackPanel  Orientation="Horizontal" Spacing="10">
+                        <Border Width="30" Height="30" CornerRadius="9999" Background="{ThemeResource PortraitBackgroundColor}">
                             <share:Picture  x:Name="portrait" Src="{x:Bind PortraitUrl}" LoadImageCallback="{StaticResource PortraitLoader}"></share:Picture>
                         </Border>
-                        <TextBlock Text="{x:Bind UserName}"  VerticalAlignment="Center" ></TextBlock>
+                        <TextBlock Text="{x:Bind UserName}"  VerticalAlignment="Center" FontFamily="{StaticResource HarmonySansBold}" Foreground="{StaticResource SoftPurple}"></TextBlock>
                     </StackPanel>
                 </HyperlinkButton>
 
                 <Border  Grid.Row="1" Padding="10" CornerRadius="4" Background="{ThemeResource MarkdownBackgroudBrush}">
-                    <ubb:UbbTextBlock UbbText="{x:Bind Content,Mode=OneWay}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" MediaClicked="UbbTextBlock_MediaClicked"></ubb:UbbTextBlock>
+                    <ubb:UbbTextBlock UbbText="{x:Bind Content,Mode=OneWay}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" BoldFontFamily="{StaticResource HarmonySansBold}" QuoteBackground="{ThemeResource QuoteBackgroundBrush}" MediaClicked="UbbTextBlock_MediaClicked"></ubb:UbbTextBlock>
                 </Border>
 
                 <StackPanel Orientation="Vertical" Grid.Row="0" Margin="5,5,10,0" HorizontalAlignment="Right">
@@ -115,11 +116,11 @@
                 </Grid.RowDefinitions>
 
                 <HyperlinkButton Grid.Row="0" Margin="0,0,0,5"  x:Name="Person" Click="Person_Click" Tag="{x:Bind}" ContextRequested="Person_ContextRequested">
-                    <StackPanel Grid.Row="0"  Orientation="Horizontal" Spacing="10">
-                        <Border Width="30" Height="30" CornerRadius="9999" Background="{ThemeResource PortaitBackgroundColor}">
+                    <StackPanel   Orientation="Horizontal" Spacing="10">
+                        <Border Width="30" Height="30" CornerRadius="9999" Background="{ThemeResource PortraitBackgroundColor}">
                             <share:Picture  x:Name="portrait" Src="{x:Bind PortraitUrl}" LoadImageCallback="{StaticResource PortraitLoader}"></share:Picture>
                         </Border>
-                        <TextBlock Text="{x:Bind UserName}"  VerticalAlignment="Center" ></TextBlock>
+                        <TextBlock Text="{x:Bind UserName}"  VerticalAlignment="Center" FontFamily="{StaticResource HarmonySansBold}" Foreground="{ThemeResource SoftPurple}"></TextBlock>
                     </StackPanel>
                 </HyperlinkButton>
 
@@ -237,7 +238,7 @@
                     <TextBlock Text="{x:Bind topicInfo.Time,Mode=OneWay}" FontSize="14" VerticalAlignment="Center"></TextBlock>
                     <ic:SymbolIcon Symbol="Eye" FontSize="12" Margin="20,0,0,0"></ic:SymbolIcon>
                     <TextBlock Text="{x:Bind topicInfo.HitCount,Mode=OneWay}" FontSize="14" VerticalAlignment="Center"></TextBlock>
-                    <ic:SymbolIcon Symbol="Star" FontSize="12" Margin="20,0,0,0" ></ic:SymbolIcon>
+                    <ic:SymbolIcon Symbol="Star" FontSize="12" Margin="20,0,0,0" IconVariant="{x:Bind topicInfo.IsFavorite,Converter={StaticResource BoolToVariantConverter},Mode=OneWay}"></ic:SymbolIcon>
                     <TextBlock Text="{x:Bind topicInfo.FavoriteCount,Mode=OneWay}" FontSize="14" VerticalAlignment="Center"></TextBlock>
                     
                 </StackPanel>
@@ -263,7 +264,7 @@
                 <ColumnDefinition Width="3*" MinWidth="300"></ColumnDefinition>
                 <ColumnDefinition Width="*"></ColumnDefinition>
             </Grid.ColumnDefinitions>
-            <TextBlock x:Name="de" Grid.Column="0" HorizontalAlignment="Left" ></TextBlock>
+            <TextBlock x:Name="de" Grid.Column="0" HorizontalAlignment="Left" TextWrapping="Wrap"></TextBlock>
             <dev:PagerControl Grid.Column="1" DisplayMode="ButtonPanel" NumberOfPages="1"  HorizontalAlignment="Center" x:Name="Pager" SelectedPageIndex="0"  VerticalAlignment="Center"  SelectedIndexChanged="Pager_SelectedIndexChanged" ></dev:PagerControl>
             <StackPanel Orientation="Horizontal" Margin="0,0,20,0" Spacing="10" Grid.Column="2" HorizontalAlignment="Right" >
                 <Button Background="{ThemeResource FancyButtonBrush}" CornerRadius="9999" Width="50" Height="50" ToolTipService.ToolTip="查看投票" x:Name="StartVote" Click="StartVote_Click" Visibility="Collapsed"  >
@@ -312,7 +313,7 @@
                 <Button Grid.Row="4" x:Name="SendVote" Content="确认" HorizontalAlignment="Right" IsEnabled="false" Click="SendVote_Click" Style="{StaticResource AccentButtonStyle}"></Button>
             </Grid>
         </TeachingTip>
-        <TeachingTip  Target="{x:Bind}" x:Name="ProfileViewer" IsLightDismissEnabled="True" TailVisibility="Collapsed">
+        <TeachingTip  Target="{x:Bind}" x:Name="ProfileViewer" IsLightDismissEnabled="True" TailVisibility="Collapsed" Closed="ProfileViewer_Closed">
             <Grid RowSpacing="8" ColumnSpacing="15"  >
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"></RowDefinition>
@@ -339,7 +340,7 @@
                         <TextBlock Text="{x:Bind profile.Id,Mode=OneWay}"  Foreground="{ThemeResource TextFillColorSecondaryBrush}" FontSize="12" IsTextSelectionEnabled="True"></TextBlock>
                     </Border>
                 </StackPanel>
-                <ubb:UbbTextBlock UbbText="{x:Bind profile.SignatureCode,Mode=OneWay}"  Grid.Column="0" Grid.ColumnSpan="4" Grid.Row="3" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Background="Transparent" />
+                <ubb:UbbTextBlock UbbText="{x:Bind profile.SignatureCode,Mode=OneWay}"  Grid.Column="0" Grid.ColumnSpan="4" Grid.Row="3" Foreground="{ThemeResource TextFillColorSecondaryBrush}" BoldFontFamily="{StaticResource HarmonySansBold}" Background="Transparent" />
             </Grid>
         </TeachingTip>
 

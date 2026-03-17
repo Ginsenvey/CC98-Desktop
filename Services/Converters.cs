@@ -203,3 +203,23 @@ public partial class BoolToFollowTextConverter : IValueConverter
         throw new NotImplementedException();
     }
 }
+
+public partial class BoolToVariantConverter : IValueConverter
+{
+    object IValueConverter.Convert(object value, Type targetType, object parameter, string language)
+    {
+        if (value is bool state)
+        {
+            return state ? IconVariant.Color : IconVariant.Regular;
+        }
+        else
+        {
+            return IconVariant.Regular;
+        }
+    }
+
+    object IValueConverter.ConvertBack(object value, Type targetType, object parameter, string language)
+    {
+        throw new NotImplementedException();
+    }
+}

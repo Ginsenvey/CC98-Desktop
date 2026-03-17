@@ -329,7 +329,11 @@
         <SplitView Grid.Row="1" PanePlacement="Left" DisplayMode="Inline" IsPaneOpen="True" x:Name="EditArea" PaneBackground="{ThemeResource CardBackgroundFillColorDefaultBrush}">
             <SplitView.Pane>
                 <ScrollViewer>
-                    <ubb:UbbTextBlock ImageMaxWidth="320" Background="{ThemeResource MarkdownBackgroudBrush}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" x:Name="Previewer"/>
+                    <Grid>
+                        <controls:MarkdownTextBlock Background="{ThemeResource MarkdownBackgroudBrush}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" x:Name="MdViewer" Visibility="Collapsed"></controls:MarkdownTextBlock>
+                        <ubb:UbbTextBlock ImageMaxWidth="320" Background="{ThemeResource MarkdownBackgroudBrush}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" BoldFontFamily="{ThemeResource HarmonySansBold}" x:Name="UbbViewer"/>
+                    </Grid>
+                    
                 </ScrollViewer>
             </SplitView.Pane>
             <SplitView.Content>
@@ -344,7 +348,7 @@
             </SplitView.Content>
         </SplitView>
         <Grid Grid.Row="2" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1">
-                <TextBlock Margin="10,0,10,0" HorizontalAlignment="Left" Text="状态" MaxLines="1" x:Name="status" Foreground="{ThemeResource TextFillColorSecondaryBrush}"></TextBlock>
+                <TextBlock Margin="10,0,10,0" HorizontalAlignment="Left" VerticalAlignment="Center" Text="状态" MaxLines="1" x:Name="status" Foreground="{ThemeResource TextFillColorSecondaryBrush}"></TextBlock>
                 <HyperlinkButton Padding="0" HorizontalAlignment="Right" CornerRadius="0" VerticalAlignment="Stretch" x:Name="SwitchContentType" Click="SwitchContentType_Click" ToolTipService.ToolTip="切换UBB/MD"> 
                     <StackPanel Orientation="Horizontal" Spacing="10" Margin="3">
                     <ic:SymbolIcon Symbol="Markdown" x:Name="MD" Visibility="Collapsed"></ic:SymbolIcon>

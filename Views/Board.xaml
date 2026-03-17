@@ -47,7 +47,7 @@
                 </Grid>
 
                 <Border Padding="10,10,10,0" x:Name="BannerBox">
-                    <ubb:UbbTextBlock x:Name="Banner" UbbText="{x:Bind boardData.BigPaper,Mode=OneWay}" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                    <ubb:UbbTextBlock x:Name="Banner" UbbText="{x:Bind boardData.BigPaper,Mode=OneWay}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" BoldFontFamily="{StaticResource HarmonySansBold}"/>
                 </Border>
 
                 <SelectorBar>

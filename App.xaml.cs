@@ -45,7 +45,6 @@ namespace CC98
     public partial class App : Application
     {
         public Window m_window { get; set; }
-
         private Window loginPage;
         public ApplicationDataContainer Set = ApplicationData.Current.LocalSettings;
         public static event Action<ElementTheme> ThemeChanged;

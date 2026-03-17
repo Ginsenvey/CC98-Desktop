@@ -149,9 +149,9 @@ namespace CC98
         {
             var Favorite=new NavigationGroup {Name="集锦", IsEditable = false };
             var PinnedGroup = new NavigationGroup{Name = "推荐", IsEditable = true };
-            MenuItems.Add(new NavigationItem{Name = "今日话题",IconSymbol = FluentIcons.Common.Symbol.DesignIdeas,Tag = "Index",IsEditable=false} );
+            MenuItems.Add(new NavigationItem{Name = "今日话题",IconSymbol = FluentIcons.Common.Symbol.Grid,Tag = "Index",IsEditable=false} );
             MenuItems.Add(new NavigationItem { Name = "全部版面", IconSymbol = FluentIcons.Common.Symbol.Board, Tag = "Section", IsEditable = false });
-            MenuItems.Add(new NavigationItem { Name = "新帖", IconSymbol = FluentIcons.Common.Symbol.Note, Tag = "Discover", IsEditable = false });
+            MenuItems.Add(new NavigationItem { Name = "新帖", IconSymbol = FluentIcons.Common.Symbol.DesignIdeas, Tag = "Discover", IsEditable = false });
             MenuItems.Add(Favorite);
             MenuItems.Add(new NavigationItem { Name = "动态", IconSymbol = FluentIcons.Common.Symbol.Home, Tag = "Focus", IsEditable = false });    
             MenuItems.Add(new NavigationItem { Name = "收藏集", IconSymbol = FluentIcons.Common.Symbol.StarLineHorizontal3, Tag = "Favorite", IsEditable = false });
