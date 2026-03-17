@@ -1,0 +1,85 @@
+﻿using CC98.Objects;
+using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
+
+namespace CC98.Objects;
+
+public partial class NavigationTemplateSelector : DataTemplateSelector
+{
+    public DataTemplate GroupTemplate { get; set; }
+    public DataTemplate PinnedItemTemplate { get; set; }
+    public DataTemplate ItemTemplate { get; set; }
+
+    protected override DataTemplate SelectTemplateCore(object item)
+    {
+        if (item is NavigationItem n)
+        {
+            if (n.IsEditable == true)
+            {
+                return PinnedItemTemplate;
+            }
+            else
+            {
+                return ItemTemplate;
+            }
+        }
+        else
+        {
+            return GroupTemplate;
+        }
+    }
+}
+
+public partial class NoticeTemplateSelector : DataTemplateSelector
+{
+    public DataTemplate SystemTemplate { get; set; }
+    public DataTemplate ReplyOrAtTemplate { get; set; }
+
+    protected override DataTemplate SelectTemplateCore(object item)
+    {
+        if (item is Notice n)
+        {
+            if (n.Type == (int)NoticeType.System)
+            {
+                return SystemTemplate;
+            }
+        }
+        return ReplyOrAtTemplate;
+    }
+}
+
+public partial class ReplyTemplateSelector : DataTemplateSelector
+{
+    public DataTemplate UBBTemplate { get; set; }
+    public DataTemplate MarkdownTemplate { get; set; }
+
+    protected override DataTemplate SelectTemplateCore(object item)
+    {
+        if (item is Reply reply)
+        {
+            if (reply.ContentType == 0)
+            {
+                return UBBTemplate;
+            }
+        }
+        return MarkdownTemplate;
+    }
+}
+
+public partial class TopicTemplateSelector : DataTemplateSelector
+{
+    public DataTemplate ImageTemplate { get; set; }
+    public DataTemplate TextTemplate { get; set; }
+
+    protected override DataTemplate SelectTemplateCore(object item)
+    {
+        if (item is TopicInfo topic)
+        {
+            if (topic.MediaContent.Thumbnail.Count>0)
+            {
+                return ImageTemplate;
+            }
+        }
+        return TextTemplate;
+    }
+}

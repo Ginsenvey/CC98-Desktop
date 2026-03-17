@@ -1,6 +1,6 @@
-﻿using Duende.IdentityModel;
+﻿using CC98.Kernel.ApiScope;
+using Duende.IdentityModel;
 using Duende.IdentityModel.Client;
-using Newtonsoft.Json.Serialization;
 using System;
 using System.Linq;
 using System.Security.Cryptography;
@@ -18,7 +18,8 @@ public class OpenID()
     {
         var (verifier, challenge) = GeneratePkce();
         string state = GenerateState();
-        var request = new RequestUrl("https://openid.cc98.org/connect/authorize");//终结点
+        var endpoint = ApiEndpoints.OpenID.GetAuthorizeUrl();
+        var request = new RequestUrl(endpoint);//终结点
         var url = request.CreateAuthorizeUrl(
             responseType: "code",//授权码模式
             scope: "openid profile cc98-api cc98-card.all offline_access",

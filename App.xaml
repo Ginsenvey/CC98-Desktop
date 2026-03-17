@@ -6,7 +6,8 @@
     xmlns:lab="using:CommunityToolkit.Labs.WinUI"
     xmlns:dev="using:DevWinUI"
     xmlns:tool="using:CommunityToolkit.WinUI.Controls"
-    xmlns:md="using:CommunityToolkit.WinUI.UI.Controls"
+    xmlns:pr="using:CC98.Share.Controls.Primitives"
+    xmlns:cv="using:CC98.Services.Converters"
     xmlns:local="using:CC98">
     <Application.Resources>
         <ResourceDictionary >
@@ -18,6 +19,7 @@
 
             <ResourceDictionary.ThemeDictionaries>
                 <ResourceDictionary x:Key="Light">
+                    <Color x:Key="QuoteBackgroundColor">#E8F4F9</Color>
                     <Color x:Key="CustomBackgroundColor">#FBFBFB</Color>
                     <Color x:Key="borderlinecolor">#E5E5E5</Color>
                     <Color x:Key="DividerColor">#CACACA</Color>
@@ -31,10 +33,10 @@
                     <Color x:Key="Contrast">#000000</Color>
                     <Color x:Key="Standard">#FFFFFF</Color>
                     <Color x:Key="AcrylicTintColor">#66ccff</Color>
-                    <Color x:Key="PortaitBackgroundColor">#62b3ae</Color>
-                    
+                    <Color x:Key="PortraitBackgroundColor">#62b3ae</Color>
                 </ResourceDictionary>
                 <ResourceDictionary x:Key="Dark">
+                    <Color x:Key="QuoteBackgroundColor">#959595</Color>
                     <Color x:Key="CustomBackgroundColor">#2f2f2f</Color>
                     <Color x:Key="borderlinecolor">#202020</Color>
                     <Color x:Key="DividerColor">#525252</Color>
@@ -48,39 +50,48 @@
                     <Color x:Key="Contrast">#FFFFFF</Color>
                     <Color x:Key="Standard">#000000</Color>
                     <Color x:Key="AcrylicTintColor">#000000</Color>
-                    <Color x:Key="PortaitBackgroundColor">#004d9891</Color>
-                    
+                    <Color x:Key="PortraitBackgroundColor">#004d9891</Color>
+
                 </ResourceDictionary>
                 <ResourceDictionary x:Key="Tint"></ResourceDictionary>
 
             </ResourceDictionary.ThemeDictionaries>
             <SolidColorBrush x:Key="MarkdownBackgroudBrush" Color="{ThemeResource MarkdownBackgroudColor}"></SolidColorBrush>
             <SolidColorBrush x:Key="DividerBrush" Color="{ThemeResource DividerColor}"></SolidColorBrush>
-            <SolidColorBrush x:Key="pinkgreen" Color="{ThemeResource pink-green}"></SolidColorBrush>
-            <SolidColorBrush x:Key="0" Color="{ThemeResource trans-plain}"></SolidColorBrush>
-            <SolidColorBrush x:Key="skyblue" Color="{ThemeResource sky-blue}"></SolidColorBrush>
-            <SolidColorBrush x:Key="yellow" Color="{ThemeResource yel-low}" ></SolidColorBrush>
+            <SolidColorBrush x:Key="FancyButtonBrush" Color="{ThemeResource pink-green}"></SolidColorBrush>
             <SolidColorBrush x:Key="QuoteBorderBrush" Color="{ThemeResource QuoteBorderColor}"></SolidColorBrush>
             <SolidColorBrush x:Key="StandardBrush" Color="{ThemeResource Standard}"></SolidColorBrush>
+            <SolidColorBrush x:Key="QuoteBackgroundBrush" Color="{ThemeResource QuoteBackgroundColor}"></SolidColorBrush>
             <AcrylicBrush x:Key="AcrylicCardBrush" TintOpacity="0.4" TintColor="{ThemeResource AcrylicTintColor}" AlwaysUseFallback="False"/>
+            <FontFamily x:Key="HarmonySans">/Assets/Fonts/HarmonyOS_Sans_SC_Regular.ttf#HarmonyOS Sans SC</FontFamily>
+            <FontFamily x:Key="HarmonySansBold">/Assets/Fonts/HarmonyOS_Sans_SC_Bold.ttf#HarmonyOS Sans SC Bold</FontFamily>
             <Style TargetType="TextBlock">
-                <Setter Property="FontFamily" Value="/Assets/Fonts/HarmonyOS_Sans_SC_Regular.ttf#HarmonyOS Sans SC"></Setter>
+                <Setter Property="FontFamily" Value="{StaticResource HarmonySans}"></Setter>
             </Style>
             <Style TargetType="RichTextBlock">
-                <Setter Property="FontFamily" Value="/Assets/Fonts/HarmonyOS_Sans_SC_Regular.ttf#HarmonyOS Sans SC"></Setter>
+                <Setter Property="FontFamily" Value="{StaticResource HarmonySans}"></Setter>
+            </Style>
+            <Style TargetType="tool:MarkdownTextBlock">
+                <Setter Property="FontFamily" Value="{StaticResource HarmonySans}"></Setter>
             </Style>
             <Style TargetType="tool:SettingsCard">
-                <Setter Property="FontFamily" Value="/Assets/Fonts/HarmonyOS_Sans_SC_Regular.ttf#HarmonyOS Sans SC"></Setter>
+                <Setter Property="FontFamily" Value="{StaticResource HarmonySans}"></Setter>
             </Style>
             <Style TargetType="tool:SettingsExpander">
-                <Setter Property="FontFamily" Value="/Assets/Fonts/HarmonyOS_Sans_SC_Regular.ttf#HarmonyOS Sans SC"></Setter>
+                <Setter Property="FontFamily" Value="{StaticResource HarmonySans}"></Setter>
             </Style>
             <Style TargetType="AppBarButton">
-                <Setter Property="FontFamily" Value="/Assets/Fonts/HarmonyOS_Sans_SC_Regular.ttf#HarmonyOS Sans SC"></Setter>
+                <Setter Property="FontFamily" Value="{StaticResource HarmonySans}"></Setter>
                 <Setter Property="CornerRadius" Value="3"></Setter>
             </Style>
-            
+            <SolidColorBrush x:Key="SoftPink" Color="#ddfb7299"></SolidColorBrush>
+            <SolidColorBrush x:Key="SoftPurple" Color="#C4ABD4"></SolidColorBrush>
+
+            <pr:SmartImageLoader x:Key="PortraitLoader" LowRes="True"></pr:SmartImageLoader>
+            <pr:SmartImageLoader x:Key="CustomPortraitLoader" LowRes="False"></pr:SmartImageLoader>
+            <cv:LikeToVariantConverter x:Key="LikeToVariantConverter"></cv:LikeToVariantConverter>
+            <cv:DisLikeToVariantConverter x:Key="DisLikeToVariantConverter"></cv:DisLikeToVariantConverter>
+            <cv:BoolToVariantConverter x:Key="BoolToVariantConverter"></cv:BoolToVariantConverter>
         </ResourceDictionary>
-        
     </Application.Resources>
 </Application>

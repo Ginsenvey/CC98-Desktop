@@ -13,8 +13,8 @@
 
   <Identity
     Name="OrangePlanet.CC98"
-    Publisher="CN=5E739DE2-5824-463F-BFB7-16411BC0F71A"
-    Version="1.2.1.0" />
+    Publisher="CN=Ansherly"
+    Version="1.2.6.0" />
 
   <mp:PhoneIdentity PhoneProductId="5eeae64f-e2f1-4d47-be24-1ca8665fbbe5" PhonePublisherId="00000000-0000-0000-0000-000000000000"/>
 
@@ -64,6 +64,16 @@
             <uap:Logo>Assets\cc98.png</uap:Logo>
             <uap:DisplayName>CC98 Desktop</uap:DisplayName>
           </uap:Protocol>
+        </uap:Extension>
+        <uap:Extension Category="windows.shareTarget">
+          <uap:ShareTarget Description="分享你的动态到CC98吧！">
+            <uap:SupportedFileTypes>
+              <uap:SupportsAnyFileType/>
+            </uap:SupportedFileTypes>
+            <uap:DataFormat>Text</uap:DataFormat>
+            <uap:DataFormat>URI</uap:DataFormat>
+            <uap:DataFormat>Bitmap</uap:DataFormat>
+          </uap:ShareTarget>
         </uap:Extension>
       </Extensions>
     </Application>

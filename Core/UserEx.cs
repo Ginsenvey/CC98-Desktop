@@ -1,7 +1,6 @@
 ﻿using CC98.Kernel;
 using FluentIcons.Common;
 using Microsoft.UI.Xaml.Media.Imaging;
-using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -18,7 +17,7 @@ namespace CC98.Kernel.UserExperience//用户体验模型，包括:版面图标�
 {
     public static class BoardIcon
     {
-        public static FluentIcons.Common.Symbol GetSymbol(string Id, string Name)
+        public static FluentIcons.Common.Symbol GetSymbol(int Id, string Name)
         {
             if (BoardIcon.Icons.ContainsKey(Id))
             {
@@ -32,7 +31,7 @@ namespace CC98.Kernel.UserExperience//用户体验模型，包括:版面图标�
                     {
                         return FluentIcons.Common.Symbol.Teaching;
                     }
-                    else if (Name.Contains("学院"))
+                    else if (Name.Contains("院"))
                     {
                         return FluentIcons.Common.Symbol.ChartPerson;
                     }
@@ -41,50 +40,50 @@ namespace CC98.Kernel.UserExperience//用户体验模型，包括:版面图标�
                 return FluentIcons.Common.Symbol.Tag;
             }
         }
-        public static Dictionary<string,FluentIcons.Common.Symbol> Icons=new Dictionary<string, Symbol>
+        public static Dictionary<int,FluentIcons.Common.Symbol> Icons=new Dictionary<int, Symbol>
         {
-            {"758",Symbol.LeafOne},
-            {"182",Symbol.Heart },
-            {"184",Symbol.ChatHelp },
-            {"68",Symbol.Library },
-            {"581",Symbol.BeakerEdit },
-            {"102",Symbol.HatGraduation },
-            {"304",Symbol.Translate },
-            {"263" ,Symbol.TaskList},
-            {"105",Symbol.Code },
-            {"749",Symbol.ReadingList },
-            {"100",Symbol.InfoSparkle},
-            {"777",Symbol.Shield },
-            {"357" ,Symbol.BoardSplit},
-            {"459",Symbol.CalendarWorkWeek },
-            {"515",Symbol.BuildingTownhouse },
-            {"235",Symbol.Agents },
-            {"782",Symbol.ArrowTrending },
-            {"180",Symbol.PhoneDesktop },
-            {"30",Symbol.AnimalPawPrint },
-            {"760",Symbol.Bookmark },
-            {"26",Symbol.BookmarkMultiple},
-            {"25",Symbol.MusicNote2 },
-            {"91",Symbol.Games },
-            {"115",Symbol.LeafTwo},
-            {"744",Symbol.MoviesAndTv},
-            {"788",Symbol.DriveTrain},
-            {"43",Symbol.ShoppingBag},
-            {"562",Symbol.ShoppingBagAdd},
-            {"569",Symbol.AgentsAdd},
-            {"764",Symbol.ShoppingBagArrowLeft },
-            {"114",Symbol.HeartBroken},
-            {"81",Symbol.WeatherMoon },
-            {"152",Symbol.HeartPulse},
-            {"135",Symbol.WeatherSunny },
-            {"15",Symbol.Sport },
-            {"226",Symbol.Toolbox},
-            {"258",Symbol.AnimalCat },
-            {"173",Symbol.CameraSparkles},
-            {"353",Symbol.Sparkle},
-            {"229",Symbol.FoodPizza},
-            {"261",Symbol.LeafThree},
-            {"315",Symbol.Album},
+            {758,Symbol.LeafOne},
+            {182,Symbol.Heart },
+            {184,Symbol.ChatHelp},
+            {68,Symbol.Library },
+            {581,Symbol.BeakerEdit },
+            {102,Symbol.HatGraduation },
+            {304,Symbol.Translate },
+            {263 ,Symbol.TaskList},
+            {105,Symbol.Code },
+            {749,Symbol.ReadingList },
+            {100,Symbol.InfoSparkle},
+            {777,Symbol.Shield },
+            {357 ,Symbol.BoardSplit},
+            {459,Symbol.CalendarWorkWeek },
+            {515,Symbol.BuildingTownhouse },
+            {235,Symbol.Agents },
+            {782,Symbol.ArrowTrending },
+            {180,Symbol.PhoneDesktop },
+            {30,Symbol.AnimalPawPrint },
+            {760,Symbol.Bookmark },
+            {26,Symbol.BookmarkMultiple},
+            {25,Symbol.MusicNote2 },
+            {91,Symbol.Games },
+            {115,Symbol.LeafTwo},
+            {744,Symbol.MoviesAndTv},
+            {788,Symbol.DriveTrain},
+            {43,Symbol.ShoppingBag},
+            {562,Symbol.ShoppingBagAdd},
+            {569,Symbol.AgentsAdd},
+            {764,Symbol.ShoppingBagArrowLeft },
+            {114,Symbol.HeartBroken},
+            {81,Symbol.WeatherMoon },
+            {152,Symbol.HeartPulse},
+            {135,Symbol.WeatherSunny },
+            {15,Symbol.Sport },
+            {226,Symbol.Toolbox},
+            {258,Symbol.AnimalCat },
+            {173,Symbol.CameraSparkles},
+            {353,Symbol.Sparkle},
+            {229,Symbol.FoodPizza},
+            {261,Symbol.LeafThree},
+            {315,Symbol.Album},
 
         };
     }
@@ -172,17 +171,17 @@ namespace CC98.Kernel.UserExperience//用户体验模型，包括:版面图标�
                 return false;
             }
         }
-        public static async Task<BitmapSource> LoadWebImage(string url)
+        public static async Task<BitmapSource> LoadWebImage(string url,bool lowRes=false)
         {
-            if (!CCloginservice.vpn.IsVpnEnabled)
+            if (!LoginService.vpn.IsVpnEnabled)
             {
                 // 不使用WebVPN
                 return new BitmapImage(new Uri(url));
             }
 
             // 使用WebVPN加载
-            byte[] imageBytes = await CCloginservice.vpn.GetByteArrayAsync(url);
-            return await LoadFromBytes(imageBytes);
+            byte[] imageBytes = await LoginService.vpn.GetByteArrayAsync(url);
+            return await LoadFromBytes(imageBytes,lowRes);
         }
         public static async Task<BitmapSource> LoadLocalImage(string path)
         {
@@ -213,19 +212,24 @@ namespace CC98.Kernel.UserExperience//用户体验模型，包括:版面图标�
 
             var bitmapImage = new BitmapImage();
             await bitmapImage.SetSourceAsync(ras);
-
+            bitmapImage.DecodePixelHeight = 48;
+            bitmapImage.DecodePixelWidth = 48;
             return bitmapImage;
         }
 
-        public static async Task<BitmapSource> LoadFromBytes(byte[] bytes)
+        public static async Task<BitmapSource> LoadFromBytes(byte[] bytes,bool lowRes=false)
         {
             using var ras = new InMemoryRandomAccessStream();
             await ras.WriteAsync(bytes.AsBuffer());
             ras.Seek(0);
-
             var bitmapImage = new BitmapImage();
+            if (lowRes)
+            {
+                bitmapImage.DecodePixelHeight = 64;
+                bitmapImage.DecodePixelWidth = 64;
+            }
             await bitmapImage.SetSourceAsync(ras);
-
+            
             return bitmapImage;
         }
     }
@@ -274,54 +278,7 @@ namespace CC98.Kernel.UserExperience//用户体验模型，包括:版面图标�
             return (R, G, B);
         }
     }
-    public static class CustomEmoji
-    {
-        public static void SaveEmoji(string url)
-        {
-            var list = GetAllEmoji();
-            list.Add(url);
-            string content=JsonConvert.SerializeObject(list);
-            string path = "CustomEmoji.json";
-            ValidationHelper.JsonWritter(content,path);
-        }
-        public static List<string> GetAllEmoji()
-        {
-            StorageFolder Folder = ApplicationData.Current.LocalCacheFolder;
-            string path = Folder.Path + "/" + "CustomEmoji.json";
-            string content = ValidationHelper.JsonReader(path);
-            if (!content.StartsWith("10:"))
-            {
-                try
-                {
-                    var list = JsonConvert.DeserializeObject<List<string>>(content);
-                    if (list != null)
-                    {
-                        return list;
-                    }
-                        
-                }
-                catch { }
-            }
-            return new List<string>();
-        }
-        public static void DeleteEmoji(int index)
-        {
-            var list = GetAllEmoji();
-            if (list.Count > index)
-            {
-                list.RemoveAt(index);
-            }
-            string content = JsonConvert.SerializeObject(list);
-            string path = "CustomEmoji.json";
-            ValidationHelper.JsonWritter(content, path);
-        }
-        public static void ClearAllEmoji()
-        {
-            string content = JsonConvert.SerializeObject(new List<string>());
-            string path = "CustomEmoji.json";
-            ValidationHelper.JsonWritter(content, path);
-        }
-    }
+    
 
     
     

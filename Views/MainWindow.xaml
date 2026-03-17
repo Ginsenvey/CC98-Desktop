@@ -1,0 +1,170 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Window
+    x:Class="CC98.MainWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:CC98"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d"
+    Title="CC98"  
+    xmlns:animatedvisuals="using:Microsoft.UI.Xaml.Controls.AnimatedVisuals"
+    xmlns:dev="using:DevWinUI"
+    xmlns:ic="using:FluentIcons.WinUI"
+    xmlns:obj="using:CC98.Objects"
+    xmlns:cv="using:CC98.Services.Converters"
+    xmlns:sv="using:CC98.Services"
+    SystemBackdrop="{ThemeResource AcrylicBackgroundFillColorDefaultBackdrop}">
+    
+    <Grid x:Name="RootGrid">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="48"></RowDefinition>
+            <RowDefinition Height="*"></RowDefinition>
+            <RowDefinition Height="12*"></RowDefinition>
+            
+        </Grid.RowDefinitions>
+        <TeachingTip x:Name="ForumStat" IsLightDismissEnabled="True" Target="{x:Bind Me}" TailVisibility="Collapsed"  Unloaded="ForumStat_Unloaded" >
+            <TeachingTip.HeroContent>
+                <TextBlock x:Name="welcome" Text="" Margin="10,10,10,0" HorizontalAlignment="Center" Foreground="LightSeaGreen"></TextBlock>
+            </TeachingTip.HeroContent>
+            <TeachingTip.Content>
+                <ListView x:Name="ForumStatList" >
+                    <ListView.ItemTemplate>
+                        <DataTemplate x:DataType="obj:CardStatInfoPair">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="2*"></ColumnDefinition>
+                                    <ColumnDefinition Width="*"></ColumnDefinition>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" FontSize="12" Text="{x:Bind StatItem}" Foreground="{ThemeResource TextFillColorSecondaryBrush}"></TextBlock>
+                                <TextBlock Grid.Column="1" FontSize="12" Text="{x:Bind Value}"></TextBlock>
+                            </Grid>
+                        </DataTemplate>
+                    </ListView.ItemTemplate>
+                </ListView>
+            </TeachingTip.Content>
+        </TeachingTip>
+        <Grid Grid.Row="0" x:Name="GridTitleBar">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="45"></ColumnDefinition>
+                <ColumnDefinition Width="Auto"></ColumnDefinition>
+                <ColumnDefinition Width="Auto"></ColumnDefinition>
+                <ColumnDefinition Width="Auto"></ColumnDefinition>
+
+                <ColumnDefinition Width="*"></ColumnDefinition>
+                <ColumnDefinition Width="50"></ColumnDefinition>
+                <ColumnDefinition Width="155"></ColumnDefinition>
+                
+            </Grid.ColumnDefinitions>
+            <Image Grid.Column="0" Source="/Assets/back.png" Width="28" VerticalAlignment="Center" Margin="5,0,0,3"></Image>
+            <Button Grid.Column="1" Width="41" Height="37" Background="Transparent" BorderThickness="0" Margin="3,0,0,0" x:Name="Back" Click="Back_Click" PointerEntered="Back_PointerEntered"   PointerExited="Back_PointerExited">
+                <AnimatedIcon  x:Name="BackIcon">
+                    <AnimatedIcon.Source>
+                        <animatedvisuals:AnimatedBackVisualSource/>
+                    </AnimatedIcon.Source>
+                    <AnimatedIcon.FallbackIconSource>
+                        <SymbolIconSource Symbol="Back" />
+                    </AnimatedIcon.FallbackIconSource>
+                </AnimatedIcon>
+            </Button>
+            <Button Grid.Column="2" Width="41" Height="37" Background="Transparent" BorderThickness="0" Margin="3,0,0,0" x:Name="PaneExpand" Click="PaneExpand_Click" PointerEntered="PaneExpand_PointerEntered"   PointerExited="PaneExpand_PointerExited">
+                <AnimatedIcon  x:Name="NaviIcon">
+                    <AnimatedIcon.Source>
+                        <animatedvisuals:AnimatedGlobalNavigationButtonVisualSource/>
+                    </AnimatedIcon.Source>
+                    <AnimatedIcon.FallbackIconSource>
+                        <SymbolIconSource Symbol="GlobalNavigationButton"/>
+                    </AnimatedIcon.FallbackIconSource>
+                </AnimatedIcon>
+            </Button>
+            <Button Grid.Column="5" HorizontalAlignment="Right" Width="30" Height="30" BorderThickness="0" Background="Transparent"  VerticalAlignment="Center" x:Name="Me" CornerRadius="9999" Padding="0" RenderTransformOrigin="0.5,0.5" PointerEntered="Me_PointerEntered" PointerExited="Me_PointerExited" PointerPressed="Me_PointerPressed" PointerReleased="Me_PointerReleased" PointerCanceled="Me_PointerCanceled" Click="Me_Click" >
+                <PersonPicture  Width="28" Height="28" x:Name="MyPicture" BorderThickness="0"></PersonPicture>
+                <Button.RenderTransform >
+                    <ScaleTransform ScaleX="1" ScaleY="1" x:Name="PortScaleTransform"></ScaleTransform>
+                </Button.RenderTransform>
+                <Button.ContextFlyout>
+                    <MenuFlyout  Placement="LeftEdgeAlignedBottom"  SystemBackdrop="{ThemeResource AcrylicBackgroundFillColorDefaultBackdrop}" >
+                        <MenuFlyoutItem Text="CC98抽卡"  Click="CCZone_Click" Tag="0">
+                            <MenuFlyoutItem.Icon>
+                                <ic:SymbolIcon Symbol="GiftOpen"></ic:SymbolIcon>
+                            </MenuFlyoutItem.Icon>
+                        </MenuFlyoutItem>
+                        <MenuFlyoutItem Text="统计数据" Tag="1" Click="CCZone_Click">
+                            <MenuFlyoutItem.Icon>
+                                <ic:SymbolIcon Symbol="MathFormula"></ic:SymbolIcon>
+                            </MenuFlyoutItem.Icon>
+                        </MenuFlyoutItem>
+                    </MenuFlyout>
+                </Button.ContextFlyout>
+            </Button>
+            <TextBlock Grid.Column="4"  Text="CC98 Desktop" x:Name="de"  Margin="10,0,5,0" HorizontalAlignment="Left" VerticalAlignment="Center" FontSize="15"></TextBlock>
+            <Grid x:Name="UserArea" Grid.Column="3" Grid.ColumnSpan="2"></Grid>
+        </Grid>
+
+
+
+        <NavigationView Grid.Row="1" Grid.RowSpan="2" HorizontalAlignment="Stretch" PaneDisplayMode="Auto"  IsPaneOpen="True" OpenPaneLength="240" IsPaneToggleButtonVisible="False"  IsBackEnabled="True" IsSettingsVisible="False" IsBackButtonVisible="Collapsed"  x:Name="Navi"  MenuItemsSource="{x:Bind MenuItems}" ItemInvoked="Navi_ItemInvoked" FooterMenuItemsSource="{x:Bind FooterMenuItems}" >
+            <NavigationView.Resources>
+                <DataTemplate x:Key="GroupTemplate" x:DataType="local:NavigationGroup">
+                    <NavigationViewItemHeader Content="{x:Bind Name}"/>
+                </DataTemplate>
+
+                <DataTemplate x:Key="PinnedItemTemplate" x:DataType="local:NavigationItem">
+                    <NavigationViewItem  Tag="{x:Bind Tag}" >
+                        <NavigationViewItem.ContextFlyout>
+                            <MenuFlyout>
+                                <MenuFlyoutItem Text="取消固定" Tag="{x:Bind Tag}"    x:Name="PinOff" Click="PinOff_Click">
+                                    <MenuFlyoutItem.Icon>
+                                        <ic:SymbolIcon Symbol="PinOff"></ic:SymbolIcon>
+                                    </MenuFlyoutItem.Icon>
+                                </MenuFlyoutItem>
+                            </MenuFlyout>
+                        </NavigationViewItem.ContextFlyout>
+                        <StackPanel Orientation="Horizontal" Spacing="5">
+                            <ic:SymbolIcon Symbol="{x:Bind IconSymbol}" FontSize="20"  Margin="2,0,10,0"></ic:SymbolIcon>
+                            <TextBlock Text="{x:Bind Name}"></TextBlock>
+                        </StackPanel>
+                        
+                    </NavigationViewItem>
+                </DataTemplate>
+                <DataTemplate x:Key="ItemTemplate" x:DataType="local:NavigationItem">
+                    <NavigationViewItem  Tag="{x:Bind Tag}" >
+                        <StackPanel Orientation="Horizontal" Spacing="5">
+                            <ic:SymbolIcon Symbol="{x:Bind IconSymbol}" FontSize="20"  Margin="2,0,10,0"></ic:SymbolIcon>
+                            <TextBlock Text="{x:Bind Name}" ></TextBlock>
+                        </StackPanel>
+                    </NavigationViewItem>
+                </DataTemplate>
+                <obj:NavigationTemplateSelector 
+            x:Key="TemplateSelector"
+            GroupTemplate="{StaticResource GroupTemplate}"
+            PinnedItemTemplate="{StaticResource PinnedItemTemplate}"
+            ItemTemplate="{StaticResource ItemTemplate}"/>
+            </NavigationView.Resources>
+            <NavigationView.AutoSuggestBox>
+                <AutoSuggestBox PlaceholderText="CC98,My home" AutomationProperties.Name="Search" TextChanged="search_TextChanged" UpdateTextOnSelect="False" SuggestionChosen="search_SuggestionChosen">
+                    <AutoSuggestBox.QueryIcon>
+                        <ic:SymbolIcon Symbol="Search"></ic:SymbolIcon>
+                    </AutoSuggestBox.QueryIcon>
+                </AutoSuggestBox>
+            </NavigationView.AutoSuggestBox>
+
+            <NavigationView.MenuItemTemplateSelector>
+                <StaticResource ResourceKey="TemplateSelector"/>
+            </NavigationView.MenuItemTemplateSelector>
+            <NavigationView.FooterMenuItems>
+                <DataTemplate x:DataType="local:NavigationItem">
+                    <StackPanel Orientation="Horizontal" >
+                        <ic:SymbolIcon Symbol="{x:Bind IconSymbol}" FontSize="20"  Margin="2,0,10,0"></ic:SymbolIcon>
+                        <TextBlock Text="{x:Bind Name}"></TextBlock>
+                    </StackPanel>
+                </DataTemplate>
+            </NavigationView.FooterMenuItems>
+
+            <Frame x:Name="contentframe"></Frame>
+            
+        </NavigationView>
+        <TeachingTip x:Name="StatusReport" Target="{x:Bind Me}" IsLightDismissEnabled="True"></TeachingTip>
+        <local:InfoFlower Grid.Row="0" Grid.RowSpan="3" x:Name="Flower"></local:InfoFlower>
+    </Grid>
+</Window>
