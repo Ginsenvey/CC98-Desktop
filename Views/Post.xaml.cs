@@ -607,8 +607,7 @@ namespace CC98
             var type = sender as SegmentedItem;
             if (type == null) return;
             type.IsSelected = true;
-            var tag= type.Tag as string;
-            if (tag == null) return;
+            if (type.Tag is not string tag) return;
             LoadEmojiSet(tag);
         }
         private void SwitchContentType_Click(object sender, RoutedEventArgs e)

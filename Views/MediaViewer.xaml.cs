@@ -45,20 +45,20 @@ namespace CC98
     {
         public List<string> pictures = [];
         public int currentIndex = 0;
-        private MediaType _type = MediaType.Image;
-        private string _url = "";
-
-        private double _currentScale = 1.0;
-        private double _currentRotation = 0;
-        private const double ScaleStep = 0.1;
-        private const double MinScale = 0.5;
-        private const double MaxScale = 3.0;
+        private MediaType mediaType = MediaType.Image;
+        public string CurrentUrl=>pictures[currentIndex];
+        public int direction = 0;
+        public double CurrentAngle => 90.0 * direction;
+        public float scale = 1.0f;
+        public string ScaleText=>scale.ToString("P0");
         public MediaViewer(ViewerNavigationInfo info)
         {
             this.InitializeComponent();
-            _type=info.Type;
+            //初始化环境参数
+            mediaType=info.Type;
+            currentIndex = info.CurrentIndex;
             pictures.AddRange(info.Urls);
-            flipview.SelectedIndex = info.CurrentIndex;
+            //初始化UI
             this.Title = "资源预览";
             this.ExtendsContentIntoTitleBar = true;
             this.SetTitleBar(GridTitleBar);
@@ -69,179 +69,101 @@ namespace CC98
             this.SystemBackdrop=new MicaBackdrop();
             Activated += MediaViewer_Activated;
             this.Closed += MediaViewer_Closed;
-            this.Content.PointerWheelChanged += OnPointerWheelChanged;
-           
         }
 
-        
-        private void OnPointerWheelChanged(object sender, PointerRoutedEventArgs e)
+        private void LoadImage()
         {
-            try
-            {
-                // 使用正确的方法检测 Ctrl 键
-                bool isCtrlPressed = InputKeyboardSource.GetKeyStateForCurrentThread(VirtualKey.Control)
-                    .HasFlag(CoreVirtualKeyStates.Down);
-
-                if (!isCtrlPressed)
-                    return;
-
-                // 获取当前图片
-                var picture = GetCurrentPicture();
-                if (picture == null)
-                    return;
-
-                // 获取变换
-                var transform = picture.RenderTransform as CompositeTransform;
-                if (transform == null)
-                    return;
-
-                var properties = e.GetCurrentPoint(null).Properties;
-
-                // 调整缩放
-                if (properties.MouseWheelDelta > 0)
-                {
-                    _currentScale = Math.Min(_currentScale + ScaleStep, MaxScale);
-                }
-                else
-                {
-                    _currentScale = Math.Max(_currentScale - ScaleStep, MinScale);
-                }
-
-                transform.ScaleX = _currentScale;
-                transform.ScaleY = _currentScale;
-
-                if (zoomfactor != null)
-                {
-                    zoomfactor.Text = $"{_currentScale * 100:F0}%";
-                }
-
-                e.Handled = true;
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"Error: {ex.Message}");
-            }
+            direction = 0;
+            ImageTransform.Angle = CurrentAngle;
+            this.InnerImage.Src = CurrentUrl;
+            MediaInfo.Text = CurrentUrl;
+            Posi.Text = $"{currentIndex + 1} / {pictures.Count}";
         }
-
+       
         private async void MediaViewer_Activated(object sender, Microsoft.UI.Xaml.WindowActivatedEventArgs args)
         {
-            if (_type == MediaType.Video)
+            switch (mediaType)
             {
-
-                VideoPlayer.Visibility = Visibility.Visible;
-                Grid.SetRow(VideoPlayer,1);
-                Grid.SetRowSpan(VideoPlayer, 2);
-                var source =await LoginService.vpn.GetSourceAsync(_url);
-                if (source != null)
-                {
+                case MediaType.Image:
+                    VideoPlayer.Visibility = Visibility.Collapsed;
+                    LoadImage();
+                    break;
+                case MediaType.Video:
+                    VideoPlayer.Visibility = Visibility.Visible;
+                    Grid.SetRow(VideoPlayer, 1);
+                    Grid.SetRowSpan(VideoPlayer, 2);
+                    var source = await LoginService.vpn.GetSourceAsync(CurrentUrl);
+                    if (source == null) return;
                     VideoPlayer.Source = source;
-                }
-            }
-            else if (_type == MediaType.Image)
-            {
-                
-                VideoPlayer.Visibility = Visibility.Collapsed;
-            }
-                
-            
+                    break;
+            }     
         }
 
-        private Picture? GetCurrentPicture()
-        {
-            if (flipview.SelectedItem == null) return null;
-
-            // 获取当前 FlipView 项的容器
-            var container = flipview.ContainerFromIndex(flipview.SelectedIndex) as FlipViewItem;
-            if (container == null) return null;
-
-            // 查找 Picture 控件
-            return FindDescendant<Picture>(container);
-        }
-        private static T? FindDescendant<T>(DependencyObject parent) where T : DependencyObject
-        {
-            if (parent == null) return null;
-
-            for (int i = 0; i < VisualTreeHelper.GetChildrenCount(parent); i++)
-            {
-                var child = VisualTreeHelper.GetChild(parent, i);
-                if (child is T t)
-                    return t;
-
-                var result = FindDescendant<T>(child);
-                if (result != null)
-                    return result;
-            }
-            return null;
-        }
+       
         
+        private void RotateImage()
+        {
+            direction = (direction == 3) ? 0 : direction + 1;
+            ImageTransform.Angle = CurrentAngle;
+        }
 
         private void Rotate_Click(object sender, RoutedEventArgs e)
         {
-
-            var picture = GetCurrentPicture();
-            if (picture == null) return;
-
-            var transform = picture.RenderTransform as CompositeTransform;
-            if (transform == null) return;
-
-            // 每次点击旋转 90 度
-            _currentRotation = (_currentRotation + 90) % 360;
-            transform.Rotation = _currentRotation;
+            RotateImage();
         }
 
-        private async void AddAsEmoji_Click(object sender, RoutedEventArgs e)
+        private  void AddAsEmoji_Click(object sender, RoutedEventArgs e)
         {
-            if (_type == MediaType.Image && !_url.StartsWith("ms-appx"))
-            {
-                await CustomEmoji.SaveEmojiAsync(_url);
-            }
-            else
-            {
-                
-            }
+            
         }
         private void MediaViewer_Closed(object sender, WindowEventArgs e)
         {
             // 释放资源示例
             VideoPlayer.Source = null;
+            InnerImage.Src = "";
         }
-
-        private void FlipView_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        private void ScaleImage()
         {
-            _currentScale = 1.0;
-            _currentRotation = 0;
-            zoomfactor.Text = "100%";
-            //实现双向绑定
-            currentIndex = flipview.SelectedIndex;
-            MediaInfo.Text = pictures[currentIndex];
-            Posi.Text= $"{currentIndex + 1} / {pictures.Count}";
-
-            var picture = GetCurrentPicture();
-            if (picture != null)
-            {
-                var transform = picture.RenderTransform as CompositeTransform;
-                if (transform != null)
-                {
-                    transform.ScaleX = 1;
-                    transform.ScaleY = 1;
-                    transform.Rotation = 0;
-                }
-            }
+            Viewer.ChangeView(0, 0, scale,false);
+            zoomfactor.Text=ScaleText;
         }
+       
 
         private void zoomout_Click(object sender, RoutedEventArgs e)
         {
-
+            if (scale <= 0.1f) return;
+            scale -= 0.1f;
+            ScaleImage();
         }
 
         private void zoomin_Click(object sender, RoutedEventArgs e)
         {
-
+            if (scale >= 4.0f) return;
+            scale += 0.1f;
+            ScaleImage();
         }
 
         private void CopyPic_Click(object sender, RoutedEventArgs e)
         {
 
+        }
+
+        private void last_Click(object sender, RoutedEventArgs e)
+        {
+            currentIndex=(currentIndex==0)?pictures.Count-1:currentIndex-1;
+            LoadImage();
+        }
+
+        private void next_Click(object sender, RoutedEventArgs e)
+        {
+            currentIndex=(currentIndex==pictures.Count-1)?0:currentIndex+1;
+            LoadImage();
+        }
+
+        private void Viewer_ViewChanged(object sender, ScrollViewerViewChangedEventArgs e)
+        {
+            scale=Viewer.ZoomFactor;
+            zoomfactor.Text = ScaleText;
         }
     }
 }
