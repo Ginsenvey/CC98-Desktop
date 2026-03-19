@@ -96,7 +96,27 @@ public class Increment
                 currentPage--;
             }
         }
-
+    }
+    //强制加载下一页
+    public async Task LoadNextPage(Func<Task<bool>> load)
+    {
+        currentPage++;
+        var success = await load();
+        //如果没有成功，则回退页码，等待下一次尝试
+        if (!success)
+        {
+            currentPage--;
+        }
+    }
+    public async Task LoadLastPage(Func<Task<bool>> load)
+    {
+        currentPage--;
+        var success = await load();
+        //如果没有成功，则回退页码，等待下一次尝试
+        if (!success)
+        {
+            currentPage++;
+        }
     }
 }
 

@@ -32,7 +32,7 @@
 
                 <HyperlinkButton Grid.Row="0" Margin="0,0,0,5"  x:Name="Person" Click="Person_Click" Tag="{x:Bind}" ContextRequested="Person_ContextRequested">
                     <StackPanel  Orientation="Horizontal" Spacing="10">
-                        <Border Width="30" Height="30" CornerRadius="9999" Background="{ThemeResource PortraitBackgroundColor}">
+                        <Border Width="30" Height="30" CornerRadius="9999" Background="{ThemeResource PortraitBackgroundBrush}">
                             <share:Picture  x:Name="portrait" Src="{x:Bind PortraitUrl}" LoadImageCallback="{StaticResource PortraitLoader}"></share:Picture>
                         </Border>
                         <TextBlock Text="{x:Bind UserName}"  VerticalAlignment="Center" FontFamily="{StaticResource HarmonySansBold}" Foreground="{ThemeResource UserNameForegroundBrush}"></TextBlock>
@@ -75,17 +75,17 @@
                                     <ic:FluentIcon Icon="CommentQuote"></ic:FluentIcon>
                                 </MenuFlyoutItem.Icon>
                             </MenuFlyoutItem>
-                            <MenuFlyoutItem  Text="编辑" Click="PostOperation_Click" Tag="EDIT" DataContext="{x:Bind}" Visibility="{x:Bind IsMe,Converter={StaticResource BoolToVisibilityConverter}}">
+                            <MenuFlyoutItem  Text="编辑" Click="PostOperation_Click" Tag="EDIT" DataContext="{x:Bind}" Visibility="{x:Bind IsMe,Converter={StaticResource BoolToVisibility}}">
                                 <MenuFlyoutItem.Icon>
                                     <ic:FluentIcon Icon="Edit"></ic:FluentIcon>
                                 </MenuFlyoutItem.Icon>
                             </MenuFlyoutItem>
-                            <MenuFlyoutItem  Text="赠米" Click="PostOperation_Click" Tag="GIFT" DataContext="{x:Bind}" Visibility="{x:Bind IsMe,Converter={StaticResource BoolToVisibilityReConverter}}">
+                            <MenuFlyoutItem  Text="赠米" Click="PostOperation_Click" Tag="GIFT" DataContext="{x:Bind}" Visibility="{x:Bind IsMe,Converter={StaticResource ReBoolToVisibility}}">
                                 <MenuFlyoutItem.Icon>
                                     <ic:FluentIcon Icon="GiftOpen"></ic:FluentIcon>
                                 </MenuFlyoutItem.Icon>
                             </MenuFlyoutItem>
-                            <MenuFlyoutItem  Text="风评" Click="PostOperation_Click" Tag="RATE" DataContext="{x:Bind}" Visibility="{x:Bind IsMe,Converter={StaticResource BoolToVisibilityReConverter}}">
+                            <MenuFlyoutItem  Text="风评" Click="PostOperation_Click" Tag="RATE" DataContext="{x:Bind}" Visibility="{x:Bind IsMe,Converter={StaticResource ReBoolToVisibility}}">
                                 <MenuFlyoutItem.Icon>
                                     <FontIcon Glyph="&#xF6B8;" />
                                 </MenuFlyoutItem.Icon>
@@ -117,7 +117,7 @@
 
                 <HyperlinkButton Grid.Row="0" Margin="0,0,0,5"  x:Name="Person" Click="Person_Click" Tag="{x:Bind}" ContextRequested="Person_ContextRequested">
                     <StackPanel   Orientation="Horizontal" Spacing="10">
-                        <Border Width="30" Height="30" CornerRadius="9999" Background="{ThemeResource PortraitBackgroundColor}">
+                        <Border Width="30" Height="30" CornerRadius="9999" Background="{ThemeResource PortraitBackgroundBrush}">
                             <share:Picture  x:Name="portrait" Src="{x:Bind PortraitUrl}" LoadImageCallback="{StaticResource PortraitLoader}"></share:Picture>
                         </Border>
                         <TextBlock Text="{x:Bind UserName}"  VerticalAlignment="Center" FontFamily="{StaticResource HarmonySansBold}" Foreground="{ThemeResource UserNameForegroundBrush}"></TextBlock>
@@ -160,14 +160,19 @@
                                     <ic:FluentIcon Icon="CommentQuote"></ic:FluentIcon>
                                 </MenuFlyoutItem.Icon>
                             </MenuFlyoutItem>
-                            <MenuFlyoutItem  Text="编辑" Click="PostOperation_Click" Tag="EDIT" DataContext="{x:Bind}" Visibility="{x:Bind IsMe,Converter={StaticResource BoolToVisibilityConverter}}">
+                            <MenuFlyoutItem  Text="编辑" Click="PostOperation_Click" Tag="EDIT" DataContext="{x:Bind}" Visibility="{x:Bind IsMe,Converter={StaticResource BoolToVisibility}}">
                                 <MenuFlyoutItem.Icon>
                                     <ic:FluentIcon Icon="Edit"></ic:FluentIcon>
                                 </MenuFlyoutItem.Icon>
                             </MenuFlyoutItem>
-                            <MenuFlyoutItem  Text="赠米" Click="PostOperation_Click" Tag="GIFT" DataContext="{x:Bind}" Visibility="{x:Bind IsMe,Converter={StaticResource BoolToVisibilityReConverter}}">
+                            <MenuFlyoutItem  Text="赠米" Click="PostOperation_Click" Tag="GIFT" DataContext="{x:Bind}" Visibility="{x:Bind IsMe,Converter={StaticResource ReBoolToVisibility}}">
                                 <MenuFlyoutItem.Icon>
                                     <ic:FluentIcon Icon="GiftOpen"></ic:FluentIcon>
+                                </MenuFlyoutItem.Icon>
+                            </MenuFlyoutItem>
+                            <MenuFlyoutItem  Text="风评" Click="PostOperation_Click" Tag="RATE" DataContext="{x:Bind}" Visibility="{x:Bind IsMe,Converter={StaticResource ReBoolToVisibility}}">
+                                <MenuFlyoutItem.Icon>
+                                    <FontIcon Glyph="&#xF6B8;" />
                                 </MenuFlyoutItem.Icon>
                             </MenuFlyoutItem>
                             <MenuFlyoutItem Text="复制为原代码" Click="PostOperation_Click" Tag="UBB" DataContext="{x:Bind}">

@@ -68,7 +68,7 @@
             <Button x:Name="last" Grid.Column="1" Width="30" Height="30" CornerRadius="9999" HorizontalAlignment="Center" VerticalAlignment="Center" Style="{StaticResource ScrollButtonStyle}" Click="last_Click"> 
                 <FontIcon FontSize="{ThemeResource FlipViewButtonFontSize}" Glyph="&#xedd9;" />
             </Button>
-            <ScrollViewer x:Name="Viewer" Grid.Column="2" ZoomMode="Enabled" ViewChanged="Viewer_ViewChanged" HorizontalScrollMode="Enabled" VerticalContentAlignment="Stretch">
+            <ScrollViewer x:Name="Viewer" Grid.Column="2" ZoomMode="Enabled" ViewChanged="Viewer_ViewChanged" HorizontalContentAlignment="Center" VerticalAlignment="Stretch" HorizontalScrollMode="Enabled" HorizontalScrollBarVisibility="Visible" HorizontalAlignment="Stretch">
                 <share:Picture x:Name="InnerImage"  Stretch="UniformToFill" LoadImageCallback="{ThemeResource CustomPortraitLoader}" RenderTransformOrigin="0.5,0.5" HorizontalAlignment="Center"> 
                     <share:Picture.RenderTransform>
                         <RotateTransform x:Name="ImageTransform"  Angle="0"/>

@@ -39,7 +39,7 @@ public partial class UBBTextConverter : IValueConverter
         throw new NotImplementedException();
     }
 }
-public partial class AlignmentConverter : IValueConverter
+public partial class BoolToAlignmentConverter : IValueConverter
 {
     public object Convert(object value, Type targetType, object parameter, string language)
     {
@@ -168,7 +168,7 @@ public partial class DisLikeToVariantConverter : IValueConverter
         throw new NotImplementedException();
     }
 }
-public partial class RBooltoVisibilityConverter : IValueConverter
+public partial class ReBooltoVisibilityConverter : IValueConverter
 {
     object IValueConverter.Convert(object value, Type targetType, object parameter, string language)
     {

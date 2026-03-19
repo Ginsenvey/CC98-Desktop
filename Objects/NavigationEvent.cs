@@ -31,7 +31,7 @@ public class MessageNavigationInfo
     /// 标注以何种方式跳转到私信页面，从而让Chat页面做出响应。
     /// 如果从私信功能跳转(True)，那么MessageNavigationInfo将会传输要私信的用户信息
     /// </summary>
-    public bool IsFromProfile { get; set; } = false;
+    public bool HasTarget { get; set; } = false;
     public ChatInfo ChatUserInfo {  get; set; } = new ChatInfo();
 
 }

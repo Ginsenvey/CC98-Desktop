@@ -75,6 +75,8 @@ namespace CC98
         {
             direction = 0;
             ImageTransform.Angle = CurrentAngle;
+            scale = 1.0f;
+            ScaleImage();
             this.InnerImage.Src = CurrentUrl;
             MediaInfo.Text = CurrentUrl;
             Posi.Text = $"{currentIndex + 1} / {pictures.Count}";
@@ -124,7 +126,7 @@ namespace CC98
         }
         private void ScaleImage()
         {
-            Viewer.ChangeView(0, 0, scale,false);
+            Viewer.ZoomToFactor(scale);
             zoomfactor.Text=ScaleText;
         }
        

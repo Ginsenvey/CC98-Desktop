@@ -17,7 +17,7 @@
     Background="{ThemeResource DesktopAcrylicTransparentBrush}">
     <Page.Resources>
         <cv:BooltoVisibilityConverter x:Key="BoolToVisibility"></cv:BooltoVisibilityConverter>
-        <cv:RBooltoVisibilityConverter x:Key="RBoolToVisibility"></cv:RBooltoVisibilityConverter>
+        <cv:ReBooltoVisibilityConverter x:Key="RBoolToVisibility"></cv:ReBooltoVisibilityConverter>
         <cv:LikeToVariantConverter x:Key="BoolToVariant"></cv:LikeToVariantConverter>
         <cv:BoolToFollowTextConverter x:Key="FollowConverter"/>
     </Page.Resources>
@@ -83,7 +83,7 @@
                         <Button Visibility="{x:Bind profile.IsOthers,Converter={StaticResource BoolToVisibility},Mode=OneWay}" x:Name="StartChat" Click="StartChat_Click">
                             <StackPanel Orientation="Horizontal" Spacing="5">
                                 <ic:SymbolIcon Symbol="Chat"  FontSize="15"></ic:SymbolIcon>
-                                <TextBlock Text="私信" ></TextBlock>
+                                <TextBlock Text="私信"></TextBlock>
                             </StackPanel>
                         </Button>
                         <Button x:Name="Follow" Visibility="{x:Bind profile.IsOthers,Converter={StaticResource BoolToVisibility},Mode=OneWay}" Click="Follow_Click">
@@ -92,7 +92,7 @@
                                 <TextBlock Text="{x:Bind profile.IsFollowing,Converter={StaticResource FollowConverter},Mode=OneWay}" ></TextBlock>
                             </StackPanel>
                         </Button>
-                        <Border  Visibility="{x:Bind profile.IsOthers,Converter={StaticResource RBoolToVisibility},Mode=OneWay}" BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}" BorderThickness="1" CornerRadius="4" Padding="5,3,5,3">
+                        <Border  Visibility="{x:Bind profile.IsOthers,Converter={StaticResource ReBooltoVisibility},Mode=OneWay}" BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}" BorderThickness="1" CornerRadius="4" Padding="5,3,5,3">
                             <StackPanel Orientation="Horizontal" Spacing="5">
                                 <ic:SymbolIcon Symbol="CalendarCheckmarkSparkle"  IconVariant="Regular" FontSize="16" x:Name="SignStatusIcon"></ic:SymbolIcon>
                                 <TextBlock x:Name="SignStatus" Text="未签到" VerticalAlignment="Center"></TextBlock>
@@ -102,10 +102,10 @@
                 </Grid>
                 <TextBlock Text="签名档" FontSize="23" FontWeight="Bold" Foreground="#A9A9A9" Margin="0,5,0,0"></TextBlock>
                 
-                <Border Height="1" BorderBrush="{ThemeResource DividerBrush}" HorizontalAlignment="Stretch" BorderThickness="1"></Border>
+                <Border Height="1" BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}" HorizontalAlignment="Stretch" BorderThickness="1"></Border>
                 <ubb:UbbTextBlock x:Name="SignBoard" UbbText="{x:Bind profile.SignatureCode,Mode=OneWay}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" BoldFontFamily="{StaticResource HarmonySansBold}"></ubb:UbbTextBlock>
                 <TextBlock Text="主题" FontSize="23" FontWeight="Bold" Foreground="#A9A9A9" x:Name="de" IsTextSelectionEnabled="True"></TextBlock>
-                <Border Height="1" BorderBrush="{ThemeResource DividerBrush}" HorizontalAlignment="Stretch" BorderThickness="1"></Border>
+                <Border Height="1" BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}" HorizontalAlignment="Stretch" BorderThickness="1"></Border>
                 <Border Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1" CornerRadius="5">
                     <ItemsRepeater x:Name="RecentTopicRepeater"  ItemsSource="{x:Bind recentTopics}" ElementPrepared="RecentTopicRepeater_ElementPrepared">
                         <ItemsRepeater.ItemTemplate>
@@ -120,7 +120,6 @@
                                         <ic:SymbolIcon Symbol="Note" Grid.Column="0" Foreground="{ThemeResource AccentAAFillColorDefaultBrush}"></ic:SymbolIcon>
                                         <TextBlock Text="{x:Bind Title}" Grid.Column="1" VerticalAlignment="Center" Foreground="{ThemeResource TextFillColorSecondaryBrush}"></TextBlock>
                                         <TextBlock Text="{x:Bind Time}" Grid.Column="2" VerticalAlignment="Center" Foreground="{ThemeResource TextFillColorSecondaryBrush}"></TextBlock>
-
                                     </Grid>
                                 </HyperlinkButton>
                             </DataTemplate>

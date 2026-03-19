@@ -12,39 +12,36 @@
     xmlns:cv="using:CC98.Services.Converters"
     xmlns:obj="using:CC98.Objects"
     xmlns:ubb="using:UbbRender.Render"
-    Background="Transparent">
-    <Page.Resources>
-        <cv:AlignmentConverter x:Key="AlignmentConverter"/>
-    </Page.Resources>
+    xmlns:share="using:CC98.Share.Controls"
+    Background="{ThemeResource DesktopAcrylicTransparentBrush}">
+   
     <Grid>
-        <SplitView IsPaneOpen="True" DisplayMode="Inline" PaneBackground="{ThemeResource DesktopAcrylicTransparentBrush}" x:Name="MessageViewer">
+        <SplitView IsPaneOpen="True" DisplayMode="Inline" PaneBackground="Transparent" x:Name="MessageViewer">
             <SplitView.Pane>
-                <Border Background="Transparent" >
-                    <ListView x:Name="ContactRepeater" SelectionChanged="ContactRepeater_SelectionChanged" >
-                        <ListView.ItemTemplate>
-                            <DataTemplate x:DataType="obj:ChatInfo">
-                                <Grid Padding="10" RowSpacing="5" ColumnSpacing="10">
-                                    <Grid.RowDefinitions>
-                                        <RowDefinition Height="*"></RowDefinition>
-                                        <RowDefinition Height="*"></RowDefinition>
-                                    </Grid.RowDefinitions>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="50"></ColumnDefinition>
-                                        <ColumnDefinition Width="*"></ColumnDefinition>
-                                    </Grid.ColumnDefinitions>
-                                    <Border Grid.Column="0" Grid.Row="0" Grid.RowSpan="2" CornerRadius="5" Height="45" Width="45">
-                                        <image:SmartImage Source="{x:Bind PortraitUrl}" Stretch="UniformToFill"></image:SmartImage>
-                                    </Border>
-                                    <TextBlock Text="{x:Bind Name}" Grid.Column="1" Grid.Row="0" FontSize="15"></TextBlock>
-                                    <TextBlock Text="{x:Bind LastContent}" Grid.Column="1" Grid.Row="1" FontSize="13" Foreground="{ThemeResource TextFillColorSecondaryBrush}" MaxLines="1"></TextBlock>
-                                </Grid>
-                            </DataTemplate>
-                        </ListView.ItemTemplate>
-                    </ListView>
-                </Border>
+                <ListView x:Name="UserList" SelectionChanged="ContactRepeater_SelectionChanged" ItemsSource="{x:Bind chatInfoList}">
+                    <ListView.ItemTemplate>
+                        <DataTemplate x:DataType="obj:ChatInfo">
+                            <Grid Padding="10" RowSpacing="5" ColumnSpacing="10">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="*"></RowDefinition>
+                                    <RowDefinition Height="*"></RowDefinition>
+                                </Grid.RowDefinitions>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="50"></ColumnDefinition>
+                                    <ColumnDefinition Width="*"></ColumnDefinition>
+                                </Grid.ColumnDefinitions>
+                                <Border Grid.Column="0" Grid.Row="0" Grid.RowSpan="2" CornerRadius="5" Height="45" Width="45">
+                                    <share:Picture Src="{x:Bind PortraitUrl}" Stretch="UniformToFill" LoadImageCallback="{StaticResource PortraitLoader}"/>
+                                </Border>
+                                <TextBlock Text="{x:Bind Name}" Grid.Column="1" Grid.Row="0" FontSize="15"></TextBlock>
+                                <TextBlock Text="{x:Bind LastContent}" Grid.Column="1" Grid.Row="1" FontSize="13" Foreground="{ThemeResource TextFillColorSecondaryBrush}" MaxLines="1"></TextBlock>
+                            </Grid>
+                        </DataTemplate>
+                    </ListView.ItemTemplate>
+                </ListView>
             </SplitView.Pane>
             <SplitView.Content>
-                <Grid>
+                <Grid Padding="15" RowSpacing="10">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="50"></RowDefinition>
                         <RowDefinition Height="*"></RowDefinition>
@@ -52,7 +49,7 @@
                         <RowDefinition Height="65"></RowDefinition>
                     </Grid.RowDefinitions>
                     <Grid>
-                        <StackPanel Margin="15,0,0,0" Orientation="Horizontal" Spacing="8">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
                             <Button  Click="More_Click" x:Name="More" Padding="7" BorderThickness="0"  ToolTipService.ToolTip="查看更多">
                                 <ic:SymbolIcon Symbol="ChevronUp"  FontSize="16"></ic:SymbolIcon>
                             </Button>
@@ -61,26 +58,26 @@
                             </Button>
                         </StackPanel>
                     </Grid>
-                    <RefreshContainer x:Name="MoreMsg" RefreshRequested="MoreMsg_RefreshRequested" Grid.Row="1" VerticalAlignment="Stretch" CornerRadius="6">
-                        <ListView x:Name="MessagesList"   SelectionMode="None" >
-                            <ListView.ItemTemplate>
+                    <ScrollViewer x:Name="HistoryViewer" Grid.Row="1">
+                        <ItemsRepeater Grid.Row="1" x:Name="MessagesList"  ItemsSource="{x:Bind messages}" >
+                            <ItemsRepeater.ItemTemplate>
                                 <DataTemplate x:DataType="obj:ChatMessage">
-                                    <Grid Margin="0,10" HorizontalAlignment="{x:Bind IsMe ,Converter={StaticResource AlignmentConverter}}">
+                                    <Grid Margin="0,10" HorizontalAlignment="{x:Bind IsMe,Converter={StaticResource AlignmentConverter}}">
                                         <Border BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}" Background="{ThemeResource DesktopAcrylicTransparentBrush}" BorderThickness="1" CornerRadius="5" Padding="10" Height="Auto" MaxWidth="350" MinWidth="200">
                                             <StackPanel>
-                                                <ubb:UbbTextBlock UbbText="{x:Bind Content}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" BoldFontFamily="{StaticResource HarmonySansBold}"></ubb:UbbTextBlock>
+                                                <ubb:UbbTextBlock UbbText="{x:Bind Content}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" QuoteBackground="{ThemeResource QuoteBackgroundBrush。}" BoldFontFamily="{StaticResource HarmonySansBold}"></ubb:UbbTextBlock>
                                                 <TextBlock Text="{x:Bind Time}" Style="{ThemeResource CaptionTextBlockStyle}" HorizontalAlignment="Right" FontSize="10"/>
                                             </StackPanel>
                                         </Border>
                                     </Grid>
                                 </DataTemplate>
-                            </ListView.ItemTemplate>
-                        </ListView>
-                    </RefreshContainer>
+                            </ItemsRepeater.ItemTemplate>
+                        </ItemsRepeater>
+                    </ScrollViewer>
+                    
 
-                    <TextBox x:Name="ReplyBody" Grid.Row="2" AcceptsReturn="True" TextWrapping="Wrap" CornerRadius="5" Margin="15,15,15,0" ></TextBox>
-                    <TeachingTip x:Name="status" Target="{x:Bind ReplyBody}" IsLightDismissEnabled="True"></TeachingTip>
-                    <Button x:Name="Send" Style="{ThemeResource AccentButtonStyle}" Grid.Row="3" HorizontalAlignment="Right" Margin="15" Click="Send_Click">
+                    <TextBox x:Name="ReplyBody" Grid.Row="2" AcceptsReturn="True" TextWrapping="Wrap" CornerRadius="5"  ></TextBox>
+                    <Button x:Name="Send" Style="{ThemeResource AccentButtonStyle}" Grid.Row="3" HorizontalAlignment="Right"  Click="Send_Click">
                         <StackPanel Orientation="Horizontal" Spacing="10" >
                             <ic:SymbolIcon Symbol="Send"></ic:SymbolIcon>
                             <TextBlock Text="发送"></TextBlock>

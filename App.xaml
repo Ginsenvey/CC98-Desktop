@@ -46,6 +46,7 @@
             <SolidColorBrush x:Key="QuoteBorderBrush" Color="{ThemeResource QuoteBorderColor}"></SolidColorBrush>
             <SolidColorBrush x:Key="StandardBrush" Color="{ThemeResource Standard}"></SolidColorBrush>
             <SolidColorBrush x:Key="QuoteBackgroundBrush" Color="{ThemeResource QuoteBackgroundColor}"></SolidColorBrush>
+            <SolidColorBrush x:Key="PortraitBackgroundBrush" Color="{ThemeResource PortraitBackgroundColor}"></SolidColorBrush>
             <SolidColorBrush x:Key="SoftPink" Color="#ddfb7299"></SolidColorBrush>
             <SolidColorBrush x:Key="SoftPurple" Color="#C4ABD4"></SolidColorBrush>
             <SolidColorBrush x:Key="PrimaryPurple" Color="#7D6CAC"></SolidColorBrush>
@@ -79,6 +80,9 @@
             <cv:LikeToVariantConverter x:Key="LikeToVariantConverter"></cv:LikeToVariantConverter>
             <cv:DisLikeToVariantConverter x:Key="DisLikeToVariantConverter"></cv:DisLikeToVariantConverter>
             <cv:BoolToVariantConverter x:Key="BoolToVariantConverter"></cv:BoolToVariantConverter>
+            <cv:BooltoVisibilityConverter x:Key="BoolToVisibility"></cv:BooltoVisibilityConverter>
+            <cv:ReBooltoVisibilityConverter x:Key="ReBoolToVisibility"></cv:ReBooltoVisibilityConverter>
+            <cv:BoolToAlignmentConverter x:Key="AlignmentConverter"></cv:BoolToAlignmentConverter>
         </ResourceDictionary>
     </Application.Resources>
 </Application>

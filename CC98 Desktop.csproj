@@ -329,7 +329,7 @@
     <GenerateTemporaryStoreCertificate>True</GenerateTemporaryStoreCertificate>
     <AppxBundlePlatforms>x64</AppxBundlePlatforms>
     <PublishAot>True</PublishAot>
-	<PublishTrimmed>true</PublishTrimmed>
+	<PublishTrimmed>False</PublishTrimmed>
 	<TrimMode>full</TrimMode>
     <ApplicationIcon>Assets\cc98.ico</ApplicationIcon>
     <AllowUnsafeBlocks>False</AllowUnsafeBlocks>

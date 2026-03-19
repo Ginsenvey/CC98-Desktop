@@ -43,6 +43,7 @@ namespace CC98
     {
         public ApplicationDataContainer Set=ApplicationData.Current.LocalSettings;
         public ObservableCollection<TopicInfo> topics=new();
+        public HashSet<int> topicIds = [];
         public ObservableCollection<SimpleTopicInfo> randomTopics = new();
         public Increment increment = new(20);
         public Discover()
@@ -110,7 +111,9 @@ namespace CC98
                     topic.PortraitUrl = user.PortraitUrl;
                 }
             }
+            data = [.. data.Where(x => !topicIds.Contains(x.Id))];
             topics.AddRange(data);   
+            topicIds.AddRange(data.Select(x => x.Id));
             return true;
         }
 

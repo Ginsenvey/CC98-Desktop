@@ -16,8 +16,10 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.ComponentModel.Design.Serialization;
 using System.IO;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Runtime.InteropServices.WindowsRuntime;
 using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
@@ -38,57 +40,74 @@ namespace CC98
         public ObservableCollection<ChatInfo> chatInfoList = new();
         public ObservableCollection<ChatMessage> messages = new();
         //是否来自Profile页面的私信跳转功能
-        public bool isFromProfile = false;
+        public bool hasTarget = false;
         public ChatInfo targetUserInfo = new();
         public int currentUserId = 0;
-        public int currentIndex = 0;
-        public int history = 0;
-        public bool hasMore = true;
+        public Increment userIncrement = new();
+        public Increment chatHistoryIncrement = new();
         public Chat()
         {
             this.InitializeComponent();
-            ContactRepeater.ItemsSource = chatInfoList;
-            MessagesList.ItemsSource = messages;
         }
 
-        protected override void OnNavigatedTo(Microsoft.UI.Xaml.Navigation.NavigationEventArgs e)
+        protected override async void OnNavigatedTo(NavigationEventArgs e)
         {
             base.OnNavigatedTo(e);
             var args = e.TryGetParameter<MessageNavigationInfo>();
-            if (args != null)
+            if (args == null) return;
+            hasTarget = args.HasTarget;
+            if (hasTarget)//由私信功能跳转
             {
-                isFromProfile = args.IsFromProfile;
-                if (isFromProfile)//由私信功能跳转
+                var info = args.ChatUserInfo;
+                if (info != null)
                 {
-                    var info = args.ChatUserInfo;
-                    if (info != null)
-                    {
-                        targetUserInfo = info;//获取要私信的对象
-                    }
+                    targetUserInfo = info;//获取要私信的对象
                 }
-                GetRecent();
+            }
+            await GetRecent();
+            if (hasTarget)
+            {
+                StartChat();
+            }
+            else
+            {
+                UserList.SelectedIndex = 0;
             }
 
         }
-        private void ContactRepeater_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        //用于添加目标用户到聊天列表，并执行选中
+        private void StartChat()
         {
-            int i = ContactRepeater.SelectedIndex;
+            var list = chatInfoList.Select(x => x.UserId);
+            if (list.Contains(targetUserInfo.UserId))
+            {
+                UserList.SelectedIndex = chatInfoList.ToList().FindIndex(x => x.UserId == targetUserInfo.UserId);
+            }
+            else
+            {
+                chatInfoList.Insert(0, targetUserInfo);
+                UserList.SelectedIndex = 0;
+            }
+        }
+        private async void ContactRepeater_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            int i = UserList.SelectedIndex;
             if (i > -1)
             {
-                history = 0;
+                chatHistoryIncrement.Clear();
                 currentUserId = chatInfoList[i].UserId;
-                RefreshMessageList();
+                await RefreshMessageList();
             }
 
         }
-        private async void GetRecent()
+        private async Task<bool> GetRecent()
         {
-            string chatInfoUrl = ApiEndpoints.User.RecentChatUserList();
+            string chatInfoUrl = ApiEndpoints.User.RecentChatUserList(userIncrement.startIndex);
             var chatInfoResult = await RequestSender.Fetch<List<ChatInfo>>(chatInfoUrl);
             if (!chatInfoResult.IsSuccess || chatInfoResult.Data == null)
             {
                 //
-                return;
+                return false;
             }
             var data = chatInfoResult.Data;
 
@@ -98,7 +117,7 @@ namespace CC98
             if (!userInfoResult.IsSuccess || userInfoResult.Data == null)
             {
                 //报错
-                return;
+                return false;
             }
 
             var userInfoList = userInfoResult.Data;
@@ -111,82 +130,63 @@ namespace CC98
                     info.PortraitUrl = user.PortraitUrl;
                 }
             }
+            userIncrement.hasMore = data.Count == chatHistoryIncrement.pageSize;
             chatInfoList.AddRange(data);
-            if (chatInfoList.Count == 0)
-            {
-                //
-                return;
-            }
-            //选中要私信的用户
-            if (isFromProfile)
-            {
-                ContactRepeater.SelectedItem = chatInfoList.First(c => c.UserId == targetUserInfo.UserId);
-            }
-            else
-            {
-                ContactRepeater.SelectedIndex = 0;
-            }
+            return true;
         }
         
-        private async Task GetMessageList()
+        private async Task<bool> GetMessageList()
         {
-            string messageUrl = ApiEndpoints.User.ChatHistory(currentUserId, currentIndex);
+            string messageUrl = ApiEndpoints.User.ChatHistory(currentUserId, chatHistoryIncrement.startIndex);
             var messageResult = await RequestSender.Fetch<List<ChatMessage>>(messageUrl);
             if (!messageResult.IsSuccess)
             {
                 //
-                return;
+                return false;
             }
             if(messageResult.Data == null)
             {
                 //
-                return;
+                return false;
             }
             var data = messageResult.Data;
-            hasMore = data.Count == 10;
-            if (hasMore)
-            {
-                history += 10;
-            }
+            chatHistoryIncrement.hasMore= data.Count == chatHistoryIncrement.pageSize;
+            
             foreach(var message in data)
             {
                 message.IsMe = message.ReceiverId == currentUserId;
                 messages.Insert(0, message);
             }
+            return true;
         }
         
-        private async void MoreMsg_RefreshRequested(RefreshContainer sender, RefreshRequestedEventArgs args)
-        {
-            if (currentUserId != 0 && hasMore)
-            {
-                currentIndex = history;
-                await GetMessageList();
-            }
-            
-        }
-        private async void RefreshMessageList()
+        
+        private async Task RefreshMessageList()
         {
             messages.Clear();
-            currentIndex = 0;
+            chatHistoryIncrement.Clear();
             await GetMessageList();
-            if (MessagesList.Items.Count > 0)
-            {
-                // 获取最后一个项目并滚动到它
-                var lastItem = MessagesList.Items[MessagesList.Items.Count - 1];
-                MessagesList.ScrollIntoView(lastItem);
-            }
+            // 滚动到最底部
+            ScrollTo(messages.Count - 1);
         }
-        
+        private void ScrollTo(int index)
+        {
+            try
+            {
+                var element = MessagesList.GetOrCreateElement(index);
+                var options = new BringIntoViewOptions
+                {
+                    VerticalAlignmentRatio = 1, // 0=顶部对齐，0.5=居中，1=底部
+                    AnimationDesired = true       // 启用平滑滚动动画
+                };
+                element.StartBringIntoView(options);
+            }
+            catch { }
+        }
         private async void More_Click(object sender, RoutedEventArgs e)
         {
-            if (currentUserId != 0 && hasMore)
-            {
-                currentIndex = history;
-                await GetMessageList();
-            }
+            await chatHistoryIncrement.LoadNextPage(GetMessageList);
         }
-        
-
         
         private async void Send_Click(object sender, RoutedEventArgs e)
         {
@@ -198,23 +198,16 @@ namespace CC98
                 if (r == "1")
                 {
                     ReplyBody.Text = "";
-                    RefreshMessageList();
-                }
-                else
-                {
-                    status.Title = "发送失败";
-                    status.Content = "这可能是网络不佳导致的，或者存在代码问题。";
-                    status.IsOpen = true;
+                    await RefreshMessageList();
                 }
             }
         }
 
-        private void Ref_Click(object sender, RoutedEventArgs e)
+        private async void Ref_Click(object sender, RoutedEventArgs e)
         {
-            RefreshMessageList();
+            await RefreshMessageList();
         }
 
-        
     }
 
     

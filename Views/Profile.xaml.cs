@@ -171,7 +171,7 @@ namespace CC98
         private void StartChat_Click(object sender, RoutedEventArgs e)
         {
             var c = new ChatInfo { UserId = profile.Id, Name = profile.Name, PortraitUrl = profile.PortraitUrl };
-            var param=new MessageNavigationInfo { ChatUserInfo = c ,IsFromProfile=true};
+            var param=new MessageNavigationInfo { ChatUserInfo = c ,HasTarget=true};
             Frame.Navigate(typeof(Message), param);
         }
 

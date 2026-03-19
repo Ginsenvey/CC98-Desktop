@@ -64,7 +64,7 @@ public static class ApiEndpoints
         /// 收藏夹列表
         /// </summary>
         public static string FavoritesList() => $"{Base}/me/favorite-topic-group";
-        public static string RecentChatUserList() => $"{Base}/message/recent-contact-users?from=0&size=10";
+        public static string RecentChatUserList(int start) => $"{Base}/message/recent-contact-users?from={start}&size=10";
 
         public static string ChatHistory(int userId,int start) => $"{Base}/message/user/{userId}?from={start}&size=10";
         public static string SearchUser(string name) => $"{Base}/user/name/{name}";

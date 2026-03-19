@@ -564,7 +564,7 @@ namespace CC98
                         contentframe.Navigate(typeof(Setting));
                         break;
                     case "Message":
-                        var param = new MessageNavigationInfo {IsFromProfile = false };
+                        var param = new MessageNavigationInfo {HasTarget = false };
                         contentframe.Navigate(typeof(Message), param);
                         break;
                     case "Focus":

@@ -135,7 +135,7 @@ namespace CC98
             var f = m?.DataContext as Friend;
             if (f == null) return;
             var c = new ChatInfo { UserId = f.Id, Name = f.Name, PortraitUrl = f.PortraitUrl };
-            var param = new MessageNavigationInfo { IsFromProfile = true, ChatUserInfo = c };
+            var param = new MessageNavigationInfo { HasTarget = true, ChatUserInfo = c };
             Frame.Navigate(typeof(Message), param);
         }
 
