@@ -57,6 +57,16 @@ namespace CC98
                 LoginPane.Visibility = Visibility.Collapsed;
                 VpnPane.Visibility = Visibility.Visible;
             }
+            else//由于密码更改或者套餐到期，尝试使用原凭据VPN登录失败，需要验证码
+            {
+                LoginPane.Visibility = Visibility.Collapsed;
+                VpnPane.Visibility = Visibility.Visible;
+                string captchaId = LoginService.vpn.LastCaptchaId;
+                long timeStamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+                string captchaUrl = $"{VpnService.Base}/captcha/{captchaId}.png?reload={timeStamp}";
+                captcha.Source = new BitmapImage(new Uri(captchaUrl));
+                captchabox.Visibility = Visibility.Visible;
+            }
         }
         private void CenterWindow()
         {
@@ -241,7 +251,7 @@ namespace CC98
         {
             if (ValidationHelper.GetValue(Set, "IsVpnUsable") == "1")
             {
-                Flower.Play("\uE930", "已配置VPN，无需其他操作");
+                Flower.Play(FlowStatus.Info, "已配置VPN，无需其他操作");
                 return;
             }
             GuidePane.Visibility= Visibility.Collapsed;
@@ -312,7 +322,8 @@ namespace CC98
                 case VPNLoginStatus.NeedCaptcha:
                     Link.IsChecked = false;
                     de.Visibility = Visibility.Collapsed;
-                    string captchaId = res.Description;
+                    //从VpnService处直接调用。
+                    string captchaId = LoginService.vpn.LastCaptchaId;
                     long timeStamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
                     string captchaUrl = $"{VpnService.Base}/captcha/{captchaId}.png?reload={timeStamp}";
                     captcha.Source = new BitmapImage(new Uri(captchaUrl));

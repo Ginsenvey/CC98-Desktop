@@ -36,7 +36,7 @@
                 <RowDefinition Height="Auto"></RowDefinition>
 
             </Grid.RowDefinitions>
-            <TextBlock Grid.Row="0" Text="登录CC98" FontWeight="Bold" FontSize="18" Foreground="{ThemeResource AccentAAFillColorDefaultBrush}"></TextBlock>
+            <TextBlock Grid.Row="0" Text="登录CC98" FontWeight="Bold" FontFamily="{StaticResource HarmonySansBold}" FontSize="18" Foreground="{ThemeResource AccentAAFillColorDefaultBrush}"></TextBlock>
             <Image Grid.Row="1" Source="/Assets/back.png" ></Image>
             <Border Grid.Row="2"  Background="{ThemeResource AcrylicCardBrush}"  CornerRadius="4" Padding="10">
                 <TextBlock IsTextSelectionEnabled="False"  FontSize="12" x:Name="Introducing"  Foreground="{ThemeResource TextFillColorSecondaryBrush}"  Text="浙江大学校内论坛CC98的Windows客户端。使用本应用时，请阅读并遵守论坛规则。" TextWrapping="Wrap"></TextBlock>
@@ -100,8 +100,8 @@
                 <TextBlock Text="连接到WebVPN" FontWeight="Bold" FontSize="18" Foreground="LightSeaGreen"></TextBlock>
             </StackPanel>
 
-            <TextBlock Grid.Row="1" x:Name="de" Text="VPN的凭据通常与浙大通行证一致。" Foreground="{ThemeResource TextFillColorSecondaryBrush}" FontSize="12" Margin="0,10,0,0"></TextBlock>
-            <TextBox Grid.Row="2" Header="账号" x:Name="idbox" Margin="0,10,0,0" ></TextBox>
+            <TextBlock Grid.Row="1" x:Name="de" Text="VPN的凭据通常与浙大通行证一致。" Foreground="{ThemeResource TextFillColorSecondaryBrush}" FontSize="12" ></TextBlock>
+            <TextBox Grid.Row="2" Header="账号" x:Name="idbox"  ></TextBox>
             <PasswordBox Grid.Row="3" Header="密码" x:Name="passbox" ></PasswordBox>
             <TextBox x:Name="captchabox" Grid.Row="4" Header="验证码" Text="" TextChanged="captchabox_TextChanged" MaxLength="4" Visibility="Collapsed"></TextBox>
             <Image x:Name="captcha" Grid.Row="5" HorizontalAlignment="Left" Height="40" Stretch="Uniform"></Image>

@@ -119,6 +119,12 @@ namespace CC98
                     //此时vpn应该可用
                     await StartUp();
                 }
+                else
+                {
+                    Set.Values["IsVpnUsable"] = 0;
+                    ShowError("无法连接WebVPN","账户欠费或者密码不正确","请重新配置凭据");
+                    ActivateLogin(2);
+                }
             }
             if (network_status == NetworkStatus.MirrorError)
             {
