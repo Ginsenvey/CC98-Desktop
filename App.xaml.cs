@@ -44,14 +44,13 @@ namespace CC98
     /// </summary>
     public partial class App : Application
     {
-        public Window m_window { get; set; }
+        public Window AppMainWindow { get; set; }
         private Window loginPage;
         public ApplicationDataContainer Set = ApplicationData.Current.LocalSettings;
         public static event Action<ElementTheme> ThemeChanged;
         public static new App Current => (App)Application.Current;
         private static AppLog _logger;
         public static AppLog Logger => _logger ?? throw new InvalidOperationException("Logger未初始化");
-        // 在 App 类中添加字段以保留托盘图标引用，防止被 GC 回收
         private DevWinUI.SystemTrayIcon? _trayIcon;
 
         public static void RaiseThemeChanged(ElementTheme theme)
@@ -62,166 +61,20 @@ namespace CC98
         {
             this.InitializeComponent();            
         }
-        
 
-        
-        private async void InitializeNetwork()
-        {
-            var network_status = await LoginService.vpn.CheckNetwork(false);
-            if (network_status == NetworkStatus.InCampus)
-            {
-                //启动
-                await StartUp();
-                return;
-            }
-            if (network_status == NetworkStatus.NotInCampus)//在校外
-            {
-                await Logger.WriteAsync("App", "初始化网络", "检测VPN可用性");
-                if (ValidationHelper.GetValue(Set, "IsVpnUsable") != "1")
-                {
-                    //打开VPN配置设置
-                    await Logger.WriteAsync("App", "初始化网络", "未配置VPN,跳转登录");
-                    ActivateLogin(1);
-                    return;
-                }
-                //检测是否已初始化Ticket。若已初始化，使用并检查有效性。无效则重连。未初始化是出错的情况。
-                if (!PasswordManager.PasswordExists("Ticket") || !PasswordManager.PasswordExists("Route"))
-                {
-                    //报错
-                    await Logger.WriteAsync("App", "初始化网络", "VPN凭据中，有至少一个没有保存");
-                    ShowError("VPN凭据不完整");
-                    return;
-                }
-                if (!InjectTokenFromVault())
-                {
-                    //报错
-                    await Logger.WriteAsync("App", "初始化网络", "已保存的凭据中，有至少一个内容是空文本");
-                    ShowError("VPN凭据不完整");
-                    return;
-                }
-                await Logger.WriteAsync("App", "初始化网络", "注入已有Cookie成功,启用VPN模式检查网络");
-                var new_status = await LoginService.vpn.CheckNetwork(true);
-                await Logger.WriteAsync("App", "初始化网络", $"新的网络状态为：{new_status.ToString()}");
-                if (new_status == NetworkStatus.ByVPN)
-                {
-                    LoginService.vpn.Logined = true;
-                    LoginService.vpn.IsVpnEnabled = true;
-                    await StartUp();
-                    //启动
-                    return;
-                }
-                bool success = await ReloginVPN();
-                await Logger.WriteAsync("App", "初始化网络", success ? "重连成功": "重连失败");
-                if (success)
-                {
-                    LoginService.vpn.IsVpnEnabled = true;
-                    SaveToken();
-                    //此时vpn应该可用
-                    await StartUp();
-                }
-                else
-                {
-                    Set.Values["IsVpnUsable"] = 0;
-                    ShowError("无法连接WebVPN","账户欠费或者密码不正确","请重新配置凭据");
-                    ActivateLogin(2);
-                }
-            }
-            if (network_status == NetworkStatus.MirrorError)
-            {
-                ShowError("出错", "连接镜像站失败", "日志已记录");
-            }
-            if (network_status == NetworkStatus.UnknownError)
-            {
-                ShowError("出错", "IP可能被镜像站拦截", "日志已记录");
-            }
-            if (network_status == NetworkStatus.NoConnection)
-            {
-                ShowError("出错", "无互联网连接", "日志已记录");
-            }
-            return;
-        }
 
-        private bool InjectTokenFromVault()
-        {
-            //提取环节
-            var ticket_value = PasswordManager.RetrievePassword("Ticket");
-            var route_value = PasswordManager.RetrievePassword("Route");
-            var ticket = new Cookie("wengine_vpn_ticketwebvpn_zju_edu_cn", ticket_value, "/", "webvpn.zju.edu.cn");
-            var route = new Cookie("route", route_value, "/", "webvpn.zju.edu.cn");
-            ticket.HttpOnly = true;
-            //注入环节
-            if (string.IsNullOrEmpty(ticket_value) || string.IsNullOrEmpty(route_value))
-            {
-                return false;
-            }
-            LoginService.vpn.Jar.Add(ticket);
-            LoginService.vpn.Jar.Add(route);
-            return true;
-        }
-
-        private async Task<bool> ReloginVPN()
-        {
-            if (!PasswordManager.PasswordExists("VpnUserName") || !PasswordManager.PasswordExists("VpnPassWord"))
-            {
-                return false;
-            }
-            string id = PasswordManager.RetrievePassword("VpnUserName");
-            string pass = PasswordManager.RetrievePassword("VpnPassWord");
-            var res = await LoginService.vpn.LoginAsync(id, pass);
-            if(res.Status==VPNLoginStatus.Success)return true;
-            if (res.Status == VPNLoginStatus.NeedConfirm)
-            {
-                var confirm_res = await LoginService.vpn.Confirm();
-                if (confirm_res.Status == VPNLoginStatus.Success)
-                {
-                    //
-                    return true;
-                }
-                else
-                {
-                    //报错
-                    ShowError("顶号失败");
-                    return false;
-                }
-            }
-            if (res.Status == VPNLoginStatus.NeedCaptcha||res.Status==VPNLoginStatus.Error)
-            {
-                //报错
-                return false;
-            }
-            return false;
-        }
-
-        private bool SaveToken()
-        {
-            var new_ticket = LoginService.vpn.Ticket;
-            var new_route = LoginService.vpn.Route;
-            string _ticket = new_ticket.Value;
-            string _route = new_route.Value;
-            if (string.IsNullOrEmpty(_ticket) || (string.IsNullOrEmpty(_route)))
-            {
-                //报错
-                ShowError("VPN凭据不完整");
-                return false;
-            }
-            
-            //更新环节
-            PasswordManager.SavePassword(_ticket, "Ticket");
-            PasswordManager.SavePassword(_route, "Route");
-            return true;
-            //保存失败或者token为空时，会出现VPN启用但找不到令牌的情况。
-        }
-        protected override  async void OnLaunched(Microsoft.UI.Xaml.LaunchActivatedEventArgs args)
+        #region 应用启动
+        protected override async void OnLaunched(Microsoft.UI.Xaml.LaunchActivatedEventArgs args)
         {
             await InitializeAppLog();
-            var e= AppInstance.GetActivatedEventArgs();
+            var e = AppInstance.GetActivatedEventArgs();
             if (e.Kind == ActivationKind.Protocol)
             {
                 AuthFromOpenID(e);
                 return;
             }
             string IsActive = ValidationHelper.GetValue(Set, "IsActive");
-            if (IsActive =="0")
+            if (IsActive == "0")
             {
                 ActivateLogin(0);
             }
@@ -260,37 +113,50 @@ namespace CC98
                 await Logger.WriteAsync("全局异常捕获", $"未处理异常: {e.ExceptionObject}");
             };
 
-            
+
         }
         private async Task StartUp()
         {
             try
             {
                 //必须在构造函数前加上异常处理
-                m_window = new MainWindow();
+                AppMainWindow = new MainWindow();
                 await Logger.WriteAsync("App", "应用主窗口启动");
-                m_window.Closed += M_window_Closed;
-                m_window.Activate();
+                AppMainWindow.Closed += M_window_Closed;
+                AppMainWindow.Activate();
                 DisplayTrayIcon();
             }
             catch (Exception ex)
             {
-                await Logger.WriteAsync("App", "主窗口启动出错",ex.Message);
+                await Logger.WriteAsync("App", "主窗口启动出错", ex.Message);
             }
-            
+
         }
-        private void M_window_Closed(object sender, WindowEventArgs args)
+
+        private void ActivateLogin(int mode)
         {
-            if (_trayIcon != null)
-            {
-                _trayIcon.IsVisible = false;
-                _trayIcon.Dispose();
-                _trayIcon = null;
-            }
+            loginPage = new Login(mode);
+            var hWnd = WinRT.Interop.WindowNative.GetWindowHandle(loginPage);
+            var windowStyle = Win32Interop.GetWindowLong(hWnd, Win32Interop.GWL_STYLE);
+            Win32Interop.SetWindowLong(hWnd, Win32Interop.GWL_STYLE, windowStyle & ~Win32Interop.WS_THICKFRAME);
+            var desiredWidth = 720;  // 逻辑像素
+            var desiredHeight = 460; // 逻辑像素
+            var dpi = Win32Interop.GetDpiForWindow(hWnd);
+            var scalingFactor = dpi / 96.0;
+            Win32Interop.SetWindowPos(
+                hWnd,
+                Win32Interop.HWND_TOP,
+                0, 0,
+                (int)(desiredWidth * scalingFactor),
+                (int)(desiredHeight * scalingFactor),
+                Win32Interop.SWP_NOMOVE | Win32Interop.SWP_NOZORDER);
+            loginPage.Title = "登录";
+            loginPage.Activate();
         }
 
-     
+        #endregion
 
+        #region 认证
         private async void AuthFromOpenID(IActivatedEventArgs e)
         {
             var protocol = (ProtocolActivatedEventArgs)e;
@@ -340,33 +206,198 @@ namespace CC98
                     ShowError("登录失败", "未取得有效令牌", token.Message);
                     ActivateLogin(0);
                 }
-               
+
             }
         }
-        
+
 
         private void InjectTokenFromAuth(AuthorizeResult result)
         {
             PasswordManager.SavePassword(result.AccessToken, "Access");
             PasswordManager.SavePassword(result.RefreshToken, "Refresh");
             Set.Values["IsActive"] = "1";
-            m_window = new MainWindow();
-            m_window.Activate();
+            AppMainWindow = new MainWindow();
+            AppMainWindow.Activate();
         }
+        #endregion
+
+        #region 网络
+        private async void InitializeNetwork()
+        {
+            var network_status = await LoginService.vpn.CheckNetwork(false);
+            if (network_status == NetworkStatus.InCampus)
+            {
+                //启动
+                await StartUp();
+                return;
+            }
+            if (network_status == NetworkStatus.NotInCampus)//在校外
+            {
+                await Logger.WriteAsync("App", "初始化网络", "检测VPN可用性");
+                if (ValidationHelper.GetValue(Set, "IsVpnUsable") != "1")
+                {
+                    //打开VPN配置设置
+                    await Logger.WriteAsync("App", "初始化网络", "未配置VPN,跳转登录");
+                    ActivateLogin(1);
+                    return;
+                }
+                //检测是否已初始化Ticket。若已初始化，使用并检查有效性。无效则重连。未初始化是出错的情况。
+                if (!PasswordManager.PasswordExists("Ticket") || !PasswordManager.PasswordExists("Route"))
+                {
+                    //报错
+                    await Logger.WriteAsync("App", "初始化网络", "VPN凭据中，有至少一个没有保存");
+                    ShowError("VPN凭据不完整");
+                    return;
+                }
+                if (!InjectTokenFromVault())
+                {
+                    //报错
+                    await Logger.WriteAsync("App", "初始化网络", "已保存的凭据中，有至少一个内容是空文本");
+                    ShowError("VPN凭据不完整");
+                    return;
+                }
+                await Logger.WriteAsync("App", "初始化网络", "注入已有Cookie成功,启用VPN模式检查网络");
+                var new_status = await LoginService.vpn.CheckNetwork(true);
+                await Logger.WriteAsync("App", "初始化网络", $"新的网络状态为：{new_status.ToString()}");
+                if (new_status == NetworkStatus.ByVPN)
+                {
+                    LoginService.vpn.Logined = true;
+                    LoginService.vpn.IsVpnEnabled = true;
+                    await StartUp();
+                    //启动
+                    return;
+                }
+                bool success = await ReloginVPN();
+                await Logger.WriteAsync("App", "初始化网络", success ? "重连成功" : "重连失败");
+                if (success)
+                {
+                    LoginService.vpn.IsVpnEnabled = true;
+                    SaveToken();
+                    //此时vpn应该可用
+                    await StartUp();
+                }
+                else
+                {
+                    //此处存在bug，经此入口重新登录VPN，重启应用，显示VPN未配置
+                    Set.Values["IsVpnUsable"] = "0";
+                    ShowError("无法连接WebVPN", "账户欠费或者密码不正确", "请重新配置凭据");
+                }
+            }
+            if (network_status == NetworkStatus.MirrorError)
+            {
+                ShowError("出错", "连接镜像站失败", "日志已记录");
+            }
+            if (network_status == NetworkStatus.UnknownError)
+            {
+                ShowError("出错", "IP可能被镜像站拦截", "日志已记录");
+            }
+            if (network_status == NetworkStatus.NoConnection)
+            {
+                ShowError("出错", "无互联网连接", "日志已记录");
+            }
+            return;
+        }
+
+        private bool InjectTokenFromVault()
+        {
+            //提取环节
+            var ticket_value = PasswordManager.RetrievePassword("Ticket");
+            var route_value = PasswordManager.RetrievePassword("Route");
+            var ticket = new Cookie("wengine_vpn_ticketwebvpn_zju_edu_cn", ticket_value, "/", "webvpn.zju.edu.cn");
+            var route = new Cookie("route", route_value, "/", "webvpn.zju.edu.cn");
+            ticket.HttpOnly = true;
+            //注入环节
+            if (string.IsNullOrEmpty(ticket_value) || string.IsNullOrEmpty(route_value))
+            {
+                return false;
+            }
+            LoginService.vpn.Jar.Add(ticket);
+            LoginService.vpn.Jar.Add(route);
+            return true;
+        }
+
+        private async Task<bool> ReloginVPN()
+        {
+            if (!PasswordManager.PasswordExists("VpnUserName") || !PasswordManager.PasswordExists("VpnPassWord"))
+            {
+                return false;
+            }
+            string id = PasswordManager.RetrievePassword("VpnUserName");
+            string pass = PasswordManager.RetrievePassword("VpnPassWord");
+            var res = await LoginService.vpn.LoginAsync(id, pass);
+            if (res.Status == VPNLoginStatus.Success) return true;
+            if (res.Status == VPNLoginStatus.NeedConfirm)
+            {
+                var confirm_res = await LoginService.vpn.Confirm();
+                if (confirm_res.Status == VPNLoginStatus.Success)
+                {
+                    //
+                    return true;
+                }
+                else
+                {
+                    //报错
+                    ShowError("顶号失败");
+                    return false;
+                }
+            }
+            if (res.Status == VPNLoginStatus.NeedCaptcha || res.Status == VPNLoginStatus.Error)
+            {
+                //报错
+                return false;
+            }
+            return false;
+        }
+
+        private bool SaveToken()
+        {
+            var new_ticket = LoginService.vpn.Ticket;
+            var new_route = LoginService.vpn.Route;
+            string _ticket = new_ticket.Value;
+            string _route = new_route.Value;
+            if (string.IsNullOrEmpty(_ticket) || (string.IsNullOrEmpty(_route)))
+            {
+                //报错
+                ShowError("VPN凭据不完整");
+                return false;
+            }
+
+            //更新环节
+            PasswordManager.SavePassword(_ticket, "Ticket");
+            PasswordManager.SavePassword(_route, "Route");
+            return true;
+            //保存失败或者token为空时，会出现VPN启用但找不到令牌的情况。
+        }
+        #endregion
+
+        #region 其他
+
+
+        private void M_window_Closed(object sender, WindowEventArgs args)
+        {
+            if (_trayIcon != null)
+            {
+                _trayIcon.IsVisible = false;
+                _trayIcon.Dispose();
+                _trayIcon = null;
+            }
+        }
+
+      
 
         private void DisplayTrayIcon()
         {
-            var icon = WindowHelper.GetWindowIcon(m_window);
+            var icon = WindowHelper.GetWindowIcon(AppMainWindow);
             uint iconId = 9898;
 
             // 保留引用，避免被 GC 回收
             _trayIcon = new SystemTrayIcon(iconId, icon, "CC98论坛");
             _trayIcon.LeftClick += (s, e) =>
             {
-                m_window.DispatcherQueue.TryEnqueue(() => {
-                    if (!m_window.Visible) m_window.AppWindow.Show();
-                    m_window.Activate();
-                    var appWindow = Microsoft.UI.Windowing.AppWindow.GetFromWindowId(m_window.AppWindow.Id);
+                AppMainWindow.DispatcherQueue.TryEnqueue(() => {
+                    if (!AppMainWindow.Visible) AppMainWindow.AppWindow.Show();
+                    AppMainWindow.Activate();
+                    var appWindow = Microsoft.UI.Windowing.AppWindow.GetFromWindowId(AppMainWindow.AppWindow.Id);
                     if (appWindow.Presenter is Microsoft.UI.Windowing.OverlappedPresenter overlappedPresenter)
                     {
                         if (overlappedPresenter.State == Microsoft.UI.Windowing.OverlappedPresenterState.Minimized)
@@ -384,16 +415,16 @@ namespace CC98
                 var openItem = new MenuFlyoutItem { Text = "进入论坛", Width = 180, Icon = new FluentIcons.WinUI.SymbolIcon { Symbol = FluentIcons.Common.Symbol.Home } };
                 openItem.Click += (_, __) =>
                 {
-                    m_window.DispatcherQueue.TryEnqueue(() => m_window.Activate());
+                    AppMainWindow.DispatcherQueue.TryEnqueue(() => AppMainWindow.Activate());
                 };
 
                 var exitItem = new MenuFlyoutItem { Text = "退出", Width = 180, Icon = new FluentIcons.WinUI.SymbolIcon { Symbol = FluentIcons.Common.Symbol.ArrowExit } };
                 exitItem.Click += (_, __) =>
                 {
                     LoginService.vpn.Dispose();
-                    m_window.DispatcherQueue.TryEnqueue(() =>
+                    AppMainWindow.DispatcherQueue.TryEnqueue(() =>
                     {
-                        m_window.Close();
+                        AppMainWindow.Close();
                         loginPage?.Close();
                     });
 
@@ -431,26 +462,7 @@ namespace CC98
                     .BuildNotification();
             AppNotificationManager.Default.Show(notification);
         }
-        private void ActivateLogin(int mode)
-        {
-            loginPage = new Login(mode);
-            var hWnd = WinRT.Interop.WindowNative.GetWindowHandle(loginPage);
-            var windowStyle = Win32Interop.GetWindowLong(hWnd, Win32Interop.GWL_STYLE);
-            Win32Interop.SetWindowLong(hWnd, Win32Interop.GWL_STYLE, windowStyle & ~Win32Interop.WS_THICKFRAME);
-            var desiredWidth = 720;  // 逻辑像素
-            var desiredHeight = 460; // 逻辑像素
-            var dpi = Win32Interop.GetDpiForWindow(hWnd);
-            var scalingFactor = dpi / 96.0;
-            Win32Interop.SetWindowPos(
-                hWnd,
-                Win32Interop.HWND_TOP,
-                0, 0,
-                (int)(desiredWidth * scalingFactor),
-                (int)(desiredHeight * scalingFactor),
-                Win32Interop.SWP_NOMOVE | Win32Interop.SWP_NOZORDER);
-            loginPage.Title = "登录";
-            loginPage.Activate();
-        }
-        
+
+        #endregion
     }
 }

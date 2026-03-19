@@ -110,7 +110,7 @@ namespace CC98
                 Flower.Play(FlowStatus.Info, "该帖子已被删除");
             };
             //这里存在一个问题，当应用首次启动时，该项返回false,从而不能跳转
-            if (App.Current.m_window is MainWindow mainwindow)
+            if (App.Current.AppMainWindow is MainWindow mainwindow)
             {
                 var param = new TopicNavigationInfo
                 {

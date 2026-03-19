@@ -358,7 +358,7 @@ namespace CC98
                 Flower.Play(FlowStatus.Fail, "Î´±£´æVPNÆ¾¾Ý");
             }
         }
-        private void GoBackOrLaunchApp ()
+        private void GoBackOrLaunchApp()
         {
             if (mode == 0)
             {
@@ -368,8 +368,8 @@ namespace CC98
             }
             else
             {
-                App.Current.m_window= new MainWindow();
-                App.Current.m_window .Activate();
+                App.Current.AppMainWindow= new MainWindow();
+                App.Current.AppMainWindow .Activate();
                 this.DispatcherQueue.TryEnqueue(() =>
                 {
                     this.Close();
@@ -454,8 +454,8 @@ namespace CC98
             PasswordManager.SavePassword(result.RefreshToken, "Refresh");
             LoginWithPassword.IsChecked = false;
             Set.Values["IsActive"] = "2";
-            App.Current.m_window = new MainWindow();
-            App.Current.m_window.Activate();
+            App.Current.AppMainWindow = new MainWindow();
+            App.Current.AppMainWindow.Activate();
             this.DispatcherQueue.TryEnqueue(() =>
             {
                 this.Close();

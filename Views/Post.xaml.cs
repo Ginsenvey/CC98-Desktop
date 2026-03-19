@@ -48,7 +48,7 @@ namespace CC98
         public UBBEditor()
         {
             this.InitializeComponent();
-            if (App.Current.m_window is MainWindow mainwindow)
+            if (App.Current.AppMainWindow is MainWindow mainwindow)
             {
                 mainwindow.NavigationView.IsPaneOpen = false;
             }
@@ -62,7 +62,6 @@ namespace CC98
         public bool notifyPoster = true;
         public bool notifyAllReplier = false;
         public List<Emoji> emojis = [];
-        public List<Emoji> CustomEmojiList = [];
         public string content = "";
         public bool isTailVisible = false;
         public string currentLabel = "";//记录实时指令
@@ -271,7 +270,7 @@ namespace CC98
                     Editor.Focus(FocusState.Programmatic);
                     break;
                 case "贴图":
-                    await MapPanel.ShowAsync();
+                   
                     break;
                 default:
                     break;
@@ -662,40 +661,7 @@ namespace CC98
         }
 
 
-        private void MapContainer_ItemClick(object sender, ItemClickEventArgs e)
-        {
-            var i = e.ClickedItem;
-            if (i != null)
-            {
 
-                var index = MapContainer.Items.IndexOf(i);
-                if (CustomEmojiList != null)
-                {
-
-                    if (CustomEmojiList.Count > index)
-                    {
-                        var tag = CustomEmojiList[index].EmojiPath;
-                        if (tag != null)
-                        {
-                            InsertTag("img", "img", tag, 6, false);
-                        }
-                    }
-                }
-            }
-        }
-
-        private void MapPanel_Opened(ContentDialog sender, ContentDialogOpenedEventArgs args)
-        {
-            var list = CustomEmoji.GetAllEmoji();
-            CustomEmojiList = new List<Emoji>();
-            int i = 0;
-            foreach (var e in list)
-            {
-                CustomEmojiList.Add(new Emoji { EmojiName = i.ToString(), EmojiPath = e });
-                i++;
-            }
-            MapContainer.ItemsSource = CustomEmojiList;
-        }
 
         private void ConfirmCustomLink_Click(object sender, RoutedEventArgs e)
         {

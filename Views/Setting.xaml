@@ -126,7 +126,7 @@
                                                 </ItemsPanelTemplate>
                                             </GridView.ItemsPanel>
                                             <GridView.ItemTemplate>
-                                                <DataTemplate x:DataType="local:Pic">
+                                                <DataTemplate x:DataType="local:ThemePicture">
                                                     <Image  Source="{x:Bind FilePath}" Width="60" Height="35" Stretch="UniformToFill"  ToolTipService.ToolTip="{x:Bind FileName}"></Image>
                                                 </DataTemplate>
                                             </GridView.ItemTemplate>
@@ -207,22 +207,19 @@
                     </tool:SettingsExpander.Items>
                 </tool:SettingsExpander>
 
-                <tool:SettingsExpander Header="表情包管理" Description="清理、导出自定义贴图">
+                <tool:SettingsExpander Header="管理程序日志">
                     <tool:SettingsExpander.HeaderIcon>
-                        <ic:SymbolIcon Symbol="Heart"></ic:SymbolIcon>
+                        <ic:SymbolIcon Symbol="Bug"></ic:SymbolIcon>
                     </tool:SettingsExpander.HeaderIcon>
                     <tool:SettingsExpander.Items>
-                        <tool:SettingsCard Header="清空自定义表情" >
-                            <HyperlinkButton Content="确认"   Click="Emoji_Click" ></HyperlinkButton>
+                        <tool:SettingsCard Header="导出日志到桌面" >
+                            <HyperlinkButton Content="开始" x:Name="ExportLog" Click="ExportLog_Click" ></HyperlinkButton>
+                        </tool:SettingsCard>
+                        <tool:SettingsCard Header="清理日志">
+                            
                         </tool:SettingsCard>
                     </tool:SettingsExpander.Items>
                 </tool:SettingsExpander>
-                <tool:SettingsCard Header="导出程序日志" Description="默认位于桌面">
-                    <tool:SettingsCard.HeaderIcon>
-                        <ic:SymbolIcon Symbol="Bug"></ic:SymbolIcon>
-                    </tool:SettingsCard.HeaderIcon>
-                    <HyperlinkButton Content="开始" x:Name="ExportLog" Click="ExportLog_Click" ></HyperlinkButton>
-                </tool:SettingsCard>
             </StackPanel>
         </ScrollViewer>
         <local:InfoFlower HorizontalAlignment="Center" x:Name="Flower"  Grid.Row="0" Grid.RowSpan="2" ></local:InfoFlower>

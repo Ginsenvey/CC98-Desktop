@@ -69,7 +69,7 @@
                 <FontIcon FontSize="{ThemeResource FlipViewButtonFontSize}" Glyph="&#xedd9;" />
             </Button>
             <ScrollViewer x:Name="Viewer" Grid.Column="2" ZoomMode="Enabled" ViewChanged="Viewer_ViewChanged" HorizontalScrollMode="Enabled" VerticalContentAlignment="Stretch">
-                <share:Picture x:Name="InnerImage"  Stretch="None" LoadImageCallback="{ThemeResource CustomPortraitLoader}" RenderTransformOrigin="0.5,0.5" HorizontalAlignment="Center"> 
+                <share:Picture x:Name="InnerImage"  Stretch="UniformToFill" LoadImageCallback="{ThemeResource CustomPortraitLoader}" RenderTransformOrigin="0.5,0.5" HorizontalAlignment="Center"> 
                     <share:Picture.RenderTransform>
                         <RotateTransform x:Name="ImageTransform"  Angle="0"/>
                     </share:Picture.RenderTransform>

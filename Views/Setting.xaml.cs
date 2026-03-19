@@ -46,7 +46,7 @@ namespace CC98
     /// </summary>
     public sealed partial class Setting : Page
     {
-        public ObservableCollection<Pic> pics = new ObservableCollection<Pic>();
+        public ObservableCollection<ThemePicture> pics = new ObservableCollection<ThemePicture>();
         public Setting()
         {
             this.InitializeComponent();
@@ -178,75 +178,72 @@ namespace CC98
         public ApplicationDataContainer Set=ApplicationData.Current.LocalSettings;
         private void ToFeedBack_Click(object sender, RoutedEventArgs e)
         {
-            Frame.Navigate(typeof(Topic), "6173309");
+            //指向开发记录楼
+            var param = new TopicNavigationInfo
+            {
+                IsJumpingMode = false,
+                TopicId = 6173309
+            };
+            Frame.Navigate(typeof(Topic), param);
         }
 
         
 
         private void Effect_Checked(object sender, RoutedEventArgs e)
         {
-            
-            Set.Values["Effect"]= ((RadioButton)sender).Tag.ToString();
-            if (((RadioButton)sender).Tag.ToString() != EffectHistory)//当选项与原设置不同时，才进行设置。
+            var button= (RadioButton)sender;
+            if (button == null) return;
+            var tag=button.Tag;
+            if(tag is not string effect) return;
+            Set.Values["Effect"]=effect;
+            if (effect == EffectHistory) return;//当选项与原设置不同时，才进行设置。
+            EffectHistory =effect;
+            switch (effect)
             {
-                EffectHistory = ((RadioButton)sender).Tag.ToString();
-                switch (((RadioButton)sender).Tag.ToString())
-                {
-                    case "0":
-                        Mica.IsChecked = true;
-                        App.Current.m_window.SystemBackdrop = new MicaSystemBackdrop();
-                        break;
-                    case "1":
-                        MicaAlt.IsChecked = true;
-                        App.Current.m_window.SystemBackdrop = new MicaSystemBackdrop(MicaKind.BaseAlt);
-                        break;
-                    case "2":
-                        AcrylicBase.IsChecked = true;
-                        App.Current.m_window.SystemBackdrop = new AcrylicSystemBackdrop();
-                        break;
-                    case "3":
-                        AcrylicThin.IsChecked = true;
-                        App.Current.m_window.SystemBackdrop = new AcrylicSystemBackdrop(DesktopAcrylicKind.Thin);
-                        break;
-                    default:
-                        Mica.IsChecked = true;
-                        App.Current.m_window.SystemBackdrop = new MicaSystemBackdrop();
-                        break;
-                }
+                case "0":
+                    Mica.IsChecked = true;
+                    App.Current.AppMainWindow.SystemBackdrop = new MicaSystemBackdrop();
+                    break;
+                case "1":
+                    MicaAlt.IsChecked = true;
+                    App.Current.AppMainWindow.SystemBackdrop = new MicaSystemBackdrop(MicaKind.BaseAlt);
+                    break;
+                case "2":
+                    AcrylicBase.IsChecked = true;
+                    App.Current.AppMainWindow.SystemBackdrop = new AcrylicSystemBackdrop();
+                    break;
+                case "3":
+                    AcrylicThin.IsChecked = true;
+                    App.Current.AppMainWindow.SystemBackdrop = new AcrylicSystemBackdrop(DesktopAcrylicKind.Thin);
+                    break;
+                default:
+                    Mica.IsChecked = true;
+                    App.Current.AppMainWindow.SystemBackdrop = new MicaSystemBackdrop();
+                    break;
             }
-            else
-            {
 
-            }
-            
         }
 
         private void Light_Checked(object sender, RoutedEventArgs e)
         {
-            string theme = ((RadioButton)sender).Tag.ToString();
+            if (((RadioButton)sender)?.Tag is not string theme) return;
             Set.Values["Theme"] = theme;
-            try
+            if (theme == "1")
             {
-                if (theme == "1")
-                {
-                    
-                    App.RaiseThemeChanged(ElementTheme.Light);
 
-                }
-                else if (theme == "2")
-                {
-                    
-                    App.RaiseThemeChanged(ElementTheme.Dark);
+                App.RaiseThemeChanged(ElementTheme.Light);
 
-                }
-                else
-                {
-                    
-                    App.RaiseThemeChanged(ElementTheme.Default);
-                }
             }
-            catch { }
-            ;
+            else if (theme == "2")
+            {
+
+                App.RaiseThemeChanged(ElementTheme.Dark);
+
+            }
+            else
+            {
+                App.RaiseThemeChanged(ElementTheme.Default);
+            }
         }
 
         
@@ -260,7 +257,7 @@ namespace CC98
             foreach ( var file in Files)
             {  
                 string filename = Path.GetFileName(file);
-                pics.Add(new Pic{ FileName = filename, FilePath = file });  
+                pics.Add(new ThemePicture{ FileName = filename, FilePath = file });  
             }
             ThemesGrid.ItemsSource = pics;
         }
@@ -285,6 +282,8 @@ namespace CC98
             string settings = "";
             foreach (var item in Set.Values)
             {
+                //不显示收藏夹，美化打印太长
+                if (item.Key == "Favorites") continue;
                 settings += $"{item.Key}:{item.Value}\n";
             }
             LocalSet.Text = settings;
@@ -297,16 +296,6 @@ namespace CC98
             Set.Values.Clear();
             PasswordManager.Logout();
             Application.Current.Exit();
-        }
-        
-      
-        
-        
-        
-        private void Emoji_Click(object sender, RoutedEventArgs e)
-        {
-            CustomEmoji.ClearAllEmoji();
-            Flower.Play(Objects.FlowStatus.Success, "已清空表情");
         }
         
 
@@ -348,10 +337,10 @@ namespace CC98
             Set.Values["ShowBigPaper"] = ShowBigPaper.IsOn?1:2;
         }
     }
-    public class Pic
+    public class ThemePicture
     {
-        public string FileName { get; set; }
-        public string FilePath { get; set; }
+        public string FileName { get; set; } = "";
+        public string FilePath { get; set; } = "";
     }
     
 }

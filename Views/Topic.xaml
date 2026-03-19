@@ -35,7 +35,7 @@
                         <Border Width="30" Height="30" CornerRadius="9999" Background="{ThemeResource PortraitBackgroundColor}">
                             <share:Picture  x:Name="portrait" Src="{x:Bind PortraitUrl}" LoadImageCallback="{StaticResource PortraitLoader}"></share:Picture>
                         </Border>
-                        <TextBlock Text="{x:Bind UserName}"  VerticalAlignment="Center" FontFamily="{StaticResource HarmonySansBold}" Foreground="{StaticResource SoftPurple}"></TextBlock>
+                        <TextBlock Text="{x:Bind UserName}"  VerticalAlignment="Center" FontFamily="{StaticResource HarmonySansBold}" Foreground="{ThemeResource UserNameForegroundBrush}"></TextBlock>
                     </StackPanel>
                 </HyperlinkButton>
 
@@ -120,7 +120,7 @@
                         <Border Width="30" Height="30" CornerRadius="9999" Background="{ThemeResource PortraitBackgroundColor}">
                             <share:Picture  x:Name="portrait" Src="{x:Bind PortraitUrl}" LoadImageCallback="{StaticResource PortraitLoader}"></share:Picture>
                         </Border>
-                        <TextBlock Text="{x:Bind UserName}"  VerticalAlignment="Center" FontFamily="{StaticResource HarmonySansBold}" Foreground="{ThemeResource SoftPurple}"></TextBlock>
+                        <TextBlock Text="{x:Bind UserName}"  VerticalAlignment="Center" FontFamily="{StaticResource HarmonySansBold}" Foreground="{ThemeResource UserNameForegroundBrush}"></TextBlock>
                     </StackPanel>
                 </HyperlinkButton>
 
@@ -267,7 +267,7 @@
             <TextBlock x:Name="de" Grid.Column="0" HorizontalAlignment="Left" TextWrapping="Wrap"></TextBlock>
             <dev:PagerControl Grid.Column="1" DisplayMode="ButtonPanel" NumberOfPages="1"  HorizontalAlignment="Center" x:Name="Pager" SelectedPageIndex="0"  VerticalAlignment="Center"  SelectedIndexChanged="Pager_SelectedIndexChanged" ></dev:PagerControl>
             <StackPanel Orientation="Horizontal" Margin="0,0,20,0" Spacing="10" Grid.Column="2" HorizontalAlignment="Right" >
-                <Button Background="{ThemeResource FancyButtonBrush}" CornerRadius="9999" Width="50" Height="50" ToolTipService.ToolTip="查看投票" x:Name="StartVote" Click="StartVote_Click" Visibility="Collapsed"  >
+                <Button CornerRadius="9999" Width="50" Height="50" ToolTipService.ToolTip="查看投票" x:Name="StartVote" Click="StartVote_Click" Visibility="Collapsed"  >
                     <ic:SymbolIcon Symbol="Vote"></ic:SymbolIcon>
                 </Button>
                 <dev:GotoTop  Background="Transparent" ToolTipService.ToolTip="回到顶部" BorderThickness="0" Animated="True" AutoHiding="True" Target="{x:Bind RootViewer}"></dev:GotoTop>
