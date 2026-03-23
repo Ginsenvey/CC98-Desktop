@@ -70,10 +70,7 @@
             <Style TargetType="tool:SettingsExpander">
                 <Setter Property="FontFamily" Value="{StaticResource HarmonySans}"></Setter>
             </Style>
-            <Style TargetType="AppBarButton">
-                <Setter Property="FontFamily" Value="{StaticResource HarmonySans}"></Setter>
-                <Setter Property="CornerRadius" Value="3"></Setter>
-            </Style>
+            
             
             <pr:SmartImageLoader x:Key="PortraitLoader" LowRes="True"></pr:SmartImageLoader>
             <pr:SmartImageLoader x:Key="CustomPortraitLoader" LowRes="False"></pr:SmartImageLoader>

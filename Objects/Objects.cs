@@ -840,3 +840,47 @@ public class BrowsingRecord
 {
     public List<SimpleTopicInfo> Data { get; set; } = [];
 }
+
+public partial class CategoryBase : ObservableObject { }
+
+public partial class NavigationItem : CategoryBase
+{
+    public string Name
+    {
+        get => field ?? "";
+        set => SetProperty(ref field, value);
+    }
+
+    public FluentIcons.Common.Symbol IconSymbol
+    {
+        get => field;
+        set => SetProperty(ref field, value);
+    }
+    public string Tag
+    {
+        get => field ?? "";
+        set => SetProperty(ref field, value);
+    }
+
+    public bool IsEditable
+    {
+        get => field;
+        set => SetProperty(ref field, value);
+    }
+
+
+}
+
+public partial class NavigationGroup : CategoryBase
+{
+    public string Name
+    {
+        get => field ?? "";
+        set => SetProperty(ref field, value);
+    }
+    public bool IsEditable
+    {
+        get => field;
+        set => SetProperty(ref field, value);
+    }
+}

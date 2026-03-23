@@ -92,7 +92,7 @@
                                 <TextBlock Text="{x:Bind profile.IsFollowing,Converter={StaticResource FollowConverter},Mode=OneWay}" ></TextBlock>
                             </StackPanel>
                         </Button>
-                        <Border  Visibility="{x:Bind profile.IsOthers,Converter={StaticResource ReBooltoVisibility},Mode=OneWay}" BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}" BorderThickness="1" CornerRadius="4" Padding="5,3,5,3">
+                        <Border  Visibility="{x:Bind profile.IsOthers,Converter={StaticResource ReBoolToVisibility},Mode=OneWay}" BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}" BorderThickness="1" CornerRadius="4" Padding="5,3,5,3">
                             <StackPanel Orientation="Horizontal" Spacing="5">
                                 <ic:SymbolIcon Symbol="CalendarCheckmarkSparkle"  IconVariant="Regular" FontSize="16" x:Name="SignStatusIcon"></ic:SymbolIcon>
                                 <TextBlock x:Name="SignStatus" Text="未签到" VerticalAlignment="Center"></TextBlock>

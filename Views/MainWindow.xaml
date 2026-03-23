@@ -105,11 +105,11 @@
 
         <NavigationView Grid.Row="1" Grid.RowSpan="2" HorizontalAlignment="Stretch" PaneDisplayMode="Auto"  IsPaneOpen="True" OpenPaneLength="240" IsPaneToggleButtonVisible="False"  IsBackEnabled="True" IsSettingsVisible="False" IsBackButtonVisible="Collapsed"  x:Name="Navi"  MenuItemsSource="{x:Bind MenuItems}" ItemInvoked="Navi_ItemInvoked" FooterMenuItemsSource="{x:Bind FooterMenuItems}" >
             <NavigationView.Resources>
-                <DataTemplate x:Key="GroupTemplate" x:DataType="local:NavigationGroup">
+                <DataTemplate x:Key="GroupTemplate" x:DataType="obj:NavigationGroup">
                     <NavigationViewItemHeader Content="{x:Bind Name}"/>
                 </DataTemplate>
 
-                <DataTemplate x:Key="PinnedItemTemplate" x:DataType="local:NavigationItem">
+                <DataTemplate x:Key="PinnedItemTemplate" x:DataType="obj:NavigationItem">
                     <NavigationViewItem  Tag="{x:Bind Tag}" >
                         <NavigationViewItem.ContextFlyout>
                             <MenuFlyout>
@@ -127,7 +127,7 @@
                         
                     </NavigationViewItem>
                 </DataTemplate>
-                <DataTemplate x:Key="ItemTemplate" x:DataType="local:NavigationItem">
+                <DataTemplate x:Key="ItemTemplate" x:DataType="obj:NavigationItem">
                     <NavigationViewItem  Tag="{x:Bind Tag}" >
                         <StackPanel Orientation="Horizontal" Spacing="5">
                             <ic:SymbolIcon Symbol="{x:Bind IconSymbol}" FontSize="20"  Margin="2,0,10,0"></ic:SymbolIcon>
@@ -142,7 +142,7 @@
             ItemTemplate="{StaticResource ItemTemplate}"/>
             </NavigationView.Resources>
             <NavigationView.AutoSuggestBox>
-                <AutoSuggestBox PlaceholderText="CC98,My home" AutomationProperties.Name="Search" TextChanged="search_TextChanged" UpdateTextOnSelect="False" SuggestionChosen="search_SuggestionChosen">
+                <AutoSuggestBox PlaceholderText="CC98,My home" AutomationProperties.Name="Search"  UpdateTextOnSelect="False" >
                     <AutoSuggestBox.QueryIcon>
                         <ic:SymbolIcon Symbol="Search"></ic:SymbolIcon>
                     </AutoSuggestBox.QueryIcon>
@@ -153,7 +153,7 @@
                 <StaticResource ResourceKey="TemplateSelector"/>
             </NavigationView.MenuItemTemplateSelector>
             <NavigationView.FooterMenuItems>
-                <DataTemplate x:DataType="local:NavigationItem">
+                <DataTemplate x:DataType="obj:NavigationItem">
                     <StackPanel Orientation="Horizontal" >
                         <ic:SymbolIcon Symbol="{x:Bind IconSymbol}" FontSize="20"  Margin="2,0,10,0"></ic:SymbolIcon>
                         <TextBlock Text="{x:Bind Name}"></TextBlock>
@@ -161,7 +161,7 @@
                 </DataTemplate>
             </NavigationView.FooterMenuItems>
 
-            <Frame x:Name="contentframe"></Frame>
+            <Frame x:Name="ContentFrame" Navigating="ContentFrame_Navigating" ></Frame>
             
         </NavigationView>
         <TeachingTip x:Name="StatusReport" Target="{x:Bind Me}" IsLightDismissEnabled="True"></TeachingTip>

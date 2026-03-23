@@ -1,13 +1,19 @@
-﻿using Microsoft.UI;
+﻿using CC98.Share.Extensions;
+using Microsoft.UI;
+using DevWinUI;
+using Microsoft.UI.Text;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Controls.Primitives;
 using Microsoft.UI.Xaml.Documents;
 using Microsoft.UI.Xaml.Media;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using UbbRender.Parser;
 using UbbRender.Render;
+using Windows.ApplicationModel.DataTransfer;
 namespace UbbRender.Common;
 public class RenderContext
 {
@@ -22,7 +28,7 @@ public class RenderContext
     // 临时存储当前正在构建的内联容器
     private Inline CurrentInline;
     public int QuoteNestingLevel { get; set; }
-    public Dictionary<string, object> Properties { get; set; } = new Dictionary<string, object>();
+    public Dictionary<string, object> Properties { get; set; } = [];
 
     public void RenderNode(UbbNode node)
     {
@@ -180,7 +186,7 @@ public class RenderContext
         {
             EndInlineContainer();
         }
-        if (CurrentRichTextBlock != null && CurrentParagraph != null && CurrentParagraph.Inlines.Any())
+        if (CurrentRichTextBlock != null && CurrentParagraph != null && CurrentParagraph.Inlines.Count != 0)
         {
             Container.Children.Add(CurrentRichTextBlock);
             CurrentRichTextBlock = null;
@@ -200,7 +206,7 @@ public class RenderContext
             FontSize = Control.FontSize,
             Foreground = Control.Foreground ?? new SolidColorBrush(Colors.Black),
             TextWrapping = TextWrapping.Wrap,
-            ContextFlyout=CreateCustomContextMenu()
+            ContextFlyout= CreateCustomContextMenu()
         };
 
         CurrentParagraph = new Paragraph();
@@ -209,29 +215,125 @@ public class RenderContext
     #region 自定义右键菜单
     private MenuFlyout CreateCustomContextMenu()
     {
-        var menu = new MenuFlyout();
+        var menuFlyout = new MenuFlyout();
 
         // 添加复制菜单项
-        var copyItem = new MenuFlyoutItem
+        var copyItem = new AppBarButton
         {
-            Text = "复制",
+            Label = "复制",
             Icon = new SymbolIcon(Symbol.Copy)
         };
-        //copyItem.Click += OnCopyClicked;
-        menu.Items.Add(copyItem);
-
-        // 可以添加其他自定义项
-        menu.Items.Add(new MenuFlyoutSeparator());
-
-        var selectAllItem = new MenuFlyoutItem
+        var separator1 = new AppBarSeparator();
+        var selectAllItem = new AppBarButton 
         {
-            Text = "全选",
+            Label="全选",
             Icon = new SymbolIcon(Symbol.SelectAll)
         };
-        //selectAllItem.Click += OnSelectAllClicked;
-        menu.Items.Add(selectAllItem);
+        var separator2 = new AppBarSeparator();
+        var searchItem = new AppBarButton
+        {
+            Label = "搜索",
+            Icon = new FluentIcons.WinUI.SymbolIcon() { Symbol= FluentIcons.Common.Symbol.GlobeSearch }
+        };
+        var browseItem = new MenuFlyoutItem
+        {
+            Text="前往此页面",
+            Icon= new FluentIcons.WinUI.SymbolIcon() { Symbol = FluentIcons.Common.Symbol.WindowNew }
+        };
+        
+        
+        MenuFlyoutAttach.SetAutoCloseByClickOnSecondaryMenuItems(menuFlyout, true);
 
-        return menu;
+        // 设置附加属性 SecondaryMenuPlacement
+        MenuFlyoutAttach.SetSecondaryMenuPlacement(menuFlyout, MenuFlyoutSecondaryMenuPlacement.Top);
+        var secondaryItems = new MenuFlyoutSecondaryItems();
+        secondaryItems.Items.Add(copyItem);
+        secondaryItems.Items.Add(separator1);
+        secondaryItems.Items.Add(selectAllItem);
+        secondaryItems.Items.Add(separator2);
+        secondaryItems.Items.Add(searchItem);
+        MenuFlyoutAttach.SetSecondaryMenu(menuFlyout, secondaryItems);
+        menuFlyout.Items.Add(browseItem);
+        copyItem.Click += OnCopyClicked;
+        selectAllItem.Click += SelectAllItem_Click;
+        return menuFlyout;
+    }
+
+    private void SelectAllItem_Click(object sender, RoutedEventArgs e)
+    {
+        SelectAll();
+    }
+
+    private void OnCopyClicked(object sender, RoutedEventArgs e)
+    {
+        string selectedText = GetSelectedText();
+        if (!string.IsNullOrEmpty(selectedText))
+        {
+            var dataPackage = new DataPackage();
+            dataPackage.SetText(selectedText);
+            Clipboard.SetContent(dataPackage);
+        }
+        
+    }
+    private string GetSelectedText()
+    {
+        var selectedText = new StringBuilder();
+
+        // 检查当前正在编辑的 RichTextBlock
+        if (CurrentRichTextBlock != null && !string.IsNullOrEmpty(CurrentRichTextBlock.SelectedText))
+        {
+            selectedText.Append(CurrentRichTextBlock.SelectedText);
+        }
+
+        // 检查容器中已完成的 RichTextBlock
+        if (Container != null)
+        {
+            foreach (var child in Container.Children)
+            {
+                if (child is RichTextBlock richTextBlock && richTextBlock != CurrentRichTextBlock)
+                {
+                    if (!string.IsNullOrEmpty(richTextBlock.SelectedText))
+                    {
+                        if (selectedText.Length > 0)
+                        {
+                            selectedText.AppendLine(); // 不同块之间添加换行
+                        }
+                        selectedText.Append(richTextBlock.SelectedText);
+                    }
+                }
+            }
+        }
+
+        return selectedText.ToString();
+    }
+    private void SelectAll()
+    {
+        if (Container == null) return;
+
+        // 对每个 RichTextBlock 执行全选
+        foreach (var child in Container.Children)
+        {
+            if (child is RichTextBlock richTextBlock)
+            {
+                richTextBlock.SelectAll();
+            }
+        }
+    }
+
+    /// <summary>
+    /// 获取当前选中的文本（对外暴露的方法）
+    /// </summary>
+    public string GetSelectedTextExternal()
+    {
+        return GetSelectedText();
+    }
+
+    /// <summary>
+    /// 全选所有文本（对外暴露的方法）
+    /// </summary>
+    public void SelectAllExternal()
+    {
+        SelectAll();
     }
     #endregion
 }

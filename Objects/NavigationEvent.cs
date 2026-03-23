@@ -17,6 +17,7 @@ public class TopicNavigationInfo
     public int TargetFloor { get; set; } = 0;
     public int TopicId {  get; set; }
 
+    public bool GoToLatest {  get; set; }=false;
 }
 
 public class ProfileNavigationInfo
@@ -42,7 +43,7 @@ public class SearchNavigationInfo
     public string Key { get; set; } = string.Empty;
 }
 
-public class EditorNavigationInfo
+public class SketchNavigationInfo
 {
     public EditorMode EditorMode { get; set;} = EditorMode.ReplyToPost;
     public int TopicId { get; set;} = 0;

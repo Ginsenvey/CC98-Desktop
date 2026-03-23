@@ -13,7 +13,7 @@ public class GlobalService
 {
     private static GlobalService? _instance;
     private GlobalService(){}
-    public static readonly object _lock= new object();
+    public static readonly object _lock= new();
     public static GlobalService Instance
     {
         get
@@ -28,5 +28,6 @@ public class GlobalService
     public int AtCount = 0;
     public int ReplyCount = 0;
     public int SystemCount = 0;
-
+    public bool ShouldReplaceNavigationArgs = false;
+    public object? NavigationAnchor {  get; set; }
 }

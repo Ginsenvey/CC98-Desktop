@@ -3,6 +3,7 @@ using CC98.Kernel;
 using CC98.Kernel.ApiScope;
 using CC98.Kernel.UserExperience;
 using CC98.Objects;
+using CC98.Services;
 using CC98.Services.Extensions;
 using ColorCode.Compilation.Languages;
 using CommunityToolkit.WinUI.Controls;
@@ -42,10 +43,10 @@ namespace CC98
     /// <summary>
     /// An empty page that can be used on its own or navigated to within a Frame.
     /// </summary>
-    public sealed partial class UBBEditor : Page
+    public sealed partial class Sketch : Page
     {
         public ApplicationDataContainer Set=ApplicationData.Current.LocalSettings;
-        public UBBEditor()
+        public Sketch()
         {
             this.InitializeComponent();
             if (App.Current.AppMainWindow is MainWindow mainwindow)
@@ -66,14 +67,12 @@ namespace CC98
         public bool isTailVisible = false;
         public string currentLabel = "";//记录实时指令
         public const string tail = "[align=right][size=3][color=gray]——来自「[b][color=purple]CC98 For Windows[/color][/b]」[/color][/size][/align]";
-        public EditorNavigationInfo NavigationInfo { get; set;}
+        public SketchNavigationInfo NavigationInfo { get; set;}
 
         protected override void OnNavigatedTo(NavigationEventArgs e)
         {
             base.OnNavigatedTo(e);
-
-            var parameter = e.Parameter as Dictionary<string, string>;
-            var args = e.TryGetParameter<EditorNavigationInfo>();
+            var args = e.TryGetParameter<SketchNavigationInfo>();
             if (args == null) return;
             NavigationInfo = args;
             ApplyEditorEnv();
@@ -236,7 +235,7 @@ namespace CC98
                     if (r == ContentDialogResult.Primary)
                     {
                         string colorwithalpha = Colors.Color.ToString().ToLower();
-                        string color = colorwithalpha.Substring(0, 1) + colorwithalpha.Substring(3, 6);
+                        string color = string.Concat(colorwithalpha.AsSpan(0, 1), colorwithalpha.AsSpan(3, 6));
                         InsertTag("color=" + color, "color", "");
                     }
                     break;
@@ -433,54 +432,55 @@ namespace CC98
                     TopicId = NavigationInfo.TopicId,
                     TargetFloor = NavigationInfo.Floor
                 };
-                Frame.Navigate(typeof(Topic), param);
+                GlobalService.Instance.NavigationAnchor = param;
+                GoBack();
             }
         }
         private async Task<string> UploadFileAsync(string filePath)
         {
             string url = ApiEndpoints.Forum.UploadFile();
-            using (var formData = new MultipartFormDataContent())
+            using var formData = new MultipartFormDataContent();
+            var fileContent = new ByteArrayContent(File.ReadAllBytes(filePath));
+            fileContent.Headers.ContentType = new MediaTypeHeaderValue("multipart/form-data");
+            formData.Add(fileContent, "files", Path.GetFileName(filePath));
+            var res = await RequestSender.Submit<List<string>>(url, formData);
+            if (!res.IsSuccess || res.Data == null)
             {
-                var fileContent = new ByteArrayContent(File.ReadAllBytes(filePath));
-                fileContent.Headers.ContentType = new MediaTypeHeaderValue("multipart/form-data");
-                formData.Add(fileContent, "files", Path.GetFileName(filePath));
-                var res = await RequestSender.Submit<List<string>>(url, formData);
-                if (!res.IsSuccess || res.Data == null)
-                {
-                    //
-                    status.Text = $"上传失败:{res.Message}";
-                    await App.Logger.WriteAsync("UBBEditor", "上传文件失败", res.Message);
-                    return "";
-                }
-                var data = res.Data;
-                if (data.Count > 0)
-                {
-                    return data[0];
-                }
-                else
-                {
-                    await App.Logger.WriteAsync("UBBEditor", "上传文件出错", "服务器未返回文件地址");
-                    return "";
-                }
+                //
+                status.Text = $"上传失败:{res.Message}";
+                await App.Logger.WriteAsync("UBBEditor", "上传文件失败", res.Message);
+                return "";
+            }
+            var data = res.Data;
+            if (data.Count > 0)
+            {
+                return data[0];
+            }
+            else
+            {
+                await App.Logger.WriteAsync("UBBEditor", "上传文件出错", "服务器未返回文件地址");
+                return "";
             }
         }
-        private List<string> GetSuffixs(string type)
+        private static List<string> GetSuffixs(string type)
         {
             return type switch
             {
-                "img" => new List<string> { ".png", ".jpg", ".jpeg", ".bmp", ".gif", ".webp" },
-                "video" => new List<string> { ".mp4", ".mkv", ".avi", ".mov", ".wmv" },
-                "audio" => new List<string> { ".mp3", ".wav", ".m4a", ".flac", ".aac" },
-                _ => new List<string>()
+                "img" => [".png", ".jpg", ".jpeg", ".bmp", ".gif", ".webp"],
+                "video" => [".mp4", ".mkv", ".avi", ".mov", ".wmv"],
+                "audio" => [".mp3", ".wav", ".m4a", ".flac", ".aac"],
+                _ => []
             };
         }
         private async Task<string> PickAndUploadFile(IList<string> filter, PickerLocationId location)
         {
             try
             {
-                var picker = new FileOpenPicker(this.XamlRoot.ContentIslandEnvironment.AppWindowId);
-                picker.CommitButtonText = "上传";
-                picker.SuggestedStartLocation = location;
+                var picker = new FileOpenPicker(this.XamlRoot.ContentIslandEnvironment.AppWindowId)
+                {
+                    CommitButtonText = "上传",
+                    SuggestedStartLocation = location
+                };
                 picker.FileTypeFilter.AddRange(filter);
                 var file = await picker.PickSingleFileAsync();
                 if (file != null)
@@ -549,9 +549,11 @@ namespace CC98
                 { 
                     IsJumpingMode = NavigationInfo.EditorMode == EditorMode.ReplyToPost, 
                     TopicId = NavigationInfo.TopicId, 
-                    TargetFloor = NavigationInfo.Floor
+                    TargetFloor = NavigationInfo.Floor,
+                    GoToLatest= NavigationInfo.EditorMode == EditorMode.ReplyToTopic,
                 };
-                Frame.Navigate(typeof(Topic), param);
+                GlobalService.Instance.NavigationAnchor = param;
+                GoBack();
             }
         }
         private async Task DraftNewTopic()
@@ -584,7 +586,8 @@ namespace CC98
                     IsJumpingMode = false,
                     TopicId = newTopicId,
                 };
-                Frame.Navigate(typeof(Topic), param);
+                GlobalService.Instance.NavigationAnchor = param;
+                GoBack();
             }
         }
 
@@ -645,23 +648,9 @@ namespace CC98
         private void PostType_Checked(object sender, RoutedEventArgs e)
         {
             var r = sender as RadioButton;
-            if (r != null)
-            {
-                var tag = r.Tag;
-                if (tag != null)
-                {
-                    var _tag = tag.ToString();
-                    if (_tag != null)
-                    {
-                        postType = Convert.ToInt16(tag);
-                    }
-                }
-
-            }
+            if (r?.Tag is not int type) return;
+            postType= type;
         }
-
-
-
 
         private void ConfirmCustomLink_Click(object sender, RoutedEventArgs e)
         {
@@ -673,6 +662,11 @@ namespace CC98
         {
             CustomLink.Visibility = Visibility.Collapsed;
             FileUploadChoice.SelectedIndex = -1;
+        }
+
+        private void GoBack()
+        {
+            if (Frame.CanGoBack) Frame.GoBack();
         }
         #endregion
     }

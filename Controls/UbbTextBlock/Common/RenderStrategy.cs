@@ -68,8 +68,10 @@ public class BoldRenderStrategy : IRenderStrategy
 {
     public void Render(UbbNode node, RenderContext context)
     {
-        var bold = new Bold();
-        bold.FontFamily = (FontFamily)context.Properties["BoldFontFamily"];
+        var bold = new Bold
+        {
+            FontFamily = (FontFamily)context.Properties["BoldFontFamily"]
+        };
         context.BeginInlineContainer(bold);
         foreach (var child in node.Children)
         {
@@ -114,8 +116,10 @@ public class StrikethroughRenderStrategy : IRenderStrategy
 {
     public void Render(UbbNode node, RenderContext context)
     {
-        var span = new Span();
-        span.TextDecorations = Windows.UI.Text.TextDecorations.Strikethrough;
+        var span = new Span
+        {
+            TextDecorations = Windows.UI.Text.TextDecorations.Strikethrough
+        };
         context.BeginInlineContainer(span);
         foreach (var child in node.Children)
         {
@@ -123,7 +127,7 @@ public class StrikethroughRenderStrategy : IRenderStrategy
         }
         context.EndInlineContainer();
     }
-    private string CollectText(UbbNode node)
+    private static string CollectText(UbbNode node)
     {
         var text = "";
         foreach (var child in node.Children)
@@ -171,7 +175,7 @@ public class SizeRenderStrategy : IRenderStrategy
             }
         }
     }
-    private double ConvertUbbSizeToPixels(int ubbSize)
+    private static double ConvertUbbSizeToPixels(int ubbSize)
     {
         // 简单的分段线性插值
         if (ubbSize <= 1) return 8;   // 最小尺寸
@@ -210,8 +214,7 @@ public class UrlRenderStrategy : IRenderStrategy
             var url = tagNode.GetAttribute("href");
             if (!url.IsValidUrl())
             {
-                var child = node.FirstChild as TextNode;
-                if (child != null) url = child.Content;
+                if (node.FirstChild is TextNode child) url = child.Content;
             }
             // 设置样式
             hyperlink.Foreground = new SolidColorBrush(Colors.LightSeaGreen);
@@ -284,33 +287,6 @@ public class ImageRenderStrategy : IRenderStrategy
             }
         }
     }
-
-    private async void LoadImageAsync(Image image, string src)
-    {
-        try
-        {
-            if (src.StartsWith("http", StringComparison.OrdinalIgnoreCase))
-            {
-                var bitmapImage = new BitmapImage(new Uri(src));
-                image.Source = bitmapImage;
-            }
-            else
-            {
-                // 加载本地图片
-                var bitmapImage = new Microsoft.UI.Xaml.Media.Imaging.BitmapImage();
-                var file = await Windows.Storage.StorageFile.GetFileFromPathAsync(src);
-                var stream = await file.OpenAsync(Windows.Storage.FileAccessMode.Read);
-                await bitmapImage.SetSourceAsync(stream);
-                image.Source = bitmapImage;
-            }
-        }
-        catch
-        {
-            // 加载失败时显示占位符
-            image.Source = new Microsoft.UI.Xaml.Media.Imaging.BitmapImage(
-                new Uri("ms-appx:///Assets/ImageError.png"));
-        }
-    }
 }
 
 // 代码块渲染策略
@@ -340,9 +316,6 @@ public class QuoteRenderStrategy : IRenderStrategy
     public void Render(UbbNode node, RenderContext context)
     {
         context.FinalizeCurrentTextBlock();
-
-        // 增加引用块嵌套层级
-        int originalQuoteLevel = context.QuoteNestingLevel;
         context.QuoteNestingLevel++;
         bool isOutermostQuote = (context.QuoteNestingLevel == 1);
 
@@ -353,8 +326,6 @@ public class QuoteRenderStrategy : IRenderStrategy
             Margin = new Thickness(0)
         };
 
-        // 添加作者信息（如果有）
-        AddAuthorInfo(node, contentPanel, context);
 
         // 保存当前容器状态以便恢复
         var previousContainer = context.Container;
@@ -395,7 +366,7 @@ public class QuoteRenderStrategy : IRenderStrategy
         // 将整个引用块添加到容器
         context.AddToContainer(border);
     }
-    private Border CreateQuoteBorder(RenderContext context, bool isOutermostQuote)
+    private static Border CreateQuoteBorder(RenderContext context, bool isOutermostQuote)
     {
         var border = new Border
         {
@@ -419,51 +390,6 @@ public class QuoteRenderStrategy : IRenderStrategy
         return border;
     }
 
-    private void AddAuthorInfo(UbbNode node, StackPanel contentPanel, RenderContext context)
-    {
-        if (node is TagNode tagNode)
-        {
-            var author = tagNode.GetAttribute("author");
-            if (!string.IsNullOrEmpty(author))
-            {
-                var authorPanel = CreateAuthorPanel(author, context);
-                contentPanel.Children.Add(authorPanel);
-            }
-        }
-    }
-
-    private StackPanel CreateAuthorPanel(string author, RenderContext context)
-    {
-        var authorPanel = new StackPanel
-        {
-            Orientation = Orientation.Horizontal,
-            Spacing = 8,
-            Margin = new Thickness(0, 0, 0, 4)
-        };
-
-        // 作者图标
-        var icon = new TextBlock
-        {
-            Text = "💬",
-            FontSize = (double)context.Properties["FontSize"],
-            VerticalAlignment = VerticalAlignment.Center
-        };
-
-        // 作者文本
-        var authorText = new TextBlock
-        {
-            Text = $"{author} 说：",
-            FontWeight = FontWeights.SemiBold,
-            FontSize = (double)context.Properties["FontSize"],
-            Foreground = new SolidColorBrush(Color.FromArgb(255, 0, 120, 215)),
-            VerticalAlignment = VerticalAlignment.Center
-        };
-
-        authorPanel.Children.Add(icon);
-        authorPanel.Children.Add(authorText);
-
-        return authorPanel;
-    }
 }
 
 // 段落渲染策略
@@ -566,36 +492,40 @@ public class ColorRenderStrategy : IRenderStrategy
         }
     }
 
-    private Color ParseColor(string colorStr)
+    private static Color ParseColor(string colorStr)
     {
         // 移除可能的#
         colorStr = colorStr.Trim().TrimStart('#');
-
-        // 支持颜色名称
         var colorName = colorStr.ToLower();
-        switch (colorName)
+        return colorName switch
         {
-            case "black": return Colors.Black;
-            case "white": return Colors.White;
-            case "red": return Colors.Red;
-            case "green": return Colors.Green;
-            case "blue": return Color.FromArgb(255,142,130,254);
-            case "gray":
-            case "grey": return Colors.Gray;
-            case "yellow": return Colors.Yellow;
-            case "purple": return Colors.Purple;
-            case "orange": return Colors.Orange;
-            default:
-                // 尝试解析十六进制颜色
-                if (colorStr.Length == 6)
-                {
-                    var r = Convert.ToByte(colorStr.Substring(0, 2), 16);
-                    var g = Convert.ToByte(colorStr.Substring(2, 2), 16);
-                    var b = Convert.ToByte(colorStr.Substring(4, 2), 16);
-                    return Color.FromArgb(255, r, g, b);
-                }
-                return Colors.Black; // 默认黑色
+            "black" => Colors.Black,
+            "white" => Colors.White,
+            "red" => Colors.Red,
+            "green" => Colors.Green,
+            "blue" => Color.FromArgb(255, 142, 130, 254),
+            "gray" => Colors.Gray,
+            "grey" => Colors.Gray,
+            "yellow" => Colors.Yellow,
+            "purple" => Colors.Purple,
+            "orange" => Colors.Orange,
+            "transparent" => Colors.Transparent,
+            "pink"=>Colors.Pink,
+            "gold"=>Colors.Gold,
+            _ => GetColorFromRGB(colorStr),
+        };
+
+    }
+    private static Color GetColorFromRGB(string colorStr)
+    {
+        if (colorStr.Length == 6)
+        {
+            var r = Convert.ToByte(colorStr[..2], 16);
+            var g = Convert.ToByte(colorStr.Substring(2, 2), 16);
+            var b = Convert.ToByte(colorStr.Substring(4, 2), 16);
+            return Color.FromArgb(255, r, g, b);
         }
+        return Colors.Black;
     }
 }
 
@@ -680,11 +610,11 @@ public class EmojiRenderStrategy : IRenderStrategy
             }
         }
     }
-    private string GetEmoticonUrl(string code)
+    private static string GetEmoticonUrl(string code)
     {
         return EmoticonRules.GetEmoticonUrl(code);
     }
-    private ImageSource LoadImageFromUrl(string url)
+    private static BitmapImage LoadImageFromUrl(string url)
     {
         try
         {
@@ -718,25 +648,25 @@ public class LatexRenderStrategy : IRenderStrategy
         
         
     }
-    private Inline InlineLatex(string latex)
+    private static InlineUIContainer InlineLatex(string latex)
     {
         var textBlock = new LatexBlock
         {
             FontSize = 14,
+            LaTeX = latex
         };
-        textBlock.LaTeX = latex;
 
         var container=new InlineUIContainer { Child=textBlock };
         return container;
     }
-    private UIElement BlockLatex(string latex)
+    private static LatexBlock BlockLatex(string latex)
     {
-         
+
         var textBlock = new LatexBlock
         {
             FontSize = 14,
+            LaTeX = latex
         };
-        textBlock.LaTeX = latex;
         return textBlock;
     }
 }
@@ -753,7 +683,7 @@ public class DividerRenderStrategy : IRenderStrategy
             Y2 = 0,
             Stroke = new SolidColorBrush(Colors.Gray),
             StrokeThickness = 2,
-            StrokeDashArray = new DoubleCollection { 2, 2 },
+            StrokeDashArray = { 2, 2 },
             Stretch = Stretch.Fill,  // 自动拉伸
             HorizontalAlignment = HorizontalAlignment.Stretch,
             Margin = new Thickness(5,10,5,10)
@@ -793,30 +723,22 @@ public class RenderHelper
     public static void ApplyAlignToContext(string align,UbbNode node, RenderContext context)
     {
         //使用Grid进行对齐控制
-        var panel = new Grid();
-
-        switch (align)
+        var panel = new Grid
         {
-            case "center":
-                panel.HorizontalAlignment = HorizontalAlignment.Center;
-                break;
-            case "right":
-                panel.HorizontalAlignment = HorizontalAlignment.Right;
-                break;
-            default:
-                panel.HorizontalAlignment = HorizontalAlignment.Left;
-                break;
-        }
+            HorizontalAlignment = align switch
+            {
+                "center" => HorizontalAlignment.Center,
+                "right" => HorizontalAlignment.Right,
+                _ => HorizontalAlignment.Left,
+            }
+        };
 
         // 保存当前容器
         var previousContainer = context.Container;
         var previousPanelStack = context.PanelStack != null ? new Stack<Panel>(context.PanelStack) : null;
 
         context.Container = panel;
-        if (context.PanelStack == null)
-        {
-            context.PanelStack = new Stack<Panel>();
-        }
+        context.PanelStack ??= new Stack<Panel>();
         context.PanelStack.Push(panel);
 
         // 渲染子节点
@@ -891,14 +813,14 @@ public class FlatQuoteRenderStrategy : IRenderStrategy
     }
 
     // 提取所有引用层级
-    private List<UbbNode> ExtractQuoteChain(UbbNode node)
+    private static List<UbbNode> ExtractQuoteChain(UbbNode node)
     {
         var chain = new List<UbbNode>();
         ExtractAllQuotes(node, chain);
         return chain;
     }
 
-    private void ExtractAllQuotes(UbbNode node, List<UbbNode> chain)
+    private static void ExtractAllQuotes(UbbNode node, List<UbbNode> chain)
     {
         if (node.Type == UbbNodeType.Quote)
         {
@@ -916,7 +838,7 @@ public class FlatQuoteRenderStrategy : IRenderStrategy
     }
 
     // 创建引用容器
-    private FrameworkElement CreateQuoteContainer(RenderContext context, List<UbbNode> quoteChain)
+    private static Border CreateQuoteContainer(RenderContext context, List<UbbNode> quoteChain)
     {
         // 判断是否需要折叠
         bool needCollapse = quoteChain.Count > MaxVisibleDepth;
@@ -933,7 +855,7 @@ public class FlatQuoteRenderStrategy : IRenderStrategy
         {
             // 创建折叠部分（第3层及以后）
             var collapsedSection = CreateCollapsedSection(
-                quoteChain.Skip(MaxVisibleDepth).ToList(),
+                [.. quoteChain.Skip(MaxVisibleDepth)],
                 context
             );
             container.Children.Add(collapsedSection);
@@ -946,7 +868,7 @@ public class FlatQuoteRenderStrategy : IRenderStrategy
         for (int i = visibleCount - 1; i >= 0; i--)
         {
             // 渲染单个引用
-            var quoteContainer = RenderSingleQuote(quoteChain[i], context, i == 0);
+            var quoteContainer = RenderSingleQuote(quoteChain[i], context);
             container.Children.Add(quoteContainer);
 
             // 在引用之间添加分割线（除了最后一个）
@@ -968,7 +890,7 @@ public class FlatQuoteRenderStrategy : IRenderStrategy
     }
 
     // 创建折叠部分
-    private FrameworkElement CreateCollapsedSection(List<UbbNode> collapsedQuotes, RenderContext context)
+    private static StackPanel CreateCollapsedSection(List<UbbNode> collapsedQuotes, RenderContext context)
     {
         var section = new StackPanel
         {
@@ -998,7 +920,7 @@ public class FlatQuoteRenderStrategy : IRenderStrategy
         // 添加折叠的引用（按从深到浅的顺序）
         for (int i = collapsedQuotes.Count - 1; i >= 0; i--)
         {
-            var quoteContainer = RenderSingleQuote(collapsedQuotes[i], context, false);
+            var quoteContainer = RenderSingleQuote(collapsedQuotes[i], context);
             collapsedContent.Children.Add(quoteContainer);
 
             // 在折叠的引用之间也添加分割线
@@ -1011,7 +933,7 @@ public class FlatQuoteRenderStrategy : IRenderStrategy
         // 按钮点击事件
         expandButton.Click += (sender, e) =>
         {
-            ToggleCollapsedContent(expandButton, collapsedContent, collapsedQuotes.Count, context.Control);
+            ToggleCollapsedContent(expandButton, collapsedContent, collapsedQuotes.Count);
         };
 
         section.Children.Add(expandButton);
@@ -1021,7 +943,7 @@ public class FlatQuoteRenderStrategy : IRenderStrategy
     }
 
     // 切换折叠状态
-    private void ToggleCollapsedContent(ToggleButton button, StackPanel content, int quoteCount, Control control)
+    private static void ToggleCollapsedContent(ToggleButton button, StackPanel content, int quoteCount)
     {
         if (content.Visibility == Visibility.Collapsed)
         {
@@ -1039,7 +961,7 @@ public class FlatQuoteRenderStrategy : IRenderStrategy
 
 
     // 创建分割线
-    private Border CreateSeparator()
+    private static Border CreateSeparator()
     {
         return new Border
         {
@@ -1051,7 +973,7 @@ public class FlatQuoteRenderStrategy : IRenderStrategy
     }
 
     // 渲染单个引用
-    private FrameworkElement RenderSingleQuote(UbbNode quoteNode, RenderContext context, bool isFirstLevel)
+    private static Border RenderSingleQuote(UbbNode quoteNode, RenderContext context)
     {
         var contentPanel = new StackPanel
         {
@@ -1083,7 +1005,7 @@ public class FlatQuoteRenderStrategy : IRenderStrategy
     }
 
     // 渲染引用内容（跳过嵌套引用）
-    private void RenderQuoteContent(UbbNode node, RenderContext context)
+    private static void RenderQuoteContent(UbbNode node, RenderContext context)
     {
         foreach (var child in node.Children)
         {
@@ -1107,8 +1029,7 @@ public class AudioRenderStrategy : IRenderStrategy
             if (!src.IsValidUrl())
             {
                 // 尝试从子节点获取URL
-                var child = node.FirstChild as TextNode;
-                if (child != null) src = child.Content;
+                if (node.FirstChild is TextNode child) src = child.Content;
             }
 
             if (src.IsValidUrl())
@@ -1140,8 +1061,7 @@ public class VideoRenderStrategy : IRenderStrategy
             if (string.IsNullOrEmpty(src))
             {
                 // 尝试从子节点获取URL
-                var child = node.FirstChild as TextNode;
-                if (child != null) src = child.Content;
+                if (node.FirstChild is TextNode child) src = child.Content;
             }
 
             if (!string.IsNullOrEmpty(src))
@@ -1184,7 +1104,7 @@ public class TableRenderStrategy : IRenderStrategy
         }
     }
 
-    private Grid CreateTableGrid(UbbNode tableNode, RenderContext context)
+    private static Grid CreateTableGrid(UbbNode tableNode, RenderContext context)
     {
         // 解析表格结构
         var rows = ExtractRows(tableNode);
@@ -1224,7 +1144,7 @@ public class TableRenderStrategy : IRenderStrategy
         return grid;
     }
 
-    private List<List<UbbNode>> ExtractRows(UbbNode tableNode)
+    private static List<List<UbbNode>> ExtractRows(UbbNode tableNode)
     {
         var rows = new List<List<UbbNode>>();
 
@@ -1247,7 +1167,7 @@ public class TableRenderStrategy : IRenderStrategy
         return rows;
     }
 
-    private int GetMaxColumns(List<List<UbbNode>> rows)
+    private static int GetMaxColumns(List<List<UbbNode>> rows)
     {
         int max = 0;
         foreach (var row in rows)
@@ -1257,7 +1177,7 @@ public class TableRenderStrategy : IRenderStrategy
         return max;
     }
 
-    private FrameworkElement RenderCellContent(UbbNode cellNode, RenderContext context)
+    private static Border RenderCellContent(UbbNode cellNode, RenderContext context)
     {
         var container = new Border
         {
@@ -1287,7 +1207,7 @@ public class TableRenderStrategy : IRenderStrategy
         return container;
     }
 
-    private void ApplyTableStyle(Grid grid, string border, string width, string align, RenderContext context)
+    private static void ApplyTableStyle(Grid grid, string border, string width, string align, RenderContext context)
     {
         // 设置表格宽度
         if (width != "auto" && width.EndsWith("%"))
@@ -1299,18 +1219,12 @@ public class TableRenderStrategy : IRenderStrategy
         }
 
         // 设置对齐方式
-        switch (align.ToLower())
+        grid.HorizontalAlignment = align.ToLower() switch
         {
-            case "center":
-                grid.HorizontalAlignment = HorizontalAlignment.Center;
-                break;
-            case "right":
-                grid.HorizontalAlignment = HorizontalAlignment.Right;
-                break;
-            default:
-                grid.HorizontalAlignment = HorizontalAlignment.Left;
-                break;
-        }
+            "center" => HorizontalAlignment.Center,
+            "right" => HorizontalAlignment.Right,
+            _ => HorizontalAlignment.Left,
+        };
 
         // 设置边框（Grid 本身不显示边框，边框在单元格上）
         grid.Margin = new Thickness(0, 8, 0, 8);

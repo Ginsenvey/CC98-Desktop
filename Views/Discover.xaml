@@ -127,7 +127,7 @@
         </Button>
 
         <ScrollViewer Grid.Row="1" Grid.Column="0" x:Name="NewTopicViewer">
-            <ItemsRepeater ItemTemplate="{StaticResource TopicTemplateSelector}" ItemsSource="{x:Bind topics}" ElementPrepared="ItemsRepeater_ElementPrepared" VerticalCacheLength="1">
+            <ItemsRepeater ItemTemplate="{StaticResource TextPost}" ItemsSource="{x:Bind topics}" ElementPrepared="ItemsRepeater_ElementPrepared" VerticalCacheLength="1">
                 <ItemsRepeater.Layout>
                     <StackLayout Orientation="Vertical" Spacing="15"></StackLayout>
                 </ItemsRepeater.Layout>

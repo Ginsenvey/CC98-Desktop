@@ -1,6 +1,7 @@
 using CC98.Kernel;
 using CC98.Kernel.ApiScope;
 using CC98.Objects;
+using CC98.Services;
 using CC98.Services.Extensions;
 using CommunityToolkit.Mvvm.ComponentModel;
 using DevWinUI;
@@ -40,6 +41,7 @@ namespace CC98
         public ObservableCollection<Friend> friends = new ObservableCollection<Friend>();
         public string type = "follower";
         public Increment increment= new();
+        public GlobalService GlobalService = GlobalService.Instance;
         public Follow()
         {
             this.InitializeComponent();
@@ -49,19 +51,32 @@ namespace CC98
         protected override async void OnNavigatedTo(Microsoft.UI.Xaml.Navigation.NavigationEventArgs e)
         {
             base.OnNavigatedTo(e);
-
-            // 获取传递的参数
-            var parameter = e.TryGetParameter<string>();
-
-            if (!string.IsNullOrEmpty(parameter))
+            string param = "";
+            if (GlobalService.ShouldReplaceNavigationArgs)
             {
-                Set.Values["CurrentFriendType"] = parameter;
-                type= parameter;
-                if (parameter == "follower")
+                if (GlobalService.NavigationAnchor is string targetType)
+                {
+                    param= targetType;
+                }
+                else
+                {
+                    param = "follower";
+                }
+            }
+            else
+            {
+                param = e.TryGetParameter<string>() ?? "";
+            }
+                
+
+            if (!string.IsNullOrEmpty(param))
+            {
+                type= param;
+                if (param == "follower")
                 {
                     FriendType.Text = "粉丝";
                 }
-                else if(parameter == "followee")
+                else
                 {
                     FriendType.Text = "关注";
                 }  

@@ -11,6 +11,7 @@
     xmlns:ic="using:FluentIcons.WinUI"
     xmlns:controls="using:CommunityToolkit.WinUI.Controls"
     xmlns:obj="using:CC98.Objects"
+    xmlns:share="using:CC98.Share.Controls"
     xmlns:cv="using:CC98.Services.Converters"
     Background="{ThemeResource DesktopAcrylicTransparentBrush}">
 
@@ -19,43 +20,53 @@
             <RowDefinition Height="*" MinHeight="60"></RowDefinition>
             <RowDefinition Height="12*"></RowDefinition>
         </Grid.RowDefinitions>
-        <SelectorBar VerticalAlignment="Center" SelectionChanged="TypeChoice_SelectionChanged" x:Name="TypeChoice">
+        <SelectorBar VerticalAlignment="Center" SelectionChanged="TypeChoice_SelectionChanged" x:Name="Navibar">
             <SelectorBarItem Text="好友动态" IsSelected="True" Tag="0"> </SelectorBarItem>
             <SelectorBarItem Text="收藏更新" Tag="1"></SelectorBarItem>
         </SelectorBar>
 
-        <ScrollViewer Grid.Row="1"   BorderThickness="1" BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}" CornerRadius="4" >
+        <ScrollViewer Grid.Row="1" CornerRadius="4" >
             <ItemsRepeater x:Name="MomentRepeater" ItemsSource="{x:Bind topics}" ElementPrepared="MomentRepeater_ElementPrepared">
+                <ItemsRepeater.Layout>
+                    <controls:StaggeredLayout DesiredColumnWidth="300" ItemsStretch="Fill" ColumnSpacing="15" RowSpacing="15"></controls:StaggeredLayout>
+                </ItemsRepeater.Layout>
                 <ItemsRepeater.ItemTemplate>
                     <DataTemplate x:DataType="obj:TopicInfo">
-                        <HyperlinkButton HorizontalContentAlignment="Stretch" HorizontalAlignment="Stretch" CornerRadius="0" Click="Tile_Click" DataContext="{x:Bind}">
-                            <Grid Padding="0,10,0,10" ColumnSpacing="5" >
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="30"></ColumnDefinition>
-                                    <ColumnDefinition Width="4*"></ColumnDefinition>
-                                    <ColumnDefinition Width="*"></ColumnDefinition>
-                                    <ColumnDefinition Width="40"></ColumnDefinition>
-                                    <ColumnDefinition Width="70"></ColumnDefinition>
-                                </Grid.ColumnDefinitions>
-                                <ic:SymbolIcon Symbol="LeafOne"></ic:SymbolIcon>
-                                <TextBlock Text="{x:Bind Title}" Grid.Column="1" VerticalAlignment="Center" MaxLines="1" Foreground="{ThemeResource TextFillColorSecondaryBrush}"></TextBlock>
-                                <TextBlock Text="{x:Bind UserName}" Grid.Column="2" VerticalAlignment="Center" Foreground="{ThemeResource TextFillColorSecondaryBrush}"></TextBlock>
-                                <Border Grid.Column="3" Background="Transparent"  HorizontalAlignment="Left" >
+                        <Grid Padding="15" x:Name="ContentCard" Tag="{x:Bind Id}" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1" CornerRadius="5" RowSpacing="8" PointerEntered="ContentCard_PointerEntered" PointerExited="ContentCard_PointerExited" Tapped="ContentCard_Tapped">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="32"></RowDefinition>
+                                <RowDefinition Height="3"></RowDefinition>
+                                <RowDefinition Height="Auto"></RowDefinition>
+                                <RowDefinition Height="45"></RowDefinition>
+                            </Grid.RowDefinitions>
+                            <Grid.RenderTransform>
+                                <TranslateTransform x:Name="CardTranslate" X="0" Y="0"/>
+                            </Grid.RenderTransform>
+                            <StackPanel Grid.Row="0"  Orientation="Horizontal" Spacing="10">
+                                <Border Width="30" Height="30" BorderThickness="0" CornerRadius="9999" Background="{ThemeResource PortraitBackgroundColor}">
+                                    <share:Picture  x:Name="portrait" Src="{x:Bind PortraitUrl}" LoadImageCallback="{StaticResource PortraitLoader}"></share:Picture>
+                                </Border>
+                                <TextBlock Text="{x:Bind UserName}"  VerticalAlignment="Center" FontFamily="{StaticResource HarmonySansBold}" Foreground="LightSeaGreen"></TextBlock>
+                            </StackPanel>
+                            <TextBlock Grid.Row="0" HorizontalAlignment="Right" VerticalAlignment="Center" Text="{x:Bind Time}"  FontSize="10"   Foreground="{ThemeResource TextFillColorSecondaryBrush}"></TextBlock>
+                            <Border Grid.Row="1" Height="1" BorderThickness="1" VerticalAlignment="Center" BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}"></Border>
+                            <TextBlock Grid.Row="2" Text="{x:Bind Title}" Margin="0,10,0,0" TextWrapping="Wrap" Foreground="{ThemeResource TextFillColorSecondaryBrush}"></TextBlock>
+
+                            <StackPanel Orientation="Horizontal" Grid.Row="3" Spacing="10">
+                                <Button Background="Transparent"  HorizontalAlignment="Left" Margin="0,10,0,0">
                                     <StackPanel Orientation="Horizontal" Spacing="5" >
                                         <ic:SymbolIcon Symbol="Chat" FontSize="11"></ic:SymbolIcon>
                                         <TextBlock Text="{x:Bind ReplyCount}" Grid.Row="2"  HorizontalAlignment="Right" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}"></TextBlock>
                                     </StackPanel>
-                                </Border>
-
-                                <Border Grid.Column="4" Background="Transparent"  HorizontalAlignment="Left" >
+                                </Button>
+                                <Button Background="Transparent"  HorizontalAlignment="Left" Margin="0,10,0,0" >
                                     <StackPanel Orientation="Horizontal" Spacing="5" >
                                         <ic:SymbolIcon Symbol="Fire" FontSize="11"></ic:SymbolIcon>
                                         <TextBlock Text="{x:Bind HitCount}"   HorizontalAlignment="Right" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}"></TextBlock>
                                     </StackPanel>
-                                </Border>
-                            </Grid>
-                        </HyperlinkButton>
-
+                                </Button>
+                            </StackPanel>
+                        </Grid>
                     </DataTemplate>
                 </ItemsRepeater.ItemTemplate>
             </ItemsRepeater>

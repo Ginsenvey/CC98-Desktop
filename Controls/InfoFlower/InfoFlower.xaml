@@ -7,7 +7,7 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d"
-    x:Name="RootControl"
+    x:Name="Root"
     >
 
     <StackPanel  Orientation="Horizontal"  x:Name="Flower" Background="{ThemeResource AcrylicCardBrush}" Height="40" HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,0,0,120" Spacing="10" Padding="10" CornerRadius="5" Visibility="Collapsed">

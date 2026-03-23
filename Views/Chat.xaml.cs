@@ -166,23 +166,8 @@ namespace CC98
             messages.Clear();
             chatHistoryIncrement.Clear();
             await GetMessageList();
-            // 滚动到最底部
-            ScrollTo(messages.Count - 1);
         }
-        private void ScrollTo(int index)
-        {
-            try
-            {
-                var element = MessagesList.GetOrCreateElement(index);
-                var options = new BringIntoViewOptions
-                {
-                    VerticalAlignmentRatio = 1, // 0=顶部对齐，0.5=居中，1=底部
-                    AnimationDesired = true       // 启用平滑滚动动画
-                };
-                element.StartBringIntoView(options);
-            }
-            catch { }
-        }
+        
         private async void More_Click(object sender, RoutedEventArgs e)
         {
             await chatHistoryIncrement.LoadNextPage(GetMessageList);

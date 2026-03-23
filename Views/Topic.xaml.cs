@@ -108,23 +108,27 @@ namespace CC98
         {
             base.OnNavigatedTo(e);
 
-            var args = e.TryGetParameter<TopicNavigationInfo>();
-            if (args != null)
+            var args =globalService.ShouldReplaceNavigationArgs?
+                (TopicNavigationInfo?)globalService.NavigationAnchor:
+                e.TryGetParameter<TopicNavigationInfo>();
+            if (args == null) return;
+            topicId = args.TopicId;
+            await LoadTopicInfo();
+            if (args.GoToLatest)
             {
-                topicId =args.TopicId;
-                await LoadTopicInfo();
-                if (args.IsJumpingMode)
-                {
-                    isJumping = true;
-                    await TP(args.TargetFloor);
-                    return;
-                }
-                
-                await LoadReply();
-                
+                Pager.SelectedPageIndex = Pager.NumberOfPages-1;
+                return;
             }
-            
-            
+            if (args.IsJumpingMode)
+            {
+                isJumping = true;
+                await TP(args.TargetFloor);
+                return;
+            }
+
+            await LoadReply();
+
+
         }
         private void LoadSet()
         {
@@ -562,13 +566,13 @@ namespace CC98
         
         private void writereply_Click(object sender, RoutedEventArgs e)
         {
-            var param = new EditorNavigationInfo
+            var param = new SketchNavigationInfo
             {
                 EditorMode=EditorMode.ReplyToTopic,
                 TopicId=topicId,
                 HintText= topicInfo.Title,
             };
-            Frame.Navigate(typeof(UBBEditor), param);
+            Frame.Navigate(typeof(Sketch), param);
         }
 
         private async void TileFlyout_Click(object sender, RoutedEventArgs e)
@@ -689,8 +693,8 @@ namespace CC98
                         int floor = reply.Floor;
                         int page = 1 + floor / 10;
                         int location = floor % 10;
-                        string header = $"[b]以下是引用{floor}楼：用户{reply.UserName}在{reply.Time}的发言：[url=/topic/{floor}/{page}#{location}]>>查看原帖<<[/url][/b]\r\n";
-                        var param = new EditorNavigationInfo
+                        string header = $"[b]以下是引用{floor}楼：用户{reply.UserName}在{reply.Time}的发言：[url=/topic/{topicId}/{page}#{location}]>>查看原帖<<[/url][/b]\r\n";
+                        var param = new SketchNavigationInfo
                         {
                             EditorMode = EditorMode.ReplyToPost,
                             TopicId = topicId,
@@ -699,11 +703,11 @@ namespace CC98
                             HintText=$"引用{reply.UserName}的回复",
                             Floor=floor
                         };
-                        Frame.Navigate(typeof(UBBEditor), param);
+                        Frame.Navigate(typeof(Sketch), param);
                     }
                     break;
                 case "EDIT":
-                    var _param = new EditorNavigationInfo
+                    var _param = new SketchNavigationInfo
                     {
                         EditorMode = reply.Floor==1?EditorMode.EditMyTopic:EditorMode.EditMyPost,
                         TopicId = topicId,
@@ -713,7 +717,7 @@ namespace CC98
                         Floor=reply.Floor,
                         ContentType=reply.ContentType
                     };
-                    Frame.Navigate(typeof(UBBEditor), _param);
+                    Frame.Navigate(typeof(Sketch), _param);
                     break;
             }
         }

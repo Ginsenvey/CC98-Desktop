@@ -37,7 +37,7 @@
            
         </ContentDialog>
         
-        <TextBlock FontSize="24" Text="设定" FontWeight="Bold" Foreground="#4d9891" Grid.Row="0" HorizontalAlignment="Left" Margin="15,10,10,10" x:Name="de"></TextBlock>
+        <TextBlock FontSize="24" Text="设定" FontWeight="Bold" FontFamily="{StaticResource HarmonySansBold}" Foreground="LightSeaGreen" Grid.Row="0" HorizontalAlignment="Left" Margin="15,10,10,10" x:Name="de"></TextBlock>
         <Border BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}" BorderThickness="1" Height="1" Grid.Row="0" VerticalAlignment="Bottom"></Border>
         <ScrollViewer Grid.Row="1" Padding="20" Margin="0,0,0,15">
             <StackPanel Orientation="Vertical" Spacing="10">

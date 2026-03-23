@@ -1,4 +1,7 @@
 ﻿using Microsoft.UI.Dispatching;
+using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Media;
 using System;
 using System.Threading.Tasks;
 namespace CC98.Share.Extensions;

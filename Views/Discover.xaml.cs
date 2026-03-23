@@ -31,6 +31,7 @@ using Windows.ApplicationModel.DataTransfer;
 using Windows.Foundation;
 using Windows.Foundation.Collections;
 using Windows.Storage;
+using CC98.Services;
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
 
@@ -42,9 +43,9 @@ namespace CC98
     public sealed partial class Discover : Page
     {
         public ApplicationDataContainer Set=ApplicationData.Current.LocalSettings;
-        public ObservableCollection<TopicInfo> topics=new();
+        public ObservableCollection<TopicInfo> topics=[];
         public HashSet<int> topicIds = [];
-        public ObservableCollection<SimpleTopicInfo> randomTopics = new();
+        public ObservableCollection<SimpleTopicInfo> randomTopics = [];
         public Increment increment = new(20);
         public Discover()
         {
@@ -171,41 +172,16 @@ namespace CC98
         {
             var h = sender as Grid;
             var translate = h?.RenderTransform as TranslateTransform;
-            AnimateCard(translate!, 0, -5); // 向上方移动
+            UIEx.AnimateCard(translate!, 0, -5); // 向上方移动
         }
 
         private void ContentCard_PointerExited(object sender, PointerRoutedEventArgs e)
         {
             var h = sender as Grid;
             var translate = h?.RenderTransform as TranslateTransform;
-            AnimateCard(translate!, 0, 0); // 恢复原位
+            UIEx.AnimateCard(translate!, 0, 0); // 恢复原位
         }
-        private void AnimateCard(TranslateTransform transform, double targetX, double targetY)
-        {
-            var storyboard = new Storyboard();
-
-            var animationX = new DoubleAnimation
-            {
-                To = targetX,
-                Duration = TimeSpan.FromSeconds(0.2),
-                EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
-            };
-            Storyboard.SetTarget(animationX, transform);
-            Storyboard.SetTargetProperty(animationX, "X");
-
-            var animationY = new DoubleAnimation
-            {
-                To = targetY,
-                Duration = TimeSpan.FromSeconds(0.2),
-                EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
-            };
-            Storyboard.SetTarget(animationY, transform);
-            Storyboard.SetTargetProperty(animationY, "Y");
-
-            storyboard.Children.Add(animationX);
-            storyboard.Children.Add(animationY);
-            storyboard.Begin();
-        }
+        
 
         private void ContentCard_Tapped(object sender, TappedRoutedEventArgs e)
         {

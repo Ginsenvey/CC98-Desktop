@@ -2,6 +2,7 @@ using CC98.Kernel;
 using CC98.Kernel.ApiScope;
 using CC98.Kernel.UserExperience;
 using CC98.Objects;
+using CC98.Services;
 using CC98.Services.Extensions;
 using DevWinUI;
 using FluentIcons.Common;
@@ -158,12 +159,9 @@ namespace CC98
         {
             if (!isMe) return;
             var h = sender as HyperlinkButton;
-            var tag = h?.Tag as string;
-            if (!string.IsNullOrEmpty(tag))
-            {
-                Frame.Navigate(typeof(Follow), tag);
-            }
-            
+            if (h?.Tag is not string tag) return;
+            GlobalService.Instance.NavigationAnchor = tag;
+            Frame.Navigate(typeof(Follow), tag);
         }
         
         

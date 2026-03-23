@@ -11,6 +11,7 @@
     xmlns:ic="using:FluentIcons.WinUI" 
     xmlns:obj="using:CC98.Objects"
     xmlns:cv="using:CC98.Services.Converters"
+    xmlns:share="using:CC98.Share.Controls"
     Background="{ThemeResource DesktopAcrylicTransparentBrush}">
 
     <Grid Padding="15,0,15,0">
@@ -19,7 +20,7 @@
             <RowDefinition Height="12*"></RowDefinition>
         </Grid.RowDefinitions>
         <Grid  Grid.Row="0" Padding="10" >
-            <TextBlock Text="关注" x:Name="FriendType" FontSize="24" FontWeight="Bold"   Foreground="#4d9891" VerticalAlignment="Center" HorizontalAlignment="Left"></TextBlock>
+            <TextBlock Text="关注" x:Name="FriendType" FontSize="24" FontWeight="Bold" FontFamily="{StaticResource HarmonySansBold}"  Foreground="LightSeaGreen" VerticalAlignment="Center" HorizontalAlignment="Left"></TextBlock>
         </Grid>
 
         <ScrollViewer Grid.Row="1"  Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" CornerRadius="7" Margin="0,0,0,30">
@@ -52,8 +53,8 @@
                                     <RowDefinition Height="*"></RowDefinition>
                                     <RowDefinition Height="*"></RowDefinition>
                                 </Grid.RowDefinitions>
-                                <Border Grid.Column="0" Grid.Row="0" Grid.RowSpan="2" Width="40" Height="40"  VerticalAlignment="Center" HorizontalAlignment="Center" CornerRadius="3">
-                                    <image:SmartImage Source="{x:Bind PortraitUrl}" Stretch="UniformToFill"></image:SmartImage>
+                                <Border Grid.Column="0" Grid.Row="0" Grid.RowSpan="2" Width="36" Height="36"  VerticalAlignment="Center" HorizontalAlignment="Center" CornerRadius="4">
+                                    <share:Picture Src="{x:Bind PortraitUrl}" Stretch="UniformToFill" LoadImageCallback="{StaticResource PortraitLoader}"/>
                                 </Border>
                                 
                                 <TextBlock Text="{x:Bind Name}" Grid.Column="1" Grid.Row="0" Grid.RowSpan="2"  VerticalAlignment="Center"></TextBlock>

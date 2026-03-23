@@ -4,6 +4,7 @@ using CC98.Kernel.UserExperience;
 using CC98.Objects;
 using CC98.Services;
 using CC98.Services.Extensions;
+using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.WinUI.Converters;
 using DevWinUI;
 using FluentIcons.Common;
@@ -18,6 +19,7 @@ using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Media.Animation;
 using Microsoft.UI.Xaml.Media.Imaging;
+using Microsoft.UI.Xaml.Navigation;
 using Microsoft.Windows.BadgeNotifications;
 using System;
 using System.Collections;
@@ -63,9 +65,9 @@ namespace CC98
     /// </summary>
     public sealed partial class MainWindow : Window
     {
-        public ObservableCollection<CategoryBase> MenuItems { get; } = new ObservableCollection<CategoryBase>();
-        public ObservableCollection<CategoryBase> FooterMenuItems { get; } = new ObservableCollection<CategoryBase>();
-        public Frame RootFrame => contentframe;//用于在嵌套的Frame中导航
+        public ObservableCollection<CategoryBase> MenuItems { get; } = [];
+        public ObservableCollection<CategoryBase> FooterMenuItems { get; } = [];
+        public Frame RootFrame => ContentFrame;//用于在嵌套的Frame中导航
         public NavigationView NavigationView => Navi;
         public ApplicationDataContainer Set = ApplicationData.Current.LocalSettings;
         public ObservableCollection<string> collections=[];
@@ -260,15 +262,15 @@ namespace CC98
                         {
                             Flower.Play("\uEA39", "刷新首页失败");
                         }
-                        contentframe.Navigate(typeof(Index));
+                        ContentFrame.Navigate(typeof(Index));
                         break;
                     
                     case"2":
                         var param = new ProfileNavigationInfo { IsMe = true };
-                        contentframe.Navigate(typeof(Profile),param);
+                        ContentFrame.Navigate(typeof(Profile),param);
                         break;
                     case "3":
-                        contentframe.Navigate(typeof(Discover));
+                        ContentFrame.Navigate(typeof(Discover));
                         break;
                     
                 }
@@ -279,7 +281,7 @@ namespace CC98
                 var index = await FetchIndex();
                 if (index)
                 {
-                    contentframe.Navigate(typeof(Index));
+                    ContentFrame.Navigate(typeof(Index));
                 }
                 
             }
@@ -435,86 +437,13 @@ namespace CC98
             }
             else
             {
-                Flower.Play("\uE783", "暂无收藏夹");
+                Flower.Play(FlowStatus.Info, "暂无收藏夹");
                 return false;
             }
             
         }
         
 
-        private void search_TextChanged(AutoSuggestBox sender, AutoSuggestBoxTextChangedEventArgs args)
-        {
-            var a = sender as AutoSuggestBox;
-            if (args.Reason == AutoSuggestionBoxTextChangeReason.UserInput)
-            {
-                string input=a.Text;
-                if (input != "")
-                {
-                    List<string> suggestions = new List<string>() { "搜索主题 #" + input + "#", "搜索用户 #" + input + "#" };
-                    sender.ItemsSource = suggestions;
-                    string pattern = @"^\d{7}$";
-                    bool isTopic = Regex.IsMatch(input, pattern);
-                    if (isTopic)
-                    {
-                        suggestions.Add("浏览主题:" + input);
-                    }
-                }
-                
-            }
-
-        }
-        public int SearchMode = -1;
-        private  void search_SuggestionChosen(AutoSuggestBox sender, AutoSuggestBoxSuggestionChosenEventArgs args)
-        {
-            if (args.SelectedItem != null)
-            {
-                string temp = args.SelectedItem.ToString();
-                List<string> type = new List<string>()
-                {
-                    "搜索主题 #" + sender.Text + "#",
-                    "搜索用户 #" + sender.Text + "#",
-                    "浏览主题:" + sender.Text
-                };
-                
-                for (int i=0;i<type.Count;i++)
-                {
-                    if (temp.Equals(type[i]))
-                    {
-                        SearchMode = i;
-                        break;
-                    }
-                }
-                if (temp!=null)
-                {
-                    SemanticSearch(sender.Text);
-
-                }
-            }
-            
-        }
-
-        
-      
-        private void SemanticSearch(string key)
-        {
-            var p = new Dictionary<string, string>();
-            switch (SearchMode)
-            {
-                case 0:
-                    var param = new SearchNavigationInfo { SearchType = SearchType.Topic };
-                    contentframe.Navigate(typeof(Search), p);
-                    break;
-                case 1:
-                    //SearchUser(key);
-                    break;
-                case 2:
-                    contentframe.Navigate(typeof(Topic), key.Replace("cc",""));
-                    break;
-                default:
-                    break;
-            }
-        }
-       
 
         private void Back_PointerEntered(object sender, PointerRoutedEventArgs e)
         {
@@ -529,9 +458,9 @@ namespace CC98
 
         private void Back_Click(object sender, RoutedEventArgs e)
         {
-            if (contentframe.CanGoBack)
+            if (ContentFrame.CanGoBack)
             {
-                contentframe.GoBack();
+                ContentFrame.GoBack();
             }
         }
 
@@ -543,13 +472,13 @@ namespace CC98
                 switch (tag)
                 {
                     case "Index":
-                        contentframe.Navigate(typeof(Index));
+                        ContentFrame.Navigate(typeof(Index));
                         break;
                     case "Section":
-                        contentframe.Navigate(typeof(Section));
+                        ContentFrame.Navigate(typeof(Section));
                         break;
                     case "Discover":
-                        contentframe.Navigate(typeof(Discover));
+                        ContentFrame.Navigate(typeof(Discover));
                         break;
                     case "Favorite":
                         var param_1 = new Dictionary<string, string>()
@@ -558,24 +487,24 @@ namespace CC98
                             { "gid","0"},
                             {"mode","favorite"}
                         };
-                        contentframe.Navigate(typeof(Favorite), param_1);
+                        ContentFrame.Navigate(typeof(Favorite), param_1);
                         break;
                     case "Setting":
-                        contentframe.Navigate(typeof(Setting));
+                        ContentFrame.Navigate(typeof(Setting));
                         break;
                     case "Message":
                         var param = new MessageNavigationInfo {HasTarget = false };
-                        contentframe.Navigate(typeof(Message), param);
+                        ContentFrame.Navigate(typeof(Message), param);
                         break;
                     case "Focus":
-                        contentframe.Navigate(typeof(Focus));
+                        ContentFrame.Navigate(typeof(Focus));
                         break;
                     default:
                         if (tag.All(char.IsDigit))
                         {
                             try
                             {
-                                contentframe.Navigate(typeof(Board),int.Parse(tag));
+                                ContentFrame.Navigate(typeof(Board),int.Parse(tag));
                             }
                             catch
                             {
@@ -659,7 +588,7 @@ namespace CC98
         {
             LoadProfile();
             var param = new ProfileNavigationInfo { IsMe = true };
-            contentframe.Navigate(typeof(Profile), param);
+            ContentFrame.Navigate(typeof(Profile), param);
         }
 
         private async void CCZone_Click(object sender, RoutedEventArgs e)
@@ -679,7 +608,7 @@ namespace CC98
                                 Flower.Play("\uEA39", "当前登录方式不支持抽卡");
                                 return;
                             }
-                            contentframe.Navigate(typeof(Game));
+                            ContentFrame.Navigate(typeof(Game));
                             break;
                         case "1":
                             ForumStat.XamlRoot = RootGrid.XamlRoot;
@@ -715,33 +644,22 @@ namespace CC98
             welcome.Text = "";
             ForumStatList.ItemsSource = null;
         }
-    }
-    public class CategoryBase { }
-
-    public class NavigationItem : CategoryBase,INotifyPropertyChanged
-    {
-        public string Name { get; set; } = string.Empty;
-        public FluentIcons.Common.Symbol IconSymbol { get; set; }
-        public string Tag { get; set; }= string.Empty;
-        public bool IsPinned { get; set; } // 是否固定
-
-        public bool IsEditable {  get; set; }
-        
-
-        
-        public event PropertyChangedEventHandler PropertyChanged;
-        protected void OnPropertyChanged([CallerMemberName] string propertyName = null)
+        //本方法只控制全局状态记忆类的参量，而不更改导航栈本身的导航参数
+        private void ContentFrame_Navigating(object sender, Microsoft.UI.Xaml.Navigation.NavigatingCancelEventArgs e)
         {
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+            if (ContentFrame.Content is not Page currentPage) return;
+            Type fromPage = currentPage.GetType();
+            Type toPage=e.SourcePageType;
+            GlobalService.ShouldReplaceNavigationArgs = e.NavigationMode == NavigationMode.Back && rules.Contains((fromPage, toPage));
         }
+        private readonly HashSet<(Type from, Type to)> rules =
+        [
+            (typeof(Sketch),typeof(Topic)),
+            (typeof(Topic),typeof(Message)),
+            (typeof(Topic),typeof(Focus)),
+            (typeof(Profile),typeof(Follow)),
+        ];
+       
     }
-    
-    public class NavigationGroup:CategoryBase
-    {
-        public string Name { get; set; } 
-        public bool IsEditable { get; set; } 
-    }
-
-    
     
 }

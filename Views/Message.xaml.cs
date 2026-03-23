@@ -1,6 +1,7 @@
 using CC98.Objects;
 using CC98.Services;
 using CC98.Services.Extensions;
+using CommunityToolkit.WinUI.Controls;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Controls.Primitives;
@@ -41,45 +42,51 @@ namespace CC98
         protected override void OnNavigatedTo(Microsoft.UI.Xaml.Navigation.NavigationEventArgs e)
         {
             base.OnNavigatedTo(e);
-            var args = e.TryGetParameter<MessageNavigationInfo>();
-            if (args != null)
+
+            if (GlobalService.ShouldReplaceNavigationArgs)
             {
-                NavigationInfo = args;
-                ChatMsg.IsSelected = true;
+                if(GlobalService.NavigationAnchor is int targetIndex)
+                {
+                    NaviBar.SelectedItem = NaviBar.Items[targetIndex];
+                }
+                else
+                {
+                    NaviBar.SelectedItem = NaviBar.Items[0];
+                }
+                return;
             }
+            var args = e.TryGetParameter<MessageNavigationInfo>();
+            if (args == null) return;
+            NavigationInfo = args;
+            NaviBar.SelectedItem = NaviBar.Items[0];
         }
         
         private void NaviBar_SelectionChanged(SelectorBar sender, SelectorBarSelectionChangedEventArgs args)
         {
             var bar = NaviBar.SelectedItem as SelectorBarItem;
-            if (bar != null)
+            var selected=NaviBar.Items.IndexOf(bar);
+            GlobalService.Instance.NavigationAnchor = selected;
+            if (bar?.Tag is not string tag) return;
+            switch (tag)
             {
-                var _tag = bar.Tag;
-                if (_tag is string tag)
-                {
-                    if (tag == "0")//私信
-                    {
-                        MsgFrame.Navigate(typeof(Chat), NavigationInfo);
-                        MsgCount.Text = $"{GlobalService.MessageCount}条未读信息";
-                    }
-                    else if (tag == "1")//系统通知
-                    {
-                        MsgFrame.Navigate(typeof(NoticePage), NoticeType.System);
-                        MsgCount.Text = $"{GlobalService.SystemCount}条未读信息";
-                    }
-                    else if (tag == "2")//回复我的
-                    {
-                        MsgFrame.Navigate(typeof(NoticePage), NoticeType.Reply);
-                        MsgCount.Text = $"{GlobalService.ReplyCount}条未读信息";
-                    }
-                    else if (tag == "3")//提到我的
-                    {
-                        MsgFrame.Navigate(typeof(NoticePage), NoticeType.At);
-                        MsgCount.Text = $"{GlobalService.AtCount}条未读信息";
-                    }
-                }
-                
+                case "Chat":
+                    MsgFrame.Navigate(typeof(Chat), NavigationInfo);
+                    MsgCount.Text = $"{GlobalService.MessageCount}条未读信息";
+                    break;
+                case "System":
+                    MsgFrame.Navigate(typeof(NoticePage), NoticeType.System);
+                    MsgCount.Text = $"{GlobalService.SystemCount}条未读信息";
+                    break;
+                case "Reply":
+                    MsgFrame.Navigate(typeof(NoticePage), NoticeType.Reply);
+                    MsgCount.Text = $"{GlobalService.ReplyCount}条未读信息";
+                    break;
+                case "At":
+                    MsgFrame.Navigate(typeof(NoticePage), NoticeType.At);
+                    MsgCount.Text = $"{GlobalService.AtCount}条未读信息";
+                    break;
             }
+           
         }
 
       

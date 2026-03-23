@@ -113,7 +113,7 @@ namespace UbbRender.Render
         private StackPanel _rootPanel;
         private UbbDocument _document;
         public Dictionary<UbbNodeType, IRenderStrategy> renderStrategies;
-
+        public RenderContext context;
         #endregion
 
         
@@ -213,19 +213,16 @@ namespace UbbRender.Render
 
             try
             {
-                // 解析UBB为文档树
                 _document =UbbRender.Common.Parser.Parse(UbbText);
-
-                // 创建渲染上下文
-                var context = new RenderContext();
-                context.Control = this;
-                context.Container = _rootPanel;
+                context = new RenderContext
+                {
+                    Control = this,
+                    Container = _rootPanel
+                };
 
                 // Defensive initialization: ensure Properties and stacks are non-null
-                if (context.Properties == null)
-                    context.Properties = new Dictionary<string, object>();
-                if (context.PanelStack == null)
-                    context.PanelStack = new Stack<Panel>();
+                context.Properties ??= [];
+                context.PanelStack ??= new Stack<Panel>();
 
                 // 填充默认属性
                 context.Properties["FontSize"] = FontSize;
@@ -252,9 +249,24 @@ namespace UbbRender.Render
                 _rootPanel.Children.Add(errorText);
             }
         }
+        public string GetSelectedText()
+        {
+            if (context != null)
+            {
+                return context.GetSelectedTextExternal();
+            }
+            return string.Empty;
+        }
 
-
-
-
+        /// <summary>
+        /// 全选所有文本
+        /// </summary>
+        public void SelectAll()
+        {
+            if (context != null)
+            {
+                context.SelectAllExternal();
+            }
+        }
     }
 }

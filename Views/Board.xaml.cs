@@ -163,12 +163,12 @@ namespace CC98
                     switch (tag)
                     {
                         case "Send":
-                            var param = new EditorNavigationInfo
+                            var param = new SketchNavigationInfo
                             {
                                 EditorMode=EditorMode.DraftNewTopic,
                                 BoardId=boardId
                             };
-                            Frame.Navigate(typeof(UBBEditor), param);
+                            Frame.Navigate(typeof(Sketch), param);
                             break;
                         case "Pin":
                             string url = ApiEndpoints.Board.EditFocusBoards(boardId);
@@ -243,20 +243,20 @@ namespace CC98
                     await Pin();
                     break;
                 case "draft":
-                    var param = new EditorNavigationInfo
+                    var param = new SketchNavigationInfo
                     {
                         EditorMode = EditorMode.DraftNewTopic,
                         BoardId = boardId
                     };
-                    Frame.Navigate(typeof(UBBEditor), param);
+                    Frame.Navigate(typeof(Sketch), param);
                     break;
                 case "vote":
-                    var param2 = new EditorNavigationInfo
+                    var param2 = new SketchNavigationInfo
                     {
                         EditorMode = EditorMode.Vote,
                         BoardId = boardId
                     };
-                    Frame.Navigate(typeof(UBBEditor), param2);
+                    Frame.Navigate(typeof(Sketch), param2);
                     break;
             }
         }
