@@ -89,7 +89,7 @@ namespace CC98
                 string propertyName = SectionNames[i];
                 string name= _SectionNames[i];
                 var hotTopics = await _dataManager.GetTopicPartitionAsync(propertyName);
-                var section=new SectionCard { SectionName=name,IndexTopics=hotTopics,HexColor=ColorPaint.GenerateMorandiColorHex()};
+                var section=new SectionCard { SectionName=name,IndexTopics=hotTopics,HexColor=ColorEx.GenerateMorandiColorHex()};
                 sections.Add(section);
             }
             var recommendations = await _dataManager.GetRecommendationReadingAsync();

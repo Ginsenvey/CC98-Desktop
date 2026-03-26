@@ -263,7 +263,7 @@ public class ImageRenderStrategy : IRenderStrategy
                 {
                     //自定义图片加载器必须在Src设置之前赋值
                     //否则OnSrcChanged事件会触发，但此时将使用默认加载器
-                    LoadImageCallback = new SmartImageLoader(),
+                    LoadImageCallback = SmartImageLoader.Default,
                     //UBB隐藏图片语法
                     Hide= value=="1",
                     Src=src,
@@ -585,13 +585,14 @@ public class EmojiRenderStrategy : IRenderStrategy
                 {
                     if (!string.IsNullOrEmpty(imageUrl))
                     {
-                        var image = new Image
+                        var image = new Picture
                         {
-                            Source = LoadImageFromUrl(imageUrl),
+                            LoadImageCallback = SmartImageLoader.Default,
+                            Src = imageUrl,
                             Margin = new Thickness(4, 0, 4, 0),
-                            MaxWidth =32,
-                            MaxHeight=32,
-                            Stretch=Stretch.UniformToFill
+                            MaxWidth = 32,
+                            MaxHeight = 32,
+                            Stretch = Stretch.UniformToFill,
                         };
                         var inlineContainer = new InlineUIContainer { Child = image };
                         context.AddInline(inlineContainer);
@@ -614,19 +615,6 @@ public class EmojiRenderStrategy : IRenderStrategy
     {
         return EmoticonRules.GetEmoticonUrl(code);
     }
-    private static BitmapImage LoadImageFromUrl(string url)
-    {
-        try
-        {
-            var bitmapImage = new BitmapImage(new Uri(url));
-            return bitmapImage;
-        }
-        catch
-        {
-            return null;
-        }
-    }
-
 }
 
 public class LatexRenderStrategy : IRenderStrategy

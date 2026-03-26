@@ -119,7 +119,7 @@ namespace CC98
                 Set.Values["Portrait"] = data.PortraitUrl;
             }
             profile.IsOthers = !isMe;
-            MyProfile.ProfilePicture = await ImageResolver.LoadWebImage(profile.PortraitUrl);
+            MyProfile.ProfilePicture = await UrlEx.LoadWebImage(profile.PortraitUrl);
             InfoContent.DataContext = profile;
             SignBoard.DataContext = profile; 
         }

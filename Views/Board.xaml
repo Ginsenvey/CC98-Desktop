@@ -13,7 +13,6 @@
     xmlns:ubb="using:UbbRender.Render"
     xmlns:obj="using:CC98.Objects"
     xmlns:cv="using:CC98.Services.Converters"
-    NavigationCacheMode="Enabled"
     Background="{ThemeResource DesktopAcrylicTransparentBrush}">
     <Grid>
         <Grid.RowDefinitions>

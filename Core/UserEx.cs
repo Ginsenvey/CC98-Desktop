@@ -40,7 +40,7 @@ namespace CC98.Kernel.UserExperience//用户体验模型，包括:版面图标�
                 return FluentIcons.Common.Symbol.Tag;
             }
         }
-        public static Dictionary<int,FluentIcons.Common.Symbol> Icons=new Dictionary<int, Symbol>
+        private static readonly Dictionary<int, FluentIcons.Common.Symbol> Icons = new()
         {
             {758,Symbol.LeafOne},
             {182,Symbol.Heart },
@@ -87,7 +87,7 @@ namespace CC98.Kernel.UserExperience//用户体验模型，包括:版面图标�
 
         };
     }
-    public static class ImageResolver
+    public static class UrlEx
     {
         public static bool IsWebUrl(string url)
         {
@@ -128,7 +128,7 @@ namespace CC98.Kernel.UserExperience//用户体验模型，包括:版面图标�
             // 确保我们只修改文件名的扩展名部分（即最后一个点号，且该点号在最后一个斜杠之后）
             if (lastDotIndex > lastSlashIndex)
             {
-                absolutePath = absolutePath.Substring(0, lastDotIndex) + newExtension;
+                absolutePath = absolutePath[..lastDotIndex] + newExtension;
             }
             else
             {
@@ -149,7 +149,7 @@ namespace CC98.Kernel.UserExperience//用户体验模型，包括:版面图标�
             }
             else
             {
-                Uri uri = new Uri(path);
+                Uri uri = new(path);
                 return ChangeExtension(uri, ".gif").ToString();
             }
         }
@@ -173,13 +173,6 @@ namespace CC98.Kernel.UserExperience//用户体验模型，包括:版面图标�
         }
         public static async Task<BitmapSource> LoadWebImage(string url,bool lowRes=false)
         {
-            if (!LoginService.vpn.IsVpnEnabled)
-            {
-                // 不使用WebVPN
-                return new BitmapImage(new Uri(url));
-            }
-
-            // 使用WebVPN加载
             byte[] imageBytes = await LoginService.vpn.GetByteArrayAsync(url);
             return await LoadFromBytes(imageBytes,lowRes);
         }
@@ -188,7 +181,7 @@ namespace CC98.Kernel.UserExperience//用户体验模型，包括:版面图标�
             if (path.StartsWith("ms-appx:///") || path.StartsWith("ms-appdata:///"))
             {
                 // 应用资源路径
-                return new BitmapImage(new Uri(await ImageResolver.LocateEmoji(path)));
+                return new BitmapImage(new Uri(await UrlEx.LocateEmoji(path)));
             }
             else if (System.IO.File.Exists(path))
             {
@@ -233,7 +226,7 @@ namespace CC98.Kernel.UserExperience//用户体验模型，包括:版面图标�
             return bitmapImage;
         }
     }
-    public static class ColorPaint
+    public static class ColorEx
     {
 
         public static string GenerateMorandiColorHex()

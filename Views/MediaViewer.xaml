@@ -57,19 +57,15 @@
                 <HyperlinkButton Background="Transparent" x:Name="CopyPic" Width="48" Height="48" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Click="CopyPic_Click" ToolTipService.ToolTip="复制" CornerRadius="0" BorderThickness="0">
                     <ic:SymbolIcon Symbol="Copy" ></ic:SymbolIcon>
                 </HyperlinkButton>
-                <HyperlinkButton Background="Transparent"  x:Name="AddAsEmoji" Width="48" Height="48" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Click="AddAsEmoji_Click" ToolTipService.ToolTip="添加到表情" CornerRadius="0" BorderThickness="0">
-                    <ic:SymbolIcon Symbol="StarAdd" ></ic:SymbolIcon>
-                </HyperlinkButton>
                 <HyperlinkButton Background="Transparent"   x:Name="SavePic" Width="48" Height="48" Foreground="{ThemeResource TextFillColorSecondaryBrush}" ToolTipService.ToolTip="保存" CornerRadius="0" BorderThickness="0">
                     <ic:SymbolIcon Symbol="Save" ></ic:SymbolIcon>
                 </HyperlinkButton>
-
             </StackPanel>
             <Button x:Name="last" Grid.Column="1" Width="30" Height="30" CornerRadius="9999" HorizontalAlignment="Center" VerticalAlignment="Center" Style="{StaticResource ScrollButtonStyle}" Click="last_Click"> 
                 <FontIcon FontSize="{ThemeResource FlipViewButtonFontSize}" Glyph="&#xedd9;" />
             </Button>
             <ScrollViewer x:Name="Viewer" Grid.Column="2" ZoomMode="Enabled" ViewChanged="Viewer_ViewChanged" HorizontalContentAlignment="Center" VerticalAlignment="Stretch" HorizontalScrollMode="Enabled" HorizontalScrollBarVisibility="Visible" HorizontalAlignment="Stretch">
-                <share:Picture x:Name="InnerImage"  Stretch="UniformToFill" LoadImageCallback="{ThemeResource CustomPortraitLoader}" RenderTransformOrigin="0.5,0.5" HorizontalAlignment="Center"> 
+                <share:Picture x:Name="InnerImage"  Stretch="UniformToFill" LoadImageCallback="{StaticResource CustomPortraitLoader}" RenderTransformOrigin="0.5,0.5" HorizontalAlignment="Center"> 
                     <share:Picture.RenderTransform>
                         <RotateTransform x:Name="ImageTransform"  Angle="0"/>
                     </share:Picture.RenderTransform>

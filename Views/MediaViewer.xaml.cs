@@ -1,6 +1,7 @@
 using CC98.Kernel;
 using CC98.Kernel.UserExperience;
 using CC98.Objects;
+using CC98.Services;
 using CC98.Share.Controls;
 using CC98.Share.Controls.Primitives;
 using DevWinUI;
@@ -114,10 +115,6 @@ namespace CC98
             RotateImage();
         }
 
-        private  void AddAsEmoji_Click(object sender, RoutedEventArgs e)
-        {
-            
-        }
         private void MediaViewer_Closed(object sender, WindowEventArgs e)
         {
             // 释放资源示例
@@ -145,8 +142,9 @@ namespace CC98
             ScaleImage();
         }
 
-        private void CopyPic_Click(object sender, RoutedEventArgs e)
+        private async void CopyPic_Click(object sender, RoutedEventArgs e)
         {
+            bool r=await ImageExtension.CopyImageToClipboardAsync(CurrentUrl);
 
         }
 

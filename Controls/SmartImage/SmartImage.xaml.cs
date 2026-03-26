@@ -98,23 +98,23 @@ namespace CC98.Controls
 
                 switch (Source)
                 {
-                    case string url when ImageResolver.IsWebUrl(url):
-                        InnerImage.Source= await ImageResolver.LoadWebImage(url);
+                    case string url when UrlEx.IsWebUrl(url):
+                        InnerImage.Source= await UrlEx.LoadWebImage(url);
                         ImageSource = InnerImage.Source;
                         break;
 
-                    case string path when ImageResolver.IsLocalPath(path):
-                        InnerImage.Source = await ImageResolver.LoadLocalImage(path);
+                    case string path when UrlEx.IsLocalPath(path):
+                        InnerImage.Source = await UrlEx.LoadLocalImage(path);
                         ImageSource = InnerImage.Source;
                         break;
 
-                    case Uri uri when ImageResolver.IsWebUri(uri):
-                        InnerImage.Source = await ImageResolver.LoadWebImage(uri.ToString());
+                    case Uri uri when UrlEx.IsWebUri(uri):
+                        InnerImage.Source = await UrlEx.LoadWebImage(uri.ToString());
                         ImageSource = InnerImage.Source;
                         break;
 
-                    case Uri uri when ImageResolver.IsLocalUri(uri):
-                        InnerImage.Source = await ImageResolver.LoadLocalImage(uri.ToString());
+                    case Uri uri when UrlEx.IsLocalUri(uri):
+                        InnerImage.Source = await UrlEx.LoadLocalImage(uri.ToString());
                         ImageSource = InnerImage.Source;
                         break;
 

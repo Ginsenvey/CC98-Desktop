@@ -125,7 +125,7 @@ namespace CC98
                 port = data.PortraitUrl;
                 Set.Values["Portrait"] = data.PortraitUrl;
             }
-            MyPicture.ProfilePicture = await ImageResolver.LoadWebImage(port);
+            MyPicture.ProfilePicture = await UrlEx.LoadWebImage(port);
 
 
         }

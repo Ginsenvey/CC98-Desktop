@@ -772,7 +772,7 @@ namespace CC98
                 var _tag = p.Tag;
                 if(_tag is string tag)
                 {
-                    var bitmap = await ImageResolver.LoadWebImage(tag);
+                    var bitmap = await UrlEx.LoadWebImage(tag);
                     p.ProfilePicture= bitmap;
                 }
             }
