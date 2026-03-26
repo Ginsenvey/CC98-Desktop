@@ -145,7 +145,14 @@ namespace CC98
         private async void CopyPic_Click(object sender, RoutedEventArgs e)
         {
             bool r=await ImageExtension.CopyImageToClipboardAsync(CurrentUrl);
-
+            if (r)
+            {
+                Flower.Play(FlowStatus.Success, "已复制图片到剪贴板");
+            }
+            else
+            {
+                Flower.Play(FlowStatus.Fail, "复制失败");
+            }
         }
 
         private void last_Click(object sender, RoutedEventArgs e)
@@ -164,6 +171,23 @@ namespace CC98
         {
             scale=Viewer.ZoomFactor;
             zoomfactor.Text = ScaleText;
+        }
+
+        private async void SavePic_Click(object sender, RoutedEventArgs e)
+        {
+            string? r=await ImageExtension.DownloadImagesAsync(CurrentUrl);
+            if (r == null)
+            {
+                ShowTip("保存图片出错", "未知原因");
+                return;
+            }
+            ShowTip("保存图片成功", r);
+        }
+        private void ShowTip(string title,string subTitle)
+        {
+            Tip.Title = title;
+            Tip.Subtitle = subTitle;
+            Tip.IsOpen = true;
         }
     }
 }

@@ -237,7 +237,7 @@ public class RenderContext
         };
         var browseItem = new MenuFlyoutItem
         {
-            Text="前往此页面",
+            Text="在站内打开链接",
             Icon= new FluentIcons.WinUI.SymbolIcon() { Symbol = FluentIcons.Common.Symbol.WindowNew }
         };
         

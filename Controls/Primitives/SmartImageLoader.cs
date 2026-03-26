@@ -9,23 +9,20 @@ public class SmartImageLoader : IImageLoader
 {
     // 单例实例
     private static SmartImageLoader? _instance;
-    private static readonly object _lock = new object();
+    private static readonly object _lock = new();
 
     // 公共属性
     public bool LowRes { get; set; } = false;
 
-    // 私有构造函数
-    private SmartImageLoader()
+    public SmartImageLoader()
     {
     }
 
-    // 带参构造函数（用于创建不同配置的实例）
-    private SmartImageLoader(bool lowRes)
+    public SmartImageLoader(bool lowRes)
     {
         LowRes = lowRes;
     }
 
-    // 获取默认实例（LowRes = false）
     public static SmartImageLoader Default
     {
         get
@@ -49,7 +46,6 @@ public class SmartImageLoader : IImageLoader
         return _instances.GetOrAdd(lowRes, l => new SmartImageLoader(l));
     }
 
-    // 缓存字典（静态，所有实例共享）
     private static readonly ConcurrentDictionary<string, WeakReference<BitmapSource?>> _cache = new();
 
     public async Task<BitmapSource?> LoadImage(string src)
@@ -92,7 +88,6 @@ public class SmartImageLoader : IImageLoader
         return result;
     }
 
-    // 可选：清理缓存的方法
     public static void ClearCache()
     {
         _cache.Clear();

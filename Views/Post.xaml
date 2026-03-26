@@ -277,7 +277,7 @@
                 <ScrollViewer>
                     <Grid>
                         <controls:MarkdownTextBlock Background="{ThemeResource MarkdownBackgroudBrush}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" x:Name="MdViewer" Visibility="Collapsed"></controls:MarkdownTextBlock>
-                        <ubb:UbbTextBlock ImageMaxWidth="320" Background="{ThemeResource MarkdownBackgroudBrush}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" BoldFontFamily="{ThemeResource HarmonySansBold}" x:Name="UbbViewer"/>
+                        <ubb:UbbTextBlock ImageMaxWidth="320" Background="{ThemeResource MarkdownBackgroudBrush}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" QuoteBackground="{ThemeResource QuoteBackgroundBrush}" CodeBackground="{ThemeResource QuoteBackgroundBrush}" BoldFontFamily="{ThemeResource HarmonySansBold}" x:Name="UbbViewer"/>
                     </Grid>
                 </ScrollViewer>
             </SplitView.Pane>

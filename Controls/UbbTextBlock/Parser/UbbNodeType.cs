@@ -41,13 +41,16 @@ public enum UbbNodeType
 
 public static class UbbNodeTypeExtensions
 {
-    private static readonly HashSet<UbbNodeType> _blockTypes = new()
-    {
+    private static readonly HashSet<UbbNodeType> _blockTypes =
+    [
         UbbNodeType.Code,
         UbbNodeType.Quote,
         UbbNodeType.Table,
         UbbNodeType.TableRow,
         UbbNodeType.TableCell,
+        UbbNodeType.Image,
+        UbbNodeType.Audio,
+        UbbNodeType.Video,
         UbbNodeType.Paragraph,
         UbbNodeType.Divider,
         UbbNodeType.Align,
@@ -56,9 +59,8 @@ public static class UbbNodeTypeExtensions
         UbbNodeType.Right,
         UbbNodeType.NoUBB,
         UbbNodeType.Markdown,
-        UbbNodeType.NeedReply,
         UbbNodeType.ReplyView,
-    };
+    ];
 
     // 使用 HashSet 的 Contains 方法判断
     public static bool IsBlock(this UbbNodeType type)

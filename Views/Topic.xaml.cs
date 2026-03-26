@@ -59,9 +59,6 @@ namespace CC98
         public Topic()
         {
             this.InitializeComponent();
-            var instanceId = Guid.NewGuid().ToString().Substring(0, 8);
-            this.Tag = instanceId;
-            System.Diagnostics.Debug.WriteLine($"TopicÊµÀý´´½¨: {instanceId}");
             LoadSet();
             LoadFavorites();
             this.Unloaded += Topic_Unloaded; 
@@ -355,8 +352,7 @@ namespace CC98
         {
             var h = sender as HyperlinkButton;
             ProfileViewer.Target = h;
-            var t = h?.Tag as Reply;
-            if (t == null || t.IsAnonymous) return;
+            if (h?.Tag is not Reply t || t.IsAnonymous || t.IsDeleted) return;
             var info = new ProfileNavigationInfo { IsMe = t.IsMe, UserId = t.UserId ?? 0 };
             Frame.Navigate(typeof(Profile), info);
         }
@@ -416,7 +412,7 @@ namespace CC98
                     var vinfo = new ViewerNavigationInfo
                     {
                         Type = MediaType.Video,
-                        Urls = new List<string> { e.Source }
+                        Urls = [e.Source]
                     };
                     Frame.Navigate(typeof(MediaViewer), vinfo);
                     break;
@@ -663,9 +659,7 @@ namespace CC98
         private void PostOperation_Click(object sender, RoutedEventArgs e)
         {
             var operation = sender as MenuFlyoutItem;
-            var tag = operation?.Tag as string;
-            var reply = operation?.DataContext as Reply;
-            if (reply == null || tag == null) return;
+            if (operation?.DataContext is not Reply reply || operation?.Tag is not string tag) return;
             switch (tag)
             {
                 case "UBB":
@@ -734,9 +728,7 @@ namespace CC98
         {
             var b = sender as Button;
             if (b == null) return;
-            var reply = b.DataContext as Reply;
-            var mode = b.Tag as string;
-            if (reply == null || mode == null) return;
+            if (b.DataContext is not Reply reply || b.Tag is not string mode) return;
             var postId = reply.Id;
             var url = ApiEndpoints.Post.React(postId);
             var content = new StringContent(mode, Encoding.UTF8, "application/json");
@@ -781,10 +773,7 @@ namespace CC98
         private void SmallProfile_Unloaded(object sender, RoutedEventArgs e)
         {
             var p = sender as PersonPicture;
-            if (p != null)
-            {
-                p.ProfilePicture = null;
-            }
+            p?.ProfilePicture = null;
         }
 
         
@@ -887,8 +876,7 @@ namespace CC98
             {
                 var h = sender as HyperlinkButton;
                 ProfileViewer.Target = h;
-                var t = h?.Tag as Reply;
-                if (t == null || t.IsAnonymous) return;
+                if (h?.Tag is not Reply t || t.IsAnonymous) return;
                 string profileUrl = ApiEndpoints.User.UserProfile(false, t.UserId ?? 0);
                 var profileResult = await RequestSender.Fetch<UserInfo>(profileUrl);
                 if (!profileResult.IsSuccess || profileResult.Data == null)
@@ -914,7 +902,7 @@ namespace CC98
         
 
         
-        private string ExtractImageUrl(UbbNode node)
+        private static string ExtractImageUrl(UbbNode node)
         {
             string src = "";
             if (node is TagNode tagNode)

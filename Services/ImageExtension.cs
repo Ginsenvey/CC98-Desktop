@@ -61,7 +61,7 @@ public class ImageExtension
     /// <param name="imageUrl">图片URL</param>
     /// <param name="fileName">文件名（可选，不指定则从URL自动提取）</param>
     /// <returns>下载成功返回文件路径，失败返回null</returns>
-    public static async Task<string> DownloadImageToDownloadsAsync(string imageUrl, string fileName = null)
+    public static async Task<string?> DownloadImagesAsync(string imageUrl, string fileName = null)
     {
         try
         {

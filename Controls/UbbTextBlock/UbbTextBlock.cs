@@ -220,7 +220,6 @@ namespace UbbRender.Render
                     Container = _rootPanel
                 };
 
-                // Defensive initialization: ensure Properties and stacks are non-null
                 context.Properties ??= [];
                 context.PanelStack ??= new Stack<Panel>();
 

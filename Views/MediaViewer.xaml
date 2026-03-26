@@ -57,7 +57,7 @@
                 <HyperlinkButton Background="Transparent" x:Name="CopyPic" Width="48" Height="48" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Click="CopyPic_Click" ToolTipService.ToolTip="复制" CornerRadius="0" BorderThickness="0">
                     <ic:SymbolIcon Symbol="Copy" ></ic:SymbolIcon>
                 </HyperlinkButton>
-                <HyperlinkButton Background="Transparent"   x:Name="SavePic" Width="48" Height="48" Foreground="{ThemeResource TextFillColorSecondaryBrush}" ToolTipService.ToolTip="保存" CornerRadius="0" BorderThickness="0">
+                <HyperlinkButton Background="Transparent"   x:Name="SavePic" Width="48" Height="48" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Click="SavePic_Click" ToolTipService.ToolTip="保存" CornerRadius="0" BorderThickness="0">
                     <ic:SymbolIcon Symbol="Save" ></ic:SymbolIcon>
                 </HyperlinkButton>
             </StackPanel>
@@ -75,6 +75,11 @@
             <Button x:Name="next" Grid.Column="3" Width="30" Height="30" CornerRadius="9999" HorizontalAlignment="Center" VerticalAlignment="Center" Style="{StaticResource ScrollButtonStyle}" Click="next_Click">
                 <FontIcon FontSize="{ThemeResource FlipViewButtonFontSize}" Glyph="&#xEDDA;" />
             </Button>
+            <TeachingTip x:Name="Tip" Target="{x:Bind Viewer}" IsLightDismissEnabled="True">
+                <TeachingTip.IconSource>
+                    <FontIconSource Glyph="&#xE930;"></FontIconSource>
+                </TeachingTip.IconSource>
+            </TeachingTip>
         </Grid>
         
         
@@ -86,6 +91,7 @@
         </MediaPlayerElement>
         <Border Grid.Row="3" Height="1" VerticalAlignment="Top" BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}" BorderThickness="1"></Border>
         <TextBlock x:Name="MediaInfo" Grid.Row="3" Margin="5,0,0,0" Foreground="{ThemeResource TextFillColorSecondaryBrush}" IsTextSelectionEnabled="True"></TextBlock>
+        <local:InfoFlower x:Name="Flower" Grid.Row="0" Grid.RowSpan="4" HorizontalAlignment="Center"></local:InfoFlower>
     </Grid>
 
 

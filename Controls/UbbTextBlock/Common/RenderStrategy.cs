@@ -761,7 +761,7 @@ public class RenderHelper
     {
         var sb = new StringBuilder();
         CollectTextRecursive(node, sb);
-        return sb.ToString();
+        return sb.ToString().Trim();
     }
 
     private static void CollectTextRecursive(UbbNode node, StringBuilder sb)
