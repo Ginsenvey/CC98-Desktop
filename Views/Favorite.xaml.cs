@@ -34,12 +34,9 @@ namespace CC98
     public sealed partial class Favorite : Page
     {
         public ApplicationDataContainer Set = ApplicationData.Current.LocalSettings;
-        public ObservableCollection<SimpleTopicInfo> topics=new();
-        public Favorites? selectedFavorites { get; set; }
-        public ObservableCollection<Favorites> favoritesList = new()
-        {
-            
-        };
+        public ObservableCollection<SimpleTopicInfo> topics=[];
+        public Favorites? SelectedFavorites { get; set; }
+        public ObservableCollection<Favorites> favoritesList = [];
         public int sortId = 0;
         public int groupId = 0;
         public Increment increment = new();
@@ -55,7 +52,6 @@ namespace CC98
             base.OnNavigatedTo(e);
 
             LoadFavorites();
-
             await GetFavoriteTopic();
         }
         private void LoadFavorites()
@@ -91,9 +87,8 @@ namespace CC98
 
         private void Content_Click(object sender, RoutedEventArgs e)
         {
-            var h = sender as HyperlinkButton;            
-            var t = h?.DataContext as SimpleTopicInfo;
-            if (t == null) return;
+            var h = sender as HyperlinkButton;
+            if (h?.DataContext is not SimpleTopicInfo t) return;
             var param = new TopicNavigationInfo { TopicId = t.Id };
             Frame.Navigate(typeof(Topic), param);
         }
@@ -106,7 +101,7 @@ namespace CC98
             increment.Clear();
 
             await GetFavoriteTopic();
-            string Sort_Method = string.Empty;
+            string Sort_Method;
             if (currenOrder == PostOrder.Time)
             {
                 Sort_Method = "发帖时间";
@@ -127,13 +122,13 @@ namespace CC98
 
         private async void FavoriteBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            if (selectedFavorites != null)
+            if (SelectedFavorites != null)
             {
                 topics.Clear();
                 increment.Clear();
                 sortId = 0;
-                groupId = selectedFavorites.Id;
-                de.Text = selectedFavorites.Name;
+                groupId = SelectedFavorites.Id;
+                de.Text = SelectedFavorites.Name;
                 await GetFavoriteTopic();
             }
         }
@@ -143,8 +138,7 @@ namespace CC98
             var m=sender as MenuFlyoutItem;
             if(m != null)
             {
-                var t = m?.DataContext as SimpleTopicInfo;
-                if(t != null)
+                if (m?.DataContext is SimpleTopicInfo)
                 {
                     //bool res=await RequestSender.RemoveFavorite(t.Id);
                     bool res = true; //待实现

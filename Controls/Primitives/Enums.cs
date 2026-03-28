@@ -8,5 +8,6 @@ public enum MediaType
     Audio=1,
     Video=2,
     File= 3,
-    Link=4
+    Link=4,
+    AtUser=5,
 }

@@ -36,7 +36,8 @@ public enum UbbNodeType
     NoUBB, //非UBB内容块
     Markdown, //markdown内容
     NeedReply, //需要回复
-    ReplyView, //设置回复可见
+    ReplyView, //设置回复可见,
+    At
 }
 
 public static class UbbNodeTypeExtensions

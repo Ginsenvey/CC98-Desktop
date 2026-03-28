@@ -3,6 +3,7 @@ using CC98.Share.Controls.Primitives;
 using CC98.Share.Controls.Primitives.LatexBlock;
 using CC98.Share.Extensions;
 using ColorCode;
+using CommunityToolkit.WinUI.Controls;
 using DevWinUI;
 using Microsoft.UI;
 using Microsoft.UI.Text;
@@ -13,7 +14,6 @@ using Microsoft.UI.Xaml.Documents;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Media.Imaging;
 using Microsoft.UI.Xaml.Shapes;
-using CommunityToolkit.WinUI.Controls;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -26,6 +26,7 @@ using UbbRender.Parser;
 using Windows.ApplicationModel.DataTransfer;
 using Windows.UI;
 using Windows.UI.Text;
+using static System.Net.Mime.MediaTypeNames;
 using static System.Net.WebRequestMethods;
 
 namespace UbbRender.Common;
@@ -1198,7 +1199,7 @@ public class TableRenderStrategy : IRenderStrategy
     private static void ApplyTableStyle(Grid grid, string border, string width, string align, RenderContext context)
     {
         // 设置表格宽度
-        if (width != "auto" && width.EndsWith("%"))
+        if (width != "auto" && width.EndsWith('%'))
         {
             if (double.TryParse(width.TrimEnd('%'), out double percent))
             {
@@ -1258,16 +1259,17 @@ public class TopicRenderStrategy : IRenderStrategy
     {
         if (node is TagNode tagNode)
         {
-            var hyperlink = new Hyperlink();
+            var hyperlink = new Hyperlink
+            {
+                Foreground = new SolidColorBrush(Colors.LightSeaGreen),
+                TextDecorations = TextDecorations.Underline
+            };
             var topicId = tagNode.GetAttribute("value");
             if (!topicId.All(char.IsDigit))
             {
                 //必须是纯数字，否则不渲染
                 return;
             }
-            // 设置样式
-            hyperlink.Foreground = new SolidColorBrush(Colors.LightSeaGreen);
-            hyperlink.TextDecorations = TextDecorations.Underline;
             // 点击事件
             hyperlink.Click += (sender, e) =>
             {
@@ -1280,5 +1282,30 @@ public class TopicRenderStrategy : IRenderStrategy
             }
             context.EndInlineContainer();
         }
+    }
+}
+
+public class AtRenderStrategy : IRenderStrategy
+{
+    public void Render(UbbNode node, RenderContext context)
+    {
+        if (node is AtNode atNode)
+        {
+            var hyperlink = new Hyperlink
+            {
+                Foreground = new SolidColorBrush(Colors.LightSeaGreen),
+                TextDecorations = TextDecorations.None,
+            };
+            hyperlink.Inlines.Add(new Run {Text=$"@{atNode.Username}"});
+            // 点击事件
+            hyperlink.Click += (sender, e) =>
+            {
+                context.Control.OnMediaClicked(atNode.Username, MediaType.AtUser);
+            };
+            context.BeginInlineContainer(hyperlink);
+            //不存在子元素
+            context.EndInlineContainer();
+        }
+
     }
 }

@@ -32,7 +32,7 @@ public class RenderContext
 
     public void RenderNode(UbbNode node)
     {
-        if (Control.renderStrategies.TryGetValue(node.Type, out var strategy))
+        if (UbbTextBlock.renderStrategies.TryGetValue(node.Type, out var strategy))
         {
             strategy.Render(node, this);
         }

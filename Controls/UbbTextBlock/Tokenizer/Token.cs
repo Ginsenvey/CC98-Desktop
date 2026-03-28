@@ -2,19 +2,12 @@
 
 namespace UbbRender.Tokenizer;
 
-public class Token
+public class Token(TokenType type, string value, int position)
 {
-    public TokenType Type { get; set; }
-    public string Value { get; set; }
-    public int Position { get; set; }
+    public TokenType Type { get; set; } = type;
+    public string Value { get; set; } = value;
+    public int Position { get; set; } = position;
     public int Length => Value?.Length ?? 0;
-
-    public Token(TokenType type, string value, int position)
-    {
-        Type = type;
-        Value = value;
-        Position = position;
-    }
 }
 
 

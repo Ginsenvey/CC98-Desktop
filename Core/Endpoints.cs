@@ -21,6 +21,7 @@ public static class ApiEndpoints
         public static string DrawCard(int rule) => $"{Card}/api/draw/{rule}";
         public static string DestoryAllCards() => $"{Card}/api/collection/all-rest";
         public static string UploadFile()=> $"{Base}/file";
+        public static string AppCenter => Oidc;
     }
     /// <summary>
     /// 用户个人信息

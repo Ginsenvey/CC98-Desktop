@@ -14,7 +14,7 @@ public class TagNode : UbbNode
         return new TagNode
         {
             Type = type,
-            Attributes = attributes ?? new Dictionary<string, string>()
+            Attributes = attributes ?? []
         };
     }
 }

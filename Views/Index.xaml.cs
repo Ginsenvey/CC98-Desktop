@@ -38,7 +38,9 @@ using System.Threading.Tasks;
 using Windows.Foundation;
 using Windows.Foundation.Collections;
 using Windows.Storage;
+using Windows.System;
 using Windows.UI;
+using static CC98.Kernel.ApiScope.ApiEndpoints;
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
 
@@ -53,13 +55,12 @@ namespace CC98
         public ObservableCollection<FlipTopic> flipTopics=[];
         public IndexDataService.ForumStatistics? Statistics { get; private set; }
         public ApplicationDataContainer Set=ApplicationData.Current.LocalSettings;
-        private readonly IndexDataService _dataManager;
+        private readonly IndexDataService indexService;
         public ImageSource? ThemePic;
         public Index()
         {
             this.InitializeComponent();
-            _dataManager=IndexDataService.Instance;
-            
+            indexService=IndexDataService.Instance;
             LoadSet();
         }
 
@@ -80,19 +81,19 @@ namespace CC98
         private async Task LoadFromCacheAsync()
         {
             //只从缓存中读取。
-            List<string> SectionNames = new List<string>() { "hotTopic", "schoolEvent", "academics", "study", "emotion", "fleaMarket", "fullTimeJob", "partTimeJob" };
-            List<string> _SectionNames = new List<string>() { "十大话题", "校园活动", "学术通知", "学习天地", "感性·情感", "跳蚤市场", "求职广场", "实习兼职" };
+            List<string> SectionNames = ["hotTopic", "schoolEvent", "academics", "study", "emotion", "fleaMarket", "fullTimeJob", "partTimeJob"];
+            List<string> _SectionNames = ["十大话题", "校园活动", "学术通知", "学习天地", "感性·情感", "跳蚤市场", "求职广场", "实习兼职"];
             sections.Clear();
             flipTopics.Clear();
             for(int i=0; i<SectionNames.Count; i++)
             {
                 string propertyName = SectionNames[i];
                 string name= _SectionNames[i];
-                var hotTopics = await _dataManager.GetTopicPartitionAsync(propertyName);
+                var hotTopics = await indexService.GetTopicPartitionAsync(propertyName);
                 var section=new SectionCard { SectionName=name,IndexTopics=hotTopics,HexColor=ColorEx.GenerateMorandiColorHex()};
                 sections.Add(section);
             }
-            var recommendations = await _dataManager.GetRecommendationReadingAsync();
+            var recommendations = await indexService.GetRecommendationReadingAsync();
             if (recommendations == null)
             {
                 await App.Logger.WriteAsync("Index", "获取推荐阅读列表失败");
@@ -111,41 +112,16 @@ namespace CC98
         {
             var h = sender as HyperlinkButton;
             var translate = h?.RenderTransform as TranslateTransform;
-            AnimateCard(translate, 0, -5); // 向上方移动
+            UIEx.AnimateCard(translate, 0, -5); // 向上方移动
         }
 
         private void ContentCard_PointerExited(object sender, PointerRoutedEventArgs e)
         {
             var h = sender as HyperlinkButton;
             var translate = h?.RenderTransform as TranslateTransform;
-            AnimateCard(translate, 0, 0); // 恢复原位
+            UIEx.AnimateCard(translate, 0, 0); // 恢复原位
         }
-        private void AnimateCard(TranslateTransform transform, double targetX, double targetY)
-        {
-            var storyboard = new Storyboard();
-
-            var animationX = new DoubleAnimation
-            {
-                To = targetX,
-                Duration = TimeSpan.FromSeconds(0.2),
-                EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
-            };
-            Storyboard.SetTarget(animationX, transform);
-            Storyboard.SetTargetProperty(animationX, "X");
-
-            var animationY = new DoubleAnimation
-            {
-                To = targetY,
-                Duration = TimeSpan.FromSeconds(0.2),
-                EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
-            };
-            Storyboard.SetTarget(animationY, transform);
-            Storyboard.SetTargetProperty(animationY, "Y");
-
-            storyboard.Children.Add(animationX);
-            storyboard.Children.Add(animationY);
-            storyboard.Begin();
-        }
+        
 
         public bool IsOnlineMode = false;
         public string NaviCode = "";
@@ -171,6 +147,69 @@ namespace CC98
             } 
         }
 
+        private async void IndexAction_Click(object sender, RoutedEventArgs e)
+        {
+            var button = sender as AppBarButton;
+            if (button == null) return;
+            if (button.Tag is not string tag) return;
+            switch (tag)
+            {
+                case "refresh":
+                    string url = ApiEndpoints.Forum.Index();
+                    bool success= await IndexDataService.Instance.RefreshFromApiAsync(url);
+                    if (success)
+                    {
+                        await LoadFromCacheAsync();
+                    }
+                    else
+                    {
+                        Flower.Play(FlowStatus.Fail, "刷新首页失败");
+                    }
+                        break;
+                case "search":
+
+                    break;
+                case "appcenter":
+                    await Launcher.LaunchUriAsync(new Uri(ApiEndpoints.Forum.AppCenter));
+                    break;
+                case "lottery":
+                    //网页端OpenID未注册权限，不支持抽卡
+                    if (ValidationHelper.GetValue(Set, "IsActive") != "1")
+                    {
+                        Flower.Play("\uEA39", "当前登录方式不支持抽卡");
+                        return;
+                    }
+                    Frame.Navigate(typeof(Game));
+                    break;
+                case "stat":
+                    ForumStat.XamlRoot = RootGrid.XamlRoot;
+                    ForumStat.IsOpen = true;
+                    await LoadForumStat();
+                    break;
+            }
+        }
+        private async Task LoadForumStat()
+        {
+            var stats = await IndexDataService.Instance.GetStatisticsAsync();
+            if (stats == null) return;
+            ForumStatList.ItemsSource = new List<CardStatInfoPair>
+    {
+        new() { StatItem = "今日帖数", Value = stats.TodayCount },
+        new() { StatItem = "今日主题数", Value = stats.TodayTopicCount },
+        new() { StatItem = "全站帖数", Value = stats.PostCount },
+        new() { StatItem = "全站话题", Value = stats.TopicCount },
+        new() { StatItem = "在线用户", Value = stats.OnlineUserCount },
+        new() { StatItem = "全站用户", Value = stats.UserCount }
+    };
+            welcome.Text = $"欢迎新用户 {stats.LastUserName}";
+        }
+
+        private void ForumStat_Unloaded(object sender, RoutedEventArgs e)
+        {
+            welcome.Text = "";
+            ForumStatList.ItemsSource = null;
+            ForumStat.Target = null;
+        }
     }
     
 }

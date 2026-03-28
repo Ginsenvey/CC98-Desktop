@@ -121,7 +121,6 @@ namespace CC98
                     {
                         Editor.Text += Environment.NewLine;
                     }
-                    ApplyContentToViewer();
                     Editor.SelectionStart = Editor.Text.Length;
                     replyselector.IsSelected = true;
                     SetTitle.IsEnabled = false;
@@ -140,7 +139,6 @@ namespace CC98
                     {
                         Editor.Text += Environment.NewLine;
                     }
-                    ApplyContentToViewer();
                     Editor.SelectionStart = Editor.Text.Length;
                     replyselector.IsSelected = true;
                     //编辑非主题帖不允许修改标题和帖子类型
@@ -155,7 +153,6 @@ namespace CC98
                     {
                         Editor.Text += Environment.NewLine;
                     }
-                    ApplyContentToViewer();
                     Editor.SelectionStart = Editor.Text.Length;
                     topicselector.IsSelected = true;
                     SetTitle.IsEnabled = true;
@@ -164,6 +161,7 @@ namespace CC98
             }
             //初始化内容,以免由于xaml加载顺序content为空。有时候textchanged事件不会立即触发。
             content = Editor.Text.Replace("\r\n", "\n").Replace("\r", "\n");
+            ApplyContentToViewer();
         }
         //渲染实时预览
         private void ApplyContentToViewer()

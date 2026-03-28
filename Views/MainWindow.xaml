@@ -12,7 +12,7 @@
     xmlns:dev="using:DevWinUI"
     xmlns:ic="using:FluentIcons.WinUI"
     xmlns:obj="using:CC98.Objects"
-    xmlns:cv="using:CC98.Services.Converters"
+    xmlns:share="using:CC98.Share.Controls"
     xmlns:sv="using:CC98.Services"
     SystemBackdrop="{ThemeResource AcrylicBackgroundFillColorDefaultBackdrop}">
     
@@ -21,29 +21,7 @@
             <RowDefinition Height="48"></RowDefinition>
             <RowDefinition Height="*"></RowDefinition>
             <RowDefinition Height="12*"></RowDefinition>
-            
         </Grid.RowDefinitions>
-        <TeachingTip x:Name="ForumStat" IsLightDismissEnabled="True" Target="{x:Bind Me}" TailVisibility="Collapsed"  Unloaded="ForumStat_Unloaded" >
-            <TeachingTip.HeroContent>
-                <TextBlock x:Name="welcome" Text="" Margin="10,10,10,0" HorizontalAlignment="Center" Foreground="LightSeaGreen"></TextBlock>
-            </TeachingTip.HeroContent>
-            <TeachingTip.Content>
-                <ListView x:Name="ForumStatList" >
-                    <ListView.ItemTemplate>
-                        <DataTemplate x:DataType="obj:CardStatInfoPair">
-                            <Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="2*"></ColumnDefinition>
-                                    <ColumnDefinition Width="*"></ColumnDefinition>
-                                </Grid.ColumnDefinitions>
-                                <TextBlock Grid.Column="0" FontSize="12" Text="{x:Bind StatItem}" Foreground="{ThemeResource TextFillColorSecondaryBrush}"></TextBlock>
-                                <TextBlock Grid.Column="1" FontSize="12" Text="{x:Bind Value}"></TextBlock>
-                            </Grid>
-                        </DataTemplate>
-                    </ListView.ItemTemplate>
-                </ListView>
-            </TeachingTip.Content>
-        </TeachingTip>
         <Grid Grid.Row="0" x:Name="GridTitleBar">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="45"></ColumnDefinition>
@@ -78,24 +56,10 @@
                 </AnimatedIcon>
             </Button>
             <Button Grid.Column="5" HorizontalAlignment="Right" Width="30" Height="30" BorderThickness="0" Background="Transparent"  VerticalAlignment="Center" x:Name="Me" CornerRadius="9999" Padding="0" RenderTransformOrigin="0.5,0.5" PointerEntered="Me_PointerEntered" PointerExited="Me_PointerExited" PointerPressed="Me_PointerPressed" PointerReleased="Me_PointerReleased" PointerCanceled="Me_PointerCanceled" Click="Me_Click" >
-                <PersonPicture  Width="28" Height="28" x:Name="MyPicture" BorderThickness="0"></PersonPicture>
-                <Button.RenderTransform >
+                <share:Picture x:Name="MyPicture" LoadImageCallback="{StaticResource PortraitLoader}"></share:Picture>
+                <Button.RenderTransform>
                     <ScaleTransform ScaleX="1" ScaleY="1" x:Name="PortScaleTransform"></ScaleTransform>
                 </Button.RenderTransform>
-                <Button.ContextFlyout>
-                    <MenuFlyout  Placement="LeftEdgeAlignedBottom"  SystemBackdrop="{ThemeResource AcrylicBackgroundFillColorDefaultBackdrop}" >
-                        <MenuFlyoutItem Text="CC98抽卡"  Click="CCZone_Click" Tag="0">
-                            <MenuFlyoutItem.Icon>
-                                <ic:SymbolIcon Symbol="GiftOpen"></ic:SymbolIcon>
-                            </MenuFlyoutItem.Icon>
-                        </MenuFlyoutItem>
-                        <MenuFlyoutItem Text="统计数据" Tag="1" Click="CCZone_Click">
-                            <MenuFlyoutItem.Icon>
-                                <ic:SymbolIcon Symbol="MathFormula"></ic:SymbolIcon>
-                            </MenuFlyoutItem.Icon>
-                        </MenuFlyoutItem>
-                    </MenuFlyout>
-                </Button.ContextFlyout>
             </Button>
             <TextBlock Grid.Column="4"  Text="CC98 Desktop" x:Name="de"  Margin="10,0,5,0" HorizontalAlignment="Left" VerticalAlignment="Center" FontSize="15"></TextBlock>
             <Grid x:Name="UserArea" Grid.Column="3" Grid.ColumnSpan="2"></Grid>
@@ -124,7 +88,7 @@
                             <ic:SymbolIcon Symbol="{x:Bind IconSymbol}" FontSize="20"  Margin="2,0,10,0"></ic:SymbolIcon>
                             <TextBlock Text="{x:Bind Name}"></TextBlock>
                         </StackPanel>
-                        
+
                     </NavigationViewItem>
                 </DataTemplate>
                 <DataTemplate x:Key="ItemTemplate" x:DataType="obj:NavigationItem">
@@ -141,14 +105,6 @@
             PinnedItemTemplate="{StaticResource PinnedItemTemplate}"
             ItemTemplate="{StaticResource ItemTemplate}"/>
             </NavigationView.Resources>
-            <NavigationView.AutoSuggestBox>
-                <AutoSuggestBox PlaceholderText="CC98,My home" AutomationProperties.Name="Search"  UpdateTextOnSelect="False" >
-                    <AutoSuggestBox.QueryIcon>
-                        <ic:SymbolIcon Symbol="Search"></ic:SymbolIcon>
-                    </AutoSuggestBox.QueryIcon>
-                </AutoSuggestBox>
-            </NavigationView.AutoSuggestBox>
-
             <NavigationView.MenuItemTemplateSelector>
                 <StaticResource ResourceKey="TemplateSelector"/>
             </NavigationView.MenuItemTemplateSelector>
@@ -162,9 +118,8 @@
             </NavigationView.FooterMenuItems>
 
             <Frame x:Name="ContentFrame" Navigating="ContentFrame_Navigating" ></Frame>
-            
+
         </NavigationView>
-        <TeachingTip x:Name="StatusReport" Target="{x:Bind Me}" IsLightDismissEnabled="True"></TeachingTip>
         <local:InfoFlower Grid.Row="0" Grid.RowSpan="3" x:Name="Flower"></local:InfoFlower>
     </Grid>
 </Window>

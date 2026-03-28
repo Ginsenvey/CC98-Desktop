@@ -106,14 +106,14 @@ namespace CC98
         private void Surfing()
         {
             CheckLoginStatus();
-            LoadProfile();
+            LoadPortrait();
             LoadMenuItem();
             InitializeTimer();
         }
-        private async void LoadProfile()
+        private async void LoadPortrait()
         {
-            string port = ValidationHelper.GetValue(Set, "Portrait");
-            if (port == "0")
+            string portraitUrl = ValidationHelper.GetValue(Set, "Portrait");
+            if (portraitUrl == "0")
             {
                 string profileUrl = ApiEndpoints.User.UserProfile(true, 0);
                 var profileResult = await RequestSender.Fetch<UserInfo>(profileUrl);
@@ -122,12 +122,10 @@ namespace CC98
                     return;
                 }
                 var data = profileResult.Data;
-                port = data.PortraitUrl;
+                portraitUrl = data.PortraitUrl;
                 Set.Values["Portrait"] = data.PortraitUrl;
             }
-            MyPicture.ProfilePicture = await UrlEx.LoadWebImage(port);
-
-
+            MyPicture.Src = portraitUrl;
         }
         private void OnNavigationItemAdded(NavigationItem item)
         {
@@ -163,8 +161,7 @@ namespace CC98
         }
         private async void PinOff_Click(object sender, RoutedEventArgs e)
         {
-            var tag = (sender as MenuFlyoutItem)?.Tag as string;
-            if (tag == null) return;
+            if ((sender as MenuFlyoutItem)?.Tag is not string tag) return;
             int boardId=int.Parse(tag);
             string url = ApiEndpoints.Board.EditFocusBoards(boardId);
             var result = await RequestSender.Delete(url);
@@ -177,13 +174,7 @@ namespace CC98
             if (custom_boards != "0")
             {
                 var boardinfo = JsonSerialize.Deserialize<Dictionary<string, string>>(custom_boards);
-                if (boardinfo != null)
-                {
-                    if (boardinfo.ContainsKey(tag))
-                    {
-                        boardinfo.Remove(tag);
-                    }
-                }
+                boardinfo?.Remove(tag);
             }
             var item = MenuItems.OfType<NavigationItem>().First(g => g.Tag == tag);
             MenuItems.Remove(item);
@@ -195,7 +186,7 @@ namespace CC98
             string custom_boards = ValidationHelper.GetValue(Set, "CustomBoards");
             if (custom_boards!="0")
             {
-                memory = JsonSerialize.Deserialize<Dictionary<int, string>>(custom_boards)??new Dictionary<int, string>();
+                memory = JsonSerialize.Deserialize<Dictionary<int, string>>(custom_boards)??[];
             }
             else
             {
@@ -222,7 +213,7 @@ namespace CC98
                 AddBoards(board);
             }   
         }
-        public Dictionary<int, string> memory = new();
+        public Dictionary<int, string> memory = [];
         private async void AddBoards(int boardId)
         {
             //此方法将检测本地是否已存储板块，没有则添加。无论本地是否已经存在，都会加载到导航栏。
@@ -260,7 +251,7 @@ namespace CC98
                         var index = await FetchIndex();
                         if (!index)
                         {
-                            Flower.Play("\uEA39", "刷新首页失败");
+                            Flower.Play(FlowStatus.Fail, "刷新首页失败");
                         }
                         ContentFrame.Navigate(typeof(Index));
                         break;
@@ -282,15 +273,16 @@ namespace CC98
                 if (index)
                 {
                     ContentFrame.Navigate(typeof(Index));
-                }
-                
+                }  
             }
             
         }
         private  void InitializeTimer()
         {
-            SyncTimer = new DispatcherTimer();
-            SyncTimer.Interval = TimeSpan.FromSeconds(120);  
+            SyncTimer = new DispatcherTimer
+            {
+                Interval = TimeSpan.FromSeconds(240)
+            };
             SyncTimer.Tick += DispatcherTimer_Tick;  
             SyncTimer.Start();  
         }
@@ -309,46 +301,23 @@ namespace CC98
         private  void LoadSettings()
         {
             string effect = ValidationHelper.GetValue(Set, "Effect");
-            switch (effect)
+            this.SystemBackdrop = effect switch
             {
-                case "0":
-
-                    this.SystemBackdrop = new MicaSystemBackdrop();
-                    break;
-                case "1":
-
-                    this.SystemBackdrop = new MicaSystemBackdrop(MicaKind.BaseAlt);
-                    break;
-                case "2":
-
-                    this.SystemBackdrop = new AcrylicSystemBackdrop();
-                    break;
-                case "3":
-
-                    this.SystemBackdrop = new AcrylicSystemBackdrop(DesktopAcrylicKind.Thin);
-                    break;
-                case "4":
-
-                    this.SystemBackdrop = null;
-                    break;
-                default:
-
-                    this.SystemBackdrop = new MicaSystemBackdrop();
-                    break;
-            }
+                "0" => new MicaSystemBackdrop(),
+                "1" => new MicaSystemBackdrop(MicaKind.BaseAlt),
+                "2" => new AcrylicSystemBackdrop(),
+                "3" => new AcrylicSystemBackdrop(DesktopAcrylicKind.Thin),
+                "4" => null,
+                _ => new MicaSystemBackdrop(),
+            };
             string theme = ValidationHelper.GetValue(Set, "Theme");
-            if (theme == "1")
+            RootGrid.RequestedTheme = theme switch
             {
-                RootGrid.RequestedTheme = ElementTheme.Light;
-            }
-            else if (theme == "2")
-            {
-                RootGrid.RequestedTheme = ElementTheme.Dark;
-            }
-            else
-            {
-                RootGrid.RequestedTheme = ElementTheme.Default;
-            }
+                "1" => ElementTheme.Light,
+                "2" => ElementTheme.Dark,
+                _ => ElementTheme.Default
+            };
+            
             
             if (ValidationHelper.GetValue(Set,"ThemePic")=="0")
             {
@@ -481,13 +450,7 @@ namespace CC98
                         ContentFrame.Navigate(typeof(Discover));
                         break;
                     case "Favorite":
-                        var param_1 = new Dictionary<string, string>()
-                        {
-                            {"name","默认收藏夹" },
-                            { "gid","0"},
-                            {"mode","favorite"}
-                        };
-                        ContentFrame.Navigate(typeof(Favorite), param_1);
+                        ContentFrame.Navigate(typeof(Favorite));
                         break;
                     case "Setting":
                         ContentFrame.Navigate(typeof(Setting));
@@ -586,64 +549,11 @@ namespace CC98
 
         private void Me_Click(object sender, RoutedEventArgs e)
         {
-            LoadProfile();
             var param = new ProfileNavigationInfo { IsMe = true };
             ContentFrame.Navigate(typeof(Profile), param);
         }
 
-        private async void CCZone_Click(object sender, RoutedEventArgs e)
-        {
-            var m = sender as MenuFlyoutItem;
-            if (m!= null)
-            {
-                var _tag = m.Tag;
-                if(_tag is string tag)
-                {
-                    switch (tag)
-                    {
-                        case "0":
-                            //网页端OpenID未注册权限，不支持抽卡
-                            if (ValidationHelper.GetValue(Set, "IsActive") != "1")
-                            {
-                                Flower.Play("\uEA39", "当前登录方式不支持抽卡");
-                                return;
-                            }
-                            ContentFrame.Navigate(typeof(Game));
-                            break;
-                        case "1":
-                            ForumStat.XamlRoot = RootGrid.XamlRoot;
-                            ForumStat.IsOpen = true;
-                            await LoadForumStat();
-                            break;
-                        
-                    }
-                        
-                }
-            }
-            
-        }
-
-        private async Task LoadForumStat()
-        {
-            var stats= await IndexDataService.Instance.GetStatisticsAsync();
-            if (stats == null) return;
-            ForumStatList.ItemsSource = new List<CardStatInfoPair>
-    {
-        new() { StatItem = "今日帖数", Value = stats.TodayCount },
-        new() { StatItem = "今日主题数", Value = stats.TodayTopicCount },
-        new() { StatItem = "全站帖数", Value = stats.PostCount },
-        new() { StatItem = "全站话题", Value = stats.TopicCount },
-        new() { StatItem = "在线用户", Value = stats.OnlineUserCount },
-        new() { StatItem = "全站用户", Value = stats.UserCount }
-    };
-            welcome.Text = $"欢迎新用户 {stats.LastUserName}";
-        }
-
-        private void ForumStat_Unloaded(object sender, RoutedEventArgs e)
-        {
-            welcome.Text = "";
-            ForumStatList.ItemsSource = null;
-        }
+        
         //本方法只控制全局状态记忆类的参量，而不更改导航栈本身的导航参数
         private void ContentFrame_Navigating(object sender, Microsoft.UI.Xaml.Navigation.NavigatingCancelEventArgs e)
         {

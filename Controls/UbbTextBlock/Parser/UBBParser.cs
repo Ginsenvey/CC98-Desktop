@@ -2,22 +2,19 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Xml.Linq;
 using UbbRender.Tokenizer;
 
 namespace UbbRender.Parser;
 /// <summary>
 /// 将词元序列转换为 UBB 文档树的核心类。
 /// </summary>
-public class UBBParser
+public class UBBParser(IEnumerable<Token> tokens)
 {
-    private readonly IReadOnlyList<Token> _tokens;
+    private readonly List<Token> _tokens = [.. tokens];
     private int _index = 0;
-    private readonly List<UbbNode> _allNodes = new();
-
-    public UBBParser(IEnumerable<Token> tokens)
-    {
-        _tokens = tokens.ToList();
-    }
+    private bool _disableAutoLink = false;
+    private readonly List<UbbNode> _allNodes = [];
 
     private Token Peek() => _index < _tokens.Count ? _tokens[_index] : new Token(TokenType.EOF, "", -1);
     private Token Consume() => _tokens[_index++];
@@ -56,7 +53,6 @@ public class UBBParser
                 }
             }
 
-            // 2. 解析元素
             var node = ParseElement();
             if (node != null)
             {
@@ -64,7 +60,6 @@ public class UBBParser
 
                 if (node is TagNode tag && !IsSelfClosing(tag.Type))
                 {
-                    // --- 关键修改点 ---
                     if (tag.Type == UbbNodeType.Code || tag.Type == UbbNodeType.NoUBB||tag.Type==UbbNodeType.Markdown)
                     {
                         // 进入“逐字模式”，直接寻找闭合标签
@@ -72,18 +67,13 @@ public class UBBParser
                     }
                     else
                     {
-                        // 正常递归
                         ParseContent(tag, tag.Type);
                     }
                 }
             }
             else { _index++; }
         }
-    }    // 新增辅助方法：判断是否是已定义的 UBB 标签
-    private bool IsKnownTagName(string name)
-    {
-        return MapToNodeType(name) != UbbNodeType.Text;
-    }
+    } 
     private UbbNode ParseElement()
     {
         var token = Peek();
@@ -91,11 +81,13 @@ public class UBBParser
         {
             case TokenType.Text:
                 Consume();
-                return new TextNode(token.Value);
+                return  new TextNode(token.Value);
             case TokenType.Dollar:
             case TokenType.DoubleDollar:
                 return ParseLatex();
-
+            case TokenType.At:  // 新增：处理@提及
+                Consume();
+                return new AtNode(token.Value);
             case TokenType.LeftBracket:
                 Consume(); // 消耗 '['
                 return ParseTagHeaderOrFallback();
@@ -153,7 +145,7 @@ public class UBBParser
                     var valToken = Consume();
 
                     // 关键修复点：如果 Scanner 错误地将 '[' 包含在 AttrValue 中，这里进行二次检查
-                    if (valToken.Value.Contains("["))
+                    if (valToken.Value.Contains('['))
                     {
                         return FallbackToText(startIndex);
                     }
@@ -247,7 +239,7 @@ public class UBBParser
                PeekOffset(3)?.Type == TokenType.RightBracket;
     }
 
-    private UbbNode ParseLatex()
+    private LatexNode ParseLatex()
     {
         //这里只有$形式的Latex会调用到
         //[math]是TagNode而不是LatexNode,尽管它们的Type属性相同

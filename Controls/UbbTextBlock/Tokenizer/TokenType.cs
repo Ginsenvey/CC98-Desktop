@@ -16,9 +16,9 @@ public enum TokenType
     DoubleDollar,   // $$
 
     // 内容类
+    At,             // @
     TagName,        // b, url, img, ac01 等
     AttrValue,      // 属性值
-    AutoLink,       // 自动识别的链接
     Text,           // 普通文本
     EOF             // 结束符
 }

@@ -112,7 +112,38 @@ namespace UbbRender.Render
         
         private StackPanel _rootPanel;
         private UbbDocument _document;
-        public Dictionary<UbbNodeType, IRenderStrategy> renderStrategies;
+        public static readonly IReadOnlyDictionary<UbbNodeType, IRenderStrategy> renderStrategies = new Dictionary<UbbNodeType, IRenderStrategy>
+        {
+            [UbbNodeType.Text] = new TextRenderStrategy(),
+            [UbbNodeType.Bold] = new BoldRenderStrategy(),
+            [UbbNodeType.Italic] = new ItalicRenderStrategy(),
+            [UbbNodeType.Underline] = new UnderlineRenderStrategy(),
+            [UbbNodeType.Strikethrough] = new StrikethroughRenderStrategy(),
+            [UbbNodeType.Size] = new SizeRenderStrategy(),
+            [UbbNodeType.Font] = new FontRenderStrategy(),
+            [UbbNodeType.Color] = new ColorRenderStrategy(),
+            [UbbNodeType.Url] = new UrlRenderStrategy(),
+            [UbbNodeType.Topic] = new TopicRenderStrategy(),
+            [UbbNodeType.Image] = new ImageRenderStrategy(),
+            [UbbNodeType.Audio] = new AudioRenderStrategy(),
+            [UbbNodeType.Video] = new VideoRenderStrategy(),
+            [UbbNodeType.Code] = new CodeRenderStrategy(),
+            [UbbNodeType.Quote] = new FlatQuoteRenderStrategy(),
+            [UbbNodeType.Align] = new AlignRenderStrategy(),
+            [UbbNodeType.Left] = new LeftRenderStrategy(),
+            [UbbNodeType.Center] = new CenterRenderStrategy(),
+            [UbbNodeType.Right] = new RightRenderStrategy(),
+            [UbbNodeType.Table] = new TableRenderStrategy(),
+            [UbbNodeType.TableRow] = new TableRowRenderStrategy(),
+            [UbbNodeType.TableCell] = new TableCellRenderStrategy(),
+            [UbbNodeType.Paragraph] = new ParagraphRenderStrategy(),
+            [UbbNodeType.Emoji] = new EmojiRenderStrategy(),
+            [UbbNodeType.Latex] = new LatexRenderStrategy(),
+            [UbbNodeType.Divider] = new DividerRenderStrategy(),
+            [UbbNodeType.Markdown] = new MarkdownRenderStrategy(),
+            [UbbNodeType.At] = new AtRenderStrategy(),
+        };
+
         public RenderContext context;
         #endregion
 
@@ -120,7 +151,6 @@ namespace UbbRender.Render
         public UbbTextBlock()
         {
             this.DefaultStyleKey = typeof(UbbTextBlock);
-            InitializeRenderStrategies();
         }
         #region 事件
         public event EventHandler<MediaClickEventArgs> MediaClicked;
@@ -143,39 +173,9 @@ namespace UbbRender.Render
         }
 
         // 初始化渲染策略
-        private void InitializeRenderStrategies()
-        {
-            renderStrategies = new Dictionary<UbbNodeType, IRenderStrategy>
-            {
-                [UbbNodeType.Text] = new TextRenderStrategy(),
-                [UbbNodeType.Bold] = new BoldRenderStrategy(),
-                [UbbNodeType.Italic] = new ItalicRenderStrategy(),
-                [UbbNodeType.Underline] = new UnderlineRenderStrategy(),
-                [UbbNodeType.Strikethrough] = new StrikethroughRenderStrategy(),
-                [UbbNodeType.Size] = new SizeRenderStrategy(),
-                [UbbNodeType.Font] = new FontRenderStrategy(),
-                [UbbNodeType.Color] = new ColorRenderStrategy(),
-                [UbbNodeType.Url] = new UrlRenderStrategy(),
-                [UbbNodeType.Topic] = new TopicRenderStrategy(),
-                [UbbNodeType.Image] = new ImageRenderStrategy(),
-                [UbbNodeType.Audio] = new AudioRenderStrategy(),
-                [UbbNodeType.Video] = new VideoRenderStrategy(),
-                [UbbNodeType.Code] = new CodeRenderStrategy(),
-                [UbbNodeType.Quote] = new FlatQuoteRenderStrategy(),
-                [UbbNodeType.Align] = new AlignRenderStrategy(),
-                [UbbNodeType.Left] = new LeftRenderStrategy(),
-                [UbbNodeType.Center] = new CenterRenderStrategy(),
-                [UbbNodeType.Right] = new RightRenderStrategy(),
-                [UbbNodeType.Table] = new TableRenderStrategy(),
-                [UbbNodeType.TableRow] = new TableRowRenderStrategy(),
-                [UbbNodeType.TableCell] = new TableCellRenderStrategy(),
-                [UbbNodeType.Paragraph] = new ParagraphRenderStrategy(),
-                [UbbNodeType.Emoji]=new EmojiRenderStrategy(),
-                [UbbNodeType.Latex]=new LatexRenderStrategy(),
-                [UbbNodeType.Divider]=new DividerRenderStrategy(),
-                [UbbNodeType.Markdown]=new MarkdownRenderStrategy()
-            };
-        }
+
+        
+       
 
         // 属性变更处理
         private static void OnUbbTextChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
@@ -262,10 +262,7 @@ namespace UbbRender.Render
         /// </summary>
         public void SelectAll()
         {
-            if (context != null)
-            {
-                context.SelectAllExternal();
-            }
+            context?.SelectAllExternal();
         }
     }
 }

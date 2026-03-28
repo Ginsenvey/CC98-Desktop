@@ -74,6 +74,7 @@
             
             <pr:SmartImageLoader x:Key="PortraitLoader" LowRes="True"></pr:SmartImageLoader>
             <pr:SmartImageLoader x:Key="CustomPortraitLoader" LowRes="False"></pr:SmartImageLoader>
+            <cv:HexToBrushConverter x:Key="HexToColorBrush"/>
             <cv:LikeToVariantConverter x:Key="LikeToVariantConverter"></cv:LikeToVariantConverter>
             <cv:DisLikeToVariantConverter x:Key="DisLikeToVariantConverter"></cv:DisLikeToVariantConverter>
             <cv:BoolToVariantConverter x:Key="BoolToVariantConverter"></cv:BoolToVariantConverter>

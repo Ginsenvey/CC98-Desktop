@@ -91,7 +91,7 @@
         </MediaPlayerElement>
         <Border Grid.Row="3" Height="1" VerticalAlignment="Top" BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}" BorderThickness="1"></Border>
         <TextBlock x:Name="MediaInfo" Grid.Row="3" Margin="5,0,0,0" Foreground="{ThemeResource TextFillColorSecondaryBrush}" IsTextSelectionEnabled="True"></TextBlock>
-        <local:InfoFlower x:Name="Flower" Grid.Row="0" Grid.RowSpan="4" HorizontalAlignment="Center"></local:InfoFlower>
+        <local:InfoFlower x:Name="Flower" Grid.Row="0" Grid.RowSpan="4" HorizontalAlignment="Center" VerticalAlignment="Bottom"></local:InfoFlower>
     </Grid>
 
 

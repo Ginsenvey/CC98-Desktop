@@ -33,9 +33,9 @@ public class UBBTokenizer(string input)
                 {
                     token = ScanMathDelimiter();
                 }
-                else if (IsAtAutoLinkStart())
+                else if (c == '@')  // 新增：处理@符号
                 {
-                    token = ScanAutoLink();
+                    token = ScanAtMention();
                 }
                 else
                 {
@@ -106,11 +106,9 @@ public class UBBTokenizer(string input)
     private Token ScanText()
     {
         int start = _pos;
-        while (_pos < _input.Length && Peek() != '[' && Peek() != '$' )
+        while (_pos < _input.Length && Peek() != '[' && Peek() != '$' && Peek() != '@')
         {
             Advance();
-            // 如果在文本中遇到自动链接的起始位置，则停止以便让 ScanAutoLink 处理它
-            if (IsAtAutoLinkStart()) break;
         }
         return new Token(TokenType.Text, _input[start.._pos], start);
     }
@@ -126,35 +124,67 @@ public class UBBTokenizer(string input)
         }
         return new Token(TokenType.Dollar, "$", start);
     }
-
-    // 新增：判断当前位置是否为自动链接的起始位置
-    private bool IsAtAutoLinkStart()
-    {
-        // 支持 http://, https://, www.
-        if (_pos >= _input.Length) return false;
-        int remaining = _input.Length - _pos;
-        if (remaining >= 7 && _input[_pos..].StartsWith("http://")) return true;
-        if (remaining >= 8 && _input[_pos..].StartsWith("https://")) return true;
-        if (remaining >= 4 && _input[_pos..].StartsWith("www.")) return true;
-        return false;
-    }
-
-    // 新增：扫描自动链接内容，直到遇到分隔符
-    private Token ScanAutoLink()
+    /// <summary>
+    /// 扫描@提及，格式：@用户名（后跟空格）
+    /// 用户名限制：5个以内汉字或10个以内英文/数字，只能是汉字（包括日韩）、数字、外文字母
+    /// </summary>
+    private Token ScanAtMention()
     {
         int start = _pos;
+        Advance(); // 消费 '@'
+
+        int nameStart = _pos;
+        int nameLength = 0;
+        bool isValid = true;
+
+        // 解析用户名
         while (_pos < _input.Length)
         {
             char c = Peek();
-            // 空白、行终止、UBB 起始符号认为是链接的终止
-            if (char.IsWhiteSpace(c) || c == '\n' || c == '\r' || c == '[' || c == ']') break;
+
+            // 用户名后必须紧跟空格才结束
+            if (c == ' ')
+            {
+                break;
+            }
+
+            // 检查字符是否合法
+            bool isValidChar = IsValidUsernameChar(c);
+            if (!isValidChar)
+            {
+                isValid = false;
+                break;
+            }
+
+            nameLength++;
+            // 检查长度限制：最多5个汉字（每个汉字占2字节）或10个英文字母/数字
+            // 使用字节长度判断
+            int byteLength = GetUsernameByteLength(_input, nameStart, nameLength);
+            if (byteLength > 10)  // 总字节长度限制为10
+            {
+                isValid = false;
+                break;
+            }
+
             Advance();
         }
 
-        string value = _input[start.._pos];
-        return new Token(TokenType.AutoLink, value, start);
+        // 验证有效性：必须有用户名，且后跟空格
+        if (isValid && nameLength > 0 && _pos < _input.Length && Peek() == ' ')
+        {
+            string username = _input[nameStart.._pos];
+            Advance(); // 消费空格
+            return new Token(TokenType.At, username, start);
+        }
+
+        // 无效情况：回退，将@作为普通文本处理
+        // 将_pos重置到start + 1，然后返回一个Text token
+        _pos = start + 1;
+        return new Token(TokenType.Text, "@", start);
     }
 
+
+    
     private char Peek() => _pos < _input.Length ? _input[_pos] : '\0';
     private char Advance() => _input[_pos++];
 
@@ -172,4 +202,47 @@ public class UBBTokenizer(string input)
 
         return false;
     }
+
+    #region 辅助方法
+    /// <summary>
+    /// 判断字符是否为合法的用户名组成字符
+    /// 包括：汉字（CJK统一表意文字）、字母、数字
+    /// </summary>
+    private static bool IsValidUsernameChar(char c)
+    {
+        // 字母或数字
+        if (char.IsLetterOrDigit(c))
+            return true;
+
+        // CJK统一表意文字范围（基本汉字）
+        // 包括日文、韩文等东亚文字
+        if ((c >= 0x4E00 && c <= 0x9FFF) ||  // CJK统一表意文字
+            (c >= 0x3400 && c <= 0x4DBF) ||  // CJK扩展A
+            (c >= 0x20000 && c <= 0x2A6DF))  // CJK扩展B
+            return true;
+
+        return false;
+    }
+
+    /// <summary>
+    /// 获取用户名的字节长度（UTF-8编码）
+    /// </summary>
+    private static int GetUsernameByteLength(string input, int start, int length)
+    {
+        int byteLen = 0;
+        for (int i = start; i < start + length && i < input.Length; i++)
+        {
+            char c = input[i];
+            if (c <= 0x7F)
+                byteLen += 1;
+            else if (c <= 0x7FF)
+                byteLen += 2;
+            else if (c <= 0xFFFF)
+                byteLen += 3;
+            else
+                byteLen += 4;
+        }
+        return byteLen;
+    }
+    #endregion
 }

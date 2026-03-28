@@ -45,25 +45,20 @@ using Windows.Media.Core;
 using Windows.Media.Playback;
 using Windows.Storage;
 using Windows.System;
-using Windows.UI.Core.Preview;
-// To learn more about WinUI, the WinUI project structure,
-// and more about our project templates, see: http://aka.ms/winui-project-info.
+
 
 namespace CC98
 {
-    /// <summary>
-    /// An empty page that can be used on its own or navigated to within a Frame.
-    /// </summary>
     public sealed partial class Board : Page
     {
-        public ObservableCollection<SimpleTopicInfo> topics = new();
+        public ObservableCollection<SimpleTopicInfo> topics = [];
         public ApplicationDataContainer Set = ApplicationData.Current.LocalSettings;
         //是否精华帖
         public bool isBest = false;
         public int boardId = 0;
         public Increment increment = new(20);
 
-        public BoardData boardData = new BoardData() { BoardMasters = [],Id=0,BigPaper="",Description="", Name = "版面", TodayCount = 9898, TopicCount = 9898 };
+        public BoardData boardData = new() { BoardMasters = [],Id=0,BigPaper="",Description="", Name = "版面", TodayCount = 9898, TopicCount = 9898 };
         public Board()
         {
             this.InitializeComponent();
@@ -146,8 +141,7 @@ namespace CC98
         private void TileContent_Click(object sender, RoutedEventArgs e)
         {
             var h = sender as HyperlinkButton;
-            var t = h?.DataContext as SimpleTopicInfo;
-            if (t == null) return;
+            if (h?.DataContext is not SimpleTopicInfo t) return;
             var param = new TopicNavigationInfo { TopicId = t.Id };
             Frame.Navigate(typeof(Topic), param);
         }
@@ -225,8 +219,7 @@ namespace CC98
         {
             var button = sender as AppBarButton;
             if (button == null) return;
-            var tag= button.Tag as string;
-            if (tag == null) return;
+            if (button.Tag is not string tag) return;
             switch (tag)
             {
                 case "browse":

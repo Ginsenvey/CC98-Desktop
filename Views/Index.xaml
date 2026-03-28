@@ -16,26 +16,22 @@
     
     Background="{ThemeResource CardGradient1Brush}">
     <Page.Resources>
-        
-        <cv:HexToBrushConverter x:Key="HexToColorBrush"/>
         <DataTemplate x:Key="Presenter" x:DataType="obj:IndexTopic">
             <HyperlinkButton  PointerEntered="ContentCard_PointerEntered" PointerExited="ContentCard_PointerExited" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch" x:Name="TopicItem" Click="TopicItem_Click" Tag="{x:Bind Id}" CornerRadius="0" Height="53" >
-                    <HyperlinkButton.RenderTransform>
-                        <TranslateTransform x:Name="CardTranslate" X="0" Y="0"/>
-                    </HyperlinkButton.RenderTransform> 
-                    <Grid Padding="5" ColumnSpacing="5">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto"></ColumnDefinition>
-                            <ColumnDefinition Width="*"></ColumnDefinition>
-                        </Grid.ColumnDefinitions>
-                        <TextBlock Text="{x:Bind Title}" Grid.Column="1" FontSize="14"  VerticalAlignment="Center" Foreground="{ThemeResource TextFillColorSecondaryBrush}" HorizontalAlignment="Left" MaxLines="1"></TextBlock>
-                        <Border Grid.Column="0" Background="{ThemeResource MarkdownBackgroudBrush}" CornerRadius="3" VerticalAlignment="Center" Padding="3" Visibility="{x:Bind IsHotTopic}">
-                            <TextBlock Text="{x:Bind BoardName}"   FontSize="12" Grid.Row="0"   Foreground="{ThemeResource AccentAAFillColorSecondaryBrush}"></TextBlock>
-                        </Border>
-                    </Grid>
-                </HyperlinkButton>
-
-          
+                <HyperlinkButton.RenderTransform>
+                    <TranslateTransform x:Name="CardTranslate" X="0" Y="0"/>
+                </HyperlinkButton.RenderTransform>
+                <Grid Padding="5" ColumnSpacing="5">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"></ColumnDefinition>
+                        <ColumnDefinition Width="*"></ColumnDefinition>
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Text="{x:Bind Title}" Grid.Column="1" FontSize="14"  VerticalAlignment="Center" Foreground="{ThemeResource TextFillColorSecondaryBrush}" HorizontalAlignment="Left" MaxLines="1"></TextBlock>
+                    <Border Grid.Column="0" Background="{ThemeResource MarkdownBackgroudBrush}" CornerRadius="3" VerticalAlignment="Center" Padding="3" Visibility="{x:Bind IsHotTopic}">
+                        <TextBlock Text="{x:Bind BoardName}"   FontSize="12" Grid.Row="0"   Foreground="{ThemeResource AccentAAFillColorSecondaryBrush}"></TextBlock>
+                    </Border>
+                </Grid>
+            </HyperlinkButton>
         </DataTemplate>
         <DataTemplate x:Key="SectionCardStyle" x:DataType="obj:SectionCard">
             <Grid RowSpacing="5" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" CornerRadius="5" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1" MinWidth="450" HorizontalAlignment="Stretch">
@@ -53,10 +49,11 @@
             </Grid>
         </DataTemplate>
     </Page.Resources>
-    <Grid>
+    <Grid x:Name="RootGrid">
         <Grid.RowDefinitions>
-            <RowDefinition Height="*" MinHeight="100" ></RowDefinition>
-            <RowDefinition Height="6*"></RowDefinition>
+            <RowDefinition Height="96"></RowDefinition>
+            <RowDefinition Height="*"></RowDefinition>
+            <RowDefinition Height="Auto"></RowDefinition>
         </Grid.RowDefinitions>
 
         <FlipView  Grid.Row="0"  x:Name="RecomList" ItemsSource="{x:Bind flipTopics}" VerticalAlignment="Top" CornerRadius="0,0,6,6">
@@ -87,13 +84,61 @@
             </FlipView.ItemTemplate>
         </FlipView>
         <PipsPager x:Name="Pips" Grid.Row="0" VerticalAlignment="Bottom" HorizontalAlignment="Center"  SelectedPageIndex="{x:Bind Path=RecomList.SelectedIndex,Mode=TwoWay}"></PipsPager>
-        <ScrollViewer Grid.Row="1" Margin="10,0,10,10" Padding="10">
+        <ScrollViewer Grid.Row="1" Margin="10,0,10,0" Padding="10">
             <ItemsRepeater x:Name="SectionRepeater" ItemTemplate="{StaticResource SectionCardStyle}" ItemsSource="{x:Bind sections}" HorizontalAlignment="Stretch" VerticalCacheLength="32">
                 <ItemsRepeater.Layout>
                     <tool:StaggeredLayout ItemsStretch="Fill" ColumnSpacing="30" RowSpacing="45" DesiredColumnWidth="450"></tool:StaggeredLayout>
                 </ItemsRepeater.Layout>
             </ItemsRepeater>
         </ScrollViewer>
-        <local:InfoFlower x:Name="Flower" Grid.Row="0" Grid.RowSpan="2" HorizontalAlignment="Center" VerticalAlignment="Bottom"></local:InfoFlower>
+        <CommandBar x:Name="IndexAction" Grid.Row="2" Background="{ThemeResource CardGradient1Brush}">
+            <AppBarButton Label="刷新" Tag="refresh" Click="IndexAction_Click" ToolTipService.ToolTip="刷新">
+                <AppBarButton.Icon>
+                    <FontIcon Glyph="&#xE72C;" />
+                </AppBarButton.Icon>
+            </AppBarButton>
+            <AppBarButton Label="搜索" Tag="search"  ToolTipService.ToolTip="搜索" Click="IndexAction_Click">
+                <AppBarButton.Icon>
+                    <ic:SymbolIcon Symbol="Search"></ic:SymbolIcon>
+                </AppBarButton.Icon>
+            </AppBarButton>
+            <AppBarButton Label="抽卡" Tag="lottery"  ToolTipService.ToolTip="抽卡" Click="IndexAction_Click">
+                <AppBarButton.Icon>
+                    <ic:SymbolIcon Symbol="GiftOpen"></ic:SymbolIcon>
+                </AppBarButton.Icon>
+            </AppBarButton>
+            <AppBarButton Label="统计数据" Tag="stat" ToolTipService.ToolTip="统计" Click="IndexAction_Click">
+                <AppBarButton.Icon>
+                    <FontIcon Glyph="&#xE7BC;" />
+                </AppBarButton.Icon>
+            </AppBarButton>
+            <AppBarButton Label="应用中心" Tag="appcenter"  ToolTipService.ToolTip="应用中心" Click="IndexAction_Click">
+                <AppBarButton.Icon>
+                    <FontIcon Glyph="&#xE74C;" />
+                </AppBarButton.Icon>
+            </AppBarButton>
+        </CommandBar>
+        <TeachingTip x:Name="ForumStat" IsLightDismissEnabled="True" Target="{x:Bind IndexAction}" TailVisibility="Collapsed" PreferredPlacement="Top"  Unloaded="ForumStat_Unloaded" >
+            <TeachingTip.HeroContent>
+                <TextBlock x:Name="welcome" Text="" Margin="10,10,10,0" HorizontalAlignment="Center" Foreground="LightSeaGreen"></TextBlock>
+            </TeachingTip.HeroContent>
+            <TeachingTip.Content>
+                <ListView x:Name="ForumStatList" >
+                    <ListView.ItemTemplate>
+                        <DataTemplate x:DataType="obj:CardStatInfoPair">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="2*"></ColumnDefinition>
+                                    <ColumnDefinition Width="*"></ColumnDefinition>
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" FontSize="12" Text="{x:Bind StatItem}" Foreground="{ThemeResource TextFillColorSecondaryBrush}"></TextBlock>
+                                <TextBlock Grid.Column="1" FontSize="12" Text="{x:Bind Value}"></TextBlock>
+                            </Grid>
+                        </DataTemplate>
+                    </ListView.ItemTemplate>
+                </ListView>
+            </TeachingTip.Content>
+        </TeachingTip>
+        <local:InfoFlower x:Name="Flower" Grid.Row="0" Grid.RowSpan="3" HorizontalAlignment="Center" VerticalAlignment="Bottom"></local:InfoFlower>
     </Grid>
 </Page>
