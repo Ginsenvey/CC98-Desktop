@@ -13,7 +13,6 @@ public class UBBParser(IEnumerable<Token> tokens)
 {
     private readonly List<Token> _tokens = [.. tokens];
     private int _index = 0;
-    private bool _disableAutoLink = false;
     private readonly List<UbbNode> _allNodes = [];
 
     private Token Peek() => _index < _tokens.Count ? _tokens[_index] : new Token(TokenType.EOF, "", -1);
@@ -323,37 +322,7 @@ public class UBBParser(IEnumerable<Token> tokens)
     }
 
 
-    // 判断当前 Token 位置是否是一个特定的标签 [tag] 或 [/tag]
-    private bool IsSpecificTag(bool targetIsClosing, string tagName)
-    {
-        if (targetIsClosing)
-        {
-            // 匹配 [/name]
-            return Peek().Type == TokenType.LeftBracket &&
-                   PeekNext()?.Type == TokenType.Slash &&
-                   PeekOffset(2)?.Value?.ToLower() == tagName.ToLower() &&
-                   PeekOffset(3)?.Type == TokenType.RightBracket;
-        }
-        else
-        {
-            // 匹配 [name]
-            return Peek().Type == TokenType.LeftBracket &&
-                   PeekNext()?.Value?.ToLower() == tagName.ToLower() &&
-                   PeekOffset(2)?.Type == TokenType.RightBracket;
-        }
-    }
-
-    // 消费并返回整个标签的原始文本字符串（不改变解析逻辑，仅用于提取文本）
-    private string ConsumeVerbatimTagText()
-    {
-        var startIdx = _index;
-        // 简单循环直到遇到当前标签的 ']'
-        while (_index < _tokens.Count && Consume().Type != TokenType.RightBracket) { }
-
-        var sb = new System.Text.StringBuilder();
-        for (int i = startIdx; i < _index; i++) sb.Append(_tokens[i].Value);
-        return sb.ToString();
-    }
+   
 
     // 辅助方法：将当前解析进度涉及的所有 Token 还原为原始文本
     private TextNode FallbackToText(int startIndex)

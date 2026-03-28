@@ -134,6 +134,7 @@ public class UBBTokenizer(string input)
         Advance(); // 消费 '@'
 
         int nameStart = _pos;
+        //这个长度是字符长度
         int nameLength = 0;
         bool isValid = true;
 
@@ -157,10 +158,10 @@ public class UBBTokenizer(string input)
             }
 
             nameLength++;
-            // 检查长度限制：最多5个汉字（每个汉字占2字节）或10个英文字母/数字
-            // 使用字节长度判断
-            int byteLength = GetUsernameByteLength(_input, nameStart, nameLength);
-            if (byteLength > 10)  // 总字节长度限制为10
+
+            // 这里的长度是等效长度，每个汉字占2字节（而实际上有的字是3）
+            int length = GetUserNameLength(_input, nameStart, nameLength);
+            if (length > 10)  // 总字节长度限制为10
             {
                 isValid = false;
                 break;
@@ -227,22 +228,25 @@ public class UBBTokenizer(string input)
     /// <summary>
     /// 获取用户名的字节长度（UTF-8编码）
     /// </summary>
-    private static int GetUsernameByteLength(string input, int start, int length)
+    private static int GetUserNameLength(string input, int start, int length)
     {
-        int byteLen = 0;
+        int totalLength = 0;
         for (int i = start; i < start + length && i < input.Length; i++)
         {
             char c = input[i];
-            if (c <= 0x7F)
-                byteLen += 1;
-            else if (c <= 0x7FF)
-                byteLen += 2;
-            else if (c <= 0xFFFF)
-                byteLen += 3;
+
+            // 字母或数字计1
+            if (char.IsLetterOrDigit(c))
+            {
+                totalLength += 1;
+            }
             else
-                byteLen += 4;
+            {
+                // 汉字/日文/韩文等东亚文字计2
+                totalLength += 2;
+            }
         }
-        return byteLen;
+        return totalLength;
     }
     #endregion
 }

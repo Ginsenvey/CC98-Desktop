@@ -712,7 +712,7 @@ public class RenderHelper
     public static void ApplyAlignToContext(string align,UbbNode node, RenderContext context)
     {
         //使用Grid进行对齐控制
-        var panel = new Grid
+        var panel = new StackPanel
         {
             HorizontalAlignment = align switch
             {
