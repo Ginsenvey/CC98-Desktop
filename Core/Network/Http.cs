@@ -13,37 +13,35 @@ public partial class VpnService
 {
     public async Task<MediaSource?> GetSourceAsync(string url)
     {
+        if (!Logined && IsVpnEnabled)
+            throw new Exception("WebVPN未连接");
         try
         {
             string targeturl = LoginService.vpn.IsVpnEnabled ? VpnService.ConvertUrl(url) : url;
-            using (var res = await LoginService.vpn.client.GetAsync(targeturl, HttpCompletionOption.ResponseHeadersRead))
+            using var res = await LoginService.vpn.client.GetAsync(targeturl, HttpCompletionOption.ResponseHeadersRead);
+            if (res.IsSuccessStatusCode)
             {
-                if (res.IsSuccessStatusCode)
+                var memory_stream = new InMemoryRandomAccessStream();
+                using (var content_stream = await res.Content.ReadAsStreamAsync())
                 {
-                    var memory_stream = new InMemoryRandomAccessStream();
-                    using (var content_stream = await res.Content.ReadAsStreamAsync())
-                    {
-                        await ValidationHelper.CopyStreamToRandomAccessStream(content_stream, memory_stream);
-                    }
-                    var source = MediaSource.CreateFromStream(memory_stream, res.Content.Headers.ContentType?.MediaType);
-                    return source;
+                    await ValidationHelper.CopyStreamToRandomAccessStream(content_stream, memory_stream);
                 }
-                else if (res.StatusCode == HttpStatusCode.Unauthorized)
+                var source = MediaSource.CreateFromStream(memory_stream, res.Content.Headers.ContentType?.MediaType);
+                return source;
+            }
+            else if (res.StatusCode == HttpStatusCode.Unauthorized)
+            {
+                var r = await Coordinator.SafeSlientAuth();
+                if (!r) return null;
+                using var res1 = await LoginService.vpn.client.GetAsync(targeturl, HttpCompletionOption.ResponseHeadersRead);
+                if (!res1.IsSuccessStatusCode) return null;
+                var memory_stream = new InMemoryRandomAccessStream();
+                using (var content_stream = await res1.Content.ReadAsStreamAsync())
                 {
-                    var r = await Coordinator.SafeSlientAuth();
-                    if (!r) return null;
-                    using (var res1 = await LoginService.vpn.client.GetAsync(targeturl, HttpCompletionOption.ResponseHeadersRead))
-                    {
-                        if (!res1.IsSuccessStatusCode) return null;
-                        var memory_stream = new InMemoryRandomAccessStream();
-                        using (var content_stream = await res1.Content.ReadAsStreamAsync())
-                        {
-                            await ValidationHelper.CopyStreamToRandomAccessStream(content_stream, memory_stream);
-                        }
-                        var source = MediaSource.CreateFromStream(memory_stream, res1.Content.Headers.ContentType?.MediaType);
-                        return source;
-                    }
+                    await ValidationHelper.CopyStreamToRandomAccessStream(content_stream, memory_stream);
                 }
+                var source = MediaSource.CreateFromStream(memory_stream, res1.Content.Headers.ContentType?.MediaType);
+                return source;
             }
         }
         catch {}
@@ -52,9 +50,8 @@ public partial class VpnService
     }
     public async Task<byte[]> GetByteArrayAsync(string url)
     {
-        if (!Logined)
-            throw new InvalidOperationException("VPN未登录");
-
+        if (!Logined && IsVpnEnabled)
+            throw new Exception("WebVPN未连接");
         string targetUrl = IsVpnEnabled ? ConvertUrl(url) : url;
         try
         {
@@ -72,8 +69,15 @@ public partial class VpnService
             {
                 return await res.Content.ReadAsByteArrayAsync();
             }
+            else
+            {
+                await App.Logger.WriteAsync("Http","获取字节数据失败",$"状态码：{res.StatusCode}");
+            }
         }
-        catch { }
+        catch(Exception ex)
+        { 
+            await App.Logger.WriteAsync("Http","获取字节数据失败",ex.Message);
+        }
         return null;
 
     }

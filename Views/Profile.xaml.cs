@@ -31,9 +31,9 @@ namespace CC98
     /// </summary>
     public sealed partial class Profile : Page
     {
-        public ObservableCollection<SimpleTopicInfo> recentTopics=new ObservableCollection<SimpleTopicInfo>();
+        public ObservableCollection<SimpleTopicInfo> recentTopics=[];
         public ApplicationDataContainer Set = ApplicationData.Current.LocalSettings;
-        public UserInfo profile=new UserInfo() { 
+        public UserInfo profile=new() { 
             Id=0,
             Name="未知用户",
             PortraitUrl="",
@@ -119,7 +119,15 @@ namespace CC98
                 Set.Values["Portrait"] = data.PortraitUrl;
             }
             profile.IsOthers = !isMe;
-            MyProfile.ProfilePicture = await UrlEx.LoadWebImage(profile.PortraitUrl);
+            try
+            {
+                var source = await UrlEx.LoadWebImage(profile.PortraitUrl);
+                MyProfile.ProfilePicture = source;
+            }
+            catch(Exception ex)
+            {
+                await App.Logger.WriteAsync("profile","加载头像失败", ex.Message);
+            }
             InfoContent.DataContext = profile;
             SignBoard.DataContext = profile; 
         }
@@ -143,11 +151,10 @@ namespace CC98
         private void STileButton_Click(object sender, RoutedEventArgs e)
         {
             var h = sender as HyperlinkButton;
-            var s = h?.DataContext as SimpleTopicInfo;
-            if (s != null)
+            if (h?.DataContext is SimpleTopicInfo s)
             {
                 var param = new TopicNavigationInfo { TopicId = s.Id };
-                Frame.Navigate(typeof(Topic), param);    
+                Frame.Navigate(typeof(Topic), param);
             }
         }
 

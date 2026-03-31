@@ -13,7 +13,7 @@ using Windows.Storage;
 namespace CC98.Services;
 public class AppLog
 {
-    private readonly List<LogEntry> _logs = new();
+    private readonly List<LogEntry> _logs = [];
     private string _logDirectory;
     private readonly string _appName;
     private readonly object _lock = new();
@@ -313,7 +313,7 @@ public class AppLog
             if (maxCount.HasValue)
                 query = query.TakeLast(maxCount.Value);
 
-            return query.ToList();
+            return [.. query];
         }
     }
 
@@ -331,7 +331,7 @@ public class AppLog
             if (maxCount.HasValue)
                 query = (IOrderedEnumerable<LogEntry>)query.TakeLast(maxCount.Value);
 
-            return query.ToList();
+            return [.. query];
         }
     }
 
@@ -342,10 +342,9 @@ public class AppLog
     {
         lock (_lock)
         {
-            return _logs
+            return [.. _logs
                 .Where(l => l.Time >= from && l.Time <= to)
-                .OrderBy(l => l.Time)
-                .ToList();
+                .OrderBy(l => l.Time)];
         }
     }
 
@@ -356,7 +355,7 @@ public class AppLog
     {
         lock (_lock)
         {
-            return _logs
+            return [.. _logs
                 .Where(l =>
                     (!searchInMessageOnly &&
                      (l.Domain.Contains(keyword, StringComparison.OrdinalIgnoreCase) ||
@@ -364,8 +363,7 @@ public class AppLog
                       l.Message.Contains(keyword, StringComparison.OrdinalIgnoreCase))) ||
                     (searchInMessageOnly &&
                      l.Message.Contains(keyword, StringComparison.OrdinalIgnoreCase)))
-                .OrderBy(l => l.Time)
-                .ToList();
+                .OrderBy(l => l.Time)];
         }
     }
 
@@ -390,9 +388,6 @@ public class AppLog
             await LoadRecentLogsAsync();
 
             _isInitialized = true;
-
-            // 记录初始化完成
-            await WriteAsync("AppLog", "系统初始化", "日志系统初始化完成");
         }
         catch (Exception ex)
         {
@@ -428,9 +423,7 @@ public class AppLog
     private static string SanitizeFileName(string fileName)
     {
         var invalidChars = Path.GetInvalidFileNameChars();
-        return new string(fileName
-            .Where(ch => !invalidChars.Contains(ch))
-            .ToArray());
+        return new string([.. fileName.Where(ch => !invalidChars.Contains(ch))]);
     }
 
     /// <summary>
@@ -534,11 +527,10 @@ public class AppLog
         {
             lock (_lock)
             {
-                return _logs
+                return [.. _logs
                     .Select(l => l.Domain)
                     .Distinct()
-                    .OrderBy(d => d)
-                    .ToList();
+                    .OrderBy(d => d)];
             }
         }
     }

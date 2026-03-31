@@ -121,8 +121,7 @@ namespace CC98
             {
                 //必须在构造函数前加上异常处理
                 AppMainWindow = new MainWindow();
-                await Logger.WriteAsync("App", "应用主窗口启动");
-                AppMainWindow.Closed += M_window_Closed;
+                AppMainWindow.Closed += Window_Closed;
                 AppMainWindow.Activate();
                 DisplayTrayIcon();
             }
@@ -258,7 +257,7 @@ namespace CC98
                 }
                 await Logger.WriteAsync("App", "初始化网络", "注入已有Cookie成功,启用VPN模式检查网络");
                 var new_status = await LoginService.vpn.CheckNetwork(true);
-                await Logger.WriteAsync("App", "初始化网络", $"新的网络状态为：{new_status.ToString()}");
+                await Logger.WriteAsync("App", "初始化网络", $"新的网络状态为：{new_status}");
                 if (new_status == NetworkStatus.ByVPN)
                 {
                     LoginService.vpn.Logined = true;
@@ -373,7 +372,7 @@ namespace CC98
         #region 其他
 
 
-        private void M_window_Closed(object sender, WindowEventArgs args)
+        private void Window_Closed(object sender, WindowEventArgs args)
         {
             if (_trayIcon != null)
             {

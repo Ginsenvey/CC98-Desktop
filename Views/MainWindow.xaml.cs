@@ -4,6 +4,7 @@ using CC98.Kernel.UserExperience;
 using CC98.Objects;
 using CC98.Services;
 using CC98.Services.Extensions;
+using CC98.Share.Controls.Primitives;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.WinUI.Converters;
 using DevWinUI;

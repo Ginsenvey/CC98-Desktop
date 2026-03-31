@@ -292,7 +292,7 @@ namespace CC98.Kernel.UserExperience//用户体验模型，包括:版面图标�
 
         public const int GWL_STYLE = -16;
         public const int WS_THICKFRAME = 0x00040000;
-        public static readonly IntPtr HWND_TOP = new IntPtr(0);
+        public static readonly IntPtr HWND_TOP = new(0);
         public const uint SWP_NOMOVE = 0x0002;
         public const uint SWP_NOZORDER = 0x0004;
     }
