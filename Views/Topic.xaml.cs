@@ -108,6 +108,10 @@ namespace CC98
             var args =globalService.ShouldReplaceNavigationArgs?
                 (TopicNavigationInfo?)globalService.NavigationAnchor:
                 e.TryGetParameter<TopicNavigationInfo>();
+            if (!globalService.ShouldReplaceNavigationArgs)
+            {
+                globalService.NavigationAnchor = e.TryGetParameter<TopicNavigationInfo>();
+            }
             if (args == null) return;
             topicId = args.TopicId;
             await LoadTopicInfo();
