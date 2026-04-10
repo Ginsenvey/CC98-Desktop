@@ -127,6 +127,7 @@
     <None Remove="CC98 Desktop_1.0.5.0_x64_Debug.cer" />
     <None Remove="CC98 Desktop_1.0.5预览体验（x64）.zip" />
     <None Remove="CC98 Desktop_1.0.6.0_x64_Debug.cer" />
+    <None Remove="Controls\FileCard\FileCard.xaml" />
     <None Remove="Discover.xaml" />
     <None Remove="Focus.xaml" />
     <None Remove="Friend.xaml" />
@@ -296,6 +297,11 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Update="SmartImage.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+  </ItemGroup>
+  <ItemGroup>
+    <Page Update="Controls\FileCard\FileCard.xaml">
       <Generator>MSBuild:Compile</Generator>
     </Page>
   </ItemGroup>

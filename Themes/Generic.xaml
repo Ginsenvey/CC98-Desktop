@@ -3,8 +3,8 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:local="using:CC98.Controls"
     xmlns:ubb="using:UbbRender.Render"
+    xmlns:share="using:CC98.Share.Controls"
     xmlns:render="using:CC98.Controls">
-
     <Style TargetType="local:SmartImage" >
         <Setter Property="Template">
             <Setter.Value>
@@ -38,4 +38,18 @@
     </Style>
 
     
+
+    <Style TargetType="share:FileCard">
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="share:FileCard">
+                    <Border
+                        Background="{TemplateBinding Background}"
+                        BorderBrush="{TemplateBinding BorderBrush}"
+                        BorderThickness="{TemplateBinding BorderThickness}">
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
 </ResourceDictionary>

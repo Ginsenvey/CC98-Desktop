@@ -1014,7 +1014,7 @@ public class AudioRenderStrategy : IRenderStrategy
     {
         if (node is TagNode tagNode)
         {
-            var src = tagNode.GetAttribute("src");
+            var src = tagNode.GetAttribute("value");
             if (!src.IsValidUrl())
             {
                 // 尝试从子节点获取URL
@@ -1046,7 +1046,7 @@ public class VideoRenderStrategy : IRenderStrategy
     {
         if (node is TagNode tagNode)
         {
-            var src = tagNode.GetAttribute("src");
+            var src = tagNode.GetAttribute("value");
             if (string.IsNullOrEmpty(src))
             {
                 // 尝试从子节点获取URL
@@ -1308,4 +1308,34 @@ public class AtRenderStrategy : IRenderStrategy
         }
 
     }
+}
+public class FileRenderStrategy : IRenderStrategy
+{
+    public void Render(UbbNode node, RenderContext context)
+    {
+        if (node is TagNode tagNode)
+        {
+            var src = tagNode.GetAttribute("value");
+            if (!src.IsValidUrl())
+            {
+                // 尝试从子节点获取URL
+                if (node.FirstChild is TextNode child) src = child.Content;
+            }
+
+            if (src.IsValidUrl())
+            {
+                var card = new FileCard()
+                {
+                    Src = src,
+                    HorizontalAlignment = HorizontalAlignment.Left,
+                    Margin=new Thickness(0,10,0,10)
+                };
+                card.DownloadRequested += (s,e)=> {
+                    context.Control.OnMediaClicked(src, MediaType.File);
+                };
+                context.AddToContainer(card);
+            }   
+        }       
+    }
+
 }

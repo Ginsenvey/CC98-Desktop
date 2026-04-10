@@ -127,6 +127,7 @@ namespace UbbRender.Render
             [UbbNodeType.Image] = new ImageRenderStrategy(),
             [UbbNodeType.Audio] = new AudioRenderStrategy(),
             [UbbNodeType.Video] = new VideoRenderStrategy(),
+            [UbbNodeType.Upload]=new FileRenderStrategy(),
             [UbbNodeType.Code] = new CodeRenderStrategy(),
             [UbbNodeType.Quote] = new FlatQuoteRenderStrategy(),
             [UbbNodeType.Align] = new AlignRenderStrategy(),

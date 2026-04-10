@@ -134,7 +134,7 @@ public class ImageExtension
             var fileName = Path.GetFileName(uri.LocalPath);
 
             // 如果文件名无效，生成默认文件名
-            if (string.IsNullOrEmpty(fileName) || !fileName.Contains("."))
+            if (string.IsNullOrEmpty(fileName) || !fileName.Contains('.'))
             {
                 fileName = $"CC98_{DateTime.Now:yyyyMMdd_HHmmss}.jpg";
             }
