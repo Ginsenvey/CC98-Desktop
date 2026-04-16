@@ -37,6 +37,7 @@ public enum UbbNodeType
     Markdown, //markdown内容
     NeedReply, //需要回复
     ReplyView, //设置回复可见,
+    PosterOnly, //仅楼主可见
     At
 }
 

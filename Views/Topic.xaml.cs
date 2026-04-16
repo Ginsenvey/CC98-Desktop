@@ -5,7 +5,9 @@ using CC98.Kernel.UserExperience;
 using CC98.Objects;
 using CC98.Services;
 using CC98.Services.Extensions;
+using CC98.Share.Controls;
 using CC98.Share.Controls.Primitives;
+using CC98.Share.Extensions;
 using CommunityToolkit.Mvvm.ComponentModel;
 using DevWinUI;
 using FluentIcons.Common;
@@ -68,8 +70,9 @@ namespace CC98
         {
             if (Pager != null)
             {
-                Pager.SelectedIndexChanged -= Pager_SelectedIndexChanged;
+                Pager.SelenctedIndexChanged -= Pager_SelectedIndexChanged;
             }
+            GlobalMediaPlayer.Instance.Pause();
         }
 
         protected override void OnNavigatedFrom(NavigationEventArgs e)
@@ -133,11 +136,7 @@ namespace CC98
         }
         private void LoadSet()
         {
-            string _IsImageVisible = ValidationHelper.GetValue(Set, "IsImageVisible");
-            if (_IsImageVisible == "0")
-            {
-                Set.Values["IsImageVisible"] = "2";   //此时默认为不可见
-            } 
+            
         }
         /// <summary>
         /// 加载收藏集
@@ -423,16 +422,49 @@ namespace CC98
                 case MediaType.Link:
                     await HandleLink(e.Source);
                     break;
+                case MediaType.AtUser:
+                    await SearchForUser(e.Source);
+                    break;
+                case MediaType.Audio:
+                    break;
+                case MediaType.File:
+                    break;
+    
             }
         }
+        private async Task SearchForUser(string userName)
+        {
+            string url = ApiEndpoints.User.SearchUserByName(userName);
+            var result = await RequestSender.Fetch<UserInfo>(url);
+            if (!result.IsSuccess || result.Data == null)
+            {
+                //
+                return;
+            }
+            var user = result.Data;
+            if (user == null)
+            {
+                Flower.Play(FlowStatus.Fail, "未找到用户");
+            }
+            else
+            {
+                //这里需要为Auth类加一个ID的静态属性，以便在其他页面进行对比，判断是否为当前用户。
+                //var info = new ProfileNavigationInfo { IsMe = user.Id == LoginService.CurrentUserId, UserId = user.Id };
+                //Frame.Navigate(typeof(Profile), info);
+            }
+                
+        }
 
+        [GeneratedRegex(@"/topic/(\d{7})/(\d+)#(\d+)")]
+        private static partial Regex FloorAnchorRegex();
+   
         private async Task HandleLink(string url)
         {
-            Match match = Regex.Match(url, @"/topic/(\d{7})/(\d+)#(\d+)");
+            Match match = FloorAnchorRegex().Match(url);
             if (match.Success)
             {
-                int before=Convert.ToInt32(match.Groups[2].Value);
-                int after=Convert.ToInt32((match.Groups[3].Value));
+                int before=int.Parse(match.Groups[2].ValueSpan);
+                int after=int.Parse((match.Groups[3].ValueSpan));
                 int floor=10*(before-1)+after;
                 isJumping = true;
                 await TP(floor);
@@ -578,40 +610,26 @@ namespace CC98
         private async void TileFlyout_Click(object sender, RoutedEventArgs e)
         {
             var m = sender as MenuFlyoutItem;
-            if (m == null) return;
-            var tag = m.Tag as string;
-            if (tag == "0")
+            if(m?.Tag is not string tag) return;
+            switch (tag)
             {
-                await LoadTopicInfo();
-                await LoadReply();
-                Flower.Play(FlowStatus.Success, "刷新成功");
+                case "0":
+                    await LoadTopicInfo();
+                    await LoadReply();
+                    Flower.Play(FlowStatus.Success, "刷新成功");
+                    break;
+                case "1":
+                    string shareurl = $"https://www.cc98.org/topic/{topicId}";
+                    var datapackage = new DataPackage();
+                    datapackage.SetText(shareurl);
+                    Clipboard.SetContent(datapackage);
+                    Flower.Play(FlowStatus.Success, "已复制帖子链接");
+                    break;
+                case "2":
+                    break;
+                case "3":
+                    break;
             }
-            else if (tag == "1")
-            {
-                string shareurl = $"https://www.cc98.org/topic/{topicId}";
-                var datapackage = new DataPackage();
-                datapackage.SetText(shareurl);
-                Clipboard.SetContent(datapackage);
-                Flower.Play(FlowStatus.Success, "已复制帖子链接");
-            }
-            else if (tag == "2")
-            {
-
-            }
-            else if (tag == "3")
-            {
-                string _Visibility = ValidationHelper.GetValue(Set, "IsImageVisible");
-                if (_Visibility == "1")
-                {
-                    Set.Values["IsImageVisible"] = "2"; ;
-                }
-                else
-                {
-                    Set.Values["IsImageVisible"] = "1";
-                }
-                await LoadReply();
-            }
-
         }
         
 
@@ -763,15 +781,9 @@ namespace CC98
         private async void SmallProfile_Loaded(object sender, RoutedEventArgs e)
         {
             var p = sender as PersonPicture;
-            if (p != null)
-            {
-                var _tag = p.Tag;
-                if(_tag is string tag)
-                {
-                    var bitmap = await UrlEx.LoadWebImage(tag);
-                    p.ProfilePicture= bitmap;
-                }
-            }
+            if (p?.Tag is not string tag) return;
+            var bitmap = await UrlEx.LoadWebImage(tag);
+            p.ProfilePicture = bitmap;
         }
 
         private void SmallProfile_Unloaded(object sender, RoutedEventArgs e)
@@ -912,7 +924,7 @@ namespace CC98
             if (node is TagNode tagNode)
             {
                 var value = tagNode.GetAttribute("value");
-                if (string.IsNullOrEmpty(value) || value == "1")
+                if (!value.IsValidUrl()|| value == "1")
                 {
                     // 尝试从子节点获取URL（对于 [img]url[/img] 格式）
                     var first = node.FirstChild;
@@ -934,5 +946,7 @@ namespace CC98
             ProfileViewer.Target = null;  // 关键：清理 Target 引用
             ProfileViewer.Tag = null;
         }
+
+        
     }
 }

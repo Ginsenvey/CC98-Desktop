@@ -72,7 +72,7 @@ namespace CC98
 
         private void SearchUser(string key)
         {
-            string url = ApiEndpoints.User.SearchUser(key) ;
+            string url = ApiEndpoints.User.SearchUserByName(key) ;
             //Ìæ»»ÊµÏÖ
             
         }

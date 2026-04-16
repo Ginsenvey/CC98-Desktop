@@ -68,7 +68,7 @@ public static class ApiEndpoints
         public static string RecentChatUserList(int start) => $"{Base}/message/recent-contact-users?from={start}&size=10";
 
         public static string ChatHistory(int userId,int start) => $"{Base}/message/user/{userId}?from={start}&size=10";
-        public static string SearchUser(string name) => $"{Base}/user/name/{name}";
+        public static string SearchUserByName(string name) => $"{Base}/user/name/{name}";
         public static string UnreadMessage() => $"{Base}/me/unread-count";
         public static string SystemNotice(string typeName,int start) => $"{Base}/notification/{typeName}?from={start}&size=10";
         public static string EditFriends(int userId) => $"{Base}/me/followee/{userId}";
@@ -76,6 +76,7 @@ public static class ApiEndpoints
         public static string TransferWealth() => $"{Base}/me/transfer-wealth";
         public static string EnableBrowseHistory(bool value) => $"{Base}/me/browsing-history?enabled={value.ToString().ToLower()}";
         public static string BrowseHistory(int start) => $"{Base}/me/browsing-record?from={start}&size=11";
+
     }
     public static class Post
     {

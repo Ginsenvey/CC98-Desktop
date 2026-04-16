@@ -1014,28 +1014,33 @@ public class AudioRenderStrategy : IRenderStrategy
     {
         if (node is TagNode tagNode)
         {
-            var src = tagNode.GetAttribute("value");
-            if (!src.IsValidUrl())
+            var title = tagNode.GetAttribute("value");
+            if (node.FirstChild is TextNode child)
             {
-                // 尝试从子节点获取URL
-                if (node.FirstChild is TextNode child) src = child.Content;
-            }
-
-            if (src.IsValidUrl())
-            {
-                var player = new MusicPlayer
+                var src = child.Content;
+                if (src.IsValidUrl(false))
                 {
-                    Title = "音频",
-                    LoadMediaCallback=new SmartMediaLoader(),
-                    Src = src,
-                    Margin = new Thickness(10),
-                };
-                player.DownloadStarted += (s, e) =>
+                    var player = new MusicPlayer
+                    {
+                        Title = title == "" ? "音频" : title.Replace("title=", ""),
+                        LoadMediaCallback = new SmartMediaLoader(),
+                        Src = src,
+                        Margin = new Thickness(10),
+                    };
+                    player.DownloadStarted += (s, e) =>
+                    {
+                        context.Control.OnMediaClicked(src, MediaType.Audio);
+                    };
+                    context.AddToContainer(player);
+                }
+                else
                 {
-                    context.Control.OnMediaClicked(src, MediaType.Audio);
-                };
-                context.AddToContainer(player);
+                    var run = new Run { Text = $"[无效音频链接: {src}]" };
+                    context.AddInline(run);
+                }
             }
+            
+          
         }
     }
 }
@@ -1339,3 +1344,21 @@ public class FileRenderStrategy : IRenderStrategy
     }
 
 }
+
+public class ReplyViewRenderStrategy : IRenderStrategy
+{
+    public void Render(UbbNode node, RenderContext context)
+    {
+        var run = new Run { Text = "此消息回复可见",Foreground= new SolidColorBrush(Colors.LightSeaGreen)};
+        context.AddInline(run);
+    }
+}
+public class PosterOnlyRenderStrategy : IRenderStrategy
+{
+    public void Render(UbbNode node, RenderContext context)
+    {
+        var run = new Run { Text = "本楼开启了仅楼主可见", Foreground = new SolidColorBrush(Colors.Red) };
+        context.AddInline(run);
+    }
+}
+

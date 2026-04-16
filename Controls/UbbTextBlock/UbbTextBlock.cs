@@ -143,6 +143,10 @@ namespace UbbRender.Render
             [UbbNodeType.Divider] = new DividerRenderStrategy(),
             [UbbNodeType.Markdown] = new MarkdownRenderStrategy(),
             [UbbNodeType.At] = new AtRenderStrategy(),
+            [UbbNodeType.PosterOnly]=new PosterOnlyRenderStrategy(),
+            [UbbNodeType.ReplyView]=new ReplyViewRenderStrategy(),
+            [UbbNodeType.NeedReply]=new ReplyViewRenderStrategy()
+
         };
 
         public RenderContext context;

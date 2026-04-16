@@ -24,7 +24,7 @@ namespace CC98.Share.Controls;
 
 public sealed partial class MusicPlayer : UserControl, IDisposable
 {
-    private MediaPlayer _mediaPlayer;
+    private GlobalMediaPlayer _globalPlayer;
     private bool _isInitialized = false;
     private bool _isPlaying = false;
     private bool _disposed = false;
@@ -86,16 +86,14 @@ public sealed partial class MusicPlayer : UserControl, IDisposable
 
     private void InitializeMediaPlayer()
     {
-        _mediaPlayer = new MediaPlayer
-        {
-            AutoPlay = false,
-            IsLoopingEnabled = false
-        };
+        // 使用全局单例 MediaPlayer
+        _globalPlayer = GlobalMediaPlayer.Instance;
 
-        _mediaPlayer.MediaOpened += OnMediaOpened;
-        _mediaPlayer.MediaEnded += OnMediaEnded;
-        _mediaPlayer.MediaFailed += OnMediaFailed;
-        _mediaPlayer.CurrentStateChanged += OnCurrentStateChanged;
+        //订阅事件（只订阅，不处理底层释放）
+        _globalPlayer.MediaOpened += OnMediaOpened;
+        _globalPlayer.MediaEnded += OnMediaEnded;
+        _globalPlayer.MediaFailed += OnMediaFailed;
+        _globalPlayer.CurrentStateChanged += OnCurrentStateChanged;
     }
 
     private void SetupProgressTimer()
@@ -154,15 +152,16 @@ public sealed partial class MusicPlayer : UserControl, IDisposable
 
             if (mediaSource == null)
             {
-                ShowErrorMessage("无法加载媒体");
+                ShowErrorMessage($"无法加载媒体:{Src}");
                 return;
             }
 
-            _mediaPlayer.Source = mediaSource;
+            // 使用全局播放器设置源并播放
+            _globalPlayer.SetSource(mediaSource);
             _isInitialized = true;
             ProgressSlider.IsEnabled = true;
             // 开始播放
-            _mediaPlayer.Play();
+            _globalPlayer.Play();
             
             _isPlaying = true;
             UpdatePlayPauseButton();
@@ -184,12 +183,12 @@ public sealed partial class MusicPlayer : UserControl, IDisposable
     {
         if (_isPlaying)
         {
-            _mediaPlayer.Pause();
+            _globalPlayer.Pause();
             _progressTimer.Stop();
         }
         else
         {
-            _mediaPlayer.Play();
+            _globalPlayer.Play();
             _progressTimer.Start();
         }
         _isPlaying = !_isPlaying;
@@ -208,27 +207,28 @@ public sealed partial class MusicPlayer : UserControl, IDisposable
 
     private void UpdateProgress(object sender, object e)
     {
-        if (_mediaPlayer.PlaybackSession != null &&
-            _mediaPlayer.PlaybackSession.NaturalDuration.TotalSeconds > 0)
+        var session = _globalPlayer?.PlaybackSession;
+        if (session != null && session.NaturalDuration.TotalSeconds >0)
         {
-            var current = _mediaPlayer.PlaybackSession.Position.TotalSeconds;
-            var total = _mediaPlayer.PlaybackSession.NaturalDuration.TotalSeconds;
+            var current = session.Position.TotalSeconds;
+            var total = session.NaturalDuration.TotalSeconds;
 
-            ProgressSlider.Value = (current / total) * 100;
+            ProgressSlider.Value = (current / total) *100;
 
             CurrentTimeText.Text = FormatTime(current);
             TotalTimeText.Text = FormatTime(total);
         }
     }
 
-    private void ProgressSlider_ValueChanged(object sender, RoutedEventArgs e)
+    // 使用正确的事件签名 (RangeBaseValueChangedEventArgs) 来处理滑块拖动
+    private void ProgressSlider_ValueChanged(object sender, RangeBaseValueChangedEventArgs e)
     {
-        if (_mediaPlayer.PlaybackSession != null &&
-            _mediaPlayer.PlaybackSession.NaturalDuration.TotalSeconds > 0)
+        var session = _globalPlayer?.PlaybackSession;
+        if (session != null && session.NaturalDuration.TotalSeconds >0)
         {
             var newPosition = TimeSpan.FromSeconds(
-                ProgressSlider.Value / 100.0 * _mediaPlayer.PlaybackSession.NaturalDuration.TotalSeconds);
-            _mediaPlayer.PlaybackSession.Position = newPosition;
+                ProgressSlider.Value /100.0 * session.NaturalDuration.TotalSeconds);
+            session.Position = newPosition;
         }
     }
 
@@ -340,17 +340,15 @@ public sealed partial class MusicPlayer : UserControl, IDisposable
             _progressTimer?.Stop();
             _progressTimer = null;
 
-            if (_mediaPlayer != null)
+            if (_globalPlayer != null)
             {
-                _mediaPlayer.MediaOpened -= OnMediaOpened;
-                _mediaPlayer.MediaEnded -= OnMediaEnded;
-                _mediaPlayer.MediaFailed -= OnMediaFailed;
-                _mediaPlayer.CurrentStateChanged -= OnCurrentStateChanged;
+                //只取消订阅事件，不释放全局播放器
+                _globalPlayer.MediaOpened -= OnMediaOpened;
+                _globalPlayer.MediaEnded -= OnMediaEnded;
+                _globalPlayer.MediaFailed -= OnMediaFailed;
+                _globalPlayer.CurrentStateChanged -= OnCurrentStateChanged;
 
-                _mediaPlayer.Pause();
-                _mediaPlayer.Source = null;
-                _mediaPlayer.Dispose();
-                _mediaPlayer = null;
+                // 不要调用 Dispose 在全局播放器上
             }
 
             GC.SuppressFinalize(this);
@@ -364,8 +362,4 @@ public sealed partial class MusicPlayer : UserControl, IDisposable
 
     #endregion
 
-    private void ProgressSlider_ValueChanged(object sender, RangeBaseValueChangedEventArgs e)
-    {
-
-    }
 }
