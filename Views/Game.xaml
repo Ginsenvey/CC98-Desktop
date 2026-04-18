@@ -141,7 +141,7 @@
         <ScrollViewer x:Name="ResultViewer" Grid.Row="1" Grid.Column="0" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" CornerRadius="5" Padding="10" >
             <ItemsRepeater x:Name="CardList" Margin="0,10,0,0">
                 <ItemsRepeater.Layout>
-                    <LinedFlowLayout MinItemSpacing="15" LineSpacing="15" ItemsStretch="Fill" ItemsJustification="Center"></LinedFlowLayout>
+                    <LinedFlowLayout MinItemSpacing="15" LineSpacing="15" ItemsStretch="Fill" ItemsJustification="Center"  ></LinedFlowLayout>
                 </ItemsRepeater.Layout>
                 <ItemsRepeater.ItemTemplate>
                     <DataTemplate x:DataType="obj:Card">

@@ -70,7 +70,7 @@ namespace CC98
         {
             if (Pager != null)
             {
-                Pager.SelenctedIndexChanged -= Pager_SelectedIndexChanged;
+                Pager.SelectedIndexChanged -= Pager_SelectedIndexChanged;
             }
             GlobalMediaPlayer.Instance.Pause();
         }

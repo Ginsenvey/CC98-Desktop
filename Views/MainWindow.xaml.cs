@@ -21,6 +21,9 @@ using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Media.Animation;
 using Microsoft.UI.Xaml.Media.Imaging;
 using Microsoft.UI.Xaml.Navigation;
+using Microsoft.Windows.AppLifecycle;
+using Microsoft.Windows.AppNotifications;
+using Microsoft.Windows.AppNotifications.Builder;
 using Microsoft.Windows.BadgeNotifications;
 using System;
 using System.Collections;
@@ -45,6 +48,7 @@ using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Xml.Linq;
+using Windows.ApplicationModel.Core;
 using Windows.ApplicationModel.DataTransfer;
 using Windows.Foundation;
 using Windows.Foundation.Collections;
@@ -87,7 +91,6 @@ namespace CC98
             LoadSettings();
             App.ThemeChanged += OnAppThemeChanged;
             Messenger.Instance.NavigationItemAdded += OnNavigationItemAdded;
-            var dataManager = IndexDataService.Instance;
             Surfing();
         }
 
@@ -343,7 +346,9 @@ namespace CC98
             string Access = PasswordManager.RetrievePassword("Access");
             if (string.IsNullOrEmpty(Access))
             {
-                //
+                ShowTips("登录凭据未保存", "请重新登录");
+                //应该只清除CC98相关的凭据
+                Logout();
                 return;
             }
             LoginService.vpn.client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Access);
@@ -355,6 +360,8 @@ namespace CC98
                 if (result.StatusCode == (int)HttpStatusCode.Unauthorized)
                 {
                     //登录失效
+                    ShowTips("登录状态已过期", "请重新登录");
+                    Logout();
                 }
                 return;
             }
@@ -570,7 +577,31 @@ namespace CC98
             (typeof(Topic),typeof(Focus)),
             (typeof(Profile),typeof(Follow)),
         ];
-       
+
+
+        #region 辅助方法
+
+
+        private void Logout()
+        {
+            //清除凭据
+            PasswordManager.ClearAllPasswords("Access");
+            PasswordManager.ClearAllPasswords("Refresh");
+            Set.Values["Portrait"] = "0";
+            Set.Values["IsActive"] = "0";
+            //退出，重启
+            AppInstance.Restart("");
+        }
+        private void ShowTips(string title,string description)
+        {
+            AppNotification notification = new AppNotificationBuilder()
+            .AddText(title)
+            .AddText(description)
+            .BuildNotification();
+
+            AppNotificationManager.Default.Show(notification);
+        }
+        #endregion
     }
-    
+
 }

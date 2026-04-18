@@ -36,6 +36,7 @@ using System.Text.Json;
 using CC98.Services;
 using CC98.Services.Extensions;
 using CC98.Objects;
+using Microsoft.Windows.AppLifecycle;
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
 
@@ -293,9 +294,11 @@ namespace CC98
 
         private  void SwitchUser_Click(object sender, RoutedEventArgs e)
         {
+            //登出：清理设置，清理密码，退出应用
             Set.Values.Clear();
             PasswordManager.Logout();
-            Application.Current.Exit();
+            //重启应用
+            AppInstance.Restart("");
         }
         
 
