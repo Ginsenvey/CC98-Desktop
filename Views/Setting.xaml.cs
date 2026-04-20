@@ -132,23 +132,7 @@ namespace CC98
             {
                 Set.Values["TitlePage"] = "1";
             }
-            string _IsImageVisible = ValidationHelper.GetValue(Set, "IsImageVisible");
-            if (_IsImageVisible == "0")
-            {
-                Set.Values["IsImageVisible"] = "2";//初始化为不显示
-                IsImageVisible.IsOn = false;
-            }
-            else
-            {
-                if (_IsImageVisible == "1")
-                {
-                    IsImageVisible.IsOn = true;//1
-                }
-                else
-                {
-                    IsImageVisible.IsOn = false;//2
-                }
-            }
+            
             string _IsTailVisible = ValidationHelper.GetValue(Set, "IsTailVisible");
             if (_IsTailVisible == "0")
             {
@@ -310,11 +294,7 @@ namespace CC98
                 Set.Values["TitlePage"] = (c+1).ToString();
             }
         }
-
-        private void IsImageVisible_Toggled(object sender, RoutedEventArgs e)
-        {
-            Set.Values["IsImageVisible"] = IsImageVisible.IsOn?1:2;
-        }
+       
 
 
         private void TailVisibility_Toggled(object sender, RoutedEventArgs e)

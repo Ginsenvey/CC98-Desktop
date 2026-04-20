@@ -9,6 +9,7 @@
     mc:Ignorable="d"
     xmlns:tool="using:CommunityToolkit.WinUI.Controls"
     xmlns:ic="using:FluentIcons.WinUI"
+    xmlns:sv="using:CC98.Services"
     Background="{ThemeResource DesktopAcrylicTransparentBrush}">
 
     
@@ -139,11 +140,11 @@
                     </tool:SettingsExpander.Items>
                 </tool:SettingsExpander>
                 <TextBlock  Text="浏览" FontSize="16" Margin="5,2,0,5"></TextBlock>
-                <tool:SettingsCard Header="显示图片">
+                <tool:SettingsCard Header="无图模式" Description="隐藏帖子中的图片,仅对UBB有效">
                     <tool:SettingsCard.HeaderIcon>
                         <ic:SymbolIcon Symbol="Image"></ic:SymbolIcon>
                     </tool:SettingsCard.HeaderIcon>
-                    <ToggleSwitch x:Name="IsImageVisible" Toggled="IsImageVisible_Toggled"></ToggleSwitch>
+                    <ToggleSwitch x:Name="IsImageVisible" IsOn="{x:Bind sv:AppSettings.Current.HideImage,Mode=OneWay}"></ToggleSwitch>
                 </tool:SettingsCard>
                 <tool:SettingsCard Header="显示版面通告">
                     <tool:SettingsCard.HeaderIcon>

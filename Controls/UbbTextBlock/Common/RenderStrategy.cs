@@ -245,7 +245,7 @@ public class ImageRenderStrategy : IRenderStrategy
         {
             string src = "";
             var value = tagNode.GetAttribute("value");
-            if (string.IsNullOrEmpty(value) || value == "1")
+            if (!value.IsValidUrl(false))
             {
                 // 尝试从子节点获取URL（对于 [img]url[/img] 格式）
                 var first=node.FirstChild;
@@ -258,7 +258,7 @@ public class ImageRenderStrategy : IRenderStrategy
             {
                 src = value;
             }
-            if (!string.IsNullOrEmpty(src))
+            if (src.IsValidUrl(false))
             {
                 var image = new Picture()
                 {
@@ -266,7 +266,7 @@ public class ImageRenderStrategy : IRenderStrategy
                     //否则OnSrcChanged事件会触发，但此时将使用默认加载器
                     LoadImageCallback = SmartImageLoader.Default,
                     //UBB隐藏图片语法
-                    Hide= value=="1",
+                    Hide=context.Control.HideImage || value=="1",
                     Src=src,
                     MaxWidth = (double)context.Properties["ImageMaxWidth"],
                     Stretch = Stretch.Uniform,

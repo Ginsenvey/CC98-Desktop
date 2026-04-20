@@ -43,6 +43,7 @@ public enum UbbNodeType
 
 public static class UbbNodeTypeExtensions
 {
+    
     private static readonly HashSet<UbbNodeType> _blockTypes =
     [
         UbbNodeType.Code,

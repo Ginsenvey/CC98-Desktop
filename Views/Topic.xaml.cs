@@ -48,7 +48,7 @@ namespace CC98
     public sealed partial class Topic : Page
     {
         public ObservableCollection<Reply> replies=[];
-        public TopicInfo topicInfo { get; set; } = new TopicInfo(){};
+        public TopicInfo TopicInfo { get; set; } = new TopicInfo(){};
         public UserInfo profile = new() {Popularity=0,PostCount=0,FanCount=0}; 
         public ApplicationDataContainer Set = ApplicationData.Current.LocalSettings;
         public bool isVote = false;//是否为投票贴
@@ -136,7 +136,8 @@ namespace CC98
         }
         private void LoadSet()
         {
-            
+            bool hideImage = AppSettings.Current.HideImage;
+            HideImageFlyoutItem.Text = hideImage ? "显示图片" : "隐藏图片";
         }
         /// <summary>
         /// 加载收藏集
@@ -271,11 +272,11 @@ namespace CC98
                 return;
             }
             var data = topicInfoResult.Data;
-            topicInfo.FavoriteCount = data.FavoriteCount;
-            topicInfo.Title = data.Title;
-            topicInfo.Time = data.Time;
-            topicInfo.HitCount = data.HitCount;
-            topicInfo.ReplyCount = data.ReplyCount;
+            TopicInfo.FavoriteCount = data.FavoriteCount;
+            TopicInfo.Title = data.Title;
+            TopicInfo.Time = data.Time;
+            TopicInfo.HitCount = data.HitCount;
+            TopicInfo.ReplyCount = data.ReplyCount;
             string isFavoriteUrl = ApiEndpoints.Topic.IsFavorite(topicId);
             var isFavoriteResult = await RequestSender.Fetch<bool>(isFavoriteUrl);
             if (isFavoriteResult.IsNotValid)
@@ -284,11 +285,11 @@ namespace CC98
             }
             else
             {
-                topicInfo.IsFavorite = isFavoriteResult.Data;
+                TopicInfo.IsFavorite = isFavoriteResult.Data;
             }
-            Pager.NumberOfPages = (topicInfo.ReplyCount/ 10) + 1;
+            Pager.NumberOfPages = (TopicInfo.ReplyCount/ 10) + 1;
             PagerFix();
-            isVote = topicInfo.IsVote;
+            isVote = TopicInfo.IsVote;
             if (isVote)
             {
                 StartVote.Visibility = Visibility.Visible;
@@ -602,7 +603,7 @@ namespace CC98
             {
                 EditorMode=EditorMode.ReplyToTopic,
                 TopicId=topicId,
-                HintText= topicInfo.Title,
+                HintText= TopicInfo.Title,
             };
             Frame.Navigate(typeof(Sketch), param);
         }
@@ -619,15 +620,17 @@ namespace CC98
                     Flower.Play(FlowStatus.Success, "刷新成功");
                     break;
                 case "1":
-                    string shareurl = $"https://www.cc98.org/topic/{topicId}";
+                    string shareurl = $"{TopicInfo.Title} https://www.cc98.org/topic/{topicId}";
                     var datapackage = new DataPackage();
                     datapackage.SetText(shareurl);
                     Clipboard.SetContent(datapackage);
                     Flower.Play(FlowStatus.Success, "已复制帖子链接");
                     break;
                 case "2":
+                    //无需响应
                     break;
                 case "3":
+                    AppSettings.Current.HideImage = !AppSettings.Current.HideImage;
                     break;
             }
         }
@@ -729,7 +732,7 @@ namespace CC98
                         TopicId = topicId,
                         BaseText = reply.Content,
                         PostId = reply.Id,
-                        HintText = topicInfo.Title,
+                        HintText = TopicInfo.Title,
                         Floor=reply.Floor,
                         ContentType=reply.ContentType
                     };

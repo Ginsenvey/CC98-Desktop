@@ -192,6 +192,9 @@ namespace CC98
             Frame.Navigate(typeof(Topic), param);
         }
 
-        
+        private void ContentCard_Loaded(object sender, RoutedEventArgs e)
+        {
+
+        }
     } 
 }

@@ -70,7 +70,7 @@
         </DataTemplate>
         
         <DataTemplate x:Key="TextPost" x:DataType="obj:TopicInfo">
-            <Grid Padding="15" x:Name="ContentCard" Tag="{x:Bind Id}" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1" CornerRadius="5" RowSpacing="8" PointerEntered="ContentCard_PointerEntered" PointerExited="ContentCard_PointerExited" Tapped="ContentCard_Tapped">
+            <Grid Padding="15" x:Name="ContentCard" Tag="{x:Bind Id}" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1" CornerRadius="5" RowSpacing="8" PointerEntered="ContentCard_PointerEntered" PointerExited="ContentCard_PointerExited" Tapped="ContentCard_Tapped" Loaded="ContentCard_Loaded">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="32"></RowDefinition>
                     <RowDefinition Height="3"></RowDefinition>
@@ -80,6 +80,9 @@
                 <Grid.RenderTransform>
                     <TranslateTransform x:Name="CardTranslate" X="0" Y="0"/>
                 </Grid.RenderTransform>
+                <Grid.Shadow>
+                    <ThemeShadow></ThemeShadow>
+                </Grid.Shadow>
                 <StackPanel Grid.Row="0"  Orientation="Horizontal" Spacing="10">
                     <Border Width="30" Height="30" BorderThickness="0" CornerRadius="9999" Background="{ThemeResource PortraitBackgroundColor}">
                         <share:Picture  x:Name="portrait" Src="{x:Bind PortraitUrl}" LoadImageCallback="{StaticResource PortraitLoader}"></share:Picture>

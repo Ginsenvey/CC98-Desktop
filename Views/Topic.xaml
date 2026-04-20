@@ -16,6 +16,7 @@
     xmlns:pr="using:CC98.Share.Controls.Primitives"
     xmlns:obj="using:CC98.Objects"
     xmlns:cv="using:CC98.Services.Converters"
+    xmlns:svc="using:CC98.Services"
     NavigationCacheMode="Disabled"
     Background="{ThemeResource DesktopAcrylicTransparentBrush}">
 
@@ -40,7 +41,7 @@
                 </HyperlinkButton>
 
                 <Border  Grid.Row="1" Padding="10" CornerRadius="4" Background="{ThemeResource MarkdownBackgroudBrush}">
-                    <ubb:UbbTextBlock UbbText="{x:Bind Content,Mode=OneWay}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" BoldFontFamily="{StaticResource HarmonySansBold}" QuoteBackground="{ThemeResource QuoteBackgroundBrush}" CodeBackground="{ThemeResource QuoteBackgroundBrush}" MediaClicked="UbbTextBlock_MediaClicked"></ubb:UbbTextBlock>
+                    <ubb:UbbTextBlock UbbText="{x:Bind Content,Mode=OneWay}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" BoldFontFamily="{StaticResource HarmonySansBold}" QuoteBackground="{ThemeResource QuoteBackgroundBrush}" CodeBackground="{ThemeResource QuoteBackgroundBrush}" MediaClicked="UbbTextBlock_MediaClicked" HideImage="{x:Bind svc:AppSettings.Current.HideImage, Mode=OneWay}"></ubb:UbbTextBlock>
                 </Border>
 
                 <StackPanel Orientation="Vertical" Grid.Row="0" Margin="5,5,10,0" HorizontalAlignment="Right">
@@ -219,7 +220,7 @@
                             <ic:FluentIcon Icon="StarAdd"></ic:FluentIcon>
                         </MenuFlyoutSubItem.Icon>
                     </MenuFlyoutSubItem>
-                    <MenuFlyoutItem Text="图片可见性" Tag="3" Click="TileFlyout_Click" >
+                    <MenuFlyoutItem x:Name="HideImageFlyoutItem" Text="隐藏图片" Tag="3" Click="TileFlyout_Click" >
                         <MenuFlyoutItem.Icon>
                             <ic:FluentIcon Icon="Image"></ic:FluentIcon>
                         </MenuFlyoutItem.Icon>
@@ -236,15 +237,15 @@
                     <ColumnDefinition Width="*"></ColumnDefinition>
                     <ColumnDefinition Width="Auto"></ColumnDefinition>
                 </Grid.ColumnDefinitions>
-                <TextBlock x:Name="TopicTitle" Text="{x:Bind  topicInfo.Title,Mode=OneWay}" Grid.Row="0" Grid.Column="0" VerticalAlignment="Center" FontWeight="Bold" Foreground="{ThemeResource AccentAAFillColorDefaultBrush}" FontSize="18" Margin="10,0,0,0" TextWrapping="Wrap" ></TextBlock>
+                <TextBlock x:Name="TopicTitle" Text="{x:Bind  TopicInfo.Title,Mode=OneWay}" Grid.Row="0" Grid.Column="0" VerticalAlignment="Center" FontWeight="Bold" Foreground="{ThemeResource AccentAAFillColorDefaultBrush}" FontSize="18" Margin="10,0,0,0" TextWrapping="Wrap" ></TextBlock>
                 
                 <StackPanel Orientation="Horizontal" Grid.Row="1" Grid.Column="0" Margin="10,10,0,0" Spacing="8">
                     <ic:SymbolIcon Symbol="Clock" FontSize="12" VerticalAlignment="Center"></ic:SymbolIcon>
-                    <TextBlock Text="{x:Bind topicInfo.Time,Mode=OneWay}" FontSize="14" VerticalAlignment="Center"></TextBlock>
+                    <TextBlock Text="{x:Bind TopicInfo.Time,Mode=OneWay}" FontSize="14" VerticalAlignment="Center"></TextBlock>
                     <ic:SymbolIcon Symbol="Eye" FontSize="12" Margin="20,0,0,0"></ic:SymbolIcon>
-                    <TextBlock Text="{x:Bind topicInfo.HitCount,Mode=OneWay}" FontSize="14" VerticalAlignment="Center"></TextBlock>
-                    <ic:SymbolIcon Symbol="Star" FontSize="12" Margin="20,0,0,0" IconVariant="{x:Bind topicInfo.IsFavorite,Converter={StaticResource BoolToVariantConverter},Mode=OneWay}"></ic:SymbolIcon>
-                    <TextBlock Text="{x:Bind topicInfo.FavoriteCount,Mode=OneWay}" FontSize="14" VerticalAlignment="Center"></TextBlock>
+                    <TextBlock Text="{x:Bind TopicInfo.HitCount,Mode=OneWay}" FontSize="14" VerticalAlignment="Center"></TextBlock>
+                    <ic:SymbolIcon Symbol="Star" FontSize="12" Margin="20,0,0,0" IconVariant="{x:Bind TopicInfo.IsFavorite,Converter={StaticResource BoolToVariantConverter},Mode=OneWay}"></ic:SymbolIcon>
+                    <TextBlock Text="{x:Bind TopicInfo.FavoriteCount,Mode=OneWay}" FontSize="14" VerticalAlignment="Center"></TextBlock>
                     
                 </StackPanel>
                 <dev:BubbleButton Grid.Row="0" Grid.Column="1" Grid.RowSpan="2" VerticalAlignment="Center" Height="45" HorizontalAlignment="Right"  Margin="10,15,10,10" x:Name="writereply" Click="writereply_Click"  BubbleForeground="{ThemeResource AccentAAFillColorDefaultBrush}">

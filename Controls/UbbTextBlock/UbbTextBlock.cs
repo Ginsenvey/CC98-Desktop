@@ -67,8 +67,16 @@ namespace UbbRender.Render
                 typeof(double),
                 typeof(UbbTextBlock),
                 new PropertyMetadata(400.0));
+ 
+        public static readonly DependencyProperty HideImageProperty =
+            DependencyProperty.Register(
+                nameof(HideImage),
+                typeof(bool),
+                typeof(UbbTextBlock),
+                new PropertyMetadata(false,onHideImageChanged));
 
         
+
         public string UbbText
         {
             get => (string)GetValue(UbbTextProperty);
@@ -108,8 +116,12 @@ namespace UbbRender.Render
             get => (double)GetValue(ImageMaxWidthProperty);
             set => SetValue(ImageMaxWidthProperty, value);
         }
+        public bool HideImage
+        {
+            get => (bool)GetValue(HideImageProperty);
+            set => SetValue(HideImageProperty, value);
+        }
 
-        
         private StackPanel _rootPanel;
         private UbbDocument _document;
         public static readonly IReadOnlyDictionary<UbbNodeType, IRenderStrategy> renderStrategies = new Dictionary<UbbNodeType, IRenderStrategy>
@@ -151,38 +163,7 @@ namespace UbbRender.Render
 
         public RenderContext context;
         #endregion
-
-        
-        public UbbTextBlock()
-        {
-            this.DefaultStyleKey = typeof(UbbTextBlock);
-        }
-        #region 事件
-        public event EventHandler<MediaClickEventArgs> MediaClicked;
-        public void OnMediaClicked(string src,MediaType mediaType)
-        {
-            MediaClicked?.Invoke(this, new MediaClickEventArgs(src,mediaType));
-        }
-
-        #endregion
-        // 应用模板
-        protected override void OnApplyTemplate()
-        {
-            base.OnApplyTemplate();
-            _rootPanel = GetTemplateChild("PART_RootPanel") as StackPanel;
-
-            if (_rootPanel != null)
-            {
-                RenderContent();
-            }
-        }
-
-        // 初始化渲染策略
-
-        
-       
-
-        // 属性变更处理
+        #region 属性变更处理
         private static void OnUbbTextChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
             if (d is UbbTextBlock control && control._rootPanel != null)
@@ -206,6 +187,42 @@ namespace UbbRender.Render
                 control.RenderContent();
             }
         }
+
+        private static void onHideImageChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        {
+            if (d is UbbTextBlock control && control._rootPanel != null)
+            {
+                control.RenderContent();
+            }
+        }
+        #endregion
+
+        #region 功能实现
+
+        public UbbTextBlock()
+        {
+            this.DefaultStyleKey = typeof(UbbTextBlock);
+        }
+        #region 事件
+        public event EventHandler<MediaClickEventArgs> MediaClicked;
+        public void OnMediaClicked(string src,MediaType mediaType)
+        {
+            MediaClicked?.Invoke(this, new MediaClickEventArgs(src,mediaType));
+        }
+
+        #endregion
+        
+        protected override void OnApplyTemplate()
+        {
+            base.OnApplyTemplate();
+            _rootPanel = GetTemplateChild("PART_RootPanel") as StackPanel;
+
+            if (_rootPanel != null)
+            {
+                RenderContent();
+            }
+        }
+
 
         // 渲染内容
         private void RenderContent()
@@ -269,5 +286,7 @@ namespace UbbRender.Render
         {
             context?.SelectAllExternal();
         }
+
+        #endregion
     }
 }
