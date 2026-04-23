@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using Windows.Storage;
@@ -11,40 +12,33 @@ namespace CC98.Services
     /// </summary>
     public sealed partial class AppSettings : INotifyPropertyChanged
     {
-        private const string HideImageKey = "HideImage";
-        private readonly ApplicationDataContainer _localSettings = ApplicationData.Current.LocalSettings;
+        //需要迁移的设置项
 
-        private static readonly Lazy<AppSettings> _instance = new(() => new AppSettings());
-        public static AppSettings Current => _instance.Value;
+        private ApplicationDataContainer LocalSettings => ApplicationData.Current.LocalSettings;
+        public static AppSettings Current { get; } = new();
 
-        private bool _hideImage;
-
-        private AppSettings()
+        private T? GetValueByName<T>(string key)
         {
-            // 从 LocalSettings 加载初始值，若不存在则默认 false
-            if (_localSettings.Values.TryGetValue(HideImageKey, out var value) && value is bool b)
+            if (LocalSettings.Values.TryGetValue(key, out var value) && value is T propertyValue)
             {
-                _hideImage = b;
+                return propertyValue;
             }
             else
             {
-                _hideImage = false;
+                return default;
             }
         }
-
         /// <summary>
         /// 是否隐藏图片。设置时会保存到 ApplicationData 并触发 PropertyChanged。
         /// </summary>
         public bool HideImage
         {
-            get => _hideImage;
+            get => GetValueByName<bool>(nameof(HideImage));
             set
             {
-                if (_hideImage == value) return;
-                _hideImage = value;
                 try
                 {
-                    _localSettings.Values[HideImageKey] = value;
+                    LocalSettings.Values[nameof(HideImage)] = value;
                 }
                 catch
                 {
@@ -54,9 +48,9 @@ namespace CC98.Services
             }
         }
 
-        public event PropertyChangedEventHandler PropertyChanged;
+        public event PropertyChangedEventHandler? PropertyChanged;
 
-        private void OnPropertyChanged([CallerMemberName] string propertyName = null)
+        private void OnPropertyChanged([CallerMemberName] string? propertyName = null)
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }

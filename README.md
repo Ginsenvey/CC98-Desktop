@@ -63,7 +63,7 @@
 你也可以克隆本应用仓库，自由修改和编译新的分支。不过，在分发时，应当告知所有的改动。  
 
 ##### 设置开发环境
-1. 确保您安装了Windows SDK 10.0.0.19041
+1. 确保您安装了Windows SDK 10.0.0.26100.1
 2. 本应用使用了[CommunityToolKit中的实验性功能](https://github.com/CommunityToolkit/Labs-Windows)，请参考[Toolkit Labs](https://github.com/CommunityToolkit/Windows/wiki/Preview-Packages)的wiki将Toolkit Labs添加至Nuget的Package Sources。
 
 **开放源代码库**  

@@ -56,6 +56,7 @@ namespace CC98.Objects;
 [JsonSerializable(typeof(RatingReason))]
 [JsonSerializable(typeof(WealthTransferMessage))]
 [JsonSerializable(typeof(BrowsingRecord))]
+[JsonSerializable(typeof(PrivateMessage))]
 // 常见 ApiResponse 泛型特化
 [JsonSerializable(typeof(List<int>))] 
 [JsonSerializable(typeof(List<string>))]   

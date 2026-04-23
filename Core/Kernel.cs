@@ -3,6 +3,7 @@ using CC98.Kernel.Network;
 using CC98.Objects;
 using CC98.Services;
 using CC98.Services.Extensions;
+using ColorCode.Compilation.Languages;
 using FluentIcons.Common;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Hosting;
@@ -27,6 +28,7 @@ using System.Text;
 using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Text.Json.Serialization.Metadata;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
@@ -57,35 +59,35 @@ public static class RequestSender
         }
         catch (HttpRequestException ex)
         {
-            return ApiResponse<T>.Fail($"网络错误: {ex.Message}",0);
+            return ApiResponse<T>.Fail($"网络错误: {ex.Message}", 0);
         }
         catch (JsonException ex)
         {
-            return ApiResponse<T>.Fail($"数据解析错误: {ex.Message}",0);
+            return ApiResponse<T>.Fail($"数据解析错误: {ex.Message}", 0);
         }
         catch (TaskCanceledException)
         {
-            return ApiResponse<T>.Fail("请求超时",0);
+            return ApiResponse<T>.Fail("请求超时", 0);
         }
         catch (Exception ex)
         {
             await App.Logger.WriteAsync("AOT", "其他错误", ex.Message);
-            return ApiResponse<T>.Fail($"系统错误: {ex.Message}",0);
+            return ApiResponse<T>.Fail($"系统错误: {ex.Message}", 0);
         }
 
     }
     /// <summary>
     /// 适用于PUT。
     /// </summary>
-    public static async Task<ApiResponse> Put(string endpoint,HttpContent? content)
+    public static async Task<ApiResponse> Put(string endpoint, HttpContent? content)
     {
         try
         {
-            var res = await LoginService.vpn.PutAsync(endpoint,content);
-            var json=await res.Content.ReadAsStringAsync();
-            return res.IsSuccessStatusCode? 
-                ApiResponse.Success(json): 
-                ApiResponse.Fail((res.ReasonPhrase ?? "响应失败") + ":" + json, (int)res.StatusCode);   
+            var res = await LoginService.vpn.PutAsync(endpoint, content);
+            var json = await res.Content.ReadAsStringAsync();
+            return res.IsSuccessStatusCode ?
+                ApiResponse.Success(json) :
+                ApiResponse.Fail((res.ReasonPhrase ?? "响应失败") + ":" + json, (int)res.StatusCode);
         }
         catch (HttpRequestException ex)
         {
@@ -134,11 +136,18 @@ public static class RequestSender
             return ApiResponse.Fail($"系统错误: {ex.Message}", 0);
         }
     }
-    public static async Task<ApiResponse<T>> Submit<T>(string endpoint,HttpContent content)
+    /// <summary>
+    /// T是返回类型，不是提交数据类型。提交数据类型由HttpContent的具体实现决定
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
+    /// <param name="endpoint"></param>
+    /// <param name="content"></param>
+    /// <returns></returns>
+    public static async Task<ApiResponse<T>> Submit<T>(string endpoint, HttpContent content)
     {
         try
         {
-            var res = await LoginService.vpn.PostAsync(endpoint,content);
+            var res = await LoginService.vpn.PostAsync(endpoint, content);
             return await Deserialize<T>(res);
         }
         catch (HttpRequestException ex)
@@ -160,76 +169,28 @@ public static class RequestSender
         }
 
     }
-    public static async Task<ApiResponse<T>> Deserialize<T>(HttpResponseMessage res)
+    public static async Task<ApiResponse<T>> Deserialize<T>(HttpResponseMessage res, CancellationToken cancellationToken = default)
     {
-        var json = await res.Content.ReadAsStringAsync();
-        if (res.IsSuccessStatusCode)
+        if (!res.IsSuccessStatusCode)
         {
-            var obj = JsonSerializer.Deserialize(json, typeof(T), CC98JsonContext.Default);
-            var data = (T?)obj;
-            return ApiResponse<T>.Success(data!);
+            return ApiResponse<T>.Fail(res.ReasonPhrase ?? "响应失败", (int)res.StatusCode);
         }
-        else
-        {
-            string message = (res.ReasonPhrase ?? "响应失败") +":"+ json;
-            return ApiResponse<T>.Fail(message, (int)res.StatusCode);
-        }
-    }
-   
-    public static async Task<bool> AddFavorites(string topicId, string GroupId)//话题Id,收藏夹的组Id
-    {
-        if (!string.IsNullOrEmpty(GroupId) && (!string.IsNullOrEmpty(topicId)))
-        {
-            try
-            {
-                string favoriteurl = $"https://api.cc98.org/me/favorite/{topicId}?groupid={GroupId}";
-                var request = new HttpRequestMessage(HttpMethod.Put, favoriteurl);
-                var content = new StringContent("", Encoding.UTF8, "application/json");
-                request.Content = content;//按照此格式发送空的put请求并设置请求头
-                var res = await LoginService.vpn.SendAsync(favoriteurl, request);
 
-                if (res.StatusCode == System.Net.HttpStatusCode.OK)
-                {
-                    return true;
-                }
-                else
-                {
-                    return false;
-                }
-            }
-            catch
-            {
-                return false;
-            }
-        }
-        else
+        try
         {
-            return true;
+            var obj = await res.Content.ReadFromJsonAsync(typeof(T), CC98JsonContext.Default, cancellationToken);
+            return ApiResponse<T>.Success((T?)obj!);
         }
+        catch (JsonException ex)
+        {
+            return ApiResponse<T>.Fail(ex.Message);
+
+        }
+
+
     }
-    
-     
-    
-    public static async Task<string> SendPrivateMsg(int receiver_id, string content)
-    {
-        string url = "https://api.cc98.org/message";
-        var post = new Dictionary<string, object>()
-            {
-                {"receiverId",receiver_id},
-                {"content",content}
-            };
-        string post_text = JsonSerialize.Serialize(post);
-        var request_body = new StringContent(post_text, Encoding.UTF8, "application/json");
-        var r = await LoginService.vpn.PostAsync(url, request_body);
-        if (r.IsSuccessStatusCode)
-        {
-            return "1";
-        }
-        else
-        {
-            return "0";
-        }
-    }
+
+   
     public static async Task<string> SendVoteResult(string id, List<int> list)
     {
         string url = $"https://api.cc98.org/topic/{id}/vote";
@@ -250,7 +211,7 @@ public static class RequestSender
         }
     }
 
-    
+
     public static async Task<ApiResponse<string>> GetBoardTags(string bid)
     {
         List<string> tags = new();
@@ -272,7 +233,7 @@ public static class ValidationHelper
         using (var outputStream = output.GetOutputStreamAt(0))
         using (var writer = new DataWriter(outputStream))
         {
-            while ((bytesRead = await input.ReadAsync(buffer, 0, buffer.Length)) > 0)
+            while ((bytesRead = await input.ReadAsync(buffer)) > 0)
             {
                 writer.WriteBytes(buffer.AsSpan(0, bytesRead).ToArray());
                 await writer.StoreAsync();
@@ -281,8 +242,8 @@ public static class ValidationHelper
             await writer.FlushAsync();
         }
     }
-   
-    
+
+
     public static string GetValue(ApplicationDataContainer container, string key)
     {
         if (container.Values.TryGetValue(key, out var token))
@@ -298,8 +259,8 @@ public static class ValidationHelper
         }
         return "0";
     }
-    
-    
+
+
     public static string GetKey(Dictionary<string, object> dic, string key)//值不可为"0".
     {
         if (dic == null) return "0";
@@ -352,7 +313,7 @@ public static class ValidationHelper
         }
         return "0";
     }
-    
+
 }
 
 
@@ -728,7 +689,7 @@ public static class LinkAnalyzer
                 }
                 return new KeyValuePair<string, string>("null", link);
             }
-            
+
             else if (link.Contains("https://www.bilibili.com/video"))
             {
                 return new KeyValuePair<string, string>("backlink", "bili");

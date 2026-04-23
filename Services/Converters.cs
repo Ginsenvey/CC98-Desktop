@@ -12,7 +12,6 @@ namespace CC98.Services.Converters;
 
 public partial class UBBTextConverter : IValueConverter
 {
-    public ApplicationDataContainer Set = ApplicationData.Current.LocalSettings;
     object IValueConverter.Convert(object value, Type targetType, object parameter, string language)
     {
         if (value != null)
@@ -20,7 +19,7 @@ public partial class UBBTextConverter : IValueConverter
             string input = value as string ?? string.Empty;
             if (!string.IsNullOrEmpty(input))
             {
-                return UbbToMd.Convert(input, ValidationHelper.GetValue(Set, "IsImageVisible") == "1");
+                return UbbToMd.Convert(input, !AppSettings.Current.HideImage);
             }
             else
             {

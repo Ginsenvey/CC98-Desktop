@@ -76,7 +76,7 @@ public static class ApiEndpoints
         public static string TransferWealth() => $"{Base}/me/transfer-wealth";
         public static string EnableBrowseHistory(bool value) => $"{Base}/me/browsing-history?enabled={value.ToString().ToLower()}";
         public static string BrowseHistory(int start) => $"{Base}/me/browsing-record?from={start}&size=11";
-
+        public static string SendPrivateMessage => $"{Base}/message";
     }
     public static class Post
     {

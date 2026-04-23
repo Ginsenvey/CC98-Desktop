@@ -1,32 +1,15 @@
-﻿using Duende.IdentityModel.Client;
+﻿using CC98.Objects;
+using CC98.Services.Extensions;
 using HtmlAgilityPack;
-using Microsoft.UI.Xaml;
-using Microsoft.Windows.AppNotifications;
-using Microsoft.Windows.AppNotifications.Builder;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.IO;
 using System.Net;
 using System.Net.Http;
-using System.Net.Http.Headers;
-using System.Numerics;
-using System.Security.Cryptography;
-using System.Text;
-using System.Text.RegularExpressions;
+using System.Net.Http.Json;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Xml;
-using Windows.Devices.PointOfService;
-using Windows.Media;
-using Windows.Media.Core;
-using Windows.Media.Playback;
-using Windows.Storage;
-using Windows.Storage.Streams;
-using System.Text.Json;
-using Microsoft.Extensions.Logging;
-using System.Text.Json.Serialization;
-using CC98.Services.Extensions;
 
 namespace CC98.Kernel.Network;
 /// <summary>
@@ -73,37 +56,60 @@ public partial class VpnService : IDisposable
             AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate,
             //Proxy=new WebProxy("127.0.0.1:9000")
         };
-        
+
         client = new HttpClient(handler);
         client.DefaultRequestHeaders.Add("Referer", Base);
         client.DefaultRequestHeaders.Connection.ParseAdd("keep-alive");
         client.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36 Edg/138.0.0.0");
     }
-    public async Task<VpnLoginResult> LoginAsync(string username, string password,CancellationToken cts = default)
+    public async Task<VpnLoginResult> LoginAsync(string username, string password, CancellationToken cancellationToken = default)
     {
         try
         {
-            
-            if (CaptchaValue == "")
+            return await LoginCoreAsync(username, password, cancellationToken);
+        }
+
+        catch (InvalidOperationException ex)
+        {
+            return VpnLoginResult.Failure(ex.Message);
+        }
+
+        catch (HttpRequestException ex)
+        {
+            return VpnLoginResult.Failure($"网络问题:{ex.Message}");
+        }
+        catch (JsonException ex)
+        {
+            return VpnLoginResult.Failure($"解析登录结果失败:{ex.Message}");
+        }
+        catch (Exception ex)
+        {
+            return VpnLoginResult.Failure($"登录出错:{ex.Message}");
+        }
+    }
+
+    private async Task<VpnLoginResult> LoginCoreAsync(string username, string password, CancellationToken cancellationToken)
+    {
+        if (CaptchaValue == "")
+        {
+            var res = await client.GetAsync(LoginAuthUrl, cancellationToken);
+            if (res.StatusCode != HttpStatusCode.OK)
             {
-                var res = await client.GetAsync(LoginAuthUrl);
-                if (res.StatusCode != HttpStatusCode.OK)
-                {
-                    return VpnLoginResult.Failure($"网络请求失败:{res.StatusCode}");
-                }
-                var html = await res.Content.ReadAsStringAsync();
-                var param = GetRandCode(html);
-                if (param.csrf == "" || param.captcha == "")
-                {
-                    return VpnLoginResult.Failure("获取登录参数失败");
-                }
-                LastRandCode = param.csrf;
-                LastCaptchaId = param.captcha;
+                throw new InvalidOperationException($"网络请求失败:{res.StatusCode}");
             }
-            string csrf = LastRandCode;
-            string captchaId = LastCaptchaId;
-            string encrpted_password = BuildPassword(Key0, password);
-            var formData = new Dictionary<string, string>
+            var html = await res.Content.ReadAsStringAsync(cancellationToken);
+            var param = GetRandCode(html);
+            if (param.csrf == "" || param.captcha == "")
+            {
+                throw new InvalidOperationException("获取登录参数失败");
+            }
+            LastRandCode = param.csrf;
+            LastCaptchaId = param.captcha;
+        }
+        string csrf = LastRandCode;
+        string captchaId = LastCaptchaId;
+        string encrpted_password = BuildPassword(Key0, password);
+        var formData = new Dictionary<string, string>
             {
                 {"_csrf", csrf},
                 {"auth_type", "local"},
@@ -114,45 +120,33 @@ public partial class VpnService : IDisposable
                 {"username",username},
                 {"password",encrpted_password }
             };
-            var content = new FormUrlEncodedContent(formData);
-            var login_res = await client.PostAsync(LoginPswUrl, content);
-            if (login_res.StatusCode != HttpStatusCode.OK)
-            {
-                return VpnLoginResult.Failure($"网络请求失败:{login_res.StatusCode}");
-            }
-            string text = await login_res.Content.ReadAsStringAsync();
-            var result = JsonSerialize.Deserialize<VpnLoginResult>(text);
-            if (result == null)
-            {
-                return VpnLoginResult.Failure("登录结果为空");
-            }
-            if (!result.IsSuccess)
-            {
-                if (result.NeedConfirm)
-                {
-                    return VpnLoginResult.ConfirmRequired();
-                }
-                result.Description = LastCaptchaId;
-                result.Status = VPNLoginStatus.NeedCaptcha;
-                return result;
-            }
-            Logined = true;
-            return VpnLoginResult.Success();
-        }
-        catch (HttpRequestException ex)
+        var content = new FormUrlEncodedContent(formData);
+        var login_res = await client.PostAsync(LoginPswUrl, content, cancellationToken);
+        if (login_res.StatusCode != HttpStatusCode.OK)
         {
-            return VpnLoginResult.Failure($"网络问题:{ex.Message}");
+            throw new InvalidOperationException($"网络请求失败:{login_res.StatusCode}");
         }
-        catch(JsonException ex)
+        string text = await login_res.Content.ReadAsStringAsync(cancellationToken);
+        var result = JsonSerialize.Deserialize<VpnLoginResult>(text);
+        if (result == null)
         {
-            return VpnLoginResult.Failure($"解析登录结果失败:{ex.Message}");
+            throw new InvalidOperationException("登录结果为空");
         }
-        catch (Exception ex)
+        if (!result.IsSuccess)
         {
-            return VpnLoginResult.Failure($"登录出错:{ex.Message}");
+            if (result.NeedConfirm)
+            {
+                return VpnLoginResult.ConfirmRequired();
+            }
+            result.Description = LastCaptchaId;
+            result.Status = VPNLoginStatus.NeedCaptcha;
+            return result;
         }
+        Logined = true;
+        return VpnLoginResult.Success();
     }
-    public async Task<VpnLoginResult> Confirm()
+
+    public async Task<VpnLoginResult> ConfirmAsync(CancellationToken cancellationToken = default)
     {
         try
         {
@@ -161,8 +155,9 @@ public partial class VpnService : IDisposable
             {
                 return VpnLoginResult.Failure($"网络请求失败:{res.StatusCode}");
             }
-            var content = await res.Content.ReadAsStringAsync();
-            var result = JsonSerialize.Deserialize<VpnLoginResult>(content);
+
+            var result = await res.Content.ReadFromJsonAsync(CC98JsonContext.Default.VpnLoginResult, cancellationToken);
+
             if (result == null)
             {
                 return VpnLoginResult.Failure("登录结果为空");
@@ -191,13 +186,16 @@ public partial class VpnService : IDisposable
     /// 注销会话
     /// </summary>
     /// <returns></returns>
-    public async Task Logout()
+    public async Task Logout(CancellationToken cancellationToken = default)
     {
         try
         {
-            var res = await client.GetAsync(LogoutUrl);
+            var res = await client.GetAsync(LogoutUrl, cancellationToken);
         }
-        catch { }
+        catch (Exception ex)
+        {
+            Trace.TraceError("注销时发生错误，Message = {0}", ex.Message);
+        }
     }
     /// <summary>
     /// 标准URL转换函数
@@ -207,14 +205,13 @@ public partial class VpnService : IDisposable
     public static string ConvertUrl(string origin)
     {
         var uri = new Uri(origin);
-        string scheme = uri.Scheme;
-        //处理协议和端口
-        int port = uri.Port;
-        string host = uri.Host;
-        bool is_special_port = port > 0 &&
-            !(uri.Scheme == "http" && port == 80) &&
-            !(uri.Scheme == "https" && port == 443);
-        string property = is_special_port ? $"{scheme}-{port}" : scheme;
+
+        bool isDefaultProt = uri.Port > 0 &&
+            !(uri.Scheme == "http" && uri.Port == 80) &&
+            !(uri.Scheme == "https" && uri.Port == 443);
+
+        string schemaAndPort = isDefaultProt ? $"{uri.Scheme}-{uri.Port}" : uri.Scheme;
+
         //处理路径和查询字符
         string suffix = uri.PathAndQuery;
         int qm = suffix.IndexOf('?');
@@ -230,8 +227,8 @@ public partial class VpnService : IDisposable
         string vpn_host = "webvpn.zju.edu.cn";
         string[] pathSegments =
         [
-            property,
-            BuildPassword(Key1,host),
+            schemaAndPort,
+            BuildPassword(Key1,uri.Host),
         ];
         var builder = new UriBuilder(vpn_scheme, vpn_host);
         var sb = new System.Text.StringBuilder();
@@ -250,9 +247,9 @@ public partial class VpnService : IDisposable
     /// <returns></returns>
     public async Task<NetworkStatus> CheckNetwork(bool UseVpn)
     {
-        
+
         string target_uri = UseVpn ? ConvertUrl(Mirror_Url) : Mirror_Url;
-        
+
         try
         {
             var response = await client.GetAsync(target_uri);
@@ -265,7 +262,7 @@ public partial class VpnService : IDisposable
                 }
                 else if (res_text == "1" || res_text == "2")
                 {
-                    return UseVpn?NetworkStatus.ByVPN:NetworkStatus.InCampus;
+                    return UseVpn ? NetworkStatus.ByVPN : NetworkStatus.InCampus;
                 }
                 else
                 {
@@ -281,7 +278,7 @@ public partial class VpnService : IDisposable
             }
             else
             {
-                await App.Logger.WriteAsync("网络检查", "访问镜像站失败", $"{response.StatusCode}:{response.ReasonPhrase??""},响应正文{res_text}");
+                await App.Logger.WriteAsync("网络检查", "访问镜像站失败", $"{response.StatusCode}:{response.ReasonPhrase ?? ""},响应正文{res_text}");
                 return NetworkStatus.MirrorError;
             }
         }
@@ -294,7 +291,7 @@ public partial class VpnService : IDisposable
 
     }
 
-    
+
     public static (string csrf, string captcha, string auth_type) GetRandCode(string html)
     {
         var doc = new HtmlDocument();
@@ -322,9 +319,9 @@ public partial class VpnService : IDisposable
         string core = full_core[..Math.Min(full_core.Length, SliceLength)];
         return $"{prifix_hex}{core}";
     }
-    
-    
-    
+
+
+
 
     public void Dispose()
     {

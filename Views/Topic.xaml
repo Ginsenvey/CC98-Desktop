@@ -207,22 +207,22 @@
                 <MenuFlyout>
                     <MenuFlyoutItem Text="刷新"  x:Name="TileFlyout" Tag="0" Click="TileFlyout_Click">
                         <MenuFlyoutItem.Icon>
-                            <ic:FluentIcon Icon="ArrowSync"></ic:FluentIcon>
+                            <ic:SymbolIcon Symbol="ArrowSync"></ic:SymbolIcon>
                         </MenuFlyoutItem.Icon>
                     </MenuFlyoutItem>
                     <MenuFlyoutItem Text="复制链接"  Tag="1" Click="TileFlyout_Click">
                         <MenuFlyoutItem.Icon>
-                            <ic:FluentIcon Icon="Share"></ic:FluentIcon>
+                            <ic:SymbolIcon Symbol="Share"></ic:SymbolIcon>
                         </MenuFlyoutItem.Icon>
                     </MenuFlyoutItem>
                     <MenuFlyoutSubItem Text="收藏" Tag="2" x:Name="CollectionMenu">
                         <MenuFlyoutSubItem.Icon>
-                            <ic:FluentIcon Icon="StarAdd"></ic:FluentIcon>
+                            <ic:SymbolIcon Symbol="StarAdd"></ic:SymbolIcon>
                         </MenuFlyoutSubItem.Icon>
                     </MenuFlyoutSubItem>
-                    <MenuFlyoutItem x:Name="HideImageFlyoutItem" Text="隐藏图片" Tag="3" Click="TileFlyout_Click" >
+                    <MenuFlyoutItem x:Name="HideImageFlyoutItem" Text="启用无图模式" Tag="3" Click="TileFlyout_Click" >
                         <MenuFlyoutItem.Icon>
-                            <ic:FluentIcon Icon="Image"></ic:FluentIcon>
+                            <ic:SymbolIcon x:Name="ImageOffIcon" Symbol="ImageOff"></ic:SymbolIcon>
                         </MenuFlyoutItem.Icon>
                     </MenuFlyoutItem>
                 </MenuFlyout>

@@ -137,7 +137,8 @@ namespace CC98
         private void LoadSet()
         {
             bool hideImage = AppSettings.Current.HideImage;
-            HideImageFlyoutItem.Text = hideImage ? "显示图片" : "隐藏图片";
+            HideImageFlyoutItem.Text = hideImage ? "关闭无图模式" : "启用无图模式";
+            ImageOffIcon.Symbol= hideImage ? FluentIcons.Common.Symbol.ImageOff : FluentIcons.Common.Symbol.Image;
         }
         /// <summary>
         /// 加载收藏集
@@ -620,10 +621,10 @@ namespace CC98
                     Flower.Play(FlowStatus.Success, "刷新成功");
                     break;
                 case "1":
-                    string shareurl = $"{TopicInfo.Title} https://www.cc98.org/topic/{topicId}";
-                    var datapackage = new DataPackage();
-                    datapackage.SetText(shareurl);
-                    Clipboard.SetContent(datapackage);
+                    string shareUrl = $"{TopicInfo.Title} https://www.cc98.org/topic/{topicId}";
+                    var dataPackage = new DataPackage();
+                    dataPackage.SetText(shareUrl);
+                    Clipboard.SetContent(dataPackage);
                     Flower.Play(FlowStatus.Success, "已复制帖子链接");
                     break;
                 case "2":
@@ -631,6 +632,7 @@ namespace CC98
                     break;
                 case "3":
                     AppSettings.Current.HideImage = !AppSettings.Current.HideImage;
+                    LoadSet();
                     break;
             }
         }
@@ -639,9 +641,8 @@ namespace CC98
         private async void CollectionItem_Click(object sender, RoutedEventArgs e)
         {
             var m = sender as MenuFlyoutItem;
-            if (m == null) return;
-            var t = m.Tag.ToInt();
-            var url = ApiEndpoints.Topic.AddIntoFavorites(topicId, t);
+            if (m?.Tag is not int groupId) return;
+            var url = ApiEndpoints.Topic.AddIntoFavorites(topicId, groupId);
             var content = new StringContent("", Encoding.UTF8, "application/json");
             var result=await RequestSender.Put(url, content);
             if (!result.IsSuccess)
@@ -654,13 +655,7 @@ namespace CC98
             Flower.Play(FlowStatus.Success, "已收藏");
         }
 
-        
-
-        
-
-        
-
-        
+      
 
         private void ScrollTo(int index)
         {

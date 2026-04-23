@@ -20,7 +20,9 @@ using System.ComponentModel.Design.Serialization;
 using System.IO;
 using System.Linq;
 using System.Linq.Expressions;
+using System.Net.Http;
 using System.Runtime.InteropServices.WindowsRuntime;
+using System.Text;
 using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
@@ -175,18 +177,31 @@ namespace CC98
         
         private async void Send_Click(object sender, RoutedEventArgs e)
         {
-            if (!string.IsNullOrEmpty(ReplyBody.Text))
+            if (string.IsNullOrEmpty(ReplyBody.Text))
             {
-                Send.IsEnabled = false;
-                var r = await RequestSender.SendPrivateMsg(currentUserId, ReplyBody.Text);
-                Send.IsEnabled = true;
-                if (r == "1")
-                {
-                    ReplyBody.Text = "";
-                    await RefreshMessageList();
-                }
+                return;
             }
+            Send.IsEnabled = false;
+            string url = ApiEndpoints.User.SendPrivateMessage;
+            var post = new PrivateMessage()
+            {
+                ReceiverId = currentUserId,
+                Content = ReplyBody.Text
+            };
+            string postText = JsonSerialize.Serialize(post);
+            var requestBody = new StringContent(postText, Encoding.UTF8, "application/json");
+            var res = await RequestSender.Submit<object>(url, requestBody);
+            if (res.IsSuccess)
+            {
+                await RefreshMessageList();
+            }
+            else
+            {
+                Flower.Play(FlowStatus.Fail, "·¢ËÍ»Ø¸´Ê§°Ü");
+            }
+            Send.IsEnabled = true;
         }
+       
 
         private async void Ref_Click(object sender, RoutedEventArgs e)
         {

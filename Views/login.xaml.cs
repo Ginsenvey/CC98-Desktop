@@ -188,7 +188,7 @@ namespace CC98
             if (res.Status == VPNLoginStatus.Success) return true;
             if (res.Status == VPNLoginStatus.NeedConfirm)
             {
-                var confirm_res = await LoginService.vpn.Confirm();
+                var confirm_res = await LoginService.vpn.ConfirmAsync();
                 if (confirm_res.Status == VPNLoginStatus.Success)
                 {
                     return true;
@@ -304,7 +304,7 @@ namespace CC98
                     Flower.Play(FlowStatus.Fail, res.Description);
                     break;
                 case VPNLoginStatus.NeedConfirm:
-                    var confirm_res = await LoginService.vpn.Confirm();
+                    var confirm_res = await LoginService.vpn.ConfirmAsync();
                     if (confirm_res.Status == VPNLoginStatus.Success)
                     {
                         SaveToken(id, pass);

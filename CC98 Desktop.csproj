@@ -1,14 +1,15 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
-    <TargetFramework>net10.0-windows10.0.19041.0</TargetFramework>
+    <TargetFramework>net10.0-windows10.0.26100.1</TargetFramework>
 	<LangVersion>preview</LangVersion>
     <TargetPlatformMinVersion>10.0.17763.0</TargetPlatformMinVersion>
     <RootNamespace>CC98</RootNamespace>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <Platforms>x86;x64;ARM64</Platforms>
     <RuntimeIdentifiers>win-x86;win-x64;win-arm64</RuntimeIdentifiers>
-	<SelfContained>true</SelfContained>
+ <SelfContained>true</SelfContained>
+ 
     <PublishProfile>win-$(Platform).pubxml</PublishProfile>
     <UseWinUI>true</UseWinUI>
     <EnableMsixTooling>true</EnableMsixTooling>
@@ -168,24 +169,24 @@
   <ItemGroup>
 	<PackageReference Include="ColorCode.WinUI" Version="2.0.15" />
 	<PackageReference Include="CommunityToolkit.Labs.WinUI.Controls.MarkdownTextBlock" Version="0.1.260203-build.2518" />
-	<PackageReference Include="CommunityToolkit.Labs.WinUI.Controls.Shimmer" Version="0.1.260203-build.2518" />
+	<PackageReference Include="CommunityToolkit.Labs.WinUI.Controls.Shimmer" Version="0.1.260415-build.2574" />
     <PackageReference Include="CommunityToolkit.Labs.WinUI.Ribbon" Version="0.1.250811-build.10" />
     <PackageReference Include="CommunityToolkit.Labs.WinUI.TokenView" Version="0.1.250828-build.2223" />
-    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
-    <PackageReference Include="CommunityToolkit.WinUI.Controls.ColorPicker" Version="8.3.260211-preview1" />
-    <PackageReference Include="CommunityToolkit.WinUI.Controls.Primitives" Version="8.3.260211-preview1" />
-    <PackageReference Include="CommunityToolkit.WinUI.Controls.SettingsControls" Version="8.3.260211-preview1" />
-    <PackageReference Include="CommunityToolkit.WinUI.Controls.Sizers" Version="8.3.260211-preview1" />
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
+    <PackageReference Include="CommunityToolkit.WinUI.Controls.ColorPicker" Version="8.3.260402-preview2" />
+    <PackageReference Include="CommunityToolkit.WinUI.Controls.Primitives" Version="8.3.260402-preview2" />
+    <PackageReference Include="CommunityToolkit.WinUI.Controls.SettingsControls" Version="8.3.260402-preview2" />
+    <PackageReference Include="CommunityToolkit.WinUI.Controls.Sizers" Version="8.3.260402-preview2" />
     <PackageReference Include="CSharpMath.SkiaSharp" Version="1.0.0-pre.1" />
-    <PackageReference Include="DevWinUI" Version="9.9.3" />
-    <PackageReference Include="DevWinUI.Controls" Version="9.9.3" />
-    <PackageReference Include="Duende.IdentityModel.OidcClient" Version="7.0.0" />
-    <PackageReference Include="FluentIcons.WinUI" Version="2.0.320" />
+    <PackageReference Include="DevWinUI" Version="9.9.4" />
+    <PackageReference Include="DevWinUI.Controls" Version="9.9.4" />
+    <PackageReference Include="Duende.IdentityModel.OidcClient" Version="7.1.0" />
+    <PackageReference Include="FluentIcons.WinUI" Version="2.1.324" />
     <PackageReference Include="HtmlAgilityPack" Version="1.12.4" />
-    <PackageReference Include="Microsoft.Windows.CsWinRT" Version="2.3.0-prerelease.251115.2" />
-    <PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.28000.1-RTM" />
+    <PackageReference Include="Microsoft.Windows.CsWinRT" Version="2.2.0" />
+    <PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.28000.1721" />
     <PackageReference Include="Microsoft.WindowsAppSDK" Version="2.0.0-preview1" />
-    <PackageReference Include="SkiaSharp.Views.WinUI" Version="3.119.3-preview.1.1" />
+    <PackageReference Include="SkiaSharp.Views.WinUI" Version="3.119.4-preview.1.1" />
   </ItemGroup>
 	
   <ItemGroup>
