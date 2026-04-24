@@ -1,24 +1,11 @@
-using Microsoft.UI.Xaml;
+Ôªøusing Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml.Controls.Primitives;
-using Microsoft.UI.Xaml.Data;
-using Microsoft.UI.Xaml.Input;
-using Microsoft.UI.Xaml.Media;
-using Microsoft.UI.Xaml.Navigation;
-using System;
 using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Runtime.InteropServices.WindowsRuntime;
-using Windows.Foundation;
-using Windows.Foundation.Collections;
 using System.Collections.ObjectModel;
-using FluentIcons.Common;
 using Windows.Storage;
 using System.Threading.Tasks;
 using CC98.Kernel;
 using CC98.Objects;
-using System.Text.Json;
 using DevWinUI;
 using CC98.Kernel.ApiScope;
 using CC98.Services.Extensions;
@@ -26,141 +13,140 @@ using CC98.Services.Extensions;
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
 
-namespace CC98
+namespace CC98;
+
+/// <summary>
+/// An empty page that can be used on its own or navigated to within a Frame.
+/// </summary>
+public sealed partial class Favorite : Page
 {
-    /// <summary>
-    /// An empty page that can be used on its own or navigated to within a Frame.
-    /// </summary>
-    public sealed partial class Favorite : Page
+    public ApplicationDataContainer Set = ApplicationData.Current.LocalSettings;
+    public ObservableCollection<SimpleTopicInfo> Topics=[];
+    public Favorites? SelectedFavorites { get; set; }
+    public ObservableCollection<Favorites> FavoritesList = [];
+    public int SortId = 0;
+    public int GroupId = 0;
+    public Increment Increment = new();
+    public PostOrder CurrenOrder = PostOrder.Mark;
+    public Favorite()
     {
-        public ApplicationDataContainer Set = ApplicationData.Current.LocalSettings;
-        public ObservableCollection<SimpleTopicInfo> topics=[];
-        public Favorites? SelectedFavorites { get; set; }
-        public ObservableCollection<Favorites> favoritesList = [];
-        public int sortId = 0;
-        public int groupId = 0;
-        public Increment increment = new();
-        public PostOrder currenOrder = PostOrder.Mark;
-        public Favorite()
-        {
-            this.InitializeComponent();
-        }
+        this.InitializeComponent();
+    }
         
         
-        protected override async void OnNavigatedTo(Microsoft.UI.Xaml.Navigation.NavigationEventArgs e)
-        {
-            base.OnNavigatedTo(e);
+    protected override async void OnNavigatedTo(Microsoft.UI.Xaml.Navigation.NavigationEventArgs e)
+    {
+        base.OnNavigatedTo(e);
 
-            LoadFavorites();
+        LoadFavorites();
+        await GetFavoriteTopic();
+    }
+    private void LoadFavorites()
+    {
+        var f = ValidationHelper.GetValue(Set, "Favorites");
+        if (f != "0")
+        {
+            //likecollection.MenuItems.Clear();
+            var data = JsonSerialize.Deserialize<List<Favorites>>(f);
+            if(data != null)
+            {
+                FavoritesList.Clear();
+                FavoritesList.AddRange(data);
+            }   
+        }
+    }
+    private async Task<bool> GetFavoriteTopic()
+    {
+        var favoriteTopicUrl = ApiEndpoints.Topic.FavoriteTopicList(Increment.StartIndex,(int)CurrenOrder,GroupId);
+        var favoriteTopicResult = await RequestSender.Fetch<List<SimpleTopicInfo>>(favoriteTopicUrl);
+        if (!favoriteTopicResult.IsSuccess || favoriteTopicResult.Data == null)
+        {
+            //
+            return false;
+        }          
+        var data = favoriteTopicResult.Data;
+        if(data.Count==11)data.RemoveAt(10);
+        Increment.HasMore = data.Count == Increment.PageSize;
+        Topics.AddRange(data);
+        return true;
+    }
+        
+
+    private void Content_Click(object sender, RoutedEventArgs e)
+    {
+        var h = sender as HyperlinkButton;
+        if (h?.DataContext is not SimpleTopicInfo t) return;
+        var param = new TopicNavigationInfo { TopicId = t.Id };
+        Frame.Navigate(typeof(Topic), param);
+    }
+        
+        
+    private async void ChangeSort_Click(object sender, RoutedEventArgs e)
+    {
+        CurrenOrder= (PostOrder)(((int)CurrenOrder + 1) % 3);
+        Topics.Clear();
+        Increment.Clear();
+
+        await GetFavoriteTopic();
+        string sortMethod;
+        if (CurrenOrder == PostOrder.Time)
+        {
+            sortMethod = "ÂèëÂ∏ñÊó∂Èó¥";
+            SortIcon.Symbol = FluentIcons.Common.Symbol.History;
+        }
+        else if (CurrenOrder == PostOrder.LastReply)
+        {
+            sortMethod = "ÊúÄÂêéÂõûÂ§ç";
+            SortIcon.Symbol = FluentIcons.Common.Symbol.ArrowReply;
+        }
+        else
+        {
+            sortMethod = "Êî∂ËóèÈ°∫Â∫è";
+            SortIcon.Symbol = FluentIcons.Common.Symbol.StarAdd;
+        }
+        Flower.Play("\uE8CB", "ÂàáÊç¢‰∏∫" + sortMethod + "ÊéíÂ∫è");
+    }
+
+    private async void FavoriteBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (SelectedFavorites != null)
+        {
+            Topics.Clear();
+            Increment.Clear();
+            SortId = 0;
+            GroupId = SelectedFavorites.Id;
+            de.Text = SelectedFavorites.Name;
             await GetFavoriteTopic();
         }
-        private void LoadFavorites()
+    }
+
+    private async void Remove_Click(object sender, RoutedEventArgs e)
+    {
+        var m=sender as MenuFlyoutItem;
+        if(m != null)
         {
-            var f = ValidationHelper.GetValue(Set, "Favorites");
-            if (f != "0")
+            if (m?.DataContext is SimpleTopicInfo)
             {
-                //likecollection.MenuItems.Clear();
-                var data = JsonSerialize.Deserialize<List<Favorites>>(f);
-                if(data != null)
+                //bool res=await RequestSender.RemoveFavorite(t.Id);
+                var res = true; //ÂæÖÂÆûÁé∞
+                if (res)
                 {
-                    favoritesList.Clear();
-                    favoritesList.AddRange(data);
-                }   
-            }
-        }
-        private async Task<bool> GetFavoriteTopic()
-        {
-            string favoriteTopicUrl = ApiEndpoints.Topic.FavoriteTopicList(increment.startIndex,(int)currenOrder,groupId);
-            var favoriteTopicResult = await RequestSender.Fetch<List<SimpleTopicInfo>>(favoriteTopicUrl);
-            if (!favoriteTopicResult.IsSuccess || favoriteTopicResult.Data == null)
-            {
-                //
-                return false;
-            }          
-            var data = favoriteTopicResult.Data;
-            if(data.Count==11)data.RemoveAt(10);
-            increment.hasMore = data.Count == increment.pageSize;
-            topics.AddRange(data);
-            return true;
-        }
-        
-
-        private void Content_Click(object sender, RoutedEventArgs e)
-        {
-            var h = sender as HyperlinkButton;
-            if (h?.DataContext is not SimpleTopicInfo t) return;
-            var param = new TopicNavigationInfo { TopicId = t.Id };
-            Frame.Navigate(typeof(Topic), param);
-        }
-        
-        
-        private async void ChangeSort_Click(object sender, RoutedEventArgs e)
-        {
-            currenOrder= (PostOrder)(((int)currenOrder + 1) % 3);
-            topics.Clear();
-            increment.Clear();
-
-            await GetFavoriteTopic();
-            string Sort_Method;
-            if (currenOrder == PostOrder.Time)
-            {
-                Sort_Method = "∑¢Ã˚ ±º‰";
-                SortIcon.Symbol = FluentIcons.Common.Symbol.History;
-            }
-            else if (currenOrder == PostOrder.LastReply)
-            {
-                Sort_Method = "◊Ó∫Ûªÿ∏¥";
-                SortIcon.Symbol = FluentIcons.Common.Symbol.ArrowReply;
-            }
-            else
-            {
-                Sort_Method = " ’≤ÿÀ≥–Ú";
-                SortIcon.Symbol = FluentIcons.Common.Symbol.StarAdd;
-            }
-            Flower.Play("\uE8CB", "«–ªªŒ™" + Sort_Method + "≈≈–Ú");
-        }
-
-        private async void FavoriteBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-            if (SelectedFavorites != null)
-            {
-                topics.Clear();
-                increment.Clear();
-                sortId = 0;
-                groupId = SelectedFavorites.Id;
-                de.Text = SelectedFavorites.Name;
-                await GetFavoriteTopic();
-            }
-        }
-
-        private async void Remove_Click(object sender, RoutedEventArgs e)
-        {
-            var m=sender as MenuFlyoutItem;
-            if(m != null)
-            {
-                if (m?.DataContext is SimpleTopicInfo)
+                    Topics.Clear();
+                    Increment.Clear();
+                    SortId = 0;
+                    await GetFavoriteTopic();
+                    Flower.Play("\uE930", "Â∑≤ÂèñÊ∂àÊî∂Ëóè");
+                }
+                else
                 {
-                    //bool res=await RequestSender.RemoveFavorite(t.Id);
-                    bool res = true; //¥˝ µœ÷
-                    if (res)
-                    {
-                        topics.Clear();
-                        increment.Clear();
-                        sortId = 0;
-                        await GetFavoriteTopic();
-                        Flower.Play("\uE930", "“—»°œ˚ ’≤ÿ");
-                    }
-                    else
-                    {
-                        Flower.Play("\uEA39", "»°œ˚ ’≤ÿ ß∞‹");
-                    }
+                    Flower.Play("\uEA39", "ÂèñÊ∂àÊî∂ËóèÂ§±Ë¥•");
                 }
             }
         }
+    }
 
-        private async void FavoriteTopicRepeater_ElementPrepared(ItemsRepeater sender, ItemsRepeaterElementPreparedEventArgs args)
-        {
-            await increment.LoadMore(args.Index, GetFavoriteTopic);
-        }
+    private async void FavoriteTopicRepeater_ElementPrepared(ItemsRepeater sender, ItemsRepeaterElementPreparedEventArgs args)
+    {
+        await Increment.LoadMore(args.Index, GetFavoriteTopic);
     }
 }

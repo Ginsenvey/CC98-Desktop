@@ -1,10 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text.Json;
+﻿using System.Collections.Generic;
 using System.Text.Json.Serialization;
 using CC98.Kernel;
 using CC98.Kernel.Network;
-using Microsoft.Extensions.Logging.Abstractions;
 using static CC98.Services.AppLog;
 using static IndexDataService;
 
@@ -79,7 +76,7 @@ namespace CC98.Objects;
 [JsonSerializable(typeof(List<Card>))]
 [JsonSerializable(typeof(List<ExportLog>))]
 [JsonSerializable(typeof(List<RatingReason>))]
-internal partial class CC98JsonContext : JsonSerializerContext
+internal partial class Cc98JsonContext : JsonSerializerContext
 {
 }
 

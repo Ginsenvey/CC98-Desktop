@@ -1,12 +1,6 @@
 ﻿using System;
-using System.IO;
 using System.Net;
-using System.Text.Json;
-using System.Text.Json.Serialization;
-using System.Threading;
 using System.Threading.Tasks;
-using Windows.ApplicationModel.Appointments;
-using Windows.System.Profile;
 
 /// <summary>
 /// 存放基础对象模型
@@ -21,7 +15,7 @@ public class ApiResponse<T>
     public string Message { get; set; } = string.Empty;
     public int StatusCode { get; set; }
 
-    public static ApiResponse<T> Success(T data, string message = "") =>new ApiResponse<T>
+    public static ApiResponse<T> Success(T data, string message = "") =>new()
     {
         IsSuccess = true,
         Data = data,
@@ -29,7 +23,7 @@ public class ApiResponse<T>
         StatusCode =(int)HttpStatusCode.OK
     };
 
-    public static ApiResponse<T> Fail(string message, int statusCode=0) =>new ApiResponse<T>
+    public static ApiResponse<T> Fail(string message, int statusCode=0) =>new()
     {
         IsSuccess = false,
         Message = message,
@@ -45,7 +39,7 @@ public class ApiResponse
     public string Message { get; set; } = string.Empty;
     public int StatusCode { get; set; }
 
-    public static ApiResponse Success(string content, string message = "") => new ApiResponse
+    public static ApiResponse Success(string content, string message = "") => new()
     {
         IsSuccess = true,
         Content=content,
@@ -53,7 +47,7 @@ public class ApiResponse
         StatusCode = (int)HttpStatusCode.OK
     };
 
-    public static ApiResponse Fail(string message, int statusCode = 0) => new ApiResponse
+    public static ApiResponse Fail(string message, int statusCode = 0) => new()
     {
         IsSuccess = false,
         Message = message,
@@ -67,55 +61,55 @@ public class ApiResponse
 /// </summary>
 public class Increment
 {
-    public int pageSize;
-    public int currentPage;
+    public int PageSize;
+    public int CurrentPage;
     //应假定没有更多项，由返回项项数决定是否还有更多
-    public bool hasMore;
-    public int startIndex => currentPage * pageSize;
+    public bool HasMore;
+    public int StartIndex => CurrentPage * PageSize;
     public Increment(int pageSize = 10,int currentPage = 0, bool hasMore = false)
     {
-        this.pageSize = pageSize;
-        this.currentPage = currentPage;
-        this.hasMore = hasMore;
+        this.PageSize = pageSize;
+        this.CurrentPage = currentPage;
+        this.HasMore = hasMore;
     }
 
     public void Clear()
     {
-        currentPage = 0;
-        hasMore = false;
+        CurrentPage = 0;
+        HasMore = false;
     }
     public async Task LoadMore(int currentIndex, Func<Task<bool>> load)
     {
-        if (hasMore&&(currentIndex + 1) % pageSize == 0)
+        if (HasMore&&(currentIndex + 1) % PageSize == 0)
         {
-            currentPage++;
+            CurrentPage++;
             var success = await load();
             //如果没有成功，则回退页码，等待下一次尝试
             if (!success)
             {
-                currentPage--;
+                CurrentPage--;
             }
         }
     }
     //强制加载下一页
     public async Task LoadNextPage(Func<Task<bool>> load)
     {
-        currentPage++;
+        CurrentPage++;
         var success = await load();
         //如果没有成功，则回退页码，等待下一次尝试
         if (!success)
         {
-            currentPage--;
+            CurrentPage--;
         }
     }
     public async Task LoadLastPage(Func<Task<bool>> load)
     {
-        currentPage--;
+        CurrentPage--;
         var success = await load();
         //如果没有成功，则回退页码，等待下一次尝试
         if (!success)
         {
-            currentPage++;
+            CurrentPage++;
         }
     }
 }

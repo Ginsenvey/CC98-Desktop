@@ -1,14 +1,10 @@
 ﻿using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Media.Animation;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace CC98.Services;
 
-public class UIEx
+public class UiEx
 {
     public static void AnimateCard(TranslateTransform transform, double targetX, double targetY)
     {

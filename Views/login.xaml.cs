@@ -1,7 +1,6 @@
-using CC98.Kernel;
+ï»¿using CC98.Kernel;
 using CC98.Kernel.OpenID;
 using CC98.Services;
-using DevWinUI;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using Microsoft.Windows.AppNotifications;
@@ -9,10 +8,8 @@ using Microsoft.Windows.AppNotifications.Builder;
 using System;
 using System.Net;
 using System.Threading.Tasks;
-using Windows.Graphics;
 using Windows.Storage;
 using Windows.System;
-using System.Text.Json;
 using CC98.Objects;
 using CC98.Kernel.Network;
 using Microsoft.UI.Xaml.Media.Imaging;
@@ -20,460 +17,457 @@ using Microsoft.UI.Xaml.Media.Imaging;
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
 
-namespace CC98
+namespace CC98;
+
+/// <summary>
+/// An empty window that can be used on its own or navigated to within a Frame.
+/// </summary>
+public sealed partial class Login : Window
 {
-    /// <summary>
-    /// An empty window that can be used on its own or navigated to within a Frame.
-    /// </summary>
-    
-    public sealed partial class Login : Window
+    public ApplicationDataContainer Set;
+    public Login(int mode)
     {
-        public ApplicationDataContainer Set;
-        public Login(int mode)
+        this.InitializeComponent();
+        this.ExtendsContentIntoTitleBar= true;
+        this.SetTitleBar(GridTitleBar);
+        this.RootGrid.RequestedTheme = ElementTheme.Light;
+        AppWindow.TitleBar.PreferredHeightOption = Microsoft.UI.Windowing.TitleBarHeightOption.Standard;
+        var presenter = OverlappedPresenter.Create();
+        presenter.IsResizable = false;
+        presenter.IsMaximizable = false;
+        presenter.IsMinimizable = false;
+        presenter.SetBorderAndTitleBar(true, true);
+        AppWindow.SetPresenter(presenter);
+        CenterWindow();
+        tip.Text = "å¦‚æœå°šæœªè¿æ¥æµ™æ±Ÿå¤§å­¦å†…ç½‘ï¼Œè¯·åœ¨æ­¤å¤„ç™»å½•WebVPN,æˆ–è€…ä½¿ç”¨[ZJU Connect](https://github.com/Mythologyli/ZJU-Connect-for-Windows/releases).";
+        Set = ApplicationData.Current.LocalSettings;
+        LoadParams(mode);
+    }
+    public int Mode = 0;
+    private void LoadParams(int mode)
+    {
+        this.Mode = mode;
+        if (mode == 0) { }//æ™®é€šç™»å½•
+        else if(mode==1)//ç”¨æˆ·å·²ç»ç™»å½•è¿‡ï¼Œåªéœ€è¦æ·»åŠ VPNå‡­æ®
         {
-            this.InitializeComponent();
-            this.ExtendsContentIntoTitleBar= true;
-            this.SetTitleBar(GridTitleBar);
-            this.RootGrid.RequestedTheme = ElementTheme.Light;
-            AppWindow.TitleBar.PreferredHeightOption = Microsoft.UI.Windowing.TitleBarHeightOption.Standard;
-            OverlappedPresenter presenter = OverlappedPresenter.Create();
-            presenter.IsResizable = false;
-            presenter.IsMaximizable = false;
-            presenter.IsMinimizable = false;
-            presenter.SetBorderAndTitleBar(true, true);
-            AppWindow.SetPresenter(presenter);
-            CenterWindow();
-            tip.Text = "Èç¹ûÉĞÎ´Á¬½ÓÕã½­´óÑ§ÄÚÍø£¬ÇëÔÚ´Ë´¦µÇÂ¼WebVPN,»òÕßÊ¹ÓÃ[ZJU Connect](https://github.com/Mythologyli/ZJU-Connect-for-Windows/releases).";
-            Set = ApplicationData.Current.LocalSettings;
-            LoadParams(mode);
+            LoginPane.Visibility = Visibility.Collapsed;
+            VpnPane.Visibility = Visibility.Visible;
         }
-        public int mode = 0;
-        private void LoadParams(int mode)
+        else//ç”±äºå¯†ç æ›´æ”¹æˆ–è€…å¥—é¤åˆ°æœŸï¼Œå°è¯•ä½¿ç”¨åŸå‡­æ®VPNç™»å½•å¤±è´¥ï¼Œéœ€è¦éªŒè¯ç 
         {
-            this.mode = mode;
-            if (mode == 0) { }//ÆÕÍ¨µÇÂ¼
-            else if(mode==1)//ÓÃ»§ÒÑ¾­µÇÂ¼¹ı£¬Ö»ĞèÒªÌí¼ÓVPNÆ¾¾İ
-            {
-                LoginPane.Visibility = Visibility.Collapsed;
-                VpnPane.Visibility = Visibility.Visible;
-            }
-            else//ÓÉÓÚÃÜÂë¸ü¸Ä»òÕßÌ×²Íµ½ÆÚ£¬³¢ÊÔÊ¹ÓÃÔ­Æ¾¾İVPNµÇÂ¼Ê§°Ü£¬ĞèÒªÑéÖ¤Âë
-            {
-                LoginPane.Visibility = Visibility.Collapsed;
-                VpnPane.Visibility = Visibility.Visible;
-                string captchaId = LoginService.vpn.LastCaptchaId;
-                long timeStamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
-                string captchaUrl = $"{VpnService.Base}/captcha/{captchaId}.png?reload={timeStamp}";
-                captcha.Source = new BitmapImage(new Uri(captchaUrl));
-                captchabox.Visibility = Visibility.Visible;
-            }
+            LoginPane.Visibility = Visibility.Collapsed;
+            VpnPane.Visibility = Visibility.Visible;
+            var captchaId = LoginService.Vpn.LastCaptchaId;
+            var timeStamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+            var captchaUrl = $"{VpnService.Base}/captcha/{captchaId}.png?reload={timeStamp}";
+            captcha.Source = new BitmapImage(new(captchaUrl));
+            captchabox.Visibility = Visibility.Visible;
         }
-        private void CenterWindow()
-        {
-            var area = DisplayArea.GetFromWindowId(AppWindow.Id, DisplayAreaFallback.Nearest)?.WorkArea;
-            if (area == null) return;
-            AppWindow.Move(new PointInt32((area.Value.Width - AppWindow.Size.Width) / 2, (area.Value.Height - AppWindow.Size.Height) / 2));
-        }
+    }
+    private void CenterWindow()
+    {
+        var area = DisplayArea.GetFromWindowId(AppWindow.Id, DisplayAreaFallback.Nearest)?.WorkArea;
+        if (area == null) return;
+        AppWindow.Move(new((area.Value.Width - AppWindow.Size.Width) / 2, (area.Value.Height - AppWindow.Size.Height) / 2));
+    }
 
 
-        private async Task InitializeNetwork()
+    private async Task InitializeNetwork()
+    {
+        var networkStatus = await LoginService.Vpn.CheckNetwork(false);
+        if (networkStatus == NetworkStatus.InCampus)
         {
-            var network_status = await LoginService.vpn.CheckNetwork(false);
-            if (network_status == NetworkStatus.InCampus)
+            //å¯åŠ¨
+            OpenPasswordLoginPane();
+            return;
+        }
+        if (networkStatus == NetworkStatus.NotInCampus)//åœ¨æ ¡å¤–
+        {
+            if (ValidationHelper.GetValue(Set, "IsVpnUsable") != "1")
             {
-                //Æô¶¯
-                OpenPasswordLoginPane();
+                //æ‰“å¼€VPNé…ç½®è®¾ç½®
+                LoginPane.Visibility = Visibility.Collapsed;
+                VpnPane.Visibility = Visibility.Visible;
                 return;
             }
-            if (network_status == NetworkStatus.NotInCampus)//ÔÚĞ£Íâ
+            //æ£€æµ‹æ˜¯å¦å·²åˆå§‹åŒ–Ticketã€‚è‹¥å·²åˆå§‹åŒ–ï¼Œä½¿ç”¨å¹¶æ£€æŸ¥æœ‰æ•ˆæ€§ã€‚æ— æ•ˆåˆ™é‡è¿ã€‚æœªåˆå§‹åŒ–æ˜¯å‡ºé”™çš„æƒ…å†µã€‚
+            if (!PasswordManager.PasswordExists("Ticket") || !PasswordManager.PasswordExists("Route"))
             {
-                if (ValidationHelper.GetValue(Set, "IsVpnUsable") != "1")
-                {
-                    //´ò¿ªVPNÅäÖÃÉèÖÃ
-                    LoginPane.Visibility = Visibility.Collapsed;
-                    VpnPane.Visibility = Visibility.Visible;
-                    return;
-                }
-                //¼ì²âÊÇ·ñÒÑ³õÊ¼»¯Ticket¡£ÈôÒÑ³õÊ¼»¯£¬Ê¹ÓÃ²¢¼ì²éÓĞĞ§ĞÔ¡£ÎŞĞ§ÔòÖØÁ¬¡£Î´³õÊ¼»¯ÊÇ³ö´íµÄÇé¿ö¡£
-                if (!PasswordManager.PasswordExists("Ticket") || !PasswordManager.PasswordExists("Route"))
-                {
-                    //±¨´í
-                    Flower.Play(FlowStatus.Fail, "VPNÆ¾¾İ²»ÍêÕû");
-                    return;
-                }
-                if (!InjectTokenFromVault())
-                {
-                    //±¨´í
-                    Flower.Play(FlowStatus.Fail, "VPNÆ¾¾İ²»ÍêÕû");
-                    return;
-                }
-                var new_status = await LoginService.vpn.CheckNetwork(true);
-                if (new_status == NetworkStatus.ByVPN)
-                {
-                    LoginService.vpn.Logined = true;
-                    LoginService.vpn.IsVpnEnabled = true;
-                    OpenPasswordLoginPane();
-                    //Æô¶¯
-                    return;
-                }
-                bool success = await ReloginVPN();
-                if (success)
-                {
-                    LoginService.vpn.IsVpnEnabled = true;
-                    SaveVpnToken();
-                    //´ËÊ±vpnÓ¦¸Ã¿ÉÓÃ
-                    OpenPasswordLoginPane();
-                }
+                //æŠ¥é”™
+                Flower.Play(FlowStatus.Fail, "VPNå‡­æ®ä¸å®Œæ•´");
+                return;
             }
-            if (network_status == NetworkStatus.MirrorError)
+            if (!InjectTokenFromVault())
             {
-                Flower.Play(FlowStatus.Fail, "Á¬½Ó¾µÏñÕ¾Ê§°Ü");
+                //æŠ¥é”™
+                Flower.Play(FlowStatus.Fail, "VPNå‡­æ®ä¸å®Œæ•´");
+                return;
             }
-            if (network_status == NetworkStatus.UnknownError)
+            var newStatus = await LoginService.Vpn.CheckNetwork(true);
+            if (newStatus == NetworkStatus.ByVpn)
             {
-                Flower.Play(FlowStatus.Fail, "IP±»¾µÏñÕ¾À¹½Ø");
+                LoginService.Vpn.Logined = true;
+                LoginService.Vpn.IsVpnEnabled = true;
+                OpenPasswordLoginPane();
+                //å¯åŠ¨
+                return;
             }
-            if (network_status == NetworkStatus.NoConnection)
+            var success = await ReloginVpn();
+            if (success)
             {
-                Flower.Play(FlowStatus.Fail, "ÎŞ»¥ÁªÍøÁ¬½Ó");
+                LoginService.Vpn.IsVpnEnabled = true;
+                SaveVpnToken();
+                //æ­¤æ—¶vpnåº”è¯¥å¯ç”¨
+                OpenPasswordLoginPane();
             }
         }
-        private bool SaveVpnToken()
+        if (networkStatus == NetworkStatus.MirrorError)
         {
-            var new_ticket = LoginService.vpn.Ticket;
-            var new_route = LoginService.vpn.Route;
-            string _ticket = new_ticket.Value;
-            string _route = new_route.Value;
-            if (string.IsNullOrEmpty(_ticket) || (string.IsNullOrEmpty(_route)))
-            {
-                //±¨´í
-                Flower.Play(FlowStatus.Fail, "Î´»ñÈ¡µ½ÍêÕûVPNÆ¾¾İ");
-                return false;
-            }
-
-            //¸üĞÂ»·½Ú
-            PasswordManager.SavePassword(_ticket, "Ticket");
-            PasswordManager.SavePassword(_route, "Route");
-            return true;
-
+            Flower.Play(FlowStatus.Fail, "è¿æ¥é•œåƒç«™å¤±è´¥");
         }
-        private bool InjectTokenFromVault()
+        if (networkStatus == NetworkStatus.UnknownError)
         {
-            //ÌáÈ¡»·½Ú
-            var ticket_value = PasswordManager.RetrievePassword("Ticket");
-            var route_value = PasswordManager.RetrievePassword("Route");
-            var ticket = new Cookie("wengine_vpn_ticketwebvpn_zju_edu_cn", ticket_value, "/", "webvpn.zju.edu.cn");
-            var route = new Cookie("route", route_value, "/", "webvpn.zju.edu.cn");
-            ticket.HttpOnly = true;
-            //×¢Èë»·½Ú
-            if (string.IsNullOrEmpty(ticket_value) || string.IsNullOrEmpty(route_value))
-            {
-                return false;
-            }
-            LoginService.vpn.Jar.Add(ticket);
-            LoginService.vpn.Jar.Add(route);
-            return true;
+            Flower.Play(FlowStatus.Fail, "IPè¢«é•œåƒç«™æ‹¦æˆª");
         }
-
-
-        private async Task<bool> ReloginVPN()
+        if (networkStatus == NetworkStatus.NoConnection)
         {
-            if (!PasswordManager.PasswordExists("VpnUserName") || !PasswordManager.PasswordExists("VpnPassWord"))
-            {
-                return false;
-            }
-            string id = PasswordManager.RetrievePassword("VpnUserName");
-            string pass = PasswordManager.RetrievePassword("VpnPassWord");
-            var res = await LoginService.vpn.LoginAsync(id, pass);
-            if (res.Status == VPNLoginStatus.Success) return true;
-            if (res.Status == VPNLoginStatus.NeedConfirm)
-            {
-                var confirm_res = await LoginService.vpn.ConfirmAsync();
-                if (confirm_res.Status == VPNLoginStatus.Success)
-                {
-                    return true;
-                }
-                else
-                {
-                    //±¨´í
-                    Flower.Play(FlowStatus.Fail, "VPNµÇÂ¼Ê§°Ü£¬±¨¸æ¿ª·¢Õß");
-                    return false;
-                }
-            }
-            if (res.Status == VPNLoginStatus.NeedCaptcha || res.Status == VPNLoginStatus.Error)
-            {
-                //±¨´í,VPNĞèÒªÖØĞÂµÇÂ¼
-                
-                return false;
-            }
+            Flower.Play(FlowStatus.Fail, "æ— äº’è”ç½‘è¿æ¥");
+        }
+    }
+    private bool SaveVpnToken()
+    {
+        var newTicket = LoginService.Vpn.Ticket;
+        var newRoute = LoginService.Vpn.Route;
+        var ticket = newTicket.Value;
+        var route = newRoute.Value;
+        if (string.IsNullOrEmpty(ticket) || (string.IsNullOrEmpty(route)))
+        {
+            //æŠ¥é”™
+            Flower.Play(FlowStatus.Fail, "æœªè·å–åˆ°å®Œæ•´VPNå‡­æ®");
             return false;
         }
 
-        private void Guide_Click(object sender, RoutedEventArgs e)
-        {
-            LoginPane.Visibility = Visibility.Collapsed;
-            GuidePane.Visibility = Visibility.Visible;
-            VpnPane.Visibility = Visibility.Collapsed;
-            string guidance = "> ÔÚĞ£ÍâÁ¬½ÓĞèÒªÅäÖÃÓ¦ÓÃµÄÄÚ½¨WebVPN,»òÕßÊ¹ÓÃ[ZJU Connect](https://github.com/Mythologyli/ZJU-Connect-for-Windows/releases)£¬´ò¿ªRVPN£¬²¢ÉèÖÃÏµÍ³´úÀí¡£\r\n\r\n  **Íü¼ÇÃÜÂë/ÎŞÕËºÅ£¿**\r\n\r\n½øÈë[CC98](https://www.cc98.org/logon)¹ÙÍø²Ù×÷¡£\r\n\r\n**Óöµ½ÎÊÌâ/ÏëÒªĞÂ¹¦ÄÜ?**\r\n\r\nÄã¿ÉÒÔÔÚÎ¢ÈíÉÌµê»ò[¿ª·¢½ø¶È¼ÇÂ¼Â¥](https://www.cc98.org/topic/6173309)·´À¡´ËÎÊÌâ¡£\r\n\r\nÄãÒ²¿ÉÒÔ¿ËÂ¡±¾Ó¦ÓÃ²Ö¿â£¬×ÔÓÉĞŞ¸ÄºÍ±àÒëĞÂµÄ·ÖÖ§¡£²»¹ı£¬ÔÚ·Ö·¢Ê±£¬Ó¦µ±¸æÖªËùÓĞµÄ¸Ä¶¯¡£\r\n\r\n**³ÉÎª¿ª·¢Õß**\r\n\r\n±¾Ó¦ÓÃÊ¹ÓÃ`Windows App SDK`,`C#`,`XAML`¹¹½¨¡£»¶Ó­ËùÓĞ¶Ô.NETÉúÌ¬¸ĞĞËÈ¤µÄuu¼ÓÈë±¾Ó¦ÓÃµÄ¿ª·¢£¬»¶Ó­ËùÓĞÊ¹ÓÃÕß¶Ô±¾Ó¦ÓÃUI¡¢¹¦ÄÜºÍ´úÂëÌá¹©½¨Òé¡£";
-            GuidePresenter.Text= guidance;
-        }
+        //æ›´æ–°ç¯èŠ‚
+        PasswordManager.SavePassword(ticket, "Ticket");
+        PasswordManager.SavePassword(route, "Route");
+        return true;
 
-        private async void OIDC_Click(object sender, RoutedEventArgs e)
+    }
+    private bool InjectTokenFromVault()
+    {
+        //æå–ç¯èŠ‚
+        var ticketValue = PasswordManager.RetrievePassword("Ticket");
+        var routeValue = PasswordManager.RetrievePassword("Route");
+        var ticket = new Cookie("wengine_vpn_ticketwebvpn_zju_edu_cn", ticketValue, "/", "webvpn.zju.edu.cn");
+        var route = new Cookie("route", routeValue, "/", "webvpn.zju.edu.cn");
+        ticket.HttpOnly = true;
+        //æ³¨å…¥ç¯èŠ‚
+        if (string.IsNullOrEmpty(ticketValue) || string.IsNullOrEmpty(routeValue))
         {
-            var status = await LoginService.vpn.CheckNetwork(false);
-            if (status == NetworkStatus.InCampus)
+            return false;
+        }
+        LoginService.Vpn.Jar.Add(ticket);
+        LoginService.Vpn.Jar.Add(route);
+        return true;
+    }
+
+
+    private async Task<bool> ReloginVpn()
+    {
+        if (!PasswordManager.PasswordExists("VpnUserName") || !PasswordManager.PasswordExists("VpnPassWord"))
+        {
+            return false;
+        }
+        var id = PasswordManager.RetrievePassword("VpnUserName");
+        var pass = PasswordManager.RetrievePassword("VpnPassWord");
+        var res = await LoginService.Vpn.LoginAsync(id, pass);
+        if (res.Status == VpnLoginStatus.Success) return true;
+        if (res.Status == VpnLoginStatus.NeedConfirm)
+        {
+            var confirmRes = await LoginService.Vpn.ConfirmAsync();
+            if (confirmRes.Status == VpnLoginStatus.Success)
             {
-                var oidc_service = new OpenID();
-                var Loop = oidc_service.GenerateAuthLoop();
-                PasswordManager.SavePassword(Loop.veri, "Verifier");
-                PasswordManager.SavePassword(Loop.state, "State");
-                await Launcher.LaunchUriAsync(new Uri(Loop.url));
-                await Task.Delay(2000);
-                Application.Current.Exit();
+                return true;
             }
             else
             {
-                Flower.Play(FlowStatus.Fail, "´ËµÇÂ¼·½Ê½ĞèÒªĞ£Ô°Íø");
+                //æŠ¥é”™
+                Flower.Play(FlowStatus.Fail, "VPNç™»å½•å¤±è´¥ï¼ŒæŠ¥å‘Šå¼€å‘è€…");
+                return false;
             }
         }
+        if (res.Status == VpnLoginStatus.NeedCaptcha || res.Status == VpnLoginStatus.Error)
+        {
+            //æŠ¥é”™,VPNéœ€è¦é‡æ–°ç™»å½•
+                
+            return false;
+        }
+        return false;
+    }
+
+    private void Guide_Click(object sender, RoutedEventArgs e)
+    {
+        LoginPane.Visibility = Visibility.Collapsed;
+        GuidePane.Visibility = Visibility.Visible;
+        VpnPane.Visibility = Visibility.Collapsed;
+        var guidance = "> åœ¨æ ¡å¤–è¿æ¥éœ€è¦é…ç½®åº”ç”¨çš„å†…å»ºWebVPN,æˆ–è€…ä½¿ç”¨[ZJU Connect](https://github.com/Mythologyli/ZJU-Connect-for-Windows/releases)ï¼Œæ‰“å¼€RVPNï¼Œå¹¶è®¾ç½®ç³»ç»Ÿä»£ç†ã€‚\r\n\r\n  **å¿˜è®°å¯†ç /æ— è´¦å·ï¼Ÿ**\r\n\r\nè¿›å…¥[CC98](https://www.cc98.org/logon)å®˜ç½‘æ“ä½œã€‚\r\n\r\n**é‡åˆ°é—®é¢˜/æƒ³è¦æ–°åŠŸèƒ½?**\r\n\r\nä½ å¯ä»¥åœ¨å¾®è½¯å•†åº—æˆ–[å¼€å‘è¿›åº¦è®°å½•æ¥¼](https://www.cc98.org/topic/6173309)åé¦ˆæ­¤é—®é¢˜ã€‚\r\n\r\nä½ ä¹Ÿå¯ä»¥å…‹éš†æœ¬åº”ç”¨ä»“åº“ï¼Œè‡ªç”±ä¿®æ”¹å’Œç¼–è¯‘æ–°çš„åˆ†æ”¯ã€‚ä¸è¿‡ï¼Œåœ¨åˆ†å‘æ—¶ï¼Œåº”å½“å‘ŠçŸ¥æ‰€æœ‰çš„æ”¹åŠ¨ã€‚\r\n\r\n**æˆä¸ºå¼€å‘è€…**\r\n\r\næœ¬åº”ç”¨ä½¿ç”¨`Windows App SDK`,`C#`,`XAML`æ„å»ºã€‚æ¬¢è¿æ‰€æœ‰å¯¹.NETç”Ÿæ€æ„Ÿå…´è¶£çš„uuåŠ å…¥æœ¬åº”ç”¨çš„å¼€å‘ï¼Œæ¬¢è¿æ‰€æœ‰ä½¿ç”¨è€…å¯¹æœ¬åº”ç”¨UIã€åŠŸèƒ½å’Œä»£ç æä¾›å»ºè®®ã€‚";
+        GuidePresenter.Text= guidance;
+    }
+
+    private async void OIDC_Click(object sender, RoutedEventArgs e)
+    {
+        var status = await LoginService.Vpn.CheckNetwork(false);
+        if (status == NetworkStatus.InCampus)
+        {
+            var oidcService = new OpenId();
+            var loop = oidcService.GenerateAuthLoop();
+            PasswordManager.SavePassword(loop.veri, "Verifier");
+            PasswordManager.SavePassword(loop.state, "State");
+            await Launcher.LaunchUriAsync(new(loop.url));
+            await Task.Delay(2000);
+            Application.Current.Exit();
+        }
+        else
+        {
+            Flower.Play(FlowStatus.Fail, "æ­¤ç™»å½•æ–¹å¼éœ€è¦æ ¡å›­ç½‘");
+        }
+    }
 
         
 
-        private void GuideBack_Click(object sender, RoutedEventArgs e)
-        {
-            GuidePresenter.Text = "";
-            LoginPane.Visibility = Visibility.Visible;
-            VpnPane.Visibility = Visibility.Collapsed;
-            GuidePane.Visibility = Visibility.Collapsed;
-        }
+    private void GuideBack_Click(object sender, RoutedEventArgs e)
+    {
+        GuidePresenter.Text = "";
+        LoginPane.Visibility = Visibility.Visible;
+        VpnPane.Visibility = Visibility.Collapsed;
+        GuidePane.Visibility = Visibility.Collapsed;
+    }
 
-        private void LinkToVpn_Click(object sender, RoutedEventArgs e)
+    private void LinkToVpn_Click(object sender, RoutedEventArgs e)
+    {
+        if (ValidationHelper.GetValue(Set, "IsVpnUsable") == "1")
         {
-            if (ValidationHelper.GetValue(Set, "IsVpnUsable") == "1")
-            {
-                Flower.Play(FlowStatus.Info, "ÒÑÅäÖÃVPN£¬ÎŞĞèÆäËû²Ù×÷");
-                return;
-            }
-            GuidePane.Visibility= Visibility.Collapsed;
-            VpnPane.Visibility = Visibility.Visible;
-            LoginPane.Visibility = Visibility.Collapsed;
+            Flower.Play(FlowStatus.Info, "å·²é…ç½®VPNï¼Œæ— éœ€å…¶ä»–æ“ä½œ");
+            return;
         }
+        GuidePane.Visibility= Visibility.Collapsed;
+        VpnPane.Visibility = Visibility.Visible;
+        LoginPane.Visibility = Visibility.Collapsed;
+    }
 
-        private void VpnBack_Click(object sender, RoutedEventArgs e)
-        {
-            GuidePane.Visibility = Visibility.Collapsed;
-            VpnPane.Visibility = Visibility.Collapsed;
-            LoginPane.Visibility = Visibility.Visible;
-        }
+    private void VpnBack_Click(object sender, RoutedEventArgs e)
+    {
+        GuidePane.Visibility = Visibility.Collapsed;
+        VpnPane.Visibility = Visibility.Collapsed;
+        LoginPane.Visibility = Visibility.Visible;
+    }
       
-        private  async void Link_Click(object sender, RoutedEventArgs e)
+    private  async void Link_Click(object sender, RoutedEventArgs e)
+    {
+        if (string.IsNullOrEmpty(idbox.Text) || string.IsNullOrEmpty(passbox.Password))
         {
-            if (string.IsNullOrEmpty(idbox.Text) || string.IsNullOrEmpty(passbox.Password))
-            {
-                //
-                Flower.Play(FlowStatus.Info, "ÇëÊäÈëÍêÕûÆ¾¾İ");
-                return;
-            }
-            Link.IsChecked = true;
-            try
-            {
-                await SetupVPN(idbox.Text, passbox.Password);
-            }
-            catch (Exception ex)
-            {
+            //
+            Flower.Play(FlowStatus.Info, "è¯·è¾“å…¥å®Œæ•´å‡­æ®");
+            return;
+        }
+        Link.IsChecked = true;
+        try
+        {
+            await SetupVpn(idbox.Text, passbox.Password);
+        }
+        catch (Exception ex)
+        {
+            Link.IsChecked = false;
+            Link.ShowError = true;
+            Flower.Play(FlowStatus.Fail, ex.Message);
+        }
+            
+    }
+    private async Task SetupVpn(string id,string pass)
+    {
+        var res = await LoginService.Vpn.LoginAsync(id, pass);
+        switch (res.Status)
+        {
+            case VpnLoginStatus.Success:
+                SaveToken(id, pass);
+                Link.IsChecked = false;
+                LoginService.Vpn.IsVpnEnabled = true;
+                GoBackOrLaunchApp();
+                break;
+            case VpnLoginStatus.Error:
                 Link.IsChecked = false;
                 Link.ShowError = true;
-                Flower.Play(FlowStatus.Fail, ex.Message);
-            }
-            
-        }
-        private async Task SetupVPN(string id,string pass)
-        {
-            var res = await LoginService.vpn.LoginAsync(id, pass);
-            switch (res.Status)
-            {
-                case VPNLoginStatus.Success:
+                Flower.Play(FlowStatus.Fail, res.Description);
+                break;
+            case VpnLoginStatus.NeedConfirm:
+                var confirmRes = await LoginService.Vpn.ConfirmAsync();
+                if (confirmRes.Status == VpnLoginStatus.Success)
+                {
                     SaveToken(id, pass);
                     Link.IsChecked = false;
-                    LoginService.vpn.IsVpnEnabled = true;
+                    LoginService.Vpn.IsVpnEnabled = true;
                     GoBackOrLaunchApp();
-                    break;
-                case VPNLoginStatus.Error:
-                    Link.IsChecked = false;
-                    Link.ShowError = true;
-                    Flower.Play(FlowStatus.Fail, res.Description);
-                    break;
-                case VPNLoginStatus.NeedConfirm:
-                    var confirm_res = await LoginService.vpn.ConfirmAsync();
-                    if (confirm_res.Status == VPNLoginStatus.Success)
-                    {
-                        SaveToken(id, pass);
-                        Link.IsChecked = false;
-                        LoginService.vpn.IsVpnEnabled = true;
-                        GoBackOrLaunchApp();
-                    }
-                    else
-                    {
-                        Link.IsChecked = false;
-                        Link.ShowError = true;
-                        Flower.Play(FlowStatus.Fail, res.Description);
-                    }
-                    break;
-                case VPNLoginStatus.NeedCaptcha:
-                    Link.IsChecked = false;
-                    de.Visibility = Visibility.Collapsed;
-                    //´ÓVpnService´¦Ö±½Óµ÷ÓÃ¡£
-                    string captchaId = LoginService.vpn.LastCaptchaId;
-                    long timeStamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
-                    string captchaUrl = $"{VpnService.Base}/captcha/{captchaId}.png?reload={timeStamp}";
-                    captcha.Source = new BitmapImage(new Uri(captchaUrl));
-                    captchabox.Visibility = Visibility.Visible;
-                    Flower.Play(FlowStatus.Fail, res.Message??"ĞèÒªÑéÖ¤Âë");
-                    break;
-                default:
-                    Link.IsChecked = false;
-                    Link.ShowError = true;
-                    Flower.Play(FlowStatus.Fail, res.Description);
-                    break;
-            }
-        }
-        private void SaveToken(string id,string pass)
-        {
-            Set.Values["IsVpnUsable"] = "1";
-            var ticket = LoginService.vpn.Ticket;
-            var route = LoginService.vpn.Route;
-            string ticket_value = ticket.Value;
-            string route_value = route.Value;
-            
-            PasswordManager.SavePassword(id, "VpnUserName");
-            PasswordManager.SavePassword(pass, "VpnPassWord");
-            if (!string.IsNullOrEmpty(ticket_value) && (!string.IsNullOrEmpty(route_value)))
-            {
-                PasswordManager.SavePassword(ticket_value, "Ticket");
-                PasswordManager.SavePassword(route_value, "Route");
-                Flower.Play(FlowStatus.Success, "ÒÑ±£´æVPNÆ¾¾İ");
-            }//±£´æÊ§°Ü»òÕßtokenÎª¿ÕÊ±£¬»á³öÏÖVPNÆôÓÃµ«ÕÒ²»µ½ÁîÅÆµÄÇé¿ö¡£
-            else
-            {
-                Flower.Play(FlowStatus.Fail, "Î´±£´æVPNÆ¾¾İ");
-            }
-        }
-        private void GoBackOrLaunchApp()
-        {
-            if (mode == 0)
-            {
-                VpnPane.Visibility = Visibility.Collapsed;
-                GuidePane.Visibility = Visibility.Collapsed;
-                LoginPane.Visibility = Visibility.Visible;
-            }
-            else
-            {
-                App.Current.AppMainWindow= new MainWindow();
-                App.Current.AppMainWindow .Activate();
-                this.DispatcherQueue.TryEnqueue(() =>
-                {
-                    this.Close();
-                });//³¢ÊÔĞŞ¸´¾ºÕùÌõ¼ş
-            }
-        }
-
-        private async void LinkToForum_Click(object sender, RoutedEventArgs e)
-        {
-            try
-            {
-                await InitializeNetwork();
-            }
-            catch(Exception ex)
-            {
-                await App.Logger.WriteAsync("Login", "ÍøÂç³õÊ¼»¯³ö´í", ex.Message);
-                debug("ÈÕÖ¾ÒÑ¼ÇÂ¼¡£");
-            }
-            
-        }
-        private void OpenPasswordLoginPane()
-        {
-            GuidePane.Visibility = Visibility.Collapsed;
-            VpnPane.Visibility = Visibility.Collapsed;
-            LoginPane.Visibility = Visibility.Collapsed;
-            PasswordLoginPane.Visibility = Visibility.Visible;
-        }
-        private void debug(string text)
-        {
-            AppNotification notification = new AppNotificationBuilder()
-                    .AddText("³ö´í")
-                    .AddText(text)
-                    .BuildNotification();
-            AppNotificationManager.Default.Show(notification);
-        }
-        private async void LoginWithPassword_Click(object sender, RoutedEventArgs e)
-        {
-            if (!string.IsNullOrEmpty(ccidbox.Text) && !string.IsNullOrEmpty(ccpassbox.Password))
-            {
-                LoginWithPassword.IsChecked = true;
-                var result = await LoginService.LoginAsync(ccidbox.Text, ccpassbox.Password);
-                LoginWithPassword.IsChecked = false;
-                if (!result.IsSuccess)
-                {
-                    //
-                    await App.Logger.WriteAsync("Login", "µÇÂ¼Ê§°Ü", result.Message);
-                    LoginWithPassword.ShowError = true;
-                    Flower.Play(FlowStatus.Fail,result.Message);
-                    return;
-                }
-                var token = result.Data;
-                if (token == null)
-                {
-                    //
-                    await App.Logger.WriteAsync("Login", "µÇÂ¼Ê§°Ü,ÁîÅÆÎª¿Õ", result.Message);
-                    LoginWithPassword.ShowError = true;
-                    Flower.Play(FlowStatus.Fail, "·¢Éú´íÎó¡£Çë±¨¸æ¿ª·¢Õß");
-                    return;
-                }
-                if (token.IsValid)
-                {
-                    InjectToken(token);
                 }
                 else
                 {
-                    await App.Logger.WriteAsync("Login", "µÇÂ¼Ê§°Ü", token.Message);
-                    LoginWithPassword.ShowError = true;
-                    Flower.Play(FlowStatus.Fail, token.Message);
-                    Set.Values["IsActive"] = "0";
+                    Link.IsChecked = false;
+                    Link.ShowError = true;
+                    Flower.Play(FlowStatus.Fail, res.Description);
                 }
-            }
-            else
-            {
-                Flower.Play(FlowStatus.Info, "Æ¾¾İ²»ÍêÕû");
-            }
+                break;
+            case VpnLoginStatus.NeedCaptcha:
+                Link.IsChecked = false;
+                de.Visibility = Visibility.Collapsed;
+                //ä»VpnServiceå¤„ç›´æ¥è°ƒç”¨ã€‚
+                var captchaId = LoginService.Vpn.LastCaptchaId;
+                var timeStamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+                var captchaUrl = $"{VpnService.Base}/captcha/{captchaId}.png?reload={timeStamp}";
+                captcha.Source = new BitmapImage(new(captchaUrl));
+                captchabox.Visibility = Visibility.Visible;
+                Flower.Play(FlowStatus.Fail, res.Message??"éœ€è¦éªŒè¯ç ");
+                break;
+            default:
+                Link.IsChecked = false;
+                Link.ShowError = true;
+                Flower.Play(FlowStatus.Fail, res.Description);
+                break;
         }
-        
-        private void InjectToken(AuthorizeResult result)
+    }
+    private void SaveToken(string id,string pass)
+    {
+        Set.Values["IsVpnUsable"] = "1";
+        var ticket = LoginService.Vpn.Ticket;
+        var route = LoginService.Vpn.Route;
+        var ticketValue = ticket.Value;
+        var routeValue = route.Value;
+            
+        PasswordManager.SavePassword(id, "VpnUserName");
+        PasswordManager.SavePassword(pass, "VpnPassWord");
+        if (!string.IsNullOrEmpty(ticketValue) && (!string.IsNullOrEmpty(routeValue)))
         {
-            //ÔÚ×¢ÈëÖ®Ç°£¬±ØĞëÈ·ÈÏIsValid==true
-            PasswordManager.SavePassword(result.AccessToken, "Access");
-            PasswordManager.SavePassword(result.RefreshToken, "Refresh");
-            LoginWithPassword.IsChecked = false;
-            Set.Values["IsActive"] = "2";
-            App.Current.AppMainWindow = new MainWindow();
-            App.Current.AppMainWindow.Activate();
-            this.DispatcherQueue.TryEnqueue(() =>
-            {
-                this.Close();
-            });
+            PasswordManager.SavePassword(ticketValue, "Ticket");
+            PasswordManager.SavePassword(routeValue, "Route");
+            Flower.Play(FlowStatus.Success, "å·²ä¿å­˜VPNå‡­æ®");
+        }//ä¿å­˜å¤±è´¥æˆ–è€…tokenä¸ºç©ºæ—¶ï¼Œä¼šå‡ºç°VPNå¯ç”¨ä½†æ‰¾ä¸åˆ°ä»¤ç‰Œçš„æƒ…å†µã€‚
+        else
+        {
+            Flower.Play(FlowStatus.Fail, "æœªä¿å­˜VPNå‡­æ®");
         }
-
-        private void PasswordLoginBack_Click(object sender, RoutedEventArgs e)
+    }
+    private void GoBackOrLaunchApp()
+    {
+        if (Mode == 0)
         {
-            PasswordLoginPane.Visibility = Visibility.Collapsed;
             VpnPane.Visibility = Visibility.Collapsed;
             GuidePane.Visibility = Visibility.Collapsed;
             LoginPane.Visibility = Visibility.Visible;
         }
-
-        private void captchabox_TextChanged(object sender, Microsoft.UI.Xaml.Controls.TextChangedEventArgs e)
+        else
         {
-            LoginService.vpn.CaptchaValue= captchabox.Text;
+            App.Current.AppMainWindow= new MainWindow();
+            App.Current.AppMainWindow .Activate();
+            this.DispatcherQueue.TryEnqueue(() =>
+            {
+                this.Close();
+            });//å°è¯•ä¿®å¤ç«äº‰æ¡ä»¶
         }
     }
-    
+
+    private async void LinkToForum_Click(object sender, RoutedEventArgs e)
+    {
+        try
+        {
+            await InitializeNetwork();
+        }
+        catch(Exception ex)
+        {
+            await App.Logger.WriteAsync("Login", "ç½‘ç»œåˆå§‹åŒ–å‡ºé”™", ex.Message);
+            Debug("æ—¥å¿—å·²è®°å½•ã€‚");
+        }
+            
+    }
+    private void OpenPasswordLoginPane()
+    {
+        GuidePane.Visibility = Visibility.Collapsed;
+        VpnPane.Visibility = Visibility.Collapsed;
+        LoginPane.Visibility = Visibility.Collapsed;
+        PasswordLoginPane.Visibility = Visibility.Visible;
+    }
+    private void Debug(string text)
+    {
+        var notification = new AppNotificationBuilder()
+            .AddText("å‡ºé”™")
+            .AddText(text)
+            .BuildNotification();
+        AppNotificationManager.Default.Show(notification);
+    }
+    private async void LoginWithPassword_Click(object sender, RoutedEventArgs e)
+    {
+        if (!string.IsNullOrEmpty(ccidbox.Text) && !string.IsNullOrEmpty(ccpassbox.Password))
+        {
+            LoginWithPassword.IsChecked = true;
+            var result = await LoginService.LoginAsync(ccidbox.Text, ccpassbox.Password);
+            LoginWithPassword.IsChecked = false;
+            if (!result.IsSuccess)
+            {
+                //
+                await App.Logger.WriteAsync("Login", "ç™»å½•å¤±è´¥", result.Message);
+                LoginWithPassword.ShowError = true;
+                Flower.Play(FlowStatus.Fail,result.Message);
+                return;
+            }
+            var token = result.Data;
+            if (token == null)
+            {
+                //
+                await App.Logger.WriteAsync("Login", "ç™»å½•å¤±è´¥,ä»¤ç‰Œä¸ºç©º", result.Message);
+                LoginWithPassword.ShowError = true;
+                Flower.Play(FlowStatus.Fail, "å‘ç”Ÿé”™è¯¯ã€‚è¯·æŠ¥å‘Šå¼€å‘è€…");
+                return;
+            }
+            if (token.IsSucceeded)
+            {
+                InjectToken(token);
+            }
+            else
+            {
+                await App.Logger.WriteAsync("Login", "ç™»å½•å¤±è´¥", token.Message);
+                LoginWithPassword.ShowError = true;
+                Flower.Play(FlowStatus.Fail, token.Message);
+                Set.Values["IsActive"] = "0";
+            }
+        }
+        else
+        {
+            Flower.Play(FlowStatus.Info, "å‡­æ®ä¸å®Œæ•´");
+        }
+    }
+        
+    private void InjectToken(AuthorizeResult result)
+    {
+        //åœ¨æ³¨å…¥ä¹‹å‰ï¼Œå¿…é¡»ç¡®è®¤IsValid==true
+        PasswordManager.SavePassword(result.AccessToken, "Access");
+        PasswordManager.SavePassword(result.RefreshToken, "Refresh");
+        LoginWithPassword.IsChecked = false;
+        Set.Values["IsActive"] = "2";
+        App.Current.AppMainWindow = new MainWindow();
+        App.Current.AppMainWindow.Activate();
+        this.DispatcherQueue.TryEnqueue(() =>
+        {
+            this.Close();
+        });
+    }
+
+    private void PasswordLoginBack_Click(object sender, RoutedEventArgs e)
+    {
+        PasswordLoginPane.Visibility = Visibility.Collapsed;
+        VpnPane.Visibility = Visibility.Collapsed;
+        GuidePane.Visibility = Visibility.Collapsed;
+        LoginPane.Visibility = Visibility.Visible;
+    }
+
+    private void captchabox_TextChanged(object sender, Microsoft.UI.Xaml.Controls.TextChangedEventArgs e)
+    {
+        LoginService.Vpn.CaptchaValue= captchabox.Text;
+    }
 }

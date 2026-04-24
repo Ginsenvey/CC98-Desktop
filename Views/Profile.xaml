@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Page
     x:Class="CC98.Profile"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
@@ -37,18 +37,18 @@
                     <Border x:Name="Picture" Width="90" Height="90" Grid.Row="0" Grid.Column="0" HorizontalAlignment="Left" VerticalAlignment="Top" CornerRadius="6" >
                         <PersonPicture Width="90" Height="90" x:Name="MyProfile" />
                     </Border>
-                    <TextBlock Grid.Row="1" Grid.Column="0" FontSize="35" FontWeight="Bold" Text="{x:Bind profile.Name,Mode=OneWay}" Foreground="#4d9891" VerticalAlignment="Center" IsTextSelectionEnabled="True"></TextBlock>
+                    <TextBlock Grid.Row="1" Grid.Column="0" FontSize="35" FontWeight="Bold" Text="{x:Bind Profile.Name,Mode=OneWay}" Foreground="#4d9891" VerticalAlignment="Center" IsTextSelectionEnabled="True"></TextBlock>
 
                     <StackPanel Orientation="Horizontal" Grid.Row="2" Grid.Column="0" Spacing="5" >
                         <HyperlinkButton  Click="FollowList_Click" Tag="followee">
                             <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="{x:Bind profile.FollowCount,Mode=OneWay}"  FontSize="16" Margin="0,0,5,0"></TextBlock>
+                                <TextBlock Text="{x:Bind Profile.FollowCount,Mode=OneWay}"  FontSize="16" Margin="0,0,5,0"></TextBlock>
                                 <TextBlock Text="关注"  FontSize="16" Foreground="{ThemeResource TextFillColorSecondaryBrush}"></TextBlock>
                             </StackPanel>
                         </HyperlinkButton>
                         <HyperlinkButton Click="FollowList_Click" Tag="follower"> 
                             <StackPanel Orientation="Horizontal">
-                                <TextBlock Text="{x:Bind profile.FanCount,Mode=OneWay}"  FontSize="16" Margin="0,0,5,0"></TextBlock>
+                                <TextBlock Text="{x:Bind Profile.FanCount,Mode=OneWay}"  FontSize="16" Margin="0,0,5,0"></TextBlock>
                                 <TextBlock Text="粉丝"  FontSize="16" Foreground="{ThemeResource TextFillColorSecondaryBrush}"></TextBlock>
                             </StackPanel>
                         </HyperlinkButton>
@@ -69,30 +69,30 @@
                         <TextBlock Text="财富值"  Grid.Row="0" Grid.Column="0" Foreground="{ThemeResource TextFillColorSecondaryBrush}" x:Name="WealthInfo"></TextBlock>
                         <TextBlock Text="发帖数" Grid.Row="1" Grid.Column="0" Foreground="{ThemeResource TextFillColorSecondaryBrush}"></TextBlock>
                         <TextBlock Text="CCID" Grid.Row="2" Grid.Column="0" Foreground="{ThemeResource TextFillColorSecondaryBrush}"></TextBlock>
-                        <TextBlock Text="{x:Bind profile.Wealth,Mode=OneWay}" Grid.Row="0" Grid.Column="1" ></TextBlock>
-                        <TextBlock Text="{x:Bind profile.PostCount,Mode=OneWay}" Grid.Row="1" Grid.Column="1" ></TextBlock>
-                        <TextBlock Text="{x:Bind profile.Id,Mode=OneWay}" Grid.Row="2" Grid.Column="1" IsTextSelectionEnabled="True"></TextBlock>
+                        <TextBlock Text="{x:Bind Profile.Wealth,Mode=OneWay}" Grid.Row="0" Grid.Column="1" ></TextBlock>
+                        <TextBlock Text="{x:Bind Profile.PostCount,Mode=OneWay}" Grid.Row="1" Grid.Column="1" ></TextBlock>
+                        <TextBlock Text="{x:Bind Profile.Id,Mode=OneWay}" Grid.Row="2" Grid.Column="1" IsTextSelectionEnabled="True"></TextBlock>
                         <TextBlock Text="风评" Grid.Row="0" Grid.Column="2" Foreground="{ThemeResource TextFillColorSecondaryBrush}"></TextBlock>
                         <TextBlock Text="注册时间" Grid.Row="1" Grid.Column="2" Foreground="{ThemeResource TextFillColorSecondaryBrush}"></TextBlock>
                         <TextBlock Text="最后登录" Grid.Row="2" Grid.Column="2" Foreground="{ThemeResource TextFillColorSecondaryBrush}"></TextBlock>
-                        <TextBlock Text="{x:Bind profile.Popularity,Mode=OneWay}" Grid.Row="0" Grid.Column="3" ></TextBlock>
-                        <TextBlock Text="{x:Bind profile.RegisterTime,Mode=OneWay}" Grid.Row="1" Grid.Column="3" ></TextBlock>
-                        <TextBlock Text="{x:Bind profile.LastLogOnTime,Mode=OneWay}" Grid.Row="2" Grid.Column="3" ></TextBlock>
+                        <TextBlock Text="{x:Bind Profile.Popularity,Mode=OneWay}" Grid.Row="0" Grid.Column="3" ></TextBlock>
+                        <TextBlock Text="{x:Bind Profile.RegisterTime,Mode=OneWay}" Grid.Row="1" Grid.Column="3" ></TextBlock>
+                        <TextBlock Text="{x:Bind Profile.LastLogOnTime,Mode=OneWay}" Grid.Row="2" Grid.Column="3" ></TextBlock>
                     </Grid>
                     <StackPanel Grid.Column="1" Grid.Row="2" Orientation="Horizontal" Spacing="10">
-                        <Button Visibility="{x:Bind profile.IsOthers,Converter={StaticResource BoolToVisibility},Mode=OneWay}" x:Name="StartChat" Click="StartChat_Click">
+                        <Button Visibility="{x:Bind Profile.IsOthers,Converter={StaticResource BoolToVisibility},Mode=OneWay}" x:Name="StartChat" Click="StartChat_Click">
                             <StackPanel Orientation="Horizontal" Spacing="5">
                                 <ic:SymbolIcon Symbol="Chat"  FontSize="15"></ic:SymbolIcon>
                                 <TextBlock Text="私信"></TextBlock>
                             </StackPanel>
                         </Button>
-                        <Button x:Name="Follow" Visibility="{x:Bind profile.IsOthers,Converter={StaticResource BoolToVisibility},Mode=OneWay}" Click="Follow_Click">
+                        <Button x:Name="Follow" Visibility="{x:Bind Profile.IsOthers,Converter={StaticResource BoolToVisibility},Mode=OneWay}" Click="Follow_Click">
                             <StackPanel Orientation="Horizontal" Spacing="5">
-                                <ic:SymbolIcon Symbol="Heart"  IconVariant="{x:Bind profile.IsFollowing,Converter={StaticResource BoolToVariant},Mode=OneWay}" FontSize="15"></ic:SymbolIcon>
-                                <TextBlock Text="{x:Bind profile.IsFollowing,Converter={StaticResource FollowConverter},Mode=OneWay}" ></TextBlock>
+                                <ic:SymbolIcon Symbol="Heart"  IconVariant="{x:Bind Profile.IsFollowing,Converter={StaticResource BoolToVariant},Mode=OneWay}" FontSize="15"></ic:SymbolIcon>
+                                <TextBlock Text="{x:Bind Profile.IsFollowing,Converter={StaticResource FollowConverter},Mode=OneWay}" ></TextBlock>
                             </StackPanel>
                         </Button>
-                        <Border  Visibility="{x:Bind profile.IsOthers,Converter={StaticResource ReBoolToVisibility},Mode=OneWay}" BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}" BorderThickness="1" CornerRadius="4" Padding="5,3,5,3">
+                        <Border  Visibility="{x:Bind Profile.IsOthers,Converter={StaticResource ReBoolToVisibility},Mode=OneWay}" BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}" BorderThickness="1" CornerRadius="4" Padding="5,3,5,3">
                             <StackPanel Orientation="Horizontal" Spacing="5">
                                 <ic:SymbolIcon Symbol="CalendarCheckmarkSparkle"  IconVariant="Regular" FontSize="16" x:Name="SignStatusIcon"></ic:SymbolIcon>
                                 <TextBlock x:Name="SignStatus" Text="未签到" VerticalAlignment="Center"></TextBlock>
@@ -103,11 +103,11 @@
                 <TextBlock Text="签名档" FontSize="23" FontWeight="Bold" Foreground="#A9A9A9" Margin="0,5,0,0"></TextBlock>
                 
                 <Border Height="1" BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}" HorizontalAlignment="Stretch" BorderThickness="1"></Border>
-                <ubb:UbbTextBlock x:Name="SignBoard" UbbText="{x:Bind profile.SignatureCode,Mode=OneWay}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" BoldFontFamily="{StaticResource HarmonySansBold}" QuoteBackground="{ThemeResource QuoteBackgroundBrush}"></ubb:UbbTextBlock>
+                <ubb:UbbTextBlock x:Name="SignBoard" UbbText="{x:Bind Profile.SignatureCode,Mode=OneWay}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" BoldFontFamily="{StaticResource HarmonySansBold}" QuoteBackground="{ThemeResource QuoteBackgroundBrush}"></ubb:UbbTextBlock>
                 <TextBlock Text="主题" FontSize="23" FontWeight="Bold" Foreground="#A9A9A9" x:Name="de" IsTextSelectionEnabled="True"></TextBlock>
                 <Border Height="1" BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}" HorizontalAlignment="Stretch" BorderThickness="1"></Border>
                 <Border Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1" CornerRadius="5">
-                    <ItemsRepeater x:Name="RecentTopicRepeater"  ItemsSource="{x:Bind recentTopics}" ElementPrepared="RecentTopicRepeater_ElementPrepared">
+                    <ItemsRepeater x:Name="RecentTopicRepeater"  ItemsSource="{x:Bind RecentTopics}" ElementPrepared="RecentTopicRepeater_ElementPrepared">
                         <ItemsRepeater.ItemTemplate>
                             <DataTemplate x:DataType="obj:SimpleTopicInfo">
                                 <HyperlinkButton HorizontalContentAlignment="Stretch" HorizontalAlignment="Stretch" CornerRadius="0" x:Name="TileContent" Click="STileButton_Click" DataContext="{x:Bind}">

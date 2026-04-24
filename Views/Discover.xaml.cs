@@ -1,141 +1,124 @@
-
-using CC98.Controls;
-using CC98.Kernel;
+Ôªøusing CC98.Kernel;
 using CC98.Kernel.ApiScope;
 using CC98.Objects;
 using CC98.Services.Extensions;
-using CC98.Share.Controls.Primitives;
 using DevWinUI;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml.Controls.Primitives;
-using Microsoft.UI.Xaml.Data;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
-using Microsoft.UI.Xaml.Media.Animation;
-using Microsoft.UI.Xaml.Media.Imaging;
 using Microsoft.UI.Xaml.Navigation;
-using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.IO;
 using System.Linq;
 using System.Net;
-using System.Net.Http.Headers;
-using System.Net.Http.Json;
-using System.Net.WebSockets;
-using System.Runtime.InteropServices.WindowsRuntime;
 using System.Threading.Tasks;
-using Windows.ApplicationModel.DataTransfer;
-using Windows.Foundation;
-using Windows.Foundation.Collections;
 using Windows.Storage;
 using CC98.Services;
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
 
-namespace CC98
+namespace CC98;
+
+/// <summary>
+/// An empty page that can be used on its own or navigated to within a Frame.
+/// </summary>
+public sealed partial class Discover : Page
 {
-    /// <summary>
-    /// An empty page that can be used on its own or navigated to within a Frame.
-    /// </summary>
-    public sealed partial class Discover : Page
+    public ApplicationDataContainer Set=ApplicationData.Current.LocalSettings;
+    public ObservableCollection<TopicInfo> Topics=[];
+    public HashSet<int> TopicIds = [];
+    public ObservableCollection<SimpleTopicInfo> RandomTopics = [];
+    public Increment Increment = new(20);
+    public Discover()
     {
-        public ApplicationDataContainer Set=ApplicationData.Current.LocalSettings;
-        public ObservableCollection<TopicInfo> topics=[];
-        public HashSet<int> topicIds = [];
-        public ObservableCollection<SimpleTopicInfo> randomTopics = [];
-        public Increment increment = new(20);
-        public Discover()
-        {
-            this.InitializeComponent();
-            SizeChanged += Discover_SizeChanged;
-        }
+        this.InitializeComponent();
+        SizeChanged += Discover_SizeChanged;
+    }
 
-        private void Discover_SizeChanged(object sender, SizeChangedEventArgs e)
-        {
-            var size = e.NewSize;
-            bool isWidthEnough = size.Width > 800;
-            RefRandomTiles.Visibility = isWidthEnough ? Visibility.Visible : Visibility.Collapsed;
-            RandomTopicViewer.Visibility = isWidthEnough ? Visibility.Visible : Visibility.Collapsed;
-            Grid.SetColumnSpan(NewTopicViewer, isWidthEnough ? 1 : 2);
-        }
+    private void Discover_SizeChanged(object sender, SizeChangedEventArgs e)
+    {
+        var size = e.NewSize;
+        var isWidthEnough = size.Width > 800;
+        RefRandomTiles.Visibility = isWidthEnough ? Visibility.Visible : Visibility.Collapsed;
+        RandomTopicViewer.Visibility = isWidthEnough ? Visibility.Visible : Visibility.Collapsed;
+        Grid.SetColumnSpan(NewTopicViewer, isWidthEnough ? 1 : 2);
+    }
 
-        protected override async void OnNavigatedTo(NavigationEventArgs e)
-        {
-            base.OnNavigatedTo(e);
-            await GetNewTopic();
-            await GetRandomTile();
-        }
+    protected override async void OnNavigatedTo(NavigationEventArgs e)
+    {
+        base.OnNavigatedTo(e);
+        await GetNewTopic();
+        await GetRandomTile();
+    }
 
-        protected override void OnNavigatedFrom(NavigationEventArgs e)
-        {
-            base.OnNavigatedFrom(e);
-            SizeChanged-= Discover_SizeChanged;
-        }
+    protected override void OnNavigatedFrom(NavigationEventArgs e)
+    {
+        base.OnNavigatedFrom(e);
+        SizeChanged-= Discover_SizeChanged;
+    }
         
-        private async Task<bool> GetNewTopic()
+    private async Task<bool> GetNewTopic()
+    {
+        var newTopicUrl = ApiEndpoints.Topic.NewTopicList(Increment.StartIndex);
+        var newTopicResult = await RequestSender.Fetch<List<TopicInfo>>(newTopicUrl);
+        if (!newTopicResult.IsSuccess || newTopicResult.Data == null)
         {
-            string newTopicUrl = ApiEndpoints.Topic.NewTopicList(increment.startIndex);
-            var newTopicResult = await RequestSender.Fetch<List<TopicInfo>>(newTopicUrl);
-            if (!newTopicResult.IsSuccess || newTopicResult.Data == null)
-            {
-                //∫ˆ¬‘º”‘ÿπ˝øÏ±®¥Ì
-                if (newTopicResult.StatusCode == (int)HttpStatusCode.Forbidden) return false;
-                Flower.Play(FlowStatus.Fail,newTopicResult.Message);
-                await App.Logger.WriteAsync("Discover", "º”‘ÿ–¬Ã˚ ß∞‹", newTopicResult.Message);
-                return false;
-            }
-            var data= newTopicResult.Data;
-            increment.hasMore = data.Count == increment.pageSize;
-            var param = string.Join("&", data.Where(x => !x.IsAnonymous && x.UserId.HasValue).Select(x => $"id={x.UserId}").ToHashSet());
-            string userInfoUrl = ApiEndpoints.User.BasicUserInfoList(param);
-            var userInfoResult = await RequestSender.Fetch<List<BasicUserInfo>>(userInfoUrl);
-            if (!userInfoResult.IsSuccess || userInfoResult.Data == null)
-            {
-                //±®¥Ì
-                Flower.Play(FlowStatus.Fail, "ªÒ»°”√ªßÕ∑œÒ≥ˆ¥Ì");
-            }
-            var userInfoList = userInfoResult.Data;
-            foreach(var topic in data)
-            {
-                if (topic.IsAnonymous)
-                {
-                    topic.PortraitUrl = "ms-appx:///Assets/hide.gif";
-                    //Ã¯π˝
-                    continue;
-                }
-                var user = userInfoList?.First(x => x.Id == topic.UserId);
-                if (user != null)
-                {
-                    topic.PortraitUrl = user.PortraitUrl;
-                }
-            }
-            data = [.. data.Where(x => !topicIds.Contains(x.Id))];
-            topics.AddRange(data);   
-            topicIds.AddRange(data.Select(x => x.Id));
-            return true;
+            //ÂøΩÁï•Âä†ËΩΩËøáÂø´Êä•Èîô
+            if (newTopicResult.StatusCode == (int)HttpStatusCode.Forbidden) return false;
+            Flower.Play(FlowStatus.Fail,newTopicResult.Message);
+            await App.Logger.WriteAsync("Discover", "Âä†ËΩΩÊñ∞Â∏ñÂ§±Ë¥•", newTopicResult.Message);
+            return false;
         }
+        var data= newTopicResult.Data;
+        Increment.HasMore = data.Count == Increment.PageSize;
+        var param = string.Join("&", data.Where(x => !x.IsAnonymous && x.UserId.HasValue).Select(x => $"id={x.UserId}").ToHashSet());
+        var userInfoUrl = ApiEndpoints.User.BasicUserInfoList(param);
+        var userInfoResult = await RequestSender.Fetch<List<BasicUserInfo>>(userInfoUrl);
+        if (!userInfoResult.IsSuccess || userInfoResult.Data == null)
+        {
+            //Êä•Èîô
+            Flower.Play(FlowStatus.Fail, "Ëé∑ÂèñÁî®Êà∑Â§¥ÂÉèÂá∫Èîô");
+        }
+        var userInfoList = userInfoResult.Data;
+        foreach(var topic in data)
+        {
+            if (topic.IsAnonymous)
+            {
+                topic.PortraitUrl = "ms-appx:///Assets/hide.gif";
+                //Ë∑≥Ëøá
+                continue;
+            }
+            var user = userInfoList?.First(x => x.Id == topic.UserId);
+            if (user != null)
+            {
+                topic.PortraitUrl = user.PortraitUrl;
+            }
+        }
+        data = [.. data.Where(x => !TopicIds.Contains(x.Id))];
+        Topics.AddRange(data);   
+        TopicIds.AddRange(data.Select(x => x.Id));
+        return true;
+    }
 
         
-        private async Task GetRandomTile()
+    private async Task GetRandomTile()
+    {
+        var randomTopicUrl = ApiEndpoints.Topic.RandomTopicList();
+        var randomTopicResult = await RequestSender.Fetch<List<SimpleTopicInfo>>(randomTopicUrl);
+        if (!randomTopicResult.IsSuccess || randomTopicResult.Data == null)
         {
-            string randomTopicUrl = ApiEndpoints.Topic.RandomTopicList();
-            var randomTopicResult = await RequestSender.Fetch<List<SimpleTopicInfo>>(randomTopicUrl);
-            if (!randomTopicResult.IsSuccess || randomTopicResult.Data == null)
-            {
-                return;
-            }
-            var data = randomTopicResult.Data;
-            randomTopics.AddRange(data);
+            return;
         }
+        var data = randomTopicResult.Data;
+        RandomTopics.AddRange(data);
+    }
 
-        private async void RefRandomTiles_Click(object sender, RoutedEventArgs e)
-        {
-            randomTopics.Clear();
-            await GetRandomTile();
-        }
+    private async void RefRandomTiles_Click(object sender, RoutedEventArgs e)
+    {
+        RandomTopics.Clear();
+        await GetRandomTile();
+    }
 
         
 
@@ -143,58 +126,57 @@ namespace CC98
 
         
 
-        private void RandomPost_Click(object sender, RoutedEventArgs e)
+    private void RandomPost_Click(object sender, RoutedEventArgs e)
+    {
+        var h = sender as HyperlinkButton;
+        if (h != null)
         {
-            var h = sender as HyperlinkButton;
-            if (h != null)
+            var p=h?.DataContext as SimpleTopicInfo;
+            if(p != null)
             {
-                var p=h?.DataContext as SimpleTopicInfo;
-                if(p != null)
-                {
-                    var param = new TopicNavigationInfo { TopicId = p.Id };
-                    Frame.Navigate(typeof(Topic),param);
-                }
+                var param = new TopicNavigationInfo { TopicId = p.Id };
+                Frame.Navigate(typeof(Topic),param);
             }
         }
+    }
 
      
 
    
 
-        private async void ItemsRepeater_ElementPrepared(ItemsRepeater sender, ItemsRepeaterElementPreparedEventArgs args)
-        {
-            await increment.LoadMore(args.Index, GetNewTopic);
-        }
+    private async void ItemsRepeater_ElementPrepared(ItemsRepeater sender, ItemsRepeaterElementPreparedEventArgs args)
+    {
+        await Increment.LoadMore(args.Index, GetNewTopic);
+    }
 
        
 
-        private void ContentCard_PointerEntered(object sender, PointerRoutedEventArgs e)
-        {
-            var h = sender as Grid;
-            var translate = h?.RenderTransform as TranslateTransform;
-            UIEx.AnimateCard(translate!, 0, -5); // œÚ…œ∑Ω“∆∂Ø
-        }
+    private void ContentCard_PointerEntered(object sender, PointerRoutedEventArgs e)
+    {
+        var h = sender as Grid;
+        var translate = h?.RenderTransform as TranslateTransform;
+        UiEx.AnimateCard(translate!, 0, -5); // Âêë‰∏äÊñπÁßªÂä®
+    }
 
-        private void ContentCard_PointerExited(object sender, PointerRoutedEventArgs e)
-        {
-            var h = sender as Grid;
-            var translate = h?.RenderTransform as TranslateTransform;
-            UIEx.AnimateCard(translate!, 0, 0); // ª÷∏¥‘≠Œª
-        }
+    private void ContentCard_PointerExited(object sender, PointerRoutedEventArgs e)
+    {
+        var h = sender as Grid;
+        var translate = h?.RenderTransform as TranslateTransform;
+        UiEx.AnimateCard(translate!, 0, 0); // ÊÅ¢Â§çÂéü‰Ωç
+    }
         
 
-        private void ContentCard_Tapped(object sender, TappedRoutedEventArgs e)
-        {
-            var h = sender as Grid;
-            var tag = h?.Tag;
-            if (tag == null) return;
-            var param = new TopicNavigationInfo { TopicId = tag.ToInt() };
-            Frame.Navigate(typeof(Topic), param);
-        }
+    private void ContentCard_Tapped(object sender, TappedRoutedEventArgs e)
+    {
+        var h = sender as Grid;
+        var tag = h?.Tag;
+        if (tag == null) return;
+        var param = new TopicNavigationInfo { TopicId = tag.ToInt() };
+        Frame.Navigate(typeof(Topic), param);
+    }
 
-        private void ContentCard_Loaded(object sender, RoutedEventArgs e)
-        {
+    private void ContentCard_Loaded(object sender, RoutedEventArgs e)
+    {
 
-        }
-    } 
+    }
 }

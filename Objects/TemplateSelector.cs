@@ -1,5 +1,4 @@
-﻿using CC98.Objects;
-using Microsoft.UI.Xaml;
+﻿using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 
 namespace CC98.Objects;

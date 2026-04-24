@@ -1,220 +1,195 @@
-using CC98.Kernel;
+Ôªøusing CC98.Kernel;
 using CC98.Kernel.ApiScope;
-using CC98.Kernel.UserExperience;
 using CC98.Objects;
 using CC98.Services.Extensions;
-using CommunityToolkit.Mvvm.ComponentModel;
 using DevWinUI;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml.Controls.Primitives;
-using Microsoft.UI.Xaml.Data;
-using Microsoft.UI.Xaml.Input;
-using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Navigation;
-using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.ComponentModel;
-using System.ComponentModel.Design.Serialization;
-using System.IO;
 using System.Linq;
-using System.Linq.Expressions;
 using System.Net.Http;
-using System.Runtime.InteropServices.WindowsRuntime;
 using System.Text;
-using System.Text.Json.Serialization;
-using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using Windows.ApplicationModel.DataTransfer;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
 
-namespace CC98
+namespace CC98;
 
+/// <summary>
+/// An empty page that can be used on its own or navigated to within a Frame.
+/// </summary>
+public sealed partial class Chat : Page
 {
-    /// <summary>
-    /// An empty page that can be used on its own or navigated to within a Frame.
-    /// </summary>
-    public sealed partial class Chat : Page
+    public ObservableCollection<ChatInfo> ChatInfoList = new();
+    public ObservableCollection<ChatMessage> Messages = new();
+    //ÊòØÂê¶Êù•Ëá™ProfileÈ°µÈù¢ÁöÑÁßÅ‰ø°Ë∑≥ËΩ¨ÂäüËÉΩ
+    public bool HasTarget = false;
+    public ChatInfo TargetUserInfo = new();
+    public int CurrentUserId = 0;
+    public Increment UserIncrement = new();
+    public Increment ChatHistoryIncrement = new();
+    public Chat()
     {
-        public ObservableCollection<ChatInfo> chatInfoList = new();
-        public ObservableCollection<ChatMessage> messages = new();
-        // «∑Ò¿¥◊‘Profile“≥√ÊµƒÀΩ–≈Ã¯◊™π¶ƒ‹
-        public bool hasTarget = false;
-        public ChatInfo targetUserInfo = new();
-        public int currentUserId = 0;
-        public Increment userIncrement = new();
-        public Increment chatHistoryIncrement = new();
-        public Chat()
+        this.InitializeComponent();
+    }
+
+    protected override async void OnNavigatedTo(NavigationEventArgs e)
+    {
+        base.OnNavigatedTo(e);
+        var args = e.TryGetParameter<MessageNavigationInfo>();
+        if (args == null) return;
+        HasTarget = args.HasTarget;
+        if (HasTarget)//Áî±ÁßÅ‰ø°ÂäüËÉΩË∑≥ËΩ¨
         {
-            this.InitializeComponent();
+            var info = args.ChatUserInfo;
+            if (info != null)
+            {
+                TargetUserInfo = info;//Ëé∑ÂèñË¶ÅÁßÅ‰ø°ÁöÑÂØπË±°
+            }
+        }
+        await GetRecent();
+        if (HasTarget)
+        {
+            StartChat();
+        }
+        else
+        {
+            UserList.SelectedIndex = 0;
         }
 
-        protected override async void OnNavigatedTo(NavigationEventArgs e)
+    }
+    //Áî®‰∫éÊ∑ªÂä†ÁõÆÊ†áÁî®Êà∑Âà∞ËÅäÂ§©ÂàóË°®ÔºåÂπ∂ÊâßË°åÈÄâ‰∏≠
+    private void StartChat()
+    {
+        var list = ChatInfoList.Select(x => x.UserId);
+        if (list.Contains(TargetUserInfo.UserId))
         {
-            base.OnNavigatedTo(e);
-            var args = e.TryGetParameter<MessageNavigationInfo>();
-            if (args == null) return;
-            hasTarget = args.HasTarget;
-            if (hasTarget)//”…ÀΩ–≈π¶ƒ‹Ã¯◊™
-            {
-                var info = args.ChatUserInfo;
-                if (info != null)
-                {
-                    targetUserInfo = info;//ªÒ»°“™ÀΩ–≈µƒ∂‘œÛ
-                }
-            }
-            await GetRecent();
-            if (hasTarget)
-            {
-                StartChat();
-            }
-            else
-            {
-                UserList.SelectedIndex = 0;
-            }
-
+            UserList.SelectedIndex = ChatInfoList.ToList().FindIndex(x => x.UserId == TargetUserInfo.UserId);
         }
-        //”√”⁄ÃÌº”ƒø±Í”√ªßµΩ¡ƒÃÏ¡–±Ì£¨≤¢÷¥––—°÷–
-        private void StartChat()
+        else
         {
-            var list = chatInfoList.Select(x => x.UserId);
-            if (list.Contains(targetUserInfo.UserId))
-            {
-                UserList.SelectedIndex = chatInfoList.ToList().FindIndex(x => x.UserId == targetUserInfo.UserId);
-            }
-            else
-            {
-                chatInfoList.Insert(0, targetUserInfo);
-                UserList.SelectedIndex = 0;
-            }
+            ChatInfoList.Insert(0, TargetUserInfo);
+            UserList.SelectedIndex = 0;
         }
-        private async void ContactRepeater_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    }
+    private async void ContactRepeater_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        var i = UserList.SelectedIndex;
+        if (i > -1)
         {
-            int i = UserList.SelectedIndex;
-            if (i > -1)
-            {
-                chatHistoryIncrement.Clear();
-                currentUserId = chatInfoList[i].UserId;
-                await RefreshMessageList();
-            }
-
-        }
-        private async Task<bool> GetRecent()
-        {
-            string chatInfoUrl = ApiEndpoints.User.RecentChatUserList(userIncrement.startIndex);
-            var chatInfoResult = await RequestSender.Fetch<List<ChatInfo>>(chatInfoUrl);
-            if (!chatInfoResult.IsSuccess || chatInfoResult.Data == null)
-            {
-                //
-                return false;
-            }
-            var data = chatInfoResult.Data;
-
-            var param = string.Join("&", data.Select(x => $"id={x.UserId}").ToHashSet());
-            string userInfoUrl = ApiEndpoints.User.BasicUserInfoList(param);
-            var userInfoResult = await RequestSender.Fetch<List<BasicUserInfo>>(userInfoUrl);
-            if (!userInfoResult.IsSuccess || userInfoResult.Data == null)
-            {
-                //±®¥Ì
-                return false;
-            }
-
-            var userInfoList = userInfoResult.Data;
-            foreach (var info in data)
-            {
-                var user = userInfoList.First(x => x.Id == info.UserId);
-                if (user != null)
-                {
-                    info.Name = user.Name;
-                    info.PortraitUrl = user.PortraitUrl;
-                }
-            }
-            userIncrement.hasMore = data.Count == chatHistoryIncrement.pageSize;
-            chatInfoList.AddRange(data);
-            return true;
-        }
-        
-        private async Task<bool> GetMessageList()
-        {
-            string messageUrl = ApiEndpoints.User.ChatHistory(currentUserId, chatHistoryIncrement.startIndex);
-            var messageResult = await RequestSender.Fetch<List<ChatMessage>>(messageUrl);
-            if (!messageResult.IsSuccess)
-            {
-                //
-                return false;
-            }
-            if(messageResult.Data == null)
-            {
-                //
-                return false;
-            }
-            var data = messageResult.Data;
-            chatHistoryIncrement.hasMore= data.Count == chatHistoryIncrement.pageSize;
-            
-            foreach(var message in data)
-            {
-                message.IsMe = message.ReceiverId == currentUserId;
-                messages.Insert(0, message);
-            }
-            return true;
-        }
-        
-        
-        private async Task RefreshMessageList()
-        {
-            messages.Clear();
-            chatHistoryIncrement.Clear();
-            await GetMessageList();
-        }
-        
-        private async void More_Click(object sender, RoutedEventArgs e)
-        {
-            await chatHistoryIncrement.LoadNextPage(GetMessageList);
-        }
-        
-        private async void Send_Click(object sender, RoutedEventArgs e)
-        {
-            if (string.IsNullOrEmpty(ReplyBody.Text))
-            {
-                return;
-            }
-            Send.IsEnabled = false;
-            string url = ApiEndpoints.User.SendPrivateMessage;
-            var post = new PrivateMessage()
-            {
-                ReceiverId = currentUserId,
-                Content = ReplyBody.Text
-            };
-            string postText = JsonSerialize.Serialize(post);
-            var requestBody = new StringContent(postText, Encoding.UTF8, "application/json");
-            var res = await RequestSender.Submit<object>(url, requestBody);
-            if (res.IsSuccess)
-            {
-                await RefreshMessageList();
-            }
-            else
-            {
-                Flower.Play(FlowStatus.Fail, "∑¢ÀÕªÿ∏¥ ß∞‹");
-            }
-            Send.IsEnabled = true;
-        }
-       
-
-        private async void Ref_Click(object sender, RoutedEventArgs e)
-        {
+            ChatHistoryIncrement.Clear();
+            CurrentUserId = ChatInfoList[i].UserId;
             await RefreshMessageList();
         }
 
     }
+    private async Task<bool> GetRecent()
+    {
+        var chatInfoUrl = ApiEndpoints.User.RecentChatUserList(UserIncrement.StartIndex);
+        var chatInfoResult = await RequestSender.Fetch<List<ChatInfo>>(chatInfoUrl);
+        if (!chatInfoResult.IsSuccess || chatInfoResult.Data == null)
+        {
+            //
+            return false;
+        }
+        var data = chatInfoResult.Data;
 
-    
-    
-    
+        var param = string.Join("&", data.Select(x => $"id={x.UserId}").ToHashSet());
+        var userInfoUrl = ApiEndpoints.User.BasicUserInfoList(param);
+        var userInfoResult = await RequestSender.Fetch<List<BasicUserInfo>>(userInfoUrl);
+        if (!userInfoResult.IsSuccess || userInfoResult.Data == null)
+        {
+            //Êä•Èîô
+            return false;
+        }
 
-    
+        var userInfoList = userInfoResult.Data;
+        foreach (var info in data)
+        {
+            var user = userInfoList.First(x => x.Id == info.UserId);
+            if (user != null)
+            {
+                info.Name = user.Name;
+                info.PortraitUrl = user.PortraitUrl;
+            }
+        }
+        UserIncrement.HasMore = data.Count == ChatHistoryIncrement.PageSize;
+        ChatInfoList.AddRange(data);
+        return true;
+    }
+        
+    private async Task<bool> GetMessageList()
+    {
+        var messageUrl = ApiEndpoints.User.ChatHistory(CurrentUserId, ChatHistoryIncrement.StartIndex);
+        var messageResult = await RequestSender.Fetch<List<ChatMessage>>(messageUrl);
+        if (!messageResult.IsSuccess)
+        {
+            //
+            return false;
+        }
+        if(messageResult.Data == null)
+        {
+            //
+            return false;
+        }
+        var data = messageResult.Data;
+        ChatHistoryIncrement.HasMore= data.Count == ChatHistoryIncrement.PageSize;
+            
+        foreach(var message in data)
+        {
+            message.IsMe = message.ReceiverId == CurrentUserId;
+            Messages.Insert(0, message);
+        }
+        return true;
+    }
+        
+        
+    private async Task RefreshMessageList()
+    {
+        Messages.Clear();
+        ChatHistoryIncrement.Clear();
+        await GetMessageList();
+    }
+        
+    private async void More_Click(object sender, RoutedEventArgs e)
+    {
+        await ChatHistoryIncrement.LoadNextPage(GetMessageList);
+    }
+        
+    private async void Send_Click(object sender, RoutedEventArgs e)
+    {
+        if (string.IsNullOrEmpty(ReplyBody.Text))
+        {
+            return;
+        }
+        Send.IsEnabled = false;
+        var url = ApiEndpoints.User.SendPrivateMessage;
+        var post = new PrivateMessage()
+        {
+            ReceiverId = CurrentUserId,
+            Content = ReplyBody.Text
+        };
+        var postText = JsonSerialize.Serialize(post);
+        var requestBody = new StringContent(postText, Encoding.UTF8, "application/json");
+        var res = await RequestSender.Submit<object>(url, requestBody);
+        if (res.IsSuccess)
+        {
+            await RefreshMessageList();
+        }
+        else
+        {
+            Flower.Play(FlowStatus.Fail, "ÂèëÈÄÅÂõûÂ§çÂ§±Ë¥•");
+        }
+        Send.IsEnabled = true;
+    }
+       
 
-    
+    private async void Ref_Click(object sender, RoutedEventArgs e)
+    {
+        await RefreshMessageList();
+    }
+
 }

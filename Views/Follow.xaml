@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Page
     x:Class="CC98.Follow"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
@@ -24,7 +24,7 @@
         </Grid>
 
         <ScrollViewer Grid.Row="1"  Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" CornerRadius="7" Margin="0,0,0,30">
-            <ItemsRepeater  x:Name="FriendRepeater"  ItemsSource="{x:Bind friends}" ElementPrepared="FriendRepeater_ElementPrepared">
+            <ItemsRepeater  x:Name="FriendRepeater"  ItemsSource="{x:Bind Friends}" ElementPrepared="FriendRepeater_ElementPrepared">
                 <ItemsRepeater.ItemTemplate>
                     <DataTemplate x:DataType="obj:Friend">
                         <HyperlinkButton HorizontalContentAlignment="Stretch" HorizontalAlignment="Stretch" CornerRadius="0" x:Name="TileContent" Click="TileContent_Click" BorderThickness="0.5" BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}" Tag="{x:Bind Id}">

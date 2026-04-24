@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Page
     x:Class="CC98.Discover"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
@@ -130,7 +130,7 @@
         </Button>
 
         <ScrollViewer Grid.Row="1" Grid.Column="0" x:Name="NewTopicViewer">
-            <ItemsRepeater ItemTemplate="{StaticResource TextPost}" ItemsSource="{x:Bind topics}" ElementPrepared="ItemsRepeater_ElementPrepared" VerticalCacheLength="1">
+            <ItemsRepeater ItemTemplate="{StaticResource TextPost}" ItemsSource="{x:Bind Topics}" ElementPrepared="ItemsRepeater_ElementPrepared" VerticalCacheLength="1">
                 <ItemsRepeater.Layout>
                     <StackLayout Orientation="Vertical" Spacing="15"></StackLayout>
                 </ItemsRepeater.Layout>
@@ -139,7 +139,7 @@
 
 
         <ScrollViewer x:Name="RandomTopicViewer"  Grid.Row="1" Grid.Column="1"  Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"   CornerRadius="5" Padding="10" >
-            <ItemsRepeater x:Name="RandomTiles" ItemsSource="{x:Bind randomTopics}">
+            <ItemsRepeater x:Name="RandomTiles" ItemsSource="{x:Bind RandomTopics}">
                 <ItemsRepeater.Layout>
                     <StackLayout Orientation="Vertical" Spacing="5"></StackLayout>
                 </ItemsRepeater.Layout>

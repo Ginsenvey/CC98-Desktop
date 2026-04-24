@@ -1,15 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace CC98.Services;
+﻿namespace CC98.Services;
 
 using CC98.Kernel;
-using Microsoft.UI.Xaml;
-using Microsoft.UI.Xaml.Controls;
 using System;
 using System.IO;
-using System.Net.Http;
 using System.Runtime.InteropServices.WindowsRuntime;
 using System.Threading.Tasks;
 using Windows.ApplicationModel.DataTransfer;
@@ -27,7 +20,7 @@ public class ImageExtension
     {
         try
         {
-            var imageBytes = await LoginService.vpn.GetByteArrayAsync(imageUrl);
+            var imageBytes = await LoginService.Vpn.GetByteArrayAsync(imageUrl);
 
             // 创建内存流
             using var stream = new MemoryStream(imageBytes);
@@ -84,7 +77,7 @@ public class ImageExtension
 
             // 创建文件
             var file = await downloadsFolder.CreateFileAsync(fileName, CreationCollisionOption.ReplaceExisting);
-            var imageBytes = await LoginService.vpn.GetByteArrayAsync(imageUrl);
+            var imageBytes = await LoginService.Vpn.GetByteArrayAsync(imageUrl);
             using var stream = await file.OpenStreamForWriteAsync();
             await stream.WriteAsync(imageBytes);
             System.Diagnostics.Debug.WriteLine($"图片已保存到: {file.Path}");

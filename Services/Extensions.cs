@@ -122,7 +122,7 @@ public static class ObjectExtensions
         }
 
         // 尝试解析字符串
-        return int.TryParse(obj.ToString(), out int result) ? result : null;
+        return int.TryParse(obj.ToString(), out var result) ? result : null;
     }
 
     public static int ToInt(this object obj, int defaultValue = 0)
@@ -191,7 +191,7 @@ public class JsonSerialize
     {
         Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
         WriteIndented = true,
-        TypeInfoResolver = CC98JsonContext.Default 
+        TypeInfoResolver = Cc98JsonContext.Default 
     };
     public static T? Deserialize<T>(string json)
     {

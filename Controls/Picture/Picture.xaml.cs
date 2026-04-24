@@ -1,137 +1,123 @@
-using CC98.Share.Controls;
-using CC98.Share.Controls.Primitives;
-using CommunityToolkit.WinUI.Controls;
+Ôªøusing CC98.Share.Controls.Primitives;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml.Controls.Primitives;
-using Microsoft.UI.Xaml.Data;
-using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
-using Microsoft.UI.Xaml.Navigation;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Runtime.InteropServices.WindowsRuntime;
 using System.Threading.Tasks;
-using Windows.Foundation;
-using Windows.Foundation.Collections;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
 
-namespace CC98.Share.Controls
+namespace CC98.Share.Controls;
+
+public sealed partial class Picture : UserControl
 {
-    public sealed partial class Picture : UserControl
+    public Picture()
     {
-        public Picture()
-        {
-            InitializeComponent();
-        }
+        InitializeComponent();
+    }
 
-        #region “¿¿µ Ù–‘
+    #region ‰æùËµñÂ±ûÊÄß
 
-        public static readonly DependencyProperty StretchProperty =
-            DependencyProperty.Register(
-                nameof(Stretch),
-                typeof(Stretch),
-                typeof(Picture),
-                new PropertyMetadata(Stretch.Uniform));
-        public static readonly DependencyProperty  SrcProperty =
-            DependencyProperty.Register(
-                "Src",
-                typeof(string),
-                typeof(Picture),
-                new PropertyMetadata("",OnSrcChanged));
+    public static readonly DependencyProperty StretchProperty =
+        DependencyProperty.Register(
+            nameof(Stretch),
+            typeof(Stretch),
+            typeof(Picture),
+            new(Stretch.Uniform));
+    public static readonly DependencyProperty  SrcProperty =
+        DependencyProperty.Register(
+            "Src",
+            typeof(string),
+            typeof(Picture),
+            new("",OnSrcChanged));
 
-        public static readonly DependencyProperty HideProperty =
-             DependencyProperty.Register(
-                 "Hide",
-                 typeof(bool),
-                 typeof(Picture),
-                 new PropertyMetadata(false));
+    public static readonly DependencyProperty HideProperty =
+        DependencyProperty.Register(
+            "Hide",
+            typeof(bool),
+            typeof(Picture),
+            new(false));
 
-        public static readonly DependencyProperty LoadImageCallbackProperty =
+    public static readonly DependencyProperty LoadImageCallbackProperty =
         DependencyProperty.Register("LoadImageCallback", typeof(IImageLoader),
-            typeof(Picture), new PropertyMetadata(new DefaultImageLoader()));
-        public Stretch Stretch
-        {
-            get => (Stretch)GetValue(StretchProperty);
-            set => SetValue(StretchProperty, value);
-        }
-        public string Src
-        {
-            get => (string)GetValue(SrcProperty);
-            set => SetValue(SrcProperty, value);
-        }
-        public bool Hide
-        {
-            get => (bool)GetValue(HideProperty);
-            set => SetValue(HideProperty, value);
-        }
-        public IImageLoader LoadImageCallback
-        {
-            get => (IImageLoader)GetValue(LoadImageCallbackProperty);
-            set => SetValue(LoadImageCallbackProperty, value);
-        }
-        #endregion
+            typeof(Picture), new(new DefaultImageLoader()));
+    public Stretch Stretch
+    {
+        get => (Stretch)GetValue(StretchProperty);
+        set => SetValue(StretchProperty, value);
+    }
+    public string Src
+    {
+        get => (string)GetValue(SrcProperty);
+        set => SetValue(SrcProperty, value);
+    }
+    public bool Hide
+    {
+        get => (bool)GetValue(HideProperty);
+        set => SetValue(HideProperty, value);
+    }
+    public IImageLoader LoadImageCallback
+    {
+        get => (IImageLoader)GetValue(LoadImageCallbackProperty);
+        set => SetValue(LoadImageCallbackProperty, value);
+    }
+    #endregion
 
 
-        #region  ¬º˛¥¶¿Ì
+    #region ‰∫ã‰ª∂Â§ÑÁêÜ
 
-        private static async void OnSrcChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+    private static async void OnSrcChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+    {
+        if(d is Picture picture)
         {
-            if(d is Picture picture)
+            if (picture.Hide)
             {
-                if (picture.Hide)
-                {
-                    picture.DisplayButton.Visibility = Visibility.Visible;
-                    picture.shimmer.Visibility = Visibility.Collapsed;
-                    picture.Viewer.Source = null;
-                }
-                else
-                {
-                    await picture.LoadImage();
-                }
+                picture.DisplayButton.Visibility = Visibility.Visible;
+                picture.shimmer.Visibility = Visibility.Collapsed;
+                picture.Viewer.Source = null;
+            }
+            else
+            {
+                await picture.LoadImage();
+            }
                     
-            }
         }
+    }
 
-        private async void DisplayButton_Click(object sender, RoutedEventArgs e)
+    private async void DisplayButton_Click(object sender, RoutedEventArgs e)
+    {
+        DisplayButton.Visibility = Visibility.Collapsed;
+        shimmer.Visibility = Visibility.Visible;
+        await LoadImage();
+    }
+
+    #endregion
+
+    #region ÂõæÁâáÂä†ËΩΩ
+
+    private async Task LoadImage()
+    {
+        shimmer.IsActive = true;
+        try
         {
-            DisplayButton.Visibility = Visibility.Collapsed;
-            shimmer.Visibility = Visibility.Visible;
-            await LoadImage();
-        }
-
-        #endregion
-
-        #region Õº∆¨º”‘ÿ
-
-        private async Task LoadImage()
-        {
-            shimmer.IsActive = true;
-            try
+            var src = Src;
+            var callback = LoadImageCallback;
+            var bitmap = await callback.LoadImage(src);
+            if (bitmap != null)
             {
-                var src = Src;
-                var callback = LoadImageCallback;
-                var bitmap = await callback.LoadImage(src);
-                if (bitmap != null)
-                {
-                    shimmer.IsActive = false;
-                    shimmer.Visibility = Visibility.Collapsed;
-                }
-                Viewer.Source = bitmap;
+                shimmer.IsActive = false;
+                shimmer.Visibility = Visibility.Collapsed;
             }
-            catch 
-            {                 
-                Viewer.Source = null;
-            }
-            
+            Viewer.Source = bitmap;
         }
+        catch 
+        {                 
+            Viewer.Source = null;
+        }
+            
+    }
 
-        #endregion
+    #endregion
 
         
-    }
 }

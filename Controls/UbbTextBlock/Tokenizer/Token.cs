@@ -1,6 +1,4 @@
-﻿using System.Collections.Generic;
-
-namespace UbbRender.Tokenizer;
+﻿namespace UbbRender.Tokenizer;
 
 public class Token(TokenType type, string value, int position)
 {

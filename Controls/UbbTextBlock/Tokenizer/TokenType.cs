@@ -20,5 +20,5 @@ public enum TokenType
     TagName,        // b, url, img, ac01 等
     AttrValue,      // 属性值
     Text,           // 普通文本
-    EOF             // 结束符
+    Eof             // 结束符
 }

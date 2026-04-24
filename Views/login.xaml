@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Window
     x:Class="CC98.Login"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
@@ -15,7 +15,7 @@
         <MicaBackdrop></MicaBackdrop>
     </Window.SystemBackdrop>
 
-    <Grid x:Name="RootGrid" >
+    <Grid x:Name="RootGrid" UseLayoutRounding="True">
         
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="*"></ColumnDefinition>

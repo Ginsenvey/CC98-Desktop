@@ -67,7 +67,7 @@ public enum SearchType
 
 public enum ContentType
 {
-    UBB=0,
+    Ubb=0,
     Markdown=1
 }
 

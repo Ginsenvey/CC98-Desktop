@@ -8,6 +8,6 @@ public class SmartMediaLoader : IMediaLoader
 {
     public async Task<MediaSource?> LoadMedia(string src)
     {
-        return await LoginService.vpn.GetSourceAsync(src);
+        return await LoginService.Vpn.GetSourceAsync(src);
     }
 }

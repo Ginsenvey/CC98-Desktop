@@ -11,7 +11,7 @@ public class TagNode : UbbNode
 
     public static TagNode Create(UbbNodeType type, Dictionary<string, string> attributes = null)
     {
-        return new TagNode
+        return new()
         {
             Type = type,
             Attributes = attributes ?? []

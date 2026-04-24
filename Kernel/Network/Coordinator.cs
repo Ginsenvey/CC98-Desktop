@@ -1,8 +1,11 @@
 ﻿using Microsoft.UI.Xaml;
 using Microsoft.Windows.AppNotifications;
 using Microsoft.Windows.AppNotifications.Builder;
+
 using System;
+using System.Threading;
 using System.Threading.Tasks;
+
 using Windows.Storage;
 
 namespace CC98.Kernel.Network;
@@ -10,16 +13,34 @@ namespace CC98.Kernel.Network;
 /// <summary>
 /// 协调器类，确保令牌刷新操作的线程安全和单次执行。
 /// </summary>
-public class Coordinator
+public sealed class Coordinator
 {
+    /// <summary>
+    /// 受保护的构造方法。
+    /// </summary>
+    private Coordinator()
+    {
+
+    }
+
+    /// <summary>
+    /// 对象的唯一实例。
+    /// </summary>
+    public static Coordinator Instance { get; } = new();
+
     // 使用Lazy<Task<bool>>确保线程安全的单次执行和结果共享
-    private static Lazy<Task<bool>> _refreshTask;
+    private Lazy<Task<bool>>? RefreshTask { get; set; }
 
-    // 用于协调刷新的锁对象
-    private static readonly object _lock = new object();
+    /// <summary>
+    /// 用于协调刷新的锁对象。
+    /// </summary>
+    private Lock Lock { get; } = new();
 
-    // 刷新函数
-    private static async Task<bool> SilentAuth()
+    /// <summary>
+    /// 执行刷新的核心方法。
+    /// </summary>
+    /// <returns>表示异步操作的任务。操作结果表示刷新是否成功。</returns>
+    public async Task<bool> SilentAuth()
     {
         try
         {
@@ -33,7 +54,7 @@ public class Coordinator
                 //统一处理令牌失效情况，通知用户并退出应用
                 //触发此处未必是令牌过期，也可能是其他登录失败的情况。
                 ApplicationData.Current.LocalSettings.Values["IsActive"] = 0;
-                AppNotification notification = new AppNotificationBuilder()
+                var notification = new AppNotificationBuilder()
                 .AddText("登录过期")
                 .AddText("请重新登录。")
                 .BuildNotification();
@@ -49,25 +70,25 @@ public class Coordinator
         finally
         {
             // 重置刷新状态，允许下次刷新
-            lock (_lock)
+            lock (Lock)
             {
-                _refreshTask = null;
+                RefreshTask = null;
             }
         }
     }
 
     // 公开的安全调用接口
-    public static Task<bool> SafeSlientAuth()
+    public Task<bool> SafeSilentAuth()
     {
-        lock (_lock)
+        lock (Lock)
         {
             // 如果当前没有进行中的刷新任务，创建新任务
-            if (_refreshTask == null || _refreshTask.Value.IsCompleted)
+            if (RefreshTask == null || RefreshTask.Value.IsCompleted)
             {
-                _refreshTask = new Lazy<Task<bool>>(() => SilentAuth());
+                RefreshTask = new(() => SilentAuth());
             }
 
-            return _refreshTask.Value;
+            return RefreshTask.Value;
         }
     }
 }

@@ -9,7 +9,7 @@ public class SmartImageLoader : IImageLoader
 {
     // 单例实例
     private static SmartImageLoader? _instance;
-    private static readonly object _lock = new();
+    private static readonly object Lock = new();
 
     // 公共属性
     public bool LowRes { get; set; } = false;
@@ -29,9 +29,9 @@ public class SmartImageLoader : IImageLoader
         {
             if (_instance == null)
             {
-                lock (_lock)
+                lock (Lock)
                 {
-                    _instance ??= new SmartImageLoader();
+                    _instance ??= new();
                 }
             }
             return _instance;
@@ -39,14 +39,14 @@ public class SmartImageLoader : IImageLoader
     }
 
     
-    private static readonly ConcurrentDictionary<bool, SmartImageLoader> _instances = new();
+    private static readonly ConcurrentDictionary<bool, SmartImageLoader> Instances = new();
 
     public static SmartImageLoader GetInstance(bool lowRes)
     {
-        return _instances.GetOrAdd(lowRes, l => new SmartImageLoader(l));
+        return Instances.GetOrAdd(lowRes, l => new(l));
     }
 
-    private static readonly ConcurrentDictionary<string, WeakReference<BitmapSource?>> _cache = new();
+    private static readonly ConcurrentDictionary<string, WeakReference<BitmapSource?>> Cache = new();
 
     public async Task<BitmapSource?> LoadImage(string src)
     {
@@ -55,7 +55,7 @@ public class SmartImageLoader : IImageLoader
 
         var cacheKey = (LowRes ? "lr:" : "hr:") + src;
 
-        if (_cache.TryGetValue(cacheKey, out var weak) && weak.TryGetTarget(out var cached) && cached != null)
+        if (Cache.TryGetValue(cacheKey, out var weak) && weak.TryGetTarget(out var cached) && cached != null)
         {
             return cached;
         }
@@ -81,8 +81,8 @@ public class SmartImageLoader : IImageLoader
         // 缓存
         if (result != null)
         {
-            _cache.AddOrUpdate(cacheKey, new WeakReference<BitmapSource?>(result),
-                (k, old) => new WeakReference<BitmapSource?>(result));
+            Cache.AddOrUpdate(cacheKey, new WeakReference<BitmapSource?>(result),
+                (k, old) => new(result));
         }
 
         return result;
@@ -90,6 +90,6 @@ public class SmartImageLoader : IImageLoader
 
     public static void ClearCache()
     {
-        _cache.Clear();
+        Cache.Clear();
     }
 }

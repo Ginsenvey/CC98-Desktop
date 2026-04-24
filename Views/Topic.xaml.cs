@@ -1,4 +1,4 @@
-using CC98.Kernel;
+ï»¿using CC98.Kernel;
 using CC98.Kernel.ApiScope;
 using CC98.Kernel.Network;
 using CC98.Kernel.UserExperience;
@@ -8,33 +8,19 @@ using CC98.Services.Extensions;
 using CC98.Share.Controls;
 using CC98.Share.Controls.Primitives;
 using CC98.Share.Extensions;
-using CommunityToolkit.Mvvm.ComponentModel;
 using DevWinUI;
-using FluentIcons.Common;
-using FluentIcons.WinUI;
-using Microsoft.UI;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml.Controls.Primitives;
-using Microsoft.UI.Xaml.Data;
-using Microsoft.UI.Xaml.Documents;
 using Microsoft.UI.Xaml.Input;
-using Microsoft.UI.Xaml.Media;
-using Microsoft.UI.Xaml.Media.Imaging;
 using Microsoft.UI.Xaml.Navigation;
-using Microsoft.Windows.AppNotifications;
-using Microsoft.Windows.AppNotifications.Builder;
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.ComponentModel;
 using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Text;
-using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using UbbRender.Common;
@@ -42,909 +28,908 @@ using UbbRender.Parser;
 using UbbRender.Render;
 using Windows.ApplicationModel.DataTransfer;
 using Windows.Storage;
-using static CC98.Kernel.ApiScope.ApiEndpoints;
-namespace CC98
+
+namespace CC98;
+
+public sealed partial class Topic : Page
 {
-    public sealed partial class Topic : Page
+    public ObservableCollection<Reply> Replies=[];
+    public TopicInfo TopicInfo { get; set; } = new(){};
+    public UserInfo Profile = new() {Popularity=0,PostCount=0,FanCount=0}; 
+    public ApplicationDataContainer Set = ApplicationData.Current.LocalSettings;
+    public bool IsVote = false;//æ˜¯å¦ä¸ºæŠ•ç¥¨è´´
+    public bool IsJumping=false;//æ˜¯å¦æ­£åœ¨è¿›è¡Œè·³è½¬
+    public int JumpToFloor = -1;
+    public int TopicId = 0;
+    public int CurrentPage = 0;
+    public int PageSize = 10;
+    public GlobalService GlobalService= GlobalService.Instance;
+    public Topic()
     {
-        public ObservableCollection<Reply> replies=[];
-        public TopicInfo TopicInfo { get; set; } = new TopicInfo(){};
-        public UserInfo profile = new() {Popularity=0,PostCount=0,FanCount=0}; 
-        public ApplicationDataContainer Set = ApplicationData.Current.LocalSettings;
-        public bool isVote = false;//ÊÇ·ñÎªÍ¶Æ±Ìù
-        public bool isJumping=false;//ÊÇ·ñÕıÔÚ½øĞĞÌø×ª
-        public int JumpToFloor = -1;
-        public int topicId = 0;
-        public int currentPage = 0;
-        public int pageSize = 10;
-        public GlobalService globalService= GlobalService.Instance;
-        public Topic()
+        this.InitializeComponent();
+        LoadSet();
+        LoadFavorites();
+        this.Unloaded += Topic_Unloaded; 
+    }
+
+    private void Topic_Unloaded(object sender, RoutedEventArgs e)
+    {
+        if (Pager != null)
         {
-            this.InitializeComponent();
-            LoadSet();
-            LoadFavorites();
-            this.Unloaded += Topic_Unloaded; 
+            Pager.SelectedIndexChanged -= Pager_SelectedIndexChanged;
+        }
+        GlobalMediaPlayer.Instance.Pause();
+    }
+
+    protected override void OnNavigatedFrom(NavigationEventArgs e)
+    {
+        //é‡Šæ”¾èµ„æº
+        base.OnNavigatedFrom(e);   
+        Replies.Clear();
+        foreach (var item in CollectionMenu.Items.OfType<MenuFlyoutItem>())
+        {
+            item.Click -= CollectionItem_Click;  // å–æ¶ˆè®¢é˜…
+        }
+        CollectionMenu.Items.Clear();
+        if (Pager != null)
+        {
+            Pager.SelectedIndexChanged -= Pager_SelectedIndexChanged;
+        }
+        if (VotePanel != null)
+        {
+            VotePanel.IsOpen = false;
+            VotePanel.Target = null;
+            VotePanel.Content = null;
         }
 
-        private void Topic_Unloaded(object sender, RoutedEventArgs e)
+        if (ProfileViewer != null)
         {
-            if (Pager != null)
-            {
-                Pager.SelectedIndexChanged -= Pager_SelectedIndexChanged;
-            }
-            GlobalMediaPlayer.Instance.Pause();
+            ProfileViewer.IsOpen = false;
+            ProfileViewer.Target = null;
+            ProfileViewer.Content = null;
         }
-
-        protected override void OnNavigatedFrom(NavigationEventArgs e)
-        {
-            //ÊÍ·Å×ÊÔ´
-            base.OnNavigatedFrom(e);   
-            replies.Clear();
-            foreach (var item in CollectionMenu.Items.OfType<MenuFlyoutItem>())
-            {
-                item.Click -= CollectionItem_Click;  // È¡Ïû¶©ÔÄ
-            }
-            CollectionMenu.Items.Clear();
-            if (Pager != null)
-            {
-                Pager.SelectedIndexChanged -= Pager_SelectedIndexChanged;
-            }
-            if (VotePanel != null)
-            {
-                VotePanel.IsOpen = false;
-                VotePanel.Target = null;
-                VotePanel.Content = null;
-            }
-
-            if (ProfileViewer != null)
-            {
-                ProfileViewer.IsOpen = false;
-                ProfileViewer.Target = null;
-                ProfileViewer.Content = null;
-            }
             
-        }
-        protected override async void OnNavigatedTo(Microsoft.UI.Xaml.Navigation.NavigationEventArgs e)
+    }
+    protected override async void OnNavigatedTo(Microsoft.UI.Xaml.Navigation.NavigationEventArgs e)
+    {
+        base.OnNavigatedTo(e);
+
+        var args =GlobalService.ShouldReplaceNavigationArgs?
+            (TopicNavigationInfo?)GlobalService.NavigationAnchor:
+            e.TryGetParameter<TopicNavigationInfo>();
+        if (!GlobalService.ShouldReplaceNavigationArgs)
         {
-            base.OnNavigatedTo(e);
-
-            var args =globalService.ShouldReplaceNavigationArgs?
-                (TopicNavigationInfo?)globalService.NavigationAnchor:
-                e.TryGetParameter<TopicNavigationInfo>();
-            if (!globalService.ShouldReplaceNavigationArgs)
-            {
-                globalService.NavigationAnchor = e.TryGetParameter<TopicNavigationInfo>();
-            }
-            if (args == null) return;
-            topicId = args.TopicId;
-            await LoadTopicInfo();
-            if (args.GoToLatest)
-            {
-                Pager.SelectedPageIndex = Pager.NumberOfPages-1;
-                return;
-            }
-            if (args.IsJumpingMode)
-            {
-                isJumping = true;
-                await TP(args.TargetFloor);
-                return;
-            }
-
-            await LoadReply();
-
-
+            GlobalService.NavigationAnchor = e.TryGetParameter<TopicNavigationInfo>();
         }
-        private void LoadSet()
+        if (args == null) return;
+        TopicId = args.TopicId;
+        await LoadTopicInfo();
+        if (args.GoToLatest)
         {
-            bool hideImage = AppSettings.Current.HideImage;
-            HideImageFlyoutItem.Text = hideImage ? "¹Ø±ÕÎŞÍ¼Ä£Ê½" : "ÆôÓÃÎŞÍ¼Ä£Ê½";
-            ImageOffIcon.Symbol= hideImage ? FluentIcons.Common.Symbol.ImageOff : FluentIcons.Common.Symbol.Image;
+            Pager.SelectedPageIndex = Pager.NumberOfPages-1;
+            return;
         }
-        /// <summary>
-        /// ¼ÓÔØÊÕ²Ø¼¯
-        /// </summary>
-        private void LoadFavorites()
+        if (args.IsJumpingMode)
         {
-            var favoritesJson = ValidationHelper.GetValue(Set, "Favorites");
-            if (favoritesJson == "0")
-            {
-                Flower.Play(FlowStatus.Fail, "ÊÕ²Ø¼ĞÎ´»º´æ");
-            }
-            var favoritesList =JsonSerialize.Deserialize<List<Favorites>>(favoritesJson);
-            if (favoritesList == null)
-            {
-                Flower.Play(FlowStatus.Fail, "½âÎöÊÕ²Ø¼Ğ»º´æ³ö´í");
-                return;
-            }
-            foreach (var favorites in favoritesList)
-            {
-                try
-                {
-                    var item = new MenuFlyoutItem { Text = favorites.Name, Tag = favorites.Id, Icon = new FluentIcons.WinUI.SymbolIcon { Symbol = FluentIcons.Common.Symbol.Tag } };
-                    item.Click += CollectionItem_Click;
-                    CollectionMenu.Items.Add(item);
-                }
-                catch (Exception ex)
-                {
-                    Flower.Play(FlowStatus.Fail, ex.Message);
-                }
-            }
+            IsJumping = true;
+            await Tp(args.TargetFloor);
+            return;
         }
-        //µ±jumping mode=trueÊ±ÏìÓ¦¡£ÏìÓ¦°üÀ¨Á½ÖÖ£¬À´×ÔÍâ²¿Ò³Ãæµ¼º½µÄÌø×ªºÍÓÃ»§µã»÷Ìû×ÓÄÚÁ´½ÓµÄÌø×ª¡£
-        //floorÈç17824L£¬ÔòpageÎª1782£¬sortÎª4£¬´ËÊ±Ä¿±êÂ¥²ãµÄindexÊÇ3.sort=1Ê±Ä¿±êindexÎª0¡£Èç¹ûsort=0,ÔòÄ¿±êÒ³ÂëÔÚÉÏÒ»Ò³¡£
-        private async Task TP(int floor)
+
+        await LoadReply();
+
+
+    }
+    private void LoadSet()
+    {
+        var hideImage = AppSettings.Current.HideImage;
+        HideImageFlyoutItem.Text = hideImage ? "å…³é—­æ— å›¾æ¨¡å¼" : "å¯ç”¨æ— å›¾æ¨¡å¼";
+        ImageOffIcon.Symbol= hideImage ? FluentIcons.Common.Symbol.ImageOff : FluentIcons.Common.Symbol.Image;
+    }
+    /// <summary>
+    /// åŠ è½½æ”¶è—é›†
+    /// </summary>
+    private void LoadFavorites()
+    {
+        var favoritesJson = ValidationHelper.GetValue(Set, "Favorites");
+        if (favoritesJson == "0")
         {
-            // ½âÎöÂ¥²ã
-            int page = floor / 10;
-            int sort = floor % 10;
-            int currentPage = Pager.SelectedPageIndex;
-            // Çé¿ö1£ºÄ¿±ê¾ÍÔÚµ±Ç°Ò³
-            if (currentPage == page)
-            {
-                await HandleSamePageJump(sort);
-            }
-            // Çé¿ö2£ºÄ¿±êÊÇÉÏÒ»Ò³µÄ×îºóÒ»¸ö£¨ÌØÊâ±ß½çÇé¿ö£©
-            else if (currentPage == page - 1 && sort == 0)
-            {
-                await HandlePrevPageLastItem();
-            }
-            // Çé¿ö3£ºĞèÒª·­Ò³
-            else
-            {
-                HandlePageNavigation(page, sort);
-            }
+            Flower.Play(FlowStatus.Fail, "æ”¶è—å¤¹æœªç¼“å­˜");
         }
-
-        /// <summary>
-        /// ´¦ÀíÍ¬Ò»Ò³ÄÚµÄÌø×ª
-        /// </summary>
-        private async Task HandleSamePageJump(int sort)
+        var favoritesList =JsonSerialize.Deserialize<List<Favorites>>(favoritesJson);
+        if (favoritesList == null)
         {
-            if (sort == 0)
-            {
-                // ÕûÊ®Â¥£ºÌø×ªµ½ÉÏÒ»Ò³µÄ×îºóÒ»¸ö
-                Pager.SelectedPageIndex--;
-                JumpToFloor = 9;
-            }
-            else
-            {
-                // ·ÇÕûÊ®Â¥£ºÖ±½ÓÌø×ªµ½¶ÔÓ¦Â¥²ã
-                await EnsureReplyLoadedAndScroll(sort - 1);
-            }
+            Flower.Play(FlowStatus.Fail, "è§£ææ”¶è—å¤¹ç¼“å­˜å‡ºé”™");
+            return;
         }
-
-        /// <summary>
-        /// ´¦ÀíÌø×ªµ½ÉÏÒ»Ò³×îºóÒ»¸öµÄÇé¿ö
-        /// </summary>
-        private async Task HandlePrevPageLastItem()
-        {
-            Pager.SelectedPageIndex++;
-
-            // ÅĞ¶ÏµÚ10Â¥ÊÇ·ñÒÑ¼ÓÔØ
-            if (replies.Count == 10)
-            {
-                ScrollTo(9);
-            }
-            else
-            {
-                await LoadReply();
-                ScrollTo(9);
-            }
-        }
-
-        /// <summary>
-        /// ´¦ÀíĞèÒª·­Ò³µÄÌø×ª
-        /// </summary>
-        private void HandlePageNavigation(int targetPage, int targetSort)
-        {
-            if (targetSort == 0)
-            {
-                // ÕûÊ®Â¥£ºÄ¿±êÔÚÉÏÒ»Ò³
-                Pager.SelectedPageIndex = targetPage - 1;
-                JumpToFloor = 9;
-            }
-            else
-            {
-                // ·ÇÕûÊ®Â¥£ºÄ¿±êÔÚµ±Ç°Ò³
-                Pager.SelectedPageIndex = targetPage;
-                JumpToFloor = targetSort - 1;
-            }
-        }
-
-        /// <summary>
-        /// È·±£Ö¸¶¨Ë÷ÒıµÄ»Ø¸´ÒÑ¼ÓÔØ²¢¹ö¶¯µ½¸ÃÎ»ÖÃ
-        /// </summary>
-        private async Task EnsureReplyLoadedAndScroll(int targetIndex)
-        {
-            // Èç¹ûÄ¿±êË÷ÒıÉĞÎ´¼ÓÔØ£¬ÏÈ¼ÓÔØÊı¾İ
-            if (replies.Count <= targetIndex)
-            {
-                await LoadReply();
-            }
-
-            ScrollTo(targetIndex);
-        }
-        private async Task LoadTopicInfo()
-        {
-            string topicInfoUrl = ApiEndpoints.Topic.TopicInfo(topicId);
-            var topicInfoResult = await RequestSender.Fetch<TopicInfo>(topicInfoUrl);
-            if (!topicInfoResult.IsSuccess||topicInfoResult.Data==null)
-            {
-                return;
-            }
-            var data = topicInfoResult.Data;
-            TopicInfo.FavoriteCount = data.FavoriteCount;
-            TopicInfo.Title = data.Title;
-            TopicInfo.Time = data.Time;
-            TopicInfo.HitCount = data.HitCount;
-            TopicInfo.ReplyCount = data.ReplyCount;
-            string isFavoriteUrl = ApiEndpoints.Topic.IsFavorite(topicId);
-            var isFavoriteResult = await RequestSender.Fetch<bool>(isFavoriteUrl);
-            if (isFavoriteResult.IsNotValid)
-            {
-                //
-            }
-            else
-            {
-                TopicInfo.IsFavorite = isFavoriteResult.Data;
-            }
-            Pager.NumberOfPages = (TopicInfo.ReplyCount/ 10) + 1;
-            PagerFix();
-            isVote = TopicInfo.IsVote;
-            if (isVote)
-            {
-                StartVote.Visibility = Visibility.Visible;
-            }
-        }
-
-        
-        private async Task LoadReply()
-        {
-            //Çå¿Õ
-            replies.Clear();
-            string replyUrl = ApiEndpoints.Topic.ReplyList(topicId, currentPage * pageSize);
-            var replyResult=await RequestSender.Fetch<List<Reply>>(replyUrl);
-            if (!replyResult.IsSuccess || replyResult.Data == null)
-            {
-                //
-                await App.Logger.WriteAsync("Topic","¼ÓÔØ»ØÌûÊ§°Ü", replyResult.Message);
-                return;
-            }
-            var data= replyResult.Data;
-            
-            var param = string.Join("&", data.Where(x=>!x.IsAnonymous&&x.UserId.HasValue).Select(x => $"id={x.UserId}").ToHashSet());
-            string userInfoUrl = ApiEndpoints.User.BasicUserInfoList(param);
-            var userInfoResult = await RequestSender.Fetch<List<BasicUserInfo>>(userInfoUrl);
-            if (!userInfoResult.IsSuccess || userInfoResult.Data == null)
-            {
-                //±¨´í
-                return;
-            }
-
-            var userInfoList = userInfoResult.Data;
-            //ÌáÈ¡Í·ÏñÁ´½Ó
-            foreach (var reply in data)
-            {
-                //CC98 Deleter
-                if (reply.IsDeleted)
-                {
-                    reply.UserName = "CC98 Deleter";
-                    reply.Content = "<--¸Ã»Ø¸´ÒÑ±»¹ÜÀíÔ±»ò·¢²¼ÕßÉ¾³ı-->";
-                    reply.PortraitUrl = "ms-appx:///Assets/deleter.png";
-                    //Ìø¹ı
-                    continue;
-                }
-                if (reply.IsAnonymous)
-                {
-                    string code = reply.UserName;
-                    reply.UserName = $"ÄäÃû{code.ToUpper()}";
-                    reply.PortraitUrl = "ms-appx:///Assets/hide.gif";
-                    //Ìø¹ı
-                    continue;
-                }
-                
-                var user = userInfoList.First(x => x.Id == reply.UserId);
-                if (user != null)
-                {
-                    reply.PortraitUrl = user.PortraitUrl;
-                }
-            }
-            replies.AddRange(data);
-        }
-
-
-        private void Person_Click(object sender, RoutedEventArgs e)
-        {
-            var h = sender as HyperlinkButton;
-            ProfileViewer.Target = h;
-            if (h?.Tag is not Reply t || t.IsAnonymous || t.IsDeleted) return;
-            var info = new ProfileNavigationInfo { IsMe = t.IsMe, UserId = t.UserId ?? 0 };
-            Frame.Navigate(typeof(Profile), info);
-        }
-        private async void Pager_SelectedIndexChanged(DevWinUI.PagerControl sender, DevWinUI.PagerControlSelectedIndexChangedEventArgs args)
-        {
-            //´Ë·½·¨ÔÚÒ³Ãæ¼ÓÔØÍê³Éºó»á±»µ÷ÓÃÒ»´Î£¬PagerµÄSelectedIndex»á±»ÉèÖÃÎª0¡£
-            //ËùÒÔÒ³Ãæ¹¹Ôìº¯Êı´¦²»ĞèÒªµ¥¶Àµ÷ÓÃLoadReply·½·¨¡£
-            //ÏŞ¶¨ÁËÖ»ÓĞÒ³ÃæÖ÷¶¯¼ÓÔØºÍÓÃ»§µã»÷·­Ò³£¬index´Ó-1µ½0²»´¥·¢Êı¾İ¼ÓÔØ¡£
-            
-            PagerFix();
-            if (args.PreviousPageIndex != -1)
-            {
-                int index = Pager.SelectedPageIndex;
-                currentPage = index;
-                if (index >= 0)
-                {
-                    await LoadReply();
-                    if (isJumping && JumpToFloor != -1)
-                    {
-                        ScrollTo(JumpToFloor);
-                        isJumping = false;
-                        JumpToFloor = -1;
-                    }
-                }
-            }
-           
-        }
-
-        private async void UbbTextBlock_MediaClicked(object sender, MediaClickEventArgs e)
-        {
-            de.Text = $"Á´½Ó£º{e.Source}£¬ÀàĞÍ£º{e.MediaType}";
-            switch (e.MediaType)
-            {
-                case MediaType.Image:
-                    var u = sender as UbbTextBlock;
-                    if (u == null) return;
-                    string ubb = u.UbbText;
-                    var doc = Parser.Parse(ubb);
-                    if (doc == null) return;
-                    var list = new List<string>();
-                    var nodes = doc.Root.GetDescendantsByType(UbbNodeType.Image);
-                    foreach (var node in nodes)
-                    {
-                        list.Add(ExtractImageUrl(node));
-                    }
-                    int anchor = list.IndexOf(e.Source);
-                    var info = new ViewerNavigationInfo
-                    {
-                        Type = MediaType.Image,
-                        Urls = list,
-                        CurrentIndex = anchor
-                    };
-                    var viewer = new MediaViewer(info);
-                    viewer.Activate();
-                    break;
-                case MediaType.Video:
-                    var vinfo = new ViewerNavigationInfo
-                    {
-                        Type = MediaType.Video,
-                        Urls = [e.Source]
-                    };
-                    Frame.Navigate(typeof(MediaViewer), vinfo);
-                    break;
-                case MediaType.Link:
-                    await HandleLink(e.Source);
-                    break;
-                case MediaType.AtUser:
-                    await SearchForUser(e.Source);
-                    break;
-                case MediaType.Audio:
-                    break;
-                case MediaType.File:
-                    break;
-    
-            }
-        }
-        private async Task SearchForUser(string userName)
-        {
-            string url = ApiEndpoints.User.SearchUserByName(userName);
-            var result = await RequestSender.Fetch<UserInfo>(url);
-            if (!result.IsSuccess || result.Data == null)
-            {
-                //
-                return;
-            }
-            var user = result.Data;
-            if (user == null)
-            {
-                Flower.Play(FlowStatus.Fail, "Î´ÕÒµ½ÓÃ»§");
-            }
-            else
-            {
-                //ÕâÀïĞèÒªÎªAuthÀà¼ÓÒ»¸öIDµÄ¾²Ì¬ÊôĞÔ£¬ÒÔ±ãÔÚÆäËûÒ³Ãæ½øĞĞ¶Ô±È£¬ÅĞ¶ÏÊÇ·ñÎªµ±Ç°ÓÃ»§¡£
-                //var info = new ProfileNavigationInfo { IsMe = user.Id == LoginService.CurrentUserId, UserId = user.Id };
-                //Frame.Navigate(typeof(Profile), info);
-            }
-                
-        }
-
-        [GeneratedRegex(@"/topic/(\d{7})/(\d+)#(\d+)")]
-        private static partial Regex FloorAnchorRegex();
-   
-        private async Task HandleLink(string url)
-        {
-            Match match = FloorAnchorRegex().Match(url);
-            if (match.Success)
-            {
-                int before=int.Parse(match.Groups[2].ValueSpan);
-                int after=int.Parse((match.Groups[3].ValueSpan));
-                int floor=10*(before-1)+after;
-                isJumping = true;
-                await TP(floor);
-            }
-        }
-        private async void MarkdownTextBlock_LinkClicked(object sender)
-        {
-            var url = "";
-            var result = LinkAnalyzer.Parse(url);
-            switch (result.Key)
-            {
-                case "topic":
-                    Set.Values["CurrentTopicId"]=result.Value;
-                    topicId =int.Parse(result.Value);
-                    await LoadTopicInfo();
-                    await LoadReply();
-                    break;
-                case "user":
-                    {
-                        string _url = "https://api.cc98.org/user/name/" + result.Value;
-                        break;
-                    }
-                //usingÓï¾ä²»ÄÜÔÚswitchÓï¾äÖĞÖ±½Ó³öÏÖ¡£Òò´Ë£¬Ê¹ÓÃ´óÀ¨ºÅ°üÎ§Õâ¸öcase.
-                case "anchor":
-                    string pattern = @"/topic/(\d{7})/(\d+)#(\d+)";
-                    //ÔİÊ±²»¿¼ÂÇ¿çÒ³ÒıÓÃ¡£Èç¹û¿¼ÂÇ£¬ÎÒÃÇĞèÒª¸Ä½øÌø×ª²ÎÊı£¬ÈÃÆä°üº¬Ò»¸öÌø×ªĞÅÏ¢¡£
-                    Regex regex = new Regex(pattern);
-
-                    // Ê¹ÓÃÕıÔò±í´ïÊ½½øĞĞÆ¥Åä
-                    Match match = regex.Match(url);
-
-                    if (match.Success)
-                    {
-                        // Êä³öÆ¥ÅäµÄÄÚÈİ
-                        string before = match.Groups[2].Value;  // #Ò³Âë
-                        string after = match.Groups[3].Value;   // #Â¥²ã
-                        int page = Convert.ToInt32(before);
-                        int floor = Convert.ToInt32(after);
-                        try
-                        {
-                            if (Pager.SelectedPageIndex + 1 == page && floor > 0)
-                            {
-                                ScrollTo(floor - 1);
-                            }
-                            else
-                            {
-                                Pager.SelectedPageIndex = page - 1;
-                                //Ó¦ÔÚÒ³Âë±ä»¯º¯ÊıÖĞ½øĞĞÌø×ª£¬·ñÔò²»µÈ´ı¡£
-                                isJumping = true;
-                                JumpToFloor = floor-1;
-                            }
-                        }
-                        catch
-                        {
-
-                        }
-                    }
-                    break;
-                case "board":
-                    Frame.Navigate(typeof(Board), result.Value);
-                    break;
-                case "file":
-                    if (result.Value == "image")
-                    {
-                        
-                    }
-                    else if (result.Value == "doc")//ÎŞ·¨Ô¤ÀÀµÄÃ½ÌåÎÄ¼şÀà
-                    {
-                        //var Operation = await DownLoadDialog.ShowAsync();
-                        if (true)
-                        {
-
-                            string UserProfile = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
-                            string DownloadsFolder = System.IO.Path.Combine(UserProfile, "Downloads");
-                            string DownloadLocation = "";
-                            string filepattern = @"(?<=https://file\.cc98\.org/v4-upload/d/\d{4}/\d{4}/)[^/]+";
-                            Regex fileregex = new Regex(filepattern);
-                            Match filematch = fileregex.Match(url);
-                            if (filematch.Success)
-                            {
-                                DownloadLocation = DownloadsFolder + "\\" + filematch.Value;
-                            }
-                            else
-                            {
-                                DownloadLocation = System.IO.Path.Combine(DownloadsFolder, "CC98_Download_" + DateTime.Now.ToString("yyyyMMdd_HHmmss") + ".pdf");
-                            }
-                            try
-                            {
-                                string target_url = LoginService.vpn.IsVpnEnabled ? VpnService.ConvertUrl(url) : url;
-                                var fileres = await LoginService.vpn.client.GetAsync(target_url, HttpCompletionOption.ResponseHeadersRead);
-                                if (fileres.StatusCode == HttpStatusCode.OK)
-                                {
-                                    using (Stream contentStream = await fileres.Content.ReadAsStreamAsync(),
-                                    fileStream = new FileStream(DownloadLocation, FileMode.Create, FileAccess.Write, FileShare.None))
-                                    {
-                                        await contentStream.CopyToAsync(fileStream);
-                                        Flower.Play(FlowStatus.Success, "ÏÂÔØÎÄ¼ş³É¹¦");
-                                    }
-                                }
-                                else
-                                {
-                                    Flower.Play("\uEA39", $"ÏÂÔØÊ§°Ü£¬×´Ì¬ÂëÎª{fileres.StatusCode.ToString()}");
-                                }
-                            }
-                            catch (Exception ex)
-                            {
-                                Flower.Play("\uEA39", ex.Message);
-                            }
-                        }
-                    }
-                    break;
-                case "backlink":
-                    if (result.Value == "bili")
-                    {
-                        var _datapackage = new DataPackage();
-                        _datapackage.SetText(url);
-                        Clipboard.SetContent(_datapackage);
-                        Flower.Play(FlowStatus.Success, "ÒÑ¸´ÖÆBiliÍâÁ´");
-                    }
-                    break ;
-                default://×Ô¶¯¸´ÖÆµ½ÓÃ»§¼ôÇĞ°å
-                    var datapackage = new DataPackage();
-                    datapackage.SetText(url);
-                    Clipboard.SetContent(datapackage);
-                    Flower.Play(FlowStatus.Success, "ÒÑ¸´ÖÆÍâ²¿Á´½Ó");
-                    break;
-            }
-
-        }
-        
-        
-        private void writereply_Click(object sender, RoutedEventArgs e)
-        {
-            var param = new SketchNavigationInfo
-            {
-                EditorMode=EditorMode.ReplyToTopic,
-                TopicId=topicId,
-                HintText= TopicInfo.Title,
-            };
-            Frame.Navigate(typeof(Sketch), param);
-        }
-
-        private async void TileFlyout_Click(object sender, RoutedEventArgs e)
-        {
-            var m = sender as MenuFlyoutItem;
-            if(m?.Tag is not string tag) return;
-            switch (tag)
-            {
-                case "0":
-                    await LoadTopicInfo();
-                    await LoadReply();
-                    Flower.Play(FlowStatus.Success, "Ë¢ĞÂ³É¹¦");
-                    break;
-                case "1":
-                    string shareUrl = $"{TopicInfo.Title} https://www.cc98.org/topic/{topicId}";
-                    var dataPackage = new DataPackage();
-                    dataPackage.SetText(shareUrl);
-                    Clipboard.SetContent(dataPackage);
-                    Flower.Play(FlowStatus.Success, "ÒÑ¸´ÖÆÌû×ÓÁ´½Ó");
-                    break;
-                case "2":
-                    //ÎŞĞèÏìÓ¦
-                    break;
-                case "3":
-                    AppSettings.Current.HideImage = !AppSettings.Current.HideImage;
-                    LoadSet();
-                    break;
-            }
-        }
-        
-
-        private async void CollectionItem_Click(object sender, RoutedEventArgs e)
-        {
-            var m = sender as MenuFlyoutItem;
-            if (m?.Tag is not int groupId) return;
-            var url = ApiEndpoints.Topic.AddIntoFavorites(topicId, groupId);
-            var content = new StringContent("", Encoding.UTF8, "application/json");
-            var result=await RequestSender.Put(url, content);
-            if (!result.IsSuccess)
-            {
-                //
-                Flower.Play(FlowStatus.Fail, result.Message);
-                return;
-            }
-            await LoadTopicInfo();
-            Flower.Play(FlowStatus.Success, "ÒÑÊÕ²Ø");
-        }
-
-      
-
-        private void ScrollTo(int index)
+        foreach (var favorites in favoritesList)
         {
             try
             {
-                var element = ReplyRepeater.GetOrCreateElement(index);
-                var options = new BringIntoViewOptions
-                {
-                    VerticalAlignmentRatio = 0, // 0=¶¥²¿¶ÔÆë£¬0.5=¾ÓÖĞ£¬1=µ×²¿
-                    AnimationDesired = true       // ÆôÓÃÆ½»¬¹ö¶¯¶¯»­
-                };
-                element.StartBringIntoView(options);
-                //¶ÔÓÚÃ»ÓĞÒ³ÂëµÄÌø×ªÁ´½ÓÔİÊ±Ã»ÓĞ´¦Àí
-            }
-            catch { }
-        }
-        
-
-
-
-        private void PostOperation_Click(object sender, RoutedEventArgs e)
-        {
-            var operation = sender as MenuFlyoutItem;
-            if (operation?.DataContext is not Reply reply || operation?.Tag is not string tag) return;
-            switch (tag)
-            {
-                case "UBB":
-                    var pack = new DataPackage();
-                    pack.SetText(reply.Content);
-                    Clipboard.SetContent(pack);
-                    Flower.Play(FlowStatus.Success, "ÒÑ¸´ÖÆÎªÔ­´úÂë");
-                    break;
-                case "MD":
-                    var _pack = new DataPackage();
-                    if (reply.ContentType == (int)ContentType.UBB)
-                    {
-                        _pack.SetText(UbbToMd.Convert(reply.Content, true));
-                    }
-                    else
-                    {
-                        _pack.SetText(reply.Content);
-                    }
-                    Clipboard.SetContent(_pack);
-                    Flower.Play(FlowStatus.Success, "ÒÑ¸´ÖÆÎªMarkdownÎÄ±¾");
-                    break;
-                case "QUOTE":
-                    if (reply.Content != null)
-                    {
-                        int floor = reply.Floor;
-                        int page = 1 + floor / 10;
-                        int location = floor % 10;
-                        string header = $"[b]ÒÔÏÂÊÇÒıÓÃ{floor}Â¥£ºÓÃ»§{reply.UserName}ÔÚ{reply.Time}µÄ·¢ÑÔ£º[url=/topic/{topicId}/{page}#{location}]>>²é¿´Ô­Ìû<<[/url][/b]\r\n";
-                        var param = new SketchNavigationInfo
-                        {
-                            EditorMode = EditorMode.ReplyToPost,
-                            TopicId = topicId,
-                            QuoteHeader = $"[quote]{header}{reply.Content}[/quote]",
-                            ParentId = reply.Id,
-                            HintText=$"ÒıÓÃ{reply.UserName}µÄ»Ø¸´",
-                            Floor=floor
-                        };
-                        Frame.Navigate(typeof(Sketch), param);
-                    }
-                    break;
-                case "EDIT":
-                    var _param = new SketchNavigationInfo
-                    {
-                        EditorMode = reply.Floor==1?EditorMode.EditMyTopic:EditorMode.EditMyPost,
-                        TopicId = topicId,
-                        BaseText = reply.Content,
-                        PostId = reply.Id,
-                        HintText = TopicInfo.Title,
-                        Floor=reply.Floor,
-                        ContentType=reply.ContentType
-                    };
-                    Frame.Navigate(typeof(Sketch), _param);
-                    break;
-            }
-        }
-        private void PagerFix()
-        {
-            Pager.NextButtonVisibility = Pager.NumberOfPages == 1 ? 
-                PagerControlButtonVisibility.Hidden : 
-                PagerControlButtonVisibility.Visible;
-        }
-
-
-
-        private async void Like_Click(object sender, RoutedEventArgs e)
-        {
-            var b = sender as Button;
-            if (b == null) return;
-            if (b.DataContext is not Reply reply || b.Tag is not string mode) return;
-            var postId = reply.Id;
-            var url = ApiEndpoints.Post.React(postId);
-            var content = new StringContent(mode, Encoding.UTF8, "application/json");
-            var result = await RequestSender.Put(url, content);
-            if (!result.IsSuccess)
-            {
-                //
-                Flower.Play("\uEA39", "²Ù×÷Ê§°Ü");
-                return;
-            }
-            var newStateUrl = ApiEndpoints.Post.ReactionState(postId);
-            var newStateResult = await RequestSender.Fetch<ReactionState>(newStateUrl);
-            if (!newStateResult.IsSuccess || newStateResult.Data == null)
-            {
-                //
-                Flower.Play("\uEA39", "»ñÈ¡ÔŞ²ÈÊı¾İÊ§°Ü");
-                return;
-            }
-            var newState = newStateResult.Data;
-            reply.LikeState = newState.LikeState;
-            reply.LikeCount = newState.LikeCount;
-            reply.DislikeCount = newState.DislikeCount;
-        }
-
-
-        
-
-        private async void SmallProfile_Loaded(object sender, RoutedEventArgs e)
-        {
-            var p = sender as PersonPicture;
-            if (p?.Tag is not string tag) return;
-            var bitmap = await UrlEx.LoadWebImage(tag);
-            p.ProfilePicture = bitmap;
-        }
-
-        private void SmallProfile_Unloaded(object sender, RoutedEventArgs e)
-        {
-            var p = sender as PersonPicture;
-            p?.ProfilePicture = null;
-        }
-
-        
-        private async Task InitializeVote()
-        {
-            if (isVote)
-            {
-
-                string voteUrl = ApiEndpoints.Topic.Vote(topicId);
-                var voteResult = await RequestSender.Fetch<VoteInfo>(voteUrl);
-                if (!voteResult.IsSuccess || voteResult.Data == null)
-                {
-                    //
-                    return;
-                }
-                var data= voteResult.Data;
-                VoteList.ItemsSource= data.VoteItems;
-                var record = data.MyRecord;
-                if (record.Count > 0)
-                {
-                    foreach (int i in record)
-                    {
-                        VoteList.SelectedItems.Add(VoteList.Items[i - 1]);
-                    }
-                }
-
-                if (data.CanVote && data.IsAvailable)
-                {
-                    SendVote.IsEnabled = true;
-                    VoteTitle.Text = "Í¶Æ±(¿ª·ÅÖĞ)";
-                }
-                else
-                {
-                    SendVote.IsEnabled = false;
-                    VoteList.IsEnabled = false;
-                    if (data.IsAvailable)
-                    {
-                        VoteTitle.Text = "Í¶Æ±(ÒÑÍ¶Æ±)";
-                    }
-                    else
-                    {
-                        VoteTitle.Text = "Í¶Æ±(ÒÑ¹ıÆÚ)";
-                    }
-                }
-                VoteList.SelectionChanged += (s, e) =>
-                {
-                    if (VoteList.SelectedItems.Count > data.MaxVoteCount)
-                    {
-                        SendVote.IsEnabled = false;
-                    }
-                    else
-                    {
-                        SendVote.IsEnabled = true;
-                    }
-                };
-                votetime.Text = $"¹ıÆÚÊ±¼ä:{data.expiredTime}";
-                voteinfo.Text = $"²ÎÓëÈËÊı:{data.VoteUserCount},Æ±ÊıÏŞÖÆ:{data.MaxVoteCount}";
-
-
-            }
-        }
-        private async void StartVote_Click(object sender, RoutedEventArgs e)
-        {
-            await InitializeVote();
-            VotePanel.IsOpen = true;
-        }
-
-        
-
-        private void VotePanel_Closed(TeachingTip sender, TeachingTipClosedEventArgs args)
-        {
-            VoteList.ItemsSource = null;
-        }
-
-        private async void SendVote_Click(object sender, RoutedEventArgs e)
-        {
-            if (VoteList.SelectedItems.Count > 0)
-            {
-                var list = VoteList.SelectedItems.Select(g=>VoteList.Items.IndexOf(g)+1).ToList();
-                var r = await RequestSender.SendVoteResult(ValidationHelper.GetValue(Set, "CurrentTopicId"), list);
-                if (r == "1")
-                {
-                    Flower.Play(FlowStatus.Success, "Í¶Æ±Íê³É");
-                    await InitializeVote();
-                }
-                else
-                {
-                    Flower.Play("\uEA39", "Í¶Æ±Ê§°Ü");
-                }
-            }
-            else
-            {
-                Flower.Play("\uEA39", "Ñ¡ÔñÖÁÉÙÒ»Ïî");
-            }
-        }
-
-        private async void Person_ContextRequested(UIElement sender, ContextRequestedEventArgs args)
-        {
-            try
-            {
-                var h = sender as HyperlinkButton;
-                ProfileViewer.Target = h;
-                if (h?.Tag is not Reply t || t.IsAnonymous) return;
-                string profileUrl = ApiEndpoints.User.UserProfile(false, t.UserId ?? 0);
-                var profileResult = await RequestSender.Fetch<UserInfo>(profileUrl);
-                if (!profileResult.IsSuccess || profileResult.Data == null)
-                {
-                    return;
-                }
-                var data = profileResult.Data;
-                profile.Name = data.Name;
-                profile.Id = data.Id;
-                profile.Popularity = data.Popularity;
-                profile.FanCount = data.FanCount;
-                profile.PortraitUrl = data.PortraitUrl;
-                profile.SignatureCode = data.SignatureCode;
-                profile.PostCount = data.PostCount;
-                ProfileViewer.IsOpen = true;
+                var item = new MenuFlyoutItem { Text = favorites.Name, Tag = favorites.Id, Icon = new FluentIcons.WinUI.SymbolIcon { Symbol = FluentIcons.Common.Symbol.Tag } };
+                item.Click += CollectionItem_Click;
+                CollectionMenu.Items.Add(item);
             }
             catch (Exception ex)
             {
-                await App.Logger.WriteAsync("Topic", "¼ÓÔØÓÃ»§ĞÅÏ¢Ô¤ÀÀÊ§°Ü", ex.Message);
+                Flower.Play(FlowStatus.Fail, ex.Message);
             }
         }
-
-        
-
-        
-        private static string ExtractImageUrl(UbbNode node)
+    }
+    //å½“jumping mode=trueæ—¶å“åº”ã€‚å“åº”åŒ…æ‹¬ä¸¤ç§ï¼Œæ¥è‡ªå¤–éƒ¨é¡µé¢å¯¼èˆªçš„è·³è½¬å’Œç”¨æˆ·ç‚¹å‡»å¸–å­å†…é“¾æ¥çš„è·³è½¬ã€‚
+    //floorå¦‚17824Lï¼Œåˆ™pageä¸º1782ï¼Œsortä¸º4ï¼Œæ­¤æ—¶ç›®æ ‡æ¥¼å±‚çš„indexæ˜¯3.sort=1æ—¶ç›®æ ‡indexä¸º0ã€‚å¦‚æœsort=0,åˆ™ç›®æ ‡é¡µç åœ¨ä¸Šä¸€é¡µã€‚
+    private async Task Tp(int floor)
+    {
+        // è§£ææ¥¼å±‚
+        var page = floor / 10;
+        var sort = floor % 10;
+        var currentPage = Pager.SelectedPageIndex;
+        // æƒ…å†µ1ï¼šç›®æ ‡å°±åœ¨å½“å‰é¡µ
+        if (currentPage == page)
         {
-            string src = "";
-            if (node is TagNode tagNode)
+            await HandleSamePageJump(sort);
+        }
+        // æƒ…å†µ2ï¼šç›®æ ‡æ˜¯ä¸Šä¸€é¡µçš„æœ€åä¸€ä¸ªï¼ˆç‰¹æ®Šè¾¹ç•Œæƒ…å†µï¼‰
+        else if (currentPage == page - 1 && sort == 0)
+        {
+            await HandlePrevPageLastItem();
+        }
+        // æƒ…å†µ3ï¼šéœ€è¦ç¿»é¡µ
+        else
+        {
+            HandlePageNavigation(page, sort);
+        }
+    }
+
+    /// <summary>
+    /// å¤„ç†åŒä¸€é¡µå†…çš„è·³è½¬
+    /// </summary>
+    private async Task HandleSamePageJump(int sort)
+    {
+        if (sort == 0)
+        {
+            // æ•´åæ¥¼ï¼šè·³è½¬åˆ°ä¸Šä¸€é¡µçš„æœ€åä¸€ä¸ª
+            Pager.SelectedPageIndex--;
+            JumpToFloor = 9;
+        }
+        else
+        {
+            // éæ•´åæ¥¼ï¼šç›´æ¥è·³è½¬åˆ°å¯¹åº”æ¥¼å±‚
+            await EnsureReplyLoadedAndScroll(sort - 1);
+        }
+    }
+
+    /// <summary>
+    /// å¤„ç†è·³è½¬åˆ°ä¸Šä¸€é¡µæœ€åä¸€ä¸ªçš„æƒ…å†µ
+    /// </summary>
+    private async Task HandlePrevPageLastItem()
+    {
+        Pager.SelectedPageIndex++;
+
+        // åˆ¤æ–­ç¬¬10æ¥¼æ˜¯å¦å·²åŠ è½½
+        if (Replies.Count == 10)
+        {
+            ScrollTo(9);
+        }
+        else
+        {
+            await LoadReply();
+            ScrollTo(9);
+        }
+    }
+
+    /// <summary>
+    /// å¤„ç†éœ€è¦ç¿»é¡µçš„è·³è½¬
+    /// </summary>
+    private void HandlePageNavigation(int targetPage, int targetSort)
+    {
+        if (targetSort == 0)
+        {
+            // æ•´åæ¥¼ï¼šç›®æ ‡åœ¨ä¸Šä¸€é¡µ
+            Pager.SelectedPageIndex = targetPage - 1;
+            JumpToFloor = 9;
+        }
+        else
+        {
+            // éæ•´åæ¥¼ï¼šç›®æ ‡åœ¨å½“å‰é¡µ
+            Pager.SelectedPageIndex = targetPage;
+            JumpToFloor = targetSort - 1;
+        }
+    }
+
+    /// <summary>
+    /// ç¡®ä¿æŒ‡å®šç´¢å¼•çš„å›å¤å·²åŠ è½½å¹¶æ»šåŠ¨åˆ°è¯¥ä½ç½®
+    /// </summary>
+    private async Task EnsureReplyLoadedAndScroll(int targetIndex)
+    {
+        // å¦‚æœç›®æ ‡ç´¢å¼•å°šæœªåŠ è½½ï¼Œå…ˆåŠ è½½æ•°æ®
+        if (Replies.Count <= targetIndex)
+        {
+            await LoadReply();
+        }
+
+        ScrollTo(targetIndex);
+    }
+    private async Task LoadTopicInfo()
+    {
+        var topicInfoUrl = ApiEndpoints.Topic.TopicInfo(TopicId);
+        var topicInfoResult = await RequestSender.Fetch<TopicInfo>(topicInfoUrl);
+        if (!topicInfoResult.IsSuccess||topicInfoResult.Data==null)
+        {
+            return;
+        }
+        var data = topicInfoResult.Data;
+        TopicInfo.FavoriteCount = data.FavoriteCount;
+        TopicInfo.Title = data.Title;
+        TopicInfo.Time = data.Time;
+        TopicInfo.HitCount = data.HitCount;
+        TopicInfo.ReplyCount = data.ReplyCount;
+        var isFavoriteUrl = ApiEndpoints.Topic.IsFavorite(TopicId);
+        var isFavoriteResult = await RequestSender.Fetch<bool>(isFavoriteUrl);
+        if (isFavoriteResult.IsNotValid)
+        {
+            //
+        }
+        else
+        {
+            TopicInfo.IsFavorite = isFavoriteResult.Data;
+        }
+        Pager.NumberOfPages = (TopicInfo.ReplyCount/ 10) + 1;
+        PagerFix();
+        IsVote = TopicInfo.IsVote;
+        if (IsVote)
+        {
+            StartVote.Visibility = Visibility.Visible;
+        }
+    }
+
+        
+    private async Task LoadReply()
+    {
+        //æ¸…ç©º
+        Replies.Clear();
+        var replyUrl = ApiEndpoints.Topic.ReplyList(TopicId, CurrentPage * PageSize);
+        var replyResult=await RequestSender.Fetch<List<Reply>>(replyUrl);
+        if (!replyResult.IsSuccess || replyResult.Data == null)
+        {
+            //
+            await App.Logger.WriteAsync("Topic","åŠ è½½å›å¸–å¤±è´¥", replyResult.Message);
+            return;
+        }
+        var data= replyResult.Data;
+            
+        var param = string.Join("&", data.Where(x=>!x.IsAnonymous&&x.UserId.HasValue).Select(x => $"id={x.UserId}").ToHashSet());
+        var userInfoUrl = ApiEndpoints.User.BasicUserInfoList(param);
+        var userInfoResult = await RequestSender.Fetch<List<BasicUserInfo>>(userInfoUrl);
+        if (!userInfoResult.IsSuccess || userInfoResult.Data == null)
+        {
+            //æŠ¥é”™
+            return;
+        }
+
+        var userInfoList = userInfoResult.Data;
+        //æå–å¤´åƒé“¾æ¥
+        foreach (var reply in data)
+        {
+            //CC98 Deleter
+            if (reply.IsDeleted)
             {
-                var value = tagNode.GetAttribute("value");
-                if (!value.IsValidUrl()|| value == "1")
+                reply.UserName = "CC98 Deleter";
+                reply.Content = "<--è¯¥å›å¤å·²è¢«ç®¡ç†å‘˜æˆ–å‘å¸ƒè€…åˆ é™¤-->";
+                reply.PortraitUrl = "ms-appx:///Assets/deleter.png";
+                //è·³è¿‡
+                continue;
+            }
+            if (reply.IsAnonymous)
+            {
+                var code = reply.UserName;
+                reply.UserName = $"åŒ¿å{code.ToUpper()}";
+                reply.PortraitUrl = "ms-appx:///Assets/hide.gif";
+                //è·³è¿‡
+                continue;
+            }
+                
+            var user = userInfoList.First(x => x.Id == reply.UserId);
+            if (user != null)
+            {
+                reply.PortraitUrl = user.PortraitUrl;
+            }
+        }
+        Replies.AddRange(data);
+    }
+
+
+    private void Person_Click(object sender, RoutedEventArgs e)
+    {
+        var h = sender as HyperlinkButton;
+        ProfileViewer.Target = h;
+        if (h?.Tag is not Reply t || t.IsAnonymous || t.IsDeleted) return;
+        var info = new ProfileNavigationInfo { IsMe = t.IsMe, UserId = t.UserId ?? 0 };
+        Frame.Navigate(typeof(Profile), info);
+    }
+    private async void Pager_SelectedIndexChanged(DevWinUI.PagerControl sender, DevWinUI.PagerControlSelectedIndexChangedEventArgs args)
+    {
+        //æ­¤æ–¹æ³•åœ¨é¡µé¢åŠ è½½å®Œæˆåä¼šè¢«è°ƒç”¨ä¸€æ¬¡ï¼ŒPagerçš„SelectedIndexä¼šè¢«è®¾ç½®ä¸º0ã€‚
+        //æ‰€ä»¥é¡µé¢æ„é€ å‡½æ•°å¤„ä¸éœ€è¦å•ç‹¬è°ƒç”¨LoadReplyæ–¹æ³•ã€‚
+        //é™å®šäº†åªæœ‰é¡µé¢ä¸»åŠ¨åŠ è½½å’Œç”¨æˆ·ç‚¹å‡»ç¿»é¡µï¼Œindexä»-1åˆ°0ä¸è§¦å‘æ•°æ®åŠ è½½ã€‚
+            
+        PagerFix();
+        if (args.PreviousPageIndex != -1)
+        {
+            var index = Pager.SelectedPageIndex;
+            CurrentPage = index;
+            if (index >= 0)
+            {
+                await LoadReply();
+                if (IsJumping && JumpToFloor != -1)
                 {
-                    // ³¢ÊÔ´Ó×Ó½Úµã»ñÈ¡URL£¨¶ÔÓÚ [img]url[/img] ¸ñÊ½£©
-                    var first = node.FirstChild;
-                    if (first is TextNode textNode)
+                    ScrollTo(JumpToFloor);
+                    IsJumping = false;
+                    JumpToFloor = -1;
+                }
+            }
+        }
+           
+    }
+
+    private async void UbbTextBlock_MediaClicked(object sender, MediaClickEventArgs e)
+    {
+        de.Text = $"é“¾æ¥ï¼š{e.Source}ï¼Œç±»å‹ï¼š{e.MediaType}";
+        switch (e.MediaType)
+        {
+            case MediaType.Image:
+                var u = sender as UbbTextBlock;
+                if (u == null) return;
+                var ubb = u.UbbText;
+                var doc = Parser.Parse(ubb);
+                if (doc == null) return;
+                var list = new List<string>();
+                var nodes = doc.Root.GetDescendantsByType(UbbNodeType.Image);
+                foreach (var node in nodes)
+                {
+                    list.Add(ExtractImageUrl(node));
+                }
+                var anchor = list.IndexOf(e.Source);
+                var info = new ViewerNavigationInfo
+                {
+                    Type = MediaType.Image,
+                    Urls = list,
+                    CurrentIndex = anchor
+                };
+                var viewer = new MediaViewer(info);
+                viewer.Activate();
+                break;
+            case MediaType.Video:
+                var vinfo = new ViewerNavigationInfo
+                {
+                    Type = MediaType.Video,
+                    Urls = [e.Source]
+                };
+                Frame.Navigate(typeof(MediaViewer), vinfo);
+                break;
+            case MediaType.Link:
+                await HandleLink(e.Source);
+                break;
+            case MediaType.AtUser:
+                await SearchForUser(e.Source);
+                break;
+            case MediaType.Audio:
+                break;
+            case MediaType.File:
+                break;
+    
+        }
+    }
+    private async Task SearchForUser(string userName)
+    {
+        var url = ApiEndpoints.User.SearchUserByName(userName);
+        var result = await RequestSender.Fetch<UserInfo>(url);
+        if (!result.IsSuccess || result.Data == null)
+        {
+            //
+            return;
+        }
+        var user = result.Data;
+        if (user == null)
+        {
+            Flower.Play(FlowStatus.Fail, "æœªæ‰¾åˆ°ç”¨æˆ·");
+        }
+        else
+        {
+            //è¿™é‡Œéœ€è¦ä¸ºAuthç±»åŠ ä¸€ä¸ªIDçš„é™æ€å±æ€§ï¼Œä»¥ä¾¿åœ¨å…¶ä»–é¡µé¢è¿›è¡Œå¯¹æ¯”ï¼Œåˆ¤æ–­æ˜¯å¦ä¸ºå½“å‰ç”¨æˆ·ã€‚
+            //var info = new ProfileNavigationInfo { IsMe = user.Id == LoginService.CurrentUserId, UserId = user.Id };
+            //Frame.Navigate(typeof(Profile), info);
+        }
+                
+    }
+
+    [GeneratedRegex(@"/topic/(\d{7})/(\d+)#(\d+)")]
+    private static partial Regex FloorAnchorRegex();
+   
+    private async Task HandleLink(string url)
+    {
+        var match = FloorAnchorRegex().Match(url);
+        if (match.Success)
+        {
+            var before=int.Parse(match.Groups[2].ValueSpan);
+            var after=int.Parse((match.Groups[3].ValueSpan));
+            var floor=10*(before-1)+after;
+            IsJumping = true;
+            await Tp(floor);
+        }
+    }
+    private async void MarkdownTextBlock_LinkClicked(object sender)
+    {
+        var url = "";
+        var result = LinkAnalyzer.Parse(url);
+        switch (result.Key)
+        {
+            case "topic":
+                Set.Values["CurrentTopicId"]=result.Value;
+                TopicId =int.Parse(result.Value);
+                await LoadTopicInfo();
+                await LoadReply();
+                break;
+            case "user":
+            {
+                var url = "https://api.cc98.org/user/name/" + result.Value;
+                break;
+            }
+            //usingè¯­å¥ä¸èƒ½åœ¨switchè¯­å¥ä¸­ç›´æ¥å‡ºç°ã€‚å› æ­¤ï¼Œä½¿ç”¨å¤§æ‹¬å·åŒ…å›´è¿™ä¸ªcase.
+            case "anchor":
+                var pattern = @"/topic/(\d{7})/(\d+)#(\d+)";
+                //æš‚æ—¶ä¸è€ƒè™‘è·¨é¡µå¼•ç”¨ã€‚å¦‚æœè€ƒè™‘ï¼Œæˆ‘ä»¬éœ€è¦æ”¹è¿›è·³è½¬å‚æ•°ï¼Œè®©å…¶åŒ…å«ä¸€ä¸ªè·³è½¬ä¿¡æ¯ã€‚
+                var regex = new Regex(pattern);
+
+                // ä½¿ç”¨æ­£åˆ™è¡¨è¾¾å¼è¿›è¡ŒåŒ¹é…
+                var match = regex.Match(url);
+
+                if (match.Success)
+                {
+                    // è¾“å‡ºåŒ¹é…çš„å†…å®¹
+                    var before = match.Groups[2].Value;  // #é¡µç 
+                    var after = match.Groups[3].Value;   // #æ¥¼å±‚
+                    var page = Convert.ToInt32(before);
+                    var floor = Convert.ToInt32(after);
+                    try
                     {
-                        src = textNode.Content;
+                        if (Pager.SelectedPageIndex + 1 == page && floor > 0)
+                        {
+                            ScrollTo(floor - 1);
+                        }
+                        else
+                        {
+                            Pager.SelectedPageIndex = page - 1;
+                            //åº”åœ¨é¡µç å˜åŒ–å‡½æ•°ä¸­è¿›è¡Œè·³è½¬ï¼Œå¦åˆ™ä¸ç­‰å¾…ã€‚
+                            IsJumping = true;
+                            JumpToFloor = floor-1;
+                        }
                     }
+                    catch
+                    {
+
+                    }
+                }
+                break;
+            case "board":
+                Frame.Navigate(typeof(Board), result.Value);
+                break;
+            case "file":
+                if (result.Value == "image")
+                {
+                        
+                }
+                else if (result.Value == "doc")//æ— æ³•é¢„è§ˆçš„åª’ä½“æ–‡ä»¶ç±»
+                {
+                    //var Operation = await DownLoadDialog.ShowAsync();
+                    if (true)
+                    {
+
+                        var userProfile = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+                        var downloadsFolder = System.IO.Path.Combine(userProfile, "Downloads");
+                        var downloadLocation = "";
+                        var filepattern = @"(?<=https://file\.cc98\.org/v4-upload/d/\d{4}/\d{4}/)[^/]+";
+                        var fileregex = new Regex(filepattern);
+                        var filematch = fileregex.Match(url);
+                        if (filematch.Success)
+                        {
+                            downloadLocation = downloadsFolder + "\\" + filematch.Value;
+                        }
+                        else
+                        {
+                            downloadLocation = System.IO.Path.Combine(downloadsFolder, "CC98_Download_" + DateTime.Now.ToString("yyyyMMdd_HHmmss") + ".pdf");
+                        }
+                        try
+                        {
+                            var targetUrl = LoginService.Vpn.IsVpnEnabled ? VpnService.ConvertUrl(url) : url;
+                            var fileres = await LoginService.Vpn.Client.GetAsync(targetUrl, HttpCompletionOption.ResponseHeadersRead);
+                            if (fileres.StatusCode == HttpStatusCode.OK)
+                            {
+                                using (Stream contentStream = await fileres.Content.ReadAsStreamAsync(),
+                                       fileStream = new FileStream(downloadLocation, FileMode.Create, FileAccess.Write, FileShare.None))
+                                {
+                                    await contentStream.CopyToAsync(fileStream);
+                                    Flower.Play(FlowStatus.Success, "ä¸‹è½½æ–‡ä»¶æˆåŠŸ");
+                                }
+                            }
+                            else
+                            {
+                                Flower.Play("\uEA39", $"ä¸‹è½½å¤±è´¥ï¼ŒçŠ¶æ€ç ä¸º{fileres.StatusCode.ToString()}");
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            Flower.Play("\uEA39", ex.Message);
+                        }
+                    }
+                }
+                break;
+            case "backlink":
+                if (result.Value == "bili")
+                {
+                    var datapackage = new DataPackage();
+                    datapackage.SetText(url);
+                    Clipboard.SetContent(datapackage);
+                    Flower.Play(FlowStatus.Success, "å·²å¤åˆ¶Biliå¤–é“¾");
+                }
+                break ;
+            default://è‡ªåŠ¨å¤åˆ¶åˆ°ç”¨æˆ·å‰ªåˆ‡æ¿
+                var datapackage = new DataPackage();
+                datapackage.SetText(url);
+                Clipboard.SetContent(datapackage);
+                Flower.Play(FlowStatus.Success, "å·²å¤åˆ¶å¤–éƒ¨é“¾æ¥");
+                break;
+        }
+
+    }
+        
+        
+    private void writereply_Click(object sender, RoutedEventArgs e)
+    {
+        var param = new SketchNavigationInfo
+        {
+            EditorMode=EditorMode.ReplyToTopic,
+            TopicId=TopicId,
+            HintText= TopicInfo.Title,
+        };
+        Frame.Navigate(typeof(Sketch), param);
+    }
+
+    private async void TileFlyout_Click(object sender, RoutedEventArgs e)
+    {
+        var m = sender as MenuFlyoutItem;
+        if(m?.Tag is not string tag) return;
+        switch (tag)
+        {
+            case "0":
+                await LoadTopicInfo();
+                await LoadReply();
+                Flower.Play(FlowStatus.Success, "åˆ·æ–°æˆåŠŸ");
+                break;
+            case "1":
+                var shareUrl = $"{TopicInfo.Title} https://www.cc98.org/topic/{TopicId}";
+                var dataPackage = new DataPackage();
+                dataPackage.SetText(shareUrl);
+                Clipboard.SetContent(dataPackage);
+                Flower.Play(FlowStatus.Success, "å·²å¤åˆ¶å¸–å­é“¾æ¥");
+                break;
+            case "2":
+                //æ— éœ€å“åº”
+                break;
+            case "3":
+                AppSettings.Current.HideImage = !AppSettings.Current.HideImage;
+                LoadSet();
+                break;
+        }
+    }
+        
+
+    private async void CollectionItem_Click(object sender, RoutedEventArgs e)
+    {
+        var m = sender as MenuFlyoutItem;
+        if (m?.Tag is not int groupId) return;
+        var url = ApiEndpoints.Topic.AddIntoFavorites(TopicId, groupId);
+        var content = new StringContent("", Encoding.UTF8, "application/json");
+        var result=await RequestSender.Put(url, content);
+        if (!result.IsSuccess)
+        {
+            //
+            Flower.Play(FlowStatus.Fail, result.Message);
+            return;
+        }
+        await LoadTopicInfo();
+        Flower.Play(FlowStatus.Success, "å·²æ”¶è—");
+    }
+
+      
+
+    private void ScrollTo(int index)
+    {
+        try
+        {
+            var element = ReplyRepeater.GetOrCreateElement(index);
+            var options = new BringIntoViewOptions
+            {
+                VerticalAlignmentRatio = 0, // 0=é¡¶éƒ¨å¯¹é½ï¼Œ0.5=å±…ä¸­ï¼Œ1=åº•éƒ¨
+                AnimationDesired = true       // å¯ç”¨å¹³æ»‘æ»šåŠ¨åŠ¨ç”»
+            };
+            element.StartBringIntoView(options);
+            //å¯¹äºæ²¡æœ‰é¡µç çš„è·³è½¬é“¾æ¥æš‚æ—¶æ²¡æœ‰å¤„ç†
+        }
+        catch { }
+    }
+        
+
+
+
+    private void PostOperation_Click(object sender, RoutedEventArgs e)
+    {
+        var operation = sender as MenuFlyoutItem;
+        if (operation?.DataContext is not Reply reply || operation?.Tag is not string tag) return;
+        switch (tag)
+        {
+            case "UBB":
+                var pack = new DataPackage();
+                pack.SetText(reply.Content);
+                Clipboard.SetContent(pack);
+                Flower.Play(FlowStatus.Success, "å·²å¤åˆ¶ä¸ºåŸä»£ç ");
+                break;
+            case "MD":
+                var pack = new DataPackage();
+                if (reply.ContentType == (int)ContentType.Ubb)
+                {
+                    pack.SetText(UbbToMd.Convert(reply.Content, true));
                 }
                 else
                 {
-                    src = value;
+                    pack.SetText(reply.Content);
                 }
-            }
-            return src;
+                Clipboard.SetContent(pack);
+                Flower.Play(FlowStatus.Success, "å·²å¤åˆ¶ä¸ºMarkdownæ–‡æœ¬");
+                break;
+            case "QUOTE":
+                if (reply.Content != null)
+                {
+                    var floor = reply.Floor;
+                    var page = 1 + floor / 10;
+                    var location = floor % 10;
+                    var header = $"[b]ä»¥ä¸‹æ˜¯å¼•ç”¨{floor}æ¥¼ï¼šç”¨æˆ·{reply.UserName}åœ¨{reply.Time}çš„å‘è¨€ï¼š[url=/topic/{TopicId}/{page}#{location}]>>æŸ¥çœ‹åŸå¸–<<[/url][/b]\r\n";
+                    var param = new SketchNavigationInfo
+                    {
+                        EditorMode = EditorMode.ReplyToPost,
+                        TopicId = TopicId,
+                        QuoteHeader = $"[quote]{header}{reply.Content}[/quote]",
+                        ParentId = reply.Id,
+                        HintText=$"å¼•ç”¨{reply.UserName}çš„å›å¤",
+                        Floor=floor
+                    };
+                    Frame.Navigate(typeof(Sketch), param);
+                }
+                break;
+            case "EDIT":
+                var param = new SketchNavigationInfo
+                {
+                    EditorMode = reply.Floor==1?EditorMode.EditMyTopic:EditorMode.EditMyPost,
+                    TopicId = TopicId,
+                    BaseText = reply.Content,
+                    PostId = reply.Id,
+                    HintText = TopicInfo.Title,
+                    Floor=reply.Floor,
+                    ContentType=reply.ContentType
+                };
+                Frame.Navigate(typeof(Sketch), param);
+                break;
         }
+    }
+    private void PagerFix()
+    {
+        Pager.NextButtonVisibility = Pager.NumberOfPages == 1 ? 
+            PagerControlButtonVisibility.Hidden : 
+            PagerControlButtonVisibility.Visible;
+    }
 
-        private void ProfileViewer_Closed(TeachingTip sender, TeachingTipClosedEventArgs args)
+
+
+    private async void Like_Click(object sender, RoutedEventArgs e)
+    {
+        var b = sender as Button;
+        if (b == null) return;
+        if (b.DataContext is not Reply reply || b.Tag is not string mode) return;
+        var postId = reply.Id;
+        var url = ApiEndpoints.Post.React(postId);
+        var content = new StringContent(mode, Encoding.UTF8, "application/json");
+        var result = await RequestSender.Put(url, content);
+        if (!result.IsSuccess)
         {
-            ProfileViewer.Target = null;  // ¹Ø¼ü£ºÇåÀí Target ÒıÓÃ
-            ProfileViewer.Tag = null;
+            //
+            Flower.Play("\uEA39", "æ“ä½œå¤±è´¥");
+            return;
         }
+        var newStateUrl = ApiEndpoints.Post.ReactionState(postId);
+        var newStateResult = await RequestSender.Fetch<ReactionState>(newStateUrl);
+        if (!newStateResult.IsSuccess || newStateResult.Data == null)
+        {
+            //
+            Flower.Play("\uEA39", "è·å–èµè¸©æ•°æ®å¤±è´¥");
+            return;
+        }
+        var newState = newStateResult.Data;
+        reply.LikeState = newState.LikeState;
+        reply.LikeCount = newState.LikeCount;
+        reply.DislikeCount = newState.DislikeCount;
+    }
+
 
         
+
+    private async void SmallProfile_Loaded(object sender, RoutedEventArgs e)
+    {
+        var p = sender as PersonPicture;
+        if (p?.Tag is not string tag) return;
+        var bitmap = await UrlEx.LoadWebImage(tag);
+        p.ProfilePicture = bitmap;
     }
+
+    private void SmallProfile_Unloaded(object sender, RoutedEventArgs e)
+    {
+        var p = sender as PersonPicture;
+        p?.ProfilePicture = null;
+    }
+
+        
+    private async Task InitializeVote()
+    {
+        if (IsVote)
+        {
+
+            var voteUrl = ApiEndpoints.Topic.Vote(TopicId);
+            var voteResult = await RequestSender.Fetch<VoteInfo>(voteUrl);
+            if (!voteResult.IsSuccess || voteResult.Data == null)
+            {
+                //
+                return;
+            }
+            var data= voteResult.Data;
+            VoteList.ItemsSource= data.VoteItems;
+            var record = data.MyRecord;
+            if (record.Count > 0)
+            {
+                foreach (var i in record)
+                {
+                    VoteList.SelectedItems.Add(VoteList.Items[i - 1]);
+                }
+            }
+
+            if (data.CanVote && data.IsAvailable)
+            {
+                SendVote.IsEnabled = true;
+                VoteTitle.Text = "æŠ•ç¥¨(å¼€æ”¾ä¸­)";
+            }
+            else
+            {
+                SendVote.IsEnabled = false;
+                VoteList.IsEnabled = false;
+                if (data.IsAvailable)
+                {
+                    VoteTitle.Text = "æŠ•ç¥¨(å·²æŠ•ç¥¨)";
+                }
+                else
+                {
+                    VoteTitle.Text = "æŠ•ç¥¨(å·²è¿‡æœŸ)";
+                }
+            }
+            VoteList.SelectionChanged += (s, e) =>
+            {
+                if (VoteList.SelectedItems.Count > data.MaxVoteCount)
+                {
+                    SendVote.IsEnabled = false;
+                }
+                else
+                {
+                    SendVote.IsEnabled = true;
+                }
+            };
+            votetime.Text = $"è¿‡æœŸæ—¶é—´:{data.ExpiredTime}";
+            voteinfo.Text = $"å‚ä¸äººæ•°:{data.VoteUserCount},ç¥¨æ•°é™åˆ¶:{data.MaxVoteCount}";
+
+
+        }
+    }
+    private async void StartVote_Click(object sender, RoutedEventArgs e)
+    {
+        await InitializeVote();
+        VotePanel.IsOpen = true;
+    }
+
+        
+
+    private void VotePanel_Closed(TeachingTip sender, TeachingTipClosedEventArgs args)
+    {
+        VoteList.ItemsSource = null;
+    }
+
+    private async void SendVote_Click(object sender, RoutedEventArgs e)
+    {
+        if (VoteList.SelectedItems.Count > 0)
+        {
+            var list = VoteList.SelectedItems.Select(g=>VoteList.Items.IndexOf(g)+1).ToList();
+            var r = await RequestSender.SendVoteResult(ValidationHelper.GetValue(Set, "CurrentTopicId"), list);
+            if (r == "1")
+            {
+                Flower.Play(FlowStatus.Success, "æŠ•ç¥¨å®Œæˆ");
+                await InitializeVote();
+            }
+            else
+            {
+                Flower.Play("\uEA39", "æŠ•ç¥¨å¤±è´¥");
+            }
+        }
+        else
+        {
+            Flower.Play("\uEA39", "é€‰æ‹©è‡³å°‘ä¸€é¡¹");
+        }
+    }
+
+    private async void Person_ContextRequested(UIElement sender, ContextRequestedEventArgs args)
+    {
+        try
+        {
+            var h = sender as HyperlinkButton;
+            ProfileViewer.Target = h;
+            if (h?.Tag is not Reply t || t.IsAnonymous) return;
+            var profileUrl = ApiEndpoints.User.UserProfile(false, t.UserId ?? 0);
+            var profileResult = await RequestSender.Fetch<UserInfo>(profileUrl);
+            if (!profileResult.IsSuccess || profileResult.Data == null)
+            {
+                return;
+            }
+            var data = profileResult.Data;
+            Profile.Name = data.Name;
+            Profile.Id = data.Id;
+            Profile.Popularity = data.Popularity;
+            Profile.FanCount = data.FanCount;
+            Profile.PortraitUrl = data.PortraitUrl;
+            Profile.SignatureCode = data.SignatureCode;
+            Profile.PostCount = data.PostCount;
+            ProfileViewer.IsOpen = true;
+        }
+        catch (Exception ex)
+        {
+            await App.Logger.WriteAsync("Topic", "åŠ è½½ç”¨æˆ·ä¿¡æ¯é¢„è§ˆå¤±è´¥", ex.Message);
+        }
+    }
+
+        
+
+        
+    private static string ExtractImageUrl(UbbNode node)
+    {
+        var src = "";
+        if (node is TagNode tagNode)
+        {
+            var value = tagNode.GetAttribute("value");
+            if (!value.IsValidUrl()|| value == "1")
+            {
+                // å°è¯•ä»å­èŠ‚ç‚¹è·å–URLï¼ˆå¯¹äº [img]url[/img] æ ¼å¼ï¼‰
+                var first = node.FirstChild;
+                if (first is TextNode textNode)
+                {
+                    src = textNode.Content;
+                }
+            }
+            else
+            {
+                src = value;
+            }
+        }
+        return src;
+    }
+
+    private void ProfileViewer_Closed(TeachingTip sender, TeachingTipClosedEventArgs args)
+    {
+        ProfileViewer.Target = null;  // å…³é”®ï¼šæ¸…ç† Target å¼•ç”¨
+        ProfileViewer.Tag = null;
+    }
+
+        
 }

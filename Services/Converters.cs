@@ -5,18 +5,17 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Data;
 using Microsoft.UI.Xaml.Media;
 using System;
-using Windows.Storage;
 using Windows.UI;
 
 namespace CC98.Services.Converters;
 
-public partial class UBBTextConverter : IValueConverter
+public partial class UbbTextConverter : IValueConverter
 {
     object IValueConverter.Convert(object value, Type targetType, object parameter, string language)
     {
         if (value != null)
         {
-            string input = value as string ?? string.Empty;
+            var input = value as string ?? string.Empty;
             if (!string.IsNullOrEmpty(input))
             {
                 return UbbToMd.Convert(input, !AppSettings.Current.HideImage);

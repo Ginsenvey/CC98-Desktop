@@ -1,292 +1,286 @@
-using CC98.Share.Controls.Primitives;
+Ôªøusing CC98.Share.Controls.Primitives;
 using Microsoft.UI;
-using Microsoft.UI.Text;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml.Documents;
 using Microsoft.UI.Xaml.Media;
-using Microsoft.UI.Xaml.Media.Imaging;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text.RegularExpressions;
 using UbbRender.Common;
 using UbbRender.Parser;
 using Windows.UI;
-using Windows.UI.Text;
-namespace UbbRender.Render
+
+namespace UbbRender.Render;
+
+public sealed partial class UbbTextBlock : Control
 {
-    public sealed partial class UbbTextBlock : Control
-    {
-        #region “¿¿µ Ù–‘
+    #region ‰æùËµñÂ±ûÊÄß
 
-        public static readonly DependencyProperty UbbTextProperty =
-            DependencyProperty.Register(
-                nameof(UbbText),
-                typeof(string),
-                typeof(UbbTextBlock),
-                new PropertyMetadata(string.Empty, OnUbbTextChanged));
+    public static readonly DependencyProperty UbbTextProperty =
+        DependencyProperty.Register(
+            nameof(UbbText),
+            typeof(string),
+            typeof(UbbTextBlock),
+            new(string.Empty, OnUbbTextChanged));
 
-        public static new readonly DependencyProperty FontSizeProperty =
-            DependencyProperty.Register(
-                nameof(FontSize),
-                typeof(double),
-                typeof(UbbTextBlock),
-                new PropertyMetadata(14.0, OnFontSizeChanged));
-        public static readonly DependencyProperty BoldFontFamilyProperty =
-            DependencyProperty.Register(
-                nameof(BoldFontFamily),
-                typeof(FontFamily),
-                typeof(UbbTextBlock),
-                new PropertyMetadata(null));
+    public static new readonly DependencyProperty FontSizeProperty =
+        DependencyProperty.Register(
+            nameof(FontSize),
+            typeof(double),
+            typeof(UbbTextBlock),
+            new(14.0, OnFontSizeChanged));
+    public static readonly DependencyProperty BoldFontFamilyProperty =
+        DependencyProperty.Register(
+            nameof(BoldFontFamily),
+            typeof(FontFamily),
+            typeof(UbbTextBlock),
+            new(null));
 
-        public static new readonly DependencyProperty ForegroundProperty =
-            DependencyProperty.Register(
-                nameof(Foreground),
-                typeof(Brush),
-                typeof(UbbTextBlock),
-                new PropertyMetadata(null, OnForegroundChanged));
+    public static new readonly DependencyProperty ForegroundProperty =
+        DependencyProperty.Register(
+            nameof(Foreground),
+            typeof(Brush),
+            typeof(UbbTextBlock),
+            new(null, OnForegroundChanged));
 
-        public static readonly DependencyProperty CodeBackgroundProperty =
-            DependencyProperty.Register(
-                nameof(CodeBackground),
-                typeof(Brush),
-                typeof(UbbTextBlock),
-                new PropertyMetadata(null));
+    public static readonly DependencyProperty CodeBackgroundProperty =
+        DependencyProperty.Register(
+            nameof(CodeBackground),
+            typeof(Brush),
+            typeof(UbbTextBlock),
+            new(null));
 
-        public static readonly DependencyProperty QuoteBackgroundProperty =
-            DependencyProperty.Register(
-                nameof(QuoteBackground),
-                typeof(Brush),
-                typeof(UbbTextBlock),
-                new PropertyMetadata(null));
+    public static readonly DependencyProperty QuoteBackgroundProperty =
+        DependencyProperty.Register(
+            nameof(QuoteBackground),
+            typeof(Brush),
+            typeof(UbbTextBlock),
+            new(null));
 
-        public static readonly DependencyProperty ImageMaxWidthProperty =
-            DependencyProperty.Register(
-                nameof(ImageMaxWidth),
-                typeof(double),
-                typeof(UbbTextBlock),
-                new PropertyMetadata(400.0));
+    public static readonly DependencyProperty ImageMaxWidthProperty =
+        DependencyProperty.Register(
+            nameof(ImageMaxWidth),
+            typeof(double),
+            typeof(UbbTextBlock),
+            new(400.0));
  
-        public static readonly DependencyProperty HideImageProperty =
-            DependencyProperty.Register(
-                nameof(HideImage),
-                typeof(bool),
-                typeof(UbbTextBlock),
-                new PropertyMetadata(false,onHideImageChanged));
+    public static readonly DependencyProperty HideImageProperty =
+        DependencyProperty.Register(
+            nameof(HideImage),
+            typeof(bool),
+            typeof(UbbTextBlock),
+            new(false,OnHideImageChanged));
 
         
 
-        public string UbbText
-        {
-            get => (string)GetValue(UbbTextProperty);
-            set => SetValue(UbbTextProperty, value);
-        }
-
-        public new double FontSize
-        {
-            get => (double)GetValue(FontSizeProperty);
-            set => SetValue(FontSizeProperty, value);
-        }
-        public FontFamily BoldFontFamily
-        {
-            get => (FontFamily)GetValue(BoldFontFamilyProperty);
-            set => SetValue(BoldFontFamilyProperty, value);
-        }
-        public new Brush Foreground
-        {
-            get => (Brush)GetValue(ForegroundProperty);
-            set => SetValue(ForegroundProperty, value);
-        }
-
-        public Brush CodeBackground
-        {
-            get => (Brush)GetValue(CodeBackgroundProperty);
-            set => SetValue(CodeBackgroundProperty, value);
-        }
-
-        public Brush QuoteBackground
-        {
-            get => (Brush)GetValue(QuoteBackgroundProperty);
-            set => SetValue(QuoteBackgroundProperty, value);
-        }
-
-        public double ImageMaxWidth
-        {
-            get => (double)GetValue(ImageMaxWidthProperty);
-            set => SetValue(ImageMaxWidthProperty, value);
-        }
-        public bool HideImage
-        {
-            get => (bool)GetValue(HideImageProperty);
-            set => SetValue(HideImageProperty, value);
-        }
-
-        private StackPanel _rootPanel;
-        private UbbDocument _document;
-        public static readonly IReadOnlyDictionary<UbbNodeType, IRenderStrategy> renderStrategies = new Dictionary<UbbNodeType, IRenderStrategy>
-        {
-            [UbbNodeType.Text] = new TextRenderStrategy(),
-            [UbbNodeType.Bold] = new BoldRenderStrategy(),
-            [UbbNodeType.Italic] = new ItalicRenderStrategy(),
-            [UbbNodeType.Underline] = new UnderlineRenderStrategy(),
-            [UbbNodeType.Strikethrough] = new StrikethroughRenderStrategy(),
-            [UbbNodeType.Size] = new SizeRenderStrategy(),
-            [UbbNodeType.Font] = new FontRenderStrategy(),
-            [UbbNodeType.Color] = new ColorRenderStrategy(),
-            [UbbNodeType.Url] = new UrlRenderStrategy(),
-            [UbbNodeType.Topic] = new TopicRenderStrategy(),
-            [UbbNodeType.Image] = new ImageRenderStrategy(),
-            [UbbNodeType.Audio] = new AudioRenderStrategy(),
-            [UbbNodeType.Video] = new VideoRenderStrategy(),
-            [UbbNodeType.Upload]=new FileRenderStrategy(),
-            [UbbNodeType.Code] = new CodeRenderStrategy(),
-            [UbbNodeType.Quote] = new FlatQuoteRenderStrategy(),
-            [UbbNodeType.Align] = new AlignRenderStrategy(),
-            [UbbNodeType.Left] = new LeftRenderStrategy(),
-            [UbbNodeType.Center] = new CenterRenderStrategy(),
-            [UbbNodeType.Right] = new RightRenderStrategy(),
-            [UbbNodeType.Table] = new TableRenderStrategy(),
-            [UbbNodeType.TableRow] = new TableRowRenderStrategy(),
-            [UbbNodeType.TableCell] = new TableCellRenderStrategy(),
-            [UbbNodeType.Paragraph] = new ParagraphRenderStrategy(),
-            [UbbNodeType.Emoji] = new EmojiRenderStrategy(),
-            [UbbNodeType.Latex] = new LatexRenderStrategy(),
-            [UbbNodeType.Divider] = new DividerRenderStrategy(),
-            [UbbNodeType.Markdown] = new MarkdownRenderStrategy(),
-            [UbbNodeType.At] = new AtRenderStrategy(),
-            [UbbNodeType.PosterOnly]=new PosterOnlyRenderStrategy(),
-            [UbbNodeType.ReplyView]=new ReplyViewRenderStrategy(),
-            [UbbNodeType.NeedReply]=new ReplyViewRenderStrategy()
-
-        };
-
-        public RenderContext context;
-        #endregion
-        #region  Ù–‘±‰∏¸¥¶¿Ì
-        private static void OnUbbTextChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
-        {
-            if (d is UbbTextBlock control && control._rootPanel != null)
-            {
-                control.RenderContent();
-            }
-        }
-
-        private static void OnFontSizeChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
-        {
-            if (d is UbbTextBlock control && control._rootPanel != null)
-            {
-                control.RenderContent();
-            }
-        }
-
-        private static void OnForegroundChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
-        {
-            if (d is UbbTextBlock control && control._rootPanel != null)
-            {
-                control.RenderContent();
-            }
-        }
-
-        private static void onHideImageChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
-        {
-            if (d is UbbTextBlock control && control._rootPanel != null)
-            {
-                control.RenderContent();
-            }
-        }
-        #endregion
-
-        #region π¶ƒ‹ µœ÷
-
-        public UbbTextBlock()
-        {
-            this.DefaultStyleKey = typeof(UbbTextBlock);
-        }
-        #region  ¬º˛
-        public event EventHandler<MediaClickEventArgs> MediaClicked;
-        public void OnMediaClicked(string src,MediaType mediaType)
-        {
-            MediaClicked?.Invoke(this, new MediaClickEventArgs(src,mediaType));
-        }
-
-        #endregion
-        
-        protected override void OnApplyTemplate()
-        {
-            base.OnApplyTemplate();
-            _rootPanel = GetTemplateChild("PART_RootPanel") as StackPanel;
-
-            if (_rootPanel != null)
-            {
-                RenderContent();
-            }
-        }
-
-
-        // ‰÷»æƒ⁄»›
-        private void RenderContent()
-        {
-            if ( UbbText==null || _rootPanel == null)
-                return;
-
-            // «Âø’œ÷”–ƒ⁄»›
-            _rootPanel.Children.Clear();
-
-            try
-            {
-                _document =UbbRender.Common.Parser.Parse(UbbText);
-                context = new RenderContext
-                {
-                    Control = this,
-                    Container = _rootPanel
-                };
-
-                context.Properties ??= [];
-                context.PanelStack ??= new Stack<Panel>();
-
-                // ÃÓ≥‰ƒ¨»œ Ù–‘
-                context.Properties["FontSize"] = FontSize;
-                context.Properties["Foreground"] = Foreground ?? new SolidColorBrush(Colors.Gray);
-                context.Properties["BoldFontFamily"] = BoldFontFamily ?? new FontFamily("HarmonyOS Sans SC Bold");
-                context.Properties["CodeBackground"] = CodeBackground ?? new SolidColorBrush(Color.FromArgb(0xff,0xe8,0xf4,0xf9));
-                context.Properties["QuoteBackground"] = QuoteBackground ?? new SolidColorBrush(Color.FromArgb(20,0,120,215));
-                context.Properties["ImageMaxWidth"] = ImageMaxWidth;
-
-                // ‰÷»æŒƒµµ
-                context.RenderNode(_document.Root);
-
-                // Ω· ¯◊Ó∫Û“ª∏ˆŒƒ±æøÈ
-                context.FinalizeCurrentTextBlock();
-            }
-            catch (Exception ex)
-            {
-                // œ‘ æ¥ÌŒÛ
-                var errorText = new TextBlock
-                {
-                    Text = $"‰÷»æ¥ÌŒÛ: {ex.Message}",
-                    Foreground = new SolidColorBrush(Colors.Red)
-                };
-                _rootPanel.Children.Add(errorText);
-            }
-        }
-        public string GetSelectedText()
-        {
-            if (context != null)
-            {
-                return context.GetSelectedTextExternal();
-            }
-            return string.Empty;
-        }
-
-        /// <summary>
-        /// »´—°À˘”–Œƒ±æ
-        /// </summary>
-        public void SelectAll()
-        {
-            context?.SelectAllExternal();
-        }
-
-        #endregion
+    public string UbbText
+    {
+        get => (string)GetValue(UbbTextProperty);
+        set => SetValue(UbbTextProperty, value);
     }
+
+    public new double FontSize
+    {
+        get => (double)GetValue(FontSizeProperty);
+        set => SetValue(FontSizeProperty, value);
+    }
+    public FontFamily BoldFontFamily
+    {
+        get => (FontFamily)GetValue(BoldFontFamilyProperty);
+        set => SetValue(BoldFontFamilyProperty, value);
+    }
+    public new Brush Foreground
+    {
+        get => (Brush)GetValue(ForegroundProperty);
+        set => SetValue(ForegroundProperty, value);
+    }
+
+    public Brush CodeBackground
+    {
+        get => (Brush)GetValue(CodeBackgroundProperty);
+        set => SetValue(CodeBackgroundProperty, value);
+    }
+
+    public Brush QuoteBackground
+    {
+        get => (Brush)GetValue(QuoteBackgroundProperty);
+        set => SetValue(QuoteBackgroundProperty, value);
+    }
+
+    public double ImageMaxWidth
+    {
+        get => (double)GetValue(ImageMaxWidthProperty);
+        set => SetValue(ImageMaxWidthProperty, value);
+    }
+    public bool HideImage
+    {
+        get => (bool)GetValue(HideImageProperty);
+        set => SetValue(HideImageProperty, value);
+    }
+
+    private StackPanel _rootPanel;
+    private UbbDocument _document;
+    public static readonly IReadOnlyDictionary<UbbNodeType, IRenderStrategy> RenderStrategies = new Dictionary<UbbNodeType, IRenderStrategy>
+    {
+        [UbbNodeType.Text] = new TextRenderStrategy(),
+        [UbbNodeType.Bold] = new BoldRenderStrategy(),
+        [UbbNodeType.Italic] = new ItalicRenderStrategy(),
+        [UbbNodeType.Underline] = new UnderlineRenderStrategy(),
+        [UbbNodeType.Strikethrough] = new StrikethroughRenderStrategy(),
+        [UbbNodeType.Size] = new SizeRenderStrategy(),
+        [UbbNodeType.Font] = new FontRenderStrategy(),
+        [UbbNodeType.Color] = new ColorRenderStrategy(),
+        [UbbNodeType.Url] = new UrlRenderStrategy(),
+        [UbbNodeType.Topic] = new TopicRenderStrategy(),
+        [UbbNodeType.Image] = new ImageRenderStrategy(),
+        [UbbNodeType.Audio] = new AudioRenderStrategy(),
+        [UbbNodeType.Video] = new VideoRenderStrategy(),
+        [UbbNodeType.Upload]=new FileRenderStrategy(),
+        [UbbNodeType.Code] = new CodeRenderStrategy(),
+        [UbbNodeType.Quote] = new FlatQuoteRenderStrategy(),
+        [UbbNodeType.Align] = new AlignRenderStrategy(),
+        [UbbNodeType.Left] = new LeftRenderStrategy(),
+        [UbbNodeType.Center] = new CenterRenderStrategy(),
+        [UbbNodeType.Right] = new RightRenderStrategy(),
+        [UbbNodeType.Table] = new TableRenderStrategy(),
+        [UbbNodeType.TableRow] = new TableRowRenderStrategy(),
+        [UbbNodeType.TableCell] = new TableCellRenderStrategy(),
+        [UbbNodeType.Paragraph] = new ParagraphRenderStrategy(),
+        [UbbNodeType.Emoji] = new EmojiRenderStrategy(),
+        [UbbNodeType.Latex] = new LatexRenderStrategy(),
+        [UbbNodeType.Divider] = new DividerRenderStrategy(),
+        [UbbNodeType.Markdown] = new MarkdownRenderStrategy(),
+        [UbbNodeType.At] = new AtRenderStrategy(),
+        [UbbNodeType.PosterOnly]=new PosterOnlyRenderStrategy(),
+        [UbbNodeType.ReplyView]=new ReplyViewRenderStrategy(),
+        [UbbNodeType.NeedReply]=new ReplyViewRenderStrategy()
+
+    };
+
+    public RenderContext Context;
+    #endregion
+    #region Â±ûÊÄßÂèòÊõ¥Â§ÑÁêÜ
+    private static void OnUbbTextChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+    {
+        if (d is UbbTextBlock control && control._rootPanel != null)
+        {
+            control.RenderContent();
+        }
+    }
+
+    private static void OnFontSizeChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+    {
+        if (d is UbbTextBlock control && control._rootPanel != null)
+        {
+            control.RenderContent();
+        }
+    }
+
+    private static void OnForegroundChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+    {
+        if (d is UbbTextBlock control && control._rootPanel != null)
+        {
+            control.RenderContent();
+        }
+    }
+
+    private static void OnHideImageChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+    {
+        if (d is UbbTextBlock control && control._rootPanel != null)
+        {
+            control.RenderContent();
+        }
+    }
+    #endregion
+
+    #region ÂäüËÉΩÂÆûÁé∞
+
+    public UbbTextBlock()
+    {
+        this.DefaultStyleKey = typeof(UbbTextBlock);
+    }
+    #region ‰∫ã‰ª∂
+    public event EventHandler<MediaClickEventArgs> MediaClicked;
+    public void OnMediaClicked(string src,MediaType mediaType)
+    {
+        MediaClicked?.Invoke(this, new(src,mediaType));
+    }
+
+    #endregion
+        
+    protected override void OnApplyTemplate()
+    {
+        base.OnApplyTemplate();
+        _rootPanel = GetTemplateChild("PART_RootPanel") as StackPanel;
+
+        if (_rootPanel != null)
+        {
+            RenderContent();
+        }
+    }
+
+
+    // Ê∏≤ÊüìÂÜÖÂÆπ
+    private void RenderContent()
+    {
+        if ( UbbText==null || _rootPanel == null)
+            return;
+
+        // Ê∏ÖÁ©∫Áé∞ÊúâÂÜÖÂÆπ
+        _rootPanel.Children.Clear();
+
+        try
+        {
+            _document =UbbRender.Common.Parser.Parse(UbbText);
+            Context = new()
+            {
+                Control = this,
+                Container = _rootPanel
+            };
+
+            Context.Properties ??= [];
+            Context.PanelStack ??= new();
+
+            // Â°´ÂÖÖÈªòËÆ§Â±ûÊÄß
+            Context.Properties["FontSize"] = FontSize;
+            Context.Properties["Foreground"] = Foreground ?? new SolidColorBrush(Colors.Gray);
+            Context.Properties["BoldFontFamily"] = BoldFontFamily ?? new FontFamily("HarmonyOS Sans SC Bold");
+            Context.Properties["CodeBackground"] = CodeBackground ?? new SolidColorBrush(Color.FromArgb(0xff,0xe8,0xf4,0xf9));
+            Context.Properties["QuoteBackground"] = QuoteBackground ?? new SolidColorBrush(Color.FromArgb(20,0,120,215));
+            Context.Properties["ImageMaxWidth"] = ImageMaxWidth;
+
+            // Ê∏≤ÊüìÊñáÊ°£
+            Context.RenderNode(_document.Root);
+
+            // ÁªìÊùüÊúÄÂêé‰∏Ä‰∏™ÊñáÊú¨Âùó
+            Context.FinalizeCurrentTextBlock();
+        }
+        catch (Exception ex)
+        {
+            // ÊòæÁ§∫ÈîôËØØ
+            var errorText = new TextBlock
+            {
+                Text = $"Ê∏≤ÊüìÈîôËØØ: {ex.Message}",
+                Foreground = new SolidColorBrush(Colors.Red)
+            };
+            _rootPanel.Children.Add(errorText);
+        }
+    }
+    public string GetSelectedText()
+    {
+        if (Context != null)
+        {
+            return Context.GetSelectedTextExternal();
+        }
+        return string.Empty;
+    }
+
+    /// <summary>
+    /// ÂÖ®ÈÄâÊâÄÊúâÊñáÊú¨
+    /// </summary>
+    public void SelectAll()
+    {
+        Context?.SelectAllExternal();
+    }
+
+    #endregion
 }

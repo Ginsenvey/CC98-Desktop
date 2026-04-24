@@ -1,368 +1,366 @@
-// VideoPlayer.xaml.cs
+ï»¿// VideoPlayer.xaml.cs
 
 using CC98.Share.Controls.Primitives;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 using System;
 using System.Diagnostics;
 using System.Threading.Tasks;
 using CC98.Share.Extensions;
-namespace CC98.Share.Controls
+namespace CC98.Share.Controls;
+
+public sealed partial class VideoPlayer : UserControl, IDisposable
 {
-    public sealed partial class VideoPlayer : UserControl, IDisposable
+    private bool _isInitialized = false;
+    private bool _isDisposed = false;
+        
+
+    public VideoPlayer()
     {
-        private bool _isInitialized = false;
-        private bool _isDisposed = false;
-        
+        this.InitializeComponent();
+        this.Loaded += OnLoaded;
+        this.Unloaded += OnUnloaded;
+    }
 
-        public VideoPlayer()
-        {
-            this.InitializeComponent();
-            this.Loaded += OnLoaded;
-            this.Unloaded += OnUnloaded;
-        }
+    #region ä¾èµ–å±æ€§
 
-        #region ÒÀÀµÊôĞÔ
+    public static readonly DependencyProperty SrcProperty =
+        DependencyProperty.Register("Src", typeof(string), typeof(VideoPlayer),
+            new(null, OnSrcChanged));
 
-        public static readonly DependencyProperty SrcProperty =
-            DependencyProperty.Register("Src", typeof(string), typeof(VideoPlayer),
-                new PropertyMetadata(null, OnSrcChanged));
+    public static readonly DependencyProperty LoadVideoCallbackProperty =
+        DependencyProperty.Register("LoadVideoCallback", typeof(IMediaLoader),
+            typeof(VideoPlayer), new(new DefaultMediaLoader()));
 
-        public static readonly DependencyProperty LoadVideoCallbackProperty =
-            DependencyProperty.Register("LoadVideoCallback", typeof(IMediaLoader),
-                typeof(VideoPlayer), new PropertyMetadata(new DefaultMediaLoader()));
+    public string Src
+    {
+        get => (string)GetValue(SrcProperty);
+        set => SetValue(SrcProperty, value);
+    }
 
-        public string Src
-        {
-            get => (string)GetValue(SrcProperty);
-            set => SetValue(SrcProperty, value);
-        }
+    public IMediaLoader LoadVideoCallback
+    {
+        get => (IMediaLoader)GetValue(LoadVideoCallbackProperty);
+        set => SetValue(LoadVideoCallbackProperty, value);
+    }
 
-        public IMediaLoader LoadVideoCallback
-        {
-            get => (IMediaLoader)GetValue(LoadVideoCallbackProperty);
-            set => SetValue(LoadVideoCallbackProperty, value);
-        }
+    // æš´éœ² MediaPlayerElement çš„åŸå§‹å±æ€§
+    public MediaPlayerElement MediaPlayerElement => MediaPlayer;
 
-        // ±©Â¶ MediaPlayerElement µÄÔ­Ê¼ÊôĞÔ
-        public MediaPlayerElement MediaPlayerElement => MediaPlayer;
+    public bool AreTransportControlsEnabled
+    {
+        get => MediaPlayer.AreTransportControlsEnabled;
+        set => MediaPlayer.AreTransportControlsEnabled = value;
+    }
 
-        public bool AreTransportControlsEnabled
-        {
-            get => MediaPlayer.AreTransportControlsEnabled;
-            set => MediaPlayer.AreTransportControlsEnabled = value;
-        }
+    public MediaTransportControls TransportControls
+    {
+        get => (MediaTransportControls)MediaPlayer.TransportControls;
+    }
 
-        public MediaTransportControls TransportControls
-        {
-            get => (MediaTransportControls)MediaPlayer.TransportControls;
-        }
+    public Stretch Stretch
+    {
+        get => MediaPlayer.Stretch;
+        set => MediaPlayer.Stretch = value;
+    }
 
-        public Stretch Stretch
-        {
-            get => MediaPlayer.Stretch;
-            set => MediaPlayer.Stretch = value;
-        }
-
-        public bool AutoPlay
-        {
-            get => MediaPlayer.AutoPlay;
-            set => MediaPlayer.AutoPlay = value;
-        }
+    public bool AutoPlay
+    {
+        get => MediaPlayer.AutoPlay;
+        set => MediaPlayer.AutoPlay = value;
+    }
 
 
 
-        #endregion
+    #endregion
 
-        #region ÊÂ¼ş
+    #region äº‹ä»¶
 
-        public event EventHandler<VideoPlayerEventArgs> VideoLoaded;
-        public event EventHandler<VideoPlayerFailedEventArgs> VideoFailed;
-        public event EventHandler<VideoPlayerEventArgs> VideoInitialized;
+    public event EventHandler<VideoPlayerEventArgs> VideoLoaded;
+    public event EventHandler<VideoPlayerFailedEventArgs> VideoFailed;
+    public event EventHandler<VideoPlayerEventArgs> VideoInitialized;
 
-        #endregion
+    #endregion
 
-        #region ³õÊ¼»¯ÓëÉúÃüÖÜÆÚ
+    #region åˆå§‹åŒ–ä¸ç”Ÿå‘½å‘¨æœŸ
 
-        private void OnLoaded(object sender, RoutedEventArgs e)
-        {
-            // ×¢²á½¹µãÊÂ¼ş
+    private void OnLoaded(object sender, RoutedEventArgs e)
+    {
+        // æ³¨å†Œç„¦ç‚¹äº‹ä»¶
             
 
-            // ×¢²á MediaPlayer ÊÂ¼ş
-            if (MediaPlayer.MediaPlayer != null)
-            {
-                MediaPlayer.MediaPlayer.MediaOpened += OnMediaOpened;
-                MediaPlayer.MediaPlayer.MediaFailed += OnMediaFailed;
-                MediaPlayer.MediaPlayer.MediaEnded += OnMediaEnded;
-            }
-        }
-
-        private void OnUnloaded(object sender, RoutedEventArgs e)
+        // æ³¨å†Œ MediaPlayer äº‹ä»¶
+        if (MediaPlayer.MediaPlayer != null)
         {
+            MediaPlayer.MediaPlayer.MediaOpened += OnMediaOpened;
+            MediaPlayer.MediaPlayer.MediaFailed += OnMediaFailed;
+            MediaPlayer.MediaPlayer.MediaEnded += OnMediaEnded;
+        }
+    }
+
+    private void OnUnloaded(object sender, RoutedEventArgs e)
+    {
             
 
-            if (MediaPlayer.MediaPlayer != null)
-            {
-                MediaPlayer.MediaPlayer.MediaOpened -= OnMediaOpened;
-                MediaPlayer.MediaPlayer.MediaFailed -= OnMediaFailed;
-                MediaPlayer.MediaPlayer.MediaEnded -= OnMediaEnded;
-            }
-        }
-
-        private static void OnSrcChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+        if (MediaPlayer.MediaPlayer != null)
         {
-            if (d is VideoPlayer player)
-            {
-                player._isInitialized = false;
-                player.ShowPlaceholder();        
-            }
+            MediaPlayer.MediaPlayer.MediaOpened -= OnMediaOpened;
+            MediaPlayer.MediaPlayer.MediaFailed -= OnMediaFailed;
+            MediaPlayer.MediaPlayer.MediaEnded -= OnMediaEnded;
         }
+    }
+
+    private static void OnSrcChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+    {
+        if (d is VideoPlayer player)
+        {
+            player._isInitialized = false;
+            player.ShowPlaceholder();        
+        }
+    }
 
         
         
 
-        #endregion
+    #endregion
 
-        #region ¼ÓÔØ
-
-
+    #region åŠ è½½
 
 
 
-        // ÊÖ¶¯ÇëÇó¼ÓÔØÊÓÆµ
-        public async Task<bool> LoadVideoAsync()
+
+
+    // æ‰‹åŠ¨è¯·æ±‚åŠ è½½è§†é¢‘
+    public async Task<bool> LoadVideoAsync()
+    {
+        return await InitializeVideoAsync();
+    }
+
+    #endregion
+
+    #region è§†é¢‘åŠ è½½
+
+    private async Task<bool> InitializeVideoAsync()
+    {
+        if (_isInitialized || _isDisposed || string.IsNullOrEmpty(Src))
         {
-            return await InitializeVideoAsync();
+            return false;
         }
 
-        #endregion
-
-        #region ÊÓÆµ¼ÓÔØ
-
-        private async Task<bool> InitializeVideoAsync()
+        try
         {
-            if (_isInitialized || _isDisposed || string.IsNullOrEmpty(Src))
+            ShowLoadingIndicator();
+
+            var src = Src;  // åœ¨ UI çº¿ç¨‹è¯»å–ä¾èµ–å±æ€§
+            var callback = LoadVideoCallback;  // åœ¨ UI çº¿ç¨‹è¯»å–ä¾èµ–å±æ€§
+
+            // åœ¨åå°çº¿ç¨‹æ‰§è¡ŒåŠ è½½æ“ä½œ
+            var mediaSource = await Task.Run(() =>
             {
-                return false;
-            }
-
-            try
-            {
-                ShowLoadingIndicator();
-
-                var src = Src;  // ÔÚ UI Ïß³Ì¶ÁÈ¡ÒÀÀµÊôĞÔ
-                var callback = LoadVideoCallback;  // ÔÚ UI Ïß³Ì¶ÁÈ¡ÒÀÀµÊôĞÔ
-
-                // ÔÚºóÌ¨Ïß³ÌÖ´ĞĞ¼ÓÔØ²Ù×÷
-                var mediaSource = await Task.Run(() =>
+                try
                 {
-                    try
-                    {
-                        return callback?.LoadMedia(src);
-                    }
-                    catch (Exception ex)
-                    {
-                        Debug.WriteLine($"ºóÌ¨Ïß³Ì¼ÓÔØÊ§°Ü: {ex.Message}");
-                        return null;
-                    }
-                });
-
-                if (mediaSource == null)
-                {
-                    throw new Exception("ÎŞ·¨¼ÓÔØÊÓÆµÔ´");
+                    return callback?.LoadMedia(src);
                 }
-
-
-                // ÇĞ»»µ½ UI Ïß³ÌÉèÖÃÔ´
-                await DispatcherQueue.EnqueueAsync(() =>
+                catch (Exception ex)
                 {
-                    MediaPlayer.Source = mediaSource;
-                    _isInitialized = true;
+                    Debug.WriteLine($"åå°çº¿ç¨‹åŠ è½½å¤±è´¥: {ex.Message}");
+                    return null;
+                }
+            });
 
-                    HideLoadingIndicator();
-                    HidePlaceholder();
-
-                    VideoInitialized?.Invoke(this, new VideoPlayerEventArgs(Src));
-
-                    Debug.WriteLine($"ÊÓÆµ³õÊ¼»¯³É¹¦: {Src}");
-                });
-
-                return true;
-            }
-            catch (Exception ex)
+            if (mediaSource == null)
             {
-                await DispatcherQueue.EnqueueAsync(() =>
-                {
-                    HideLoadingIndicator();
-                    ShowErrorMessage($"ÊÓÆµ¼ÓÔØÊ§°Ü: {ex.Message}");
-
-                    VideoFailed?.Invoke(this, new VideoPlayerFailedEventArgs(Src, ex.Message));
-
-                    Debug.WriteLine($"ÊÓÆµ³õÊ¼»¯Ê§°Ü: {ex.Message}");
-                });
-
-                return false;
+                throw new("æ— æ³•åŠ è½½è§†é¢‘æº");
             }
-        }
 
-        #endregion
 
-        #region MediaPlayer ÊÂ¼ş´¦Àí
-
-        private void OnMediaOpened(Windows.Media.Playback.MediaPlayer sender, object args)
-        {
-            _ = DispatcherQueue.TryEnqueue(() =>
+            // åˆ‡æ¢åˆ° UI çº¿ç¨‹è®¾ç½®æº
+            await DispatcherQueue.EnqueueAsync(() =>
             {
+                MediaPlayer.Source = mediaSource;
+                _isInitialized = true;
+
                 HideLoadingIndicator();
                 HidePlaceholder();
 
-                VideoLoaded?.Invoke(this, new VideoPlayerEventArgs(Src));
+                VideoInitialized?.Invoke(this, new(Src));
 
-                Debug.WriteLine($"ÊÓÆµ¿ªÊ¼²¥·Å: {Src}");
+                Debug.WriteLine($"è§†é¢‘åˆå§‹åŒ–æˆåŠŸ: {Src}");
             });
-        }
 
-        private void OnMediaFailed(Windows.Media.Playback.MediaPlayer sender,
-            Windows.Media.Playback.MediaPlayerFailedEventArgs args)
+            return true;
+        }
+        catch (Exception ex)
         {
-            _ = DispatcherQueue.TryEnqueue(() =>
+            await DispatcherQueue.EnqueueAsync(() =>
             {
                 HideLoadingIndicator();
-                ShowErrorMessage($"²¥·ÅÊ§°Ü: {args.ErrorMessage}");
+                ShowErrorMessage($"è§†é¢‘åŠ è½½å¤±è´¥: {ex.Message}");
 
-                VideoFailed?.Invoke(this, new VideoPlayerFailedEventArgs(Src, args.ErrorMessage));
+                VideoFailed?.Invoke(this, new(Src, ex.Message));
 
-                Debug.WriteLine($"ÊÓÆµ²¥·ÅÊ§°Ü: {args.ErrorMessage}");
+                Debug.WriteLine($"è§†é¢‘åˆå§‹åŒ–å¤±è´¥: {ex.Message}");
             });
-        }
 
-        private void OnMediaEnded(Windows.Media.Playback.MediaPlayer sender, object args)
-        {
-            _ = DispatcherQueue.TryEnqueue(() =>
-            {
-                Debug.WriteLine($"ÊÓÆµ²¥·Å½áÊø: {Src}");
-                // ¿ÉÒÔÔÚÕâÀïÌí¼Ó²¥·Å½áÊøºóµÄÂß¼­
-            });
-        }
-
-        #endregion
-
-        #region UI ×´Ì¬¹ÜÀí
-
-        private void LoadingButton_Click(object sender, RoutedEventArgs e)
-        {
-            _ = LoadVideoAsync();
-        }
-        private void ShowPlaceholder()
-        {
-            PlaceholderGrid.Visibility = Visibility.Visible;
-            VideoPlayerGrid.Visibility = Visibility.Collapsed;
-        }
-
-        private void HidePlaceholder()
-        {
-            PlaceholderGrid.Visibility = Visibility.Collapsed;
-            VideoPlayerGrid.Visibility = Visibility.Visible;
-        }
-
-        private void ShowLoadingIndicator()
-        {
-            LoadingRing.IsActive = true;
-            LoadingRing.Visibility = Visibility.Visible;
-            
-        }
-
-        private void HideLoadingIndicator()
-        {
-            LoadingRing.IsActive = false;
-            LoadingRing.Visibility = Visibility.Collapsed;
-            
-        }
-
-        private void ShowErrorMessage(string message)
-        {
-            VideoPlayerGrid.Visibility = Visibility.Collapsed;
-            PlaceholderGrid.Visibility = Visibility.Collapsed;
-        }
-
-
-        // ÖØÊÔ¼ÓÔØ
-        private void RetryButton_Click(object sender, RoutedEventArgs e)
-        {
-            _isInitialized = false;
-            ShowPlaceholder();
-
-            
-            
-            _ = InitializeVideoAsync();
-           
-        }
-
-        #endregion
-
-        #region IDisposable ÊµÏÖ
-
-        public void Dispose()
-        {
-            if (!_isDisposed)
-            {
-                _isDisposed = true;
-
-                // ÇåÀí MediaPlayer ×ÊÔ´
-                // ºöÂÔ¶ÔÒÑ¾­disposeµÄ¶ÔÏó½øĞĞ²Ù×÷
-                try
-                {
-                    if (MediaPlayer.MediaPlayer != null)
-                    {
-                        MediaPlayer.MediaPlayer.Pause();
-                        MediaPlayer.MediaPlayer.Source = null;
-                        MediaPlayer.MediaPlayer.Dispose();
-                    }
-
-                    MediaPlayer.Source = null;
-                }
-                catch { }
-
-                GC.SuppressFinalize(this);
-            }
-        }
-
-        ~VideoPlayer()
-        {
-            Dispose();
-        }
-
-
-        #endregion
-
-        
-    }
-
-    #region ÊÂ¼ş²ÎÊıÀà
-
-    public class VideoPlayerEventArgs : EventArgs
-    {
-        public string Source { get; }
-
-        public VideoPlayerEventArgs(string source)
-        {
-            Source = source;
-        }
-    }
-
-    public class VideoPlayerFailedEventArgs : VideoPlayerEventArgs
-    {
-        public string ErrorMessage { get; }
-
-        public VideoPlayerFailedEventArgs(string source, string errorMessage)
-            : base(source)
-        {
-            ErrorMessage = errorMessage;
+            return false;
         }
     }
 
     #endregion
+
+    #region MediaPlayer äº‹ä»¶å¤„ç†
+
+    private void OnMediaOpened(Windows.Media.Playback.MediaPlayer sender, object args)
+    {
+        _ = DispatcherQueue.TryEnqueue(() =>
+        {
+            HideLoadingIndicator();
+            HidePlaceholder();
+
+            VideoLoaded?.Invoke(this, new(Src));
+
+            Debug.WriteLine($"è§†é¢‘å¼€å§‹æ’­æ”¾: {Src}");
+        });
+    }
+
+    private void OnMediaFailed(Windows.Media.Playback.MediaPlayer sender,
+        Windows.Media.Playback.MediaPlayerFailedEventArgs args)
+    {
+        _ = DispatcherQueue.TryEnqueue(() =>
+        {
+            HideLoadingIndicator();
+            ShowErrorMessage($"æ’­æ”¾å¤±è´¥: {args.ErrorMessage}");
+
+            VideoFailed?.Invoke(this, new(Src, args.ErrorMessage));
+
+            Debug.WriteLine($"è§†é¢‘æ’­æ”¾å¤±è´¥: {args.ErrorMessage}");
+        });
+    }
+
+    private void OnMediaEnded(Windows.Media.Playback.MediaPlayer sender, object args)
+    {
+        _ = DispatcherQueue.TryEnqueue(() =>
+        {
+            Debug.WriteLine($"è§†é¢‘æ’­æ”¾ç»“æŸ: {Src}");
+            // å¯ä»¥åœ¨è¿™é‡Œæ·»åŠ æ’­æ”¾ç»“æŸåçš„é€»è¾‘
+        });
+    }
+
+    #endregion
+
+    #region UI çŠ¶æ€ç®¡ç†
+
+    private void LoadingButton_Click(object sender, RoutedEventArgs e)
+    {
+        _ = LoadVideoAsync();
+    }
+    private void ShowPlaceholder()
+    {
+        PlaceholderGrid.Visibility = Visibility.Visible;
+        VideoPlayerGrid.Visibility = Visibility.Collapsed;
+    }
+
+    private void HidePlaceholder()
+    {
+        PlaceholderGrid.Visibility = Visibility.Collapsed;
+        VideoPlayerGrid.Visibility = Visibility.Visible;
+    }
+
+    private void ShowLoadingIndicator()
+    {
+        LoadingRing.IsActive = true;
+        LoadingRing.Visibility = Visibility.Visible;
+            
+    }
+
+    private void HideLoadingIndicator()
+    {
+        LoadingRing.IsActive = false;
+        LoadingRing.Visibility = Visibility.Collapsed;
+            
+    }
+
+    private void ShowErrorMessage(string message)
+    {
+        VideoPlayerGrid.Visibility = Visibility.Collapsed;
+        PlaceholderGrid.Visibility = Visibility.Collapsed;
+    }
+
+
+    // é‡è¯•åŠ è½½
+    private void RetryButton_Click(object sender, RoutedEventArgs e)
+    {
+        _isInitialized = false;
+        ShowPlaceholder();
+
+            
+            
+        _ = InitializeVideoAsync();
+           
+    }
+
+    #endregion
+
+    #region IDisposable å®ç°
+
+    public void Dispose()
+    {
+        if (!_isDisposed)
+        {
+            _isDisposed = true;
+
+            // æ¸…ç† MediaPlayer èµ„æº
+            // å¿½ç•¥å¯¹å·²ç»disposeçš„å¯¹è±¡è¿›è¡Œæ“ä½œ
+            try
+            {
+                if (MediaPlayer.MediaPlayer != null)
+                {
+                    MediaPlayer.MediaPlayer.Pause();
+                    MediaPlayer.MediaPlayer.Source = null;
+                    MediaPlayer.MediaPlayer.Dispose();
+                }
+
+                MediaPlayer.Source = null;
+            }
+            catch { }
+
+            GC.SuppressFinalize(this);
+        }
+    }
+
+    ~VideoPlayer()
+    {
+        Dispose();
+    }
+
+
+    #endregion
+
+        
 }
+
+#region äº‹ä»¶å‚æ•°ç±»
+
+public class VideoPlayerEventArgs : EventArgs
+{
+    public string Source { get; }
+
+    public VideoPlayerEventArgs(string source)
+    {
+        Source = source;
+    }
+}
+
+public class VideoPlayerFailedEventArgs : VideoPlayerEventArgs
+{
+    public string ErrorMessage { get; }
+
+    public VideoPlayerFailedEventArgs(string source, string errorMessage)
+        : base(source)
+    {
+        ErrorMessage = errorMessage;
+    }
+}
+
+#endregion

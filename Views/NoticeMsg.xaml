@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Page
     x:Class="CC98.NoticePage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
@@ -49,7 +49,7 @@
     </Page.Resources>
     <Grid>
         <ScrollViewer x:Name="NoticeViewer">
-            <ItemsRepeater x:Name="NoticeRepeater" ItemsSource="{x:Bind notices}"  ItemTemplate="{StaticResource Selector}" ElementPrepared="NoticeRepeater_ElementPrepared"></ItemsRepeater>
+            <ItemsRepeater x:Name="NoticeRepeater" ItemsSource="{x:Bind Notices}"  ItemTemplate="{StaticResource Selector}" ElementPrepared="NoticeRepeater_ElementPrepared"></ItemsRepeater>
         </ScrollViewer>
         <local:InfoFlower x:Name="Flower"  HorizontalAlignment="Center" VerticalAlignment="Bottom"></local:InfoFlower>
     </Grid>

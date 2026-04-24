@@ -1,7 +1,4 @@
 ﻿using Microsoft.UI.Dispatching;
-using Microsoft.UI.Xaml;
-using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml.Media;
 using System;
 using System.Threading.Tasks;
 namespace CC98.Share.Extensions;
@@ -167,9 +164,9 @@ public static class StringExtensions
     {
         // 简单的相对路径验证
         // 不允许包含非法字符
-        char[] invalidPathChars = System.IO.Path.GetInvalidPathChars();
+        var invalidPathChars = System.IO.Path.GetInvalidPathChars();
 
-        foreach (char c in path)
+        foreach (var c in path)
         {
             if (Array.IndexOf(invalidPathChars, c) >= 0)
                 return false;

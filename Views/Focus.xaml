@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Page
     x:Class="CC98.Focus"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
@@ -26,7 +26,7 @@
         </SelectorBar>
 
         <ScrollViewer Grid.Row="1" CornerRadius="4" >
-            <ItemsRepeater x:Name="MomentRepeater" ItemsSource="{x:Bind topics}" ElementPrepared="MomentRepeater_ElementPrepared">
+            <ItemsRepeater x:Name="MomentRepeater" ItemsSource="{x:Bind Topics}" ElementPrepared="MomentRepeater_ElementPrepared">
                 <ItemsRepeater.Layout>
                     <controls:StaggeredLayout DesiredColumnWidth="300" ItemsStretch="Fill" ColumnSpacing="15" RowSpacing="15"></controls:StaggeredLayout>
                 </ItemsRepeater.Layout>

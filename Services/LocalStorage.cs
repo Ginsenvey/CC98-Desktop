@@ -1,13 +1,11 @@
 ﻿using CC98.Services.Extensions;
 using System;
 using System.IO;
-using System.Linq;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
-using Windows.Storage;
 
 namespace CC98.Services;
 
@@ -46,18 +44,18 @@ public class LocalCache
         try
         {
             if (!File.Exists(path))
-                return new LocalCache(path, string.Empty, false, "文件不存在");
+                return new(path, string.Empty, false, "文件不存在");
 
-            string content = await File.ReadAllTextAsync(path, cancellationToken);
+            var content = await File.ReadAllTextAsync(path, cancellationToken);
 
             if (string.IsNullOrEmpty(content))
-                return new LocalCache(path, string.Empty, true, "文件内容为空");
+                return new(path, string.Empty, true, "文件内容为空");
 
-            return new LocalCache(path, content, true, "读取成功");
+            return new(path, content, true, "读取成功");
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
-            return new LocalCache(path, string.Empty, false, $"读取失败: {ex.Message}");
+            return new(path, string.Empty, false, $"读取失败: {ex.Message}");
         }
     }
 
@@ -69,18 +67,18 @@ public class LocalCache
         try
         {
             if (!File.Exists(path))
-                return new LocalCache(path, string.Empty, false, "文件不存在");
+                return new(path, string.Empty, false, "文件不存在");
 
-            string content = File.ReadAllText(path);
+            var content = File.ReadAllText(path);
 
             if (string.IsNullOrEmpty(content))
-                return new LocalCache(path, string.Empty, true, "文件内容为空");
+                return new(path, string.Empty, true, "文件内容为空");
 
-            return new LocalCache(path, content, true, "读取成功");
+            return new(path, content, true, "读取成功");
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
-            return new LocalCache(path, string.Empty, false, $"读取失败: {ex.Message}");
+            return new(path, string.Empty, false, $"读取失败: {ex.Message}");
         }
     }
 
@@ -177,7 +175,7 @@ public class LocalCache
         {
             // 直接写入，使用重试机制
             const int maxRetries = 3;
-            for (int i = 0; i < maxRetries; i++)
+            for (var i = 0; i < maxRetries; i++)
             {
                 try
                 {

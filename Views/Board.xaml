@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Page
     x:Class="CC98.Board"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
@@ -33,21 +33,21 @@
                         <ColumnDefinition Width="3*"></ColumnDefinition>
                     </Grid.ColumnDefinitions>
                     <ic:SymbolIcon x:Name="BoardSymbol" Symbol="Chat" Grid.Row="0" Grid.RowSpan="2" FontSize="22" Grid.Column="0" Foreground="{ThemeResource AccentAAFillColorDefaultBrush}"></ic:SymbolIcon>
-                    <TextBlock Grid.Row="0" Grid.RowSpan="2" Grid.Column="1" Text="{x:Bind boardData.Name,Mode=OneWay}" FontSize="20" FontWeight="Bold" Foreground="{ThemeResource AccentAAFillColorDefaultBrush}" VerticalAlignment="Center"></TextBlock>
-                    <TextBlock Grid.Row="0" Grid.Column="2" Text="{x:Bind boardData.Description,Mode=OneWay}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" VerticalAlignment="Center" TextWrapping="Wrap" Margin="0,10,10,0"></TextBlock>
-                    <TextBlock Grid.Row="1" Grid.Column="2" Text="{x:Bind boardData.BoardMastersString,Mode=OneWay}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" VerticalAlignment="Bottom" Margin="0,0,10,10"></TextBlock>
+                    <TextBlock Grid.Row="0" Grid.RowSpan="2" Grid.Column="1" Text="{x:Bind BoardData.Name,Mode=OneWay}" FontSize="20" FontWeight="Bold" Foreground="{ThemeResource AccentAAFillColorDefaultBrush}" VerticalAlignment="Center"></TextBlock>
+                    <TextBlock Grid.Row="0" Grid.Column="2" Text="{x:Bind BoardData.Description,Mode=OneWay}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" VerticalAlignment="Center" TextWrapping="Wrap" Margin="0,10,10,0"></TextBlock>
+                    <TextBlock Grid.Row="1" Grid.Column="2" Text="{x:Bind BoardData.BoardMastersString,Mode=OneWay}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" VerticalAlignment="Bottom" Margin="0,0,10,10"></TextBlock>
                     <lab:TokenView Grid.Column="3" Grid.Row="0" Grid.RowSpan="2" >
                         <lab:TokenItem>
-                            <TextBlock Text="{x:Bind boardData.TopicCountString,Mode=OneWay}"></TextBlock>
+                            <TextBlock Text="{x:Bind BoardData.TopicCountString,Mode=OneWay}"></TextBlock>
                         </lab:TokenItem>
                         <lab:TokenItem IsSelected="True">
-                            <TextBlock Text="{x:Bind boardData.TodayCountString,Mode=OneWay}"></TextBlock>
+                            <TextBlock Text="{x:Bind BoardData.TodayCountString,Mode=OneWay}"></TextBlock>
                         </lab:TokenItem>
                     </lab:TokenView>
                 </Grid>
 
                 <Border Padding="10,10,10,0" x:Name="BannerBox">
-                    <ubb:UbbTextBlock x:Name="Banner" UbbText="{x:Bind boardData.BigPaper,Mode=OneWay}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" BoldFontFamily="{StaticResource HarmonySansBold}"/>
+                    <ubb:UbbTextBlock x:Name="Banner" UbbText="{x:Bind BoardData.BigPaper,Mode=OneWay}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" BoldFontFamily="{StaticResource HarmonySansBold}"/>
                 </Border>
 
                 <SelectorBar>
@@ -56,7 +56,7 @@
                     <SelectorBarItem  Text="精华"></SelectorBarItem>
                 </SelectorBar>
                 <Border Margin="0,10,0,0" BorderThickness="1" BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}" CornerRadius="4" >
-                    <ItemsRepeater x:Name="TopicRepeater" ElementPrepared="TopicRepeater_ElementPrepared" ItemsSource="{x:Bind topics}">
+                    <ItemsRepeater x:Name="TopicRepeater" ElementPrepared="TopicRepeater_ElementPrepared" ItemsSource="{x:Bind Topics}">
                         <ItemsRepeater.ItemTemplate>
                             <DataTemplate x:DataType="obj:SimpleTopicInfo">
                                 <HyperlinkButton HorizontalContentAlignment="Stretch" HorizontalAlignment="Stretch" CornerRadius="0" x:Name="TileContent" DataContext="{x:Bind}" Click="TileContent_Click">

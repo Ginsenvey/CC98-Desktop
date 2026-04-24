@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Page
     x:Class="CC98.Sketch"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
@@ -276,8 +276,8 @@
             <SplitView.Pane>
                 <ScrollViewer>
                     <Grid>
-                        <controls:MarkdownTextBlock Background="{ThemeResource MarkdownBackgroudBrush}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" x:Name="MdViewer" Visibility="Collapsed"></controls:MarkdownTextBlock>
-                        <ubb:UbbTextBlock ImageMaxWidth="320" Background="{ThemeResource MarkdownBackgroudBrush}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" QuoteBackground="{ThemeResource QuoteBackgroundBrush}" CodeBackground="{ThemeResource QuoteBackgroundBrush}" BoldFontFamily="{ThemeResource HarmonySansBold}" x:Name="UbbViewer"/>
+                        <controls:MarkdownTextBlock Background="{ThemeResource MarkdownBackgroundBrush}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" x:Name="MdViewer" Visibility="Collapsed"></controls:MarkdownTextBlock>
+                        <ubb:UbbTextBlock ImageMaxWidth="320" Background="{ThemeResource MarkdownBackgroundBrush}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" QuoteBackground="{ThemeResource QuoteBackgroundBrush}" CodeBackground="{ThemeResource QuoteBackgroundBrush}" BoldFontFamily="{ThemeResource HarmonySansBold}" x:Name="UbbViewer"/>
                     </Grid>
                 </ScrollViewer>
             </SplitView.Pane>

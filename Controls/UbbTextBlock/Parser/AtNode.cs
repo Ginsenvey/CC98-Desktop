@@ -1,6 +1,4 @@
-﻿using System.Collections.Generic;
-
-namespace UbbRender.Parser;
+﻿namespace UbbRender.Parser;
 
 /// <summary>
 /// @提及节点

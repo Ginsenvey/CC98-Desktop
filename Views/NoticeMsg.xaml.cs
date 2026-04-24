@@ -1,4 +1,4 @@
-using CC98.Kernel;
+ï»¿using CC98.Kernel;
 using CC98.Kernel.ApiScope;
 using CC98.Objects;
 using CC98.Services.Extensions;
@@ -12,115 +12,112 @@ using System.Threading.Tasks;
 
 
 
-namespace CC98
-{
+namespace CC98;
 
-    public sealed partial class NoticePage : Page
+public sealed partial class NoticePage : Page
+{
+    public ObservableCollection<Notice> Notices = new();
+    public NoticeType Type = NoticeType.System;
+    public Increment Increment = new(); 
+    public string GetTypeName(NoticeType type) => type switch
+    { 
+        NoticeType.System=>"system",
+        NoticeType.At=>"at",
+        NoticeType.Reply=>"reply",
+        _=>""
+    };
+    public NoticePage()
     {
-        public ObservableCollection<Notice> notices = new();
-        public NoticeType type = NoticeType.System;
-        public Increment increment = new(); 
-        public string GetTypeName(NoticeType type) => type switch
-        { 
-            NoticeType.System=>"system",
-            NoticeType.At=>"at",
-            NoticeType.Reply=>"reply",
-            _=>""
-         };
-        public NoticePage()
-        {
-            InitializeComponent();
-        }
-        protected override async void OnNavigatedTo(Microsoft.UI.Xaml.Navigation.NavigationEventArgs e)
-        {
-            base.OnNavigatedTo(e);
-            var args = e.TryGetParameter<NoticeType>();
-            type = args;
-            await GetNotice();
-        }
+        InitializeComponent();
+    }
+    protected override async void OnNavigatedTo(Microsoft.UI.Xaml.Navigation.NavigationEventArgs e)
+    {
+        base.OnNavigatedTo(e);
+        var args = e.TryGetParameter<NoticeType>();
+        Type = args;
+        await GetNotice();
+    }
         
-        //AtºÍÏµÍ³Í¨ÖªÖ»ÏÔÊ¾×îĞÂ10Ìõ
-        private async Task<bool> GetNotice()
+    //Atå’Œç³»ç»Ÿé€šçŸ¥åªæ˜¾ç¤ºæœ€æ–°10æ¡
+    private async Task<bool> GetNotice()
+    {
+        var url = ApiEndpoints.User.SystemNotice(GetTypeName(Type), Increment.StartIndex);
+        var result = await RequestSender.Fetch<List<Notice>>(url);
+        if (!result.IsSuccess || result.Data == null)
         {
-            var url = ApiEndpoints.User.SystemNotice(GetTypeName(type), increment.startIndex);
-            var result = await RequestSender.Fetch<List<Notice>>(url);
-            if (!result.IsSuccess || result.Data == null)
+            //
+            Flower.Play(FlowStatus.Fail, "åŠ è½½é€šçŸ¥å¤±è´¥");
+            await App.Logger.WriteAsync("NoticeMsg", "åŠ è½½é€šçŸ¥å¤±è´¥", result.Message);
+            return false;
+        }
+        var data= result.Data;
+        Increment.HasMore = data.Count == Increment.PageSize;
+        if (!Increment.HasMore)
+        {
+            Flower.Play(FlowStatus.Info, "æ²¡æœ‰æ›´å¤šé€šçŸ¥äº†");
+        }
+        if (Type == NoticeType.Reply ||Type==NoticeType.At)
+        {
+            var topicIds = data.Where(n => n.TopicId.HasValue).Select(n => n.TopicId!.Value).Distinct().ToList();
+            var topicInfos = await GetBasicTopicInfo(topicIds);
+            foreach (var notice in data)
             {
-                //
-                Flower.Play(FlowStatus.Fail, "¼ÓÔØÍ¨ÖªÊ§°Ü");
-                await App.Logger.WriteAsync("NoticeMsg", "¼ÓÔØÍ¨ÖªÊ§°Ü", result.Message);
-                return false;
-            }
-            var data= result.Data;
-            increment.hasMore = data.Count == increment.pageSize;
-            if (!increment.hasMore)
-            {
-                Flower.Play(FlowStatus.Info, "Ã»ÓĞ¸ü¶àÍ¨ÖªÁË");
-            }
-            if (type == NoticeType.Reply ||type==NoticeType.At)
-            {
-                var topicIds = data.Where(n => n.TopicId.HasValue).Select(n => n.TopicId!.Value).Distinct().ToList();
-                var topicInfos = await GetBasicTopicInfo(topicIds);
-                foreach (var notice in data)
+                var info= topicInfos.FirstOrDefault(t => t.Id == notice.TopicId);
+                if (info != null)
                 {
-                    var info= topicInfos.FirstOrDefault(t => t.Id == notice.TopicId);
-                    if (info != null)
-                    {
-                        string operation = type == NoticeType.Reply ? "»Ø¸´" : "@";
-                        string content=$"ÔÚÌû×Ó¡¶{info.Title}¡·µÄ{notice.PostBasicInfo?.Floor}L{operation}ÁËÄã¡£";
-                        notice.Content = content;
-                    }
+                    var operation = Type == NoticeType.Reply ? "å›å¤" : "@";
+                    var content=$"åœ¨å¸–å­ã€Š{info.Title}ã€‹çš„{notice.PostBasicInfo?.Floor}L{operation}äº†ä½ ã€‚";
+                    notice.Content = content;
                 }
             }
-            notices.AddRange(data);
-            return true;
         }
+        Notices.AddRange(data);
+        return true;
+    }
 
         
 
-        private async Task<List<BasicTopicInfo>> GetBasicTopicInfo(List<int> topicIds)
+    private async Task<List<BasicTopicInfo>> GetBasicTopicInfo(List<int> topicIds)
+    {
+        var param= string.Join("&", topicIds.Select(id => $"id={id}"));
+        var url=ApiEndpoints.Topic.BasicTopicInfoList(param);
+        var result = await RequestSender.Fetch<List<BasicTopicInfo>>(url);
+        if (!result.IsSuccess || result.Data == null)
         {
-            var param= string.Join("&", topicIds.Select(id => $"id={id}"));
-            var url=ApiEndpoints.Topic.BasicTopicInfoList(param);
-            var result = await RequestSender.Fetch<List<BasicTopicInfo>>(url);
-            if (!result.IsSuccess || result.Data == null)
+            //
+            Flower.Play(FlowStatus.Fail, "è·å–å¸–å­åŸºæœ¬ä¿¡æ¯å¤±è´¥");
+            await App.Logger.WriteAsync("NoticeMsg", "è·å–å¸–å­åŸºæœ¬ä¿¡æ¯å¤±è´¥", result.Message);
+            return [];
+        }
+        var data= result.Data;
+        return data;
+    }
+
+    private async void NoticeRepeater_ElementPrepared(ItemsRepeater sender, ItemsRepeaterElementPreparedEventArgs args)
+    {
+        await Increment.LoadMore(args.Index, GetNotice);
+    }
+
+    private void NoticeCard_Click(object sender, RoutedEventArgs e)
+    {
+        var h = sender as HyperlinkButton;
+        var n = h?.DataContext as Notice;
+        if (n == null) return;
+        if (n.TopicId is not int topicId || n.PostBasicInfo == null) return;
+        if (n.PostBasicInfo.IsDeleted) 
+        { 
+            Flower.Play(FlowStatus.Info, "è¯¥å¸–å­å·²è¢«åˆ é™¤");
+        };
+        //è¿™é‡Œå­˜åœ¨ä¸€ä¸ªé—®é¢˜ï¼Œå½“åº”ç”¨é¦–æ¬¡å¯åŠ¨æ—¶ï¼Œè¯¥é¡¹è¿”å›false,ä»è€Œä¸èƒ½è·³è½¬
+        if (App.Current.AppMainWindow is MainWindow mainwindow)
+        {
+            var param = new TopicNavigationInfo
             {
-                //
-                Flower.Play(FlowStatus.Fail, "»ñÈ¡Ìû×Ó»ù±¾ĞÅÏ¢Ê§°Ü");
-                await App.Logger.WriteAsync("NoticeMsg", "»ñÈ¡Ìû×Ó»ù±¾ĞÅÏ¢Ê§°Ü", result.Message);
-                return [];
-            }
-            var data= result.Data;
-            return data;
-        }
-
-        private async void NoticeRepeater_ElementPrepared(ItemsRepeater sender, ItemsRepeaterElementPreparedEventArgs args)
-        {
-            await increment.LoadMore(args.Index, GetNotice);
-        }
-
-        private void NoticeCard_Click(object sender, RoutedEventArgs e)
-        {
-            var h = sender as HyperlinkButton;
-            var n = h?.DataContext as Notice;
-            if (n == null) return;
-            if (n.TopicId is not int topicId || n.PostBasicInfo == null) return;
-            if (n.PostBasicInfo.IsDeleted) 
-            { 
-                Flower.Play(FlowStatus.Info, "¸ÃÌû×ÓÒÑ±»É¾³ı");
+                IsJumpingMode = true,
+                TargetFloor = n.PostBasicInfo.Floor,
+                TopicId = topicId
             };
-            //ÕâÀï´æÔÚÒ»¸öÎÊÌâ£¬µ±Ó¦ÓÃÊ×´ÎÆô¶¯Ê±£¬¸ÃÏî·µ»Øfalse,´Ó¶ø²»ÄÜÌø×ª
-            if (App.Current.AppMainWindow is MainWindow mainwindow)
-            {
-                var param = new TopicNavigationInfo
-                {
-                    IsJumpingMode = true,
-                    TargetFloor = n.PostBasicInfo.Floor,
-                    TopicId = topicId
-                };
-                mainwindow.RootFrame.Navigate(typeof(Topic), param);
-            }
+            mainwindow.RootFrame.Navigate(typeof(Topic), param);
         }
     }
-    
 }

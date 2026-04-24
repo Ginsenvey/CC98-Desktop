@@ -2,32 +2,21 @@
 using CC98.Share.Controls.Primitives;
 using CC98.Share.Controls.Primitives.LatexBlock;
 using CC98.Share.Extensions;
-using ColorCode;
 using CommunityToolkit.WinUI.Controls;
-using DevWinUI;
 using Microsoft.UI;
-using Microsoft.UI.Text;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Controls.Primitives;
 using Microsoft.UI.Xaml.Documents;
 using Microsoft.UI.Xaml.Media;
-using Microsoft.UI.Xaml.Media.Imaging;
 using Microsoft.UI.Xaml.Shapes;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.Globalization;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
-using System.Xml.Linq;
 using UbbRender.Parser;
-using Windows.ApplicationModel.DataTransfer;
 using Windows.UI;
 using Windows.UI.Text;
-using static System.Net.Mime.MediaTypeNames;
-using static System.Net.WebRequestMethods;
 
 namespace UbbRender.Common;
 
@@ -43,7 +32,7 @@ public class TextRenderStrategy : IRenderStrategy
     {
         if (node is TextNode textNode && !string.IsNullOrWhiteSpace(textNode.Content))
         {
-            string content = textNode.Content;
+            var content = textNode.Content;
             if (node.Parent.Type == UbbNodeType.Document)
             {
                 var prevIsBlock = node.PreviousSibling?.Type.IsBlock() ?? false;
@@ -155,9 +144,9 @@ public class SizeRenderStrategy : IRenderStrategy
         {
             
             var sizeStr = tagNode.GetAttribute("size");
-            if(int.TryParse(sizeStr,out int sizeInt))
+            if(int.TryParse(sizeStr,out var sizeInt))
             {
-                double pixels = sizeStr.Contains("px") ? sizeInt : ConvertUbbSizeToPixels(sizeInt);
+                var pixels = sizeStr.Contains("px") ? sizeInt : ConvertUbbSizeToPixels(sizeInt);
                 var span = new Span { FontSize = pixels };
                 context.BeginInlineContainer(span);
                 foreach (var child in node.Children)
@@ -243,7 +232,7 @@ public class ImageRenderStrategy : IRenderStrategy
     {
         if (node is TagNode tagNode)
         {
-            string src = "";
+            var src = "";
             var value = tagNode.GetAttribute("value");
             if (!value.IsValidUrl(false))
             {
@@ -274,7 +263,7 @@ public class ImageRenderStrategy : IRenderStrategy
                 var hyperlinkButton = new HyperlinkButton
                 {
                     Content = image,
-                    Padding = new Thickness(1),
+                    Padding = new(1),
                     Background = new SolidColorBrush(Colors.Transparent),
                     HorizontalAlignment = HorizontalAlignment.Left,
                     HorizontalContentAlignment=HorizontalAlignment.Stretch
@@ -302,10 +291,10 @@ public class CodeRenderStrategy : IRenderStrategy
             LanguageName = languageName,
             Code = RenderHelper.CollectText(node),
             Background= (Brush)context.Properties["CodeBackground"],
-            Padding =new Thickness(12),
-            Margin=new Thickness(4,2,4,2),
-            BorderThickness=new Thickness(1),
-            CornerRadius=new CornerRadius(4),
+            Padding =new(12),
+            Margin=new(4,2,4,2),
+            BorderThickness=new(1),
+            CornerRadius=new(4),
         };
         context.AddToContainer(viewer);
     } 
@@ -318,13 +307,13 @@ public class QuoteRenderStrategy : IRenderStrategy
     {
         context.FinalizeCurrentTextBlock();
         context.QuoteNestingLevel++;
-        bool isOutermostQuote = (context.QuoteNestingLevel == 1);
+        var isOutermostQuote = (context.QuoteNestingLevel == 1);
 
         var border = CreateQuoteBorder(context,isOutermostQuote);
         var contentPanel = new StackPanel
         {
             Spacing = 8,
-            Margin = new Thickness(0)
+            Margin = new(0)
         };
 
 
@@ -372,21 +361,21 @@ public class QuoteRenderStrategy : IRenderStrategy
         var border = new Border
         {
             BorderBrush = new SolidColorBrush(Color.FromArgb(255, 255, 196, 174)),
-            BorderThickness = new Thickness(2, 0, 0, 0),
-            Padding = new Thickness(6, 6, 6, 6),
+            BorderThickness = new(2, 0, 0, 0),
+            Padding = new(6, 6, 6, 6),
         };
         // 只有最外层引用块有背景色
         if (isOutermostQuote)
         {
             border.Background = (Brush)context.Properties["QuoteBackground"] ?? new SolidColorBrush(Color.FromArgb(255, 232, 244, 249));
-            border.Margin = new Thickness(4, 6, 4, 6);
+            border.Margin = new(4, 6, 4, 6);
         }
         else
         {
             border.Background = new SolidColorBrush(Colors.Transparent);
-            border.BorderThickness = new Thickness(2, 0, 0, 0);
+            border.BorderThickness = new(2, 0, 0, 0);
             border.BorderBrush = new SolidColorBrush(Color.FromArgb(255, 220, 176, 154));
-            border.Margin = new Thickness(2, 2, 0, 2); // 内层缩进
+            border.Margin = new(2, 2, 0, 2); // 内层缩进
         }
         return border;
     }
@@ -424,7 +413,7 @@ public class LeftRenderStrategy : IRenderStrategy
     public void Render(UbbNode node, RenderContext context)
     {
         context.FinalizeCurrentTextBlock();
-        string align = "left";
+        var align = "left";
         RenderHelper.ApplyAlignToContext(align, node, context);
     }
 }
@@ -435,7 +424,7 @@ public class CenterRenderStrategy : IRenderStrategy
     public void Render(UbbNode node, RenderContext context)
     {
         context.FinalizeCurrentTextBlock();
-        string align = "center";
+        var align = "center";
         RenderHelper.ApplyAlignToContext(align, node, context);
     }
 }
@@ -446,7 +435,7 @@ public class RightRenderStrategy : IRenderStrategy
     public void Render(UbbNode node, RenderContext context)
     {
         context.FinalizeCurrentTextBlock();
-        string align = "right";
+        var align = "right";
         RenderHelper.ApplyAlignToContext(align, node, context);
     }
 }
@@ -513,11 +502,11 @@ public class ColorRenderStrategy : IRenderStrategy
             "transparent" => Colors.Transparent,
             "pink"=>Colors.Pink,
             "gold"=>Colors.Gold,
-            _ => GetColorFromRGB(colorStr),
+            _ => GetColorFromRgb(colorStr),
         };
 
     }
-    private static Color GetColorFromRGB(string colorStr)
+    private static Color GetColorFromRgb(string colorStr)
     {
         if (colorStr.Length == 6)
         {
@@ -544,7 +533,7 @@ public class FontRenderStrategy : IRenderStrategy
 
                 try
                 {
-                    span.FontFamily = new FontFamily(fontName);
+                    span.FontFamily = new(fontName);
                 }
                 catch
                 {
@@ -590,7 +579,7 @@ public class EmojiRenderStrategy : IRenderStrategy
                         {
                             LoadImageCallback = SmartImageLoader.Default,
                             Src = imageUrl,
-                            Margin = new Thickness(4, 0, 4, 0),
+                            Margin = new(4, 0, 4, 0),
                             MaxWidth = 32,
                             MaxHeight = 32,
                             Stretch = Stretch.UniformToFill,
@@ -675,7 +664,7 @@ public class DividerRenderStrategy : IRenderStrategy
             StrokeDashArray = { 2, 2 },
             Stretch = Stretch.Fill,  // 自动拉伸
             HorizontalAlignment = HorizontalAlignment.Stretch,
-            Margin = new Thickness(5,10,5,10)
+            Margin = new(5,10,5,10)
         };
         border.Child = line;
         context.AddToContainer(border);
@@ -727,7 +716,7 @@ public class RenderHelper
         var previousPanelStack = context.PanelStack != null ? new Stack<Panel>(context.PanelStack) : null;
 
         context.Container = panel;
-        context.PanelStack ??= new Stack<Panel>();
+        context.PanelStack ??= new();
         context.PanelStack.Push(panel);
 
         // 渲染子节点
@@ -830,13 +819,13 @@ public class FlatQuoteRenderStrategy : IRenderStrategy
     private static Border CreateQuoteContainer(RenderContext context, List<UbbNode> quoteChain)
     {
         // 判断是否需要折叠
-        bool needCollapse = quoteChain.Count > MaxVisibleDepth;
-        int visibleCount = Math.Min(quoteChain.Count, MaxVisibleDepth);
+        var needCollapse = quoteChain.Count > MaxVisibleDepth;
+        var visibleCount = Math.Min(quoteChain.Count, MaxVisibleDepth);
 
         var container = new StackPanel
         {
             Spacing = 0,
-            Margin = new Thickness(0)
+            Margin = new(0)
         };
 
         // 如果需要折叠
@@ -854,7 +843,7 @@ public class FlatQuoteRenderStrategy : IRenderStrategy
         }
 
         // 添加可见部分（前两层）
-        for (int i = visibleCount - 1; i >= 0; i--)
+        for (var i = visibleCount - 1; i >= 0; i--)
         {
             // 渲染单个引用
             var quoteContainer = RenderSingleQuote(quoteChain[i], context);
@@ -868,12 +857,12 @@ public class FlatQuoteRenderStrategy : IRenderStrategy
         }
 
         // 添加外部边框
-        return new Border
+        return new()
         {
             Background = (Brush)context.Properties["QuoteBackground"] ?? new SolidColorBrush(Color.FromArgb(255, 232, 244, 249)),
-            Padding = new Thickness(12, 8, 12, 8),
-            Margin = new Thickness(0, 8, 0, 8),
-            CornerRadius = new CornerRadius(4),
+            Padding = new(12, 8, 12, 8),
+            Margin = new(0, 8, 0, 8),
+            CornerRadius = new(4),
             Child = container
         };
     }
@@ -891,10 +880,10 @@ public class FlatQuoteRenderStrategy : IRenderStrategy
         {
             Content = $"展开{collapsedQuotes.Count}条引用",
             HorizontalAlignment = HorizontalAlignment.Center,
-            Margin = new Thickness(0, 0, 0, 0),
-            Padding = new Thickness(12, 6, 12, 6),
+            Margin = new(0, 0, 0, 0),
+            Padding = new(12, 6, 12, 6),
             FontSize = 12,
-            CornerRadius = new CornerRadius(4),
+            CornerRadius = new(4),
             IsChecked = false
         };
 
@@ -903,11 +892,11 @@ public class FlatQuoteRenderStrategy : IRenderStrategy
         {
             Visibility = Visibility.Collapsed,
             Spacing = 8,
-            Margin = new Thickness(0, 8, 0, 0)
+            Margin = new(0, 8, 0, 0)
         };
 
         // 添加折叠的引用（按从深到浅的顺序）
-        for (int i = collapsedQuotes.Count - 1; i >= 0; i--)
+        for (var i = collapsedQuotes.Count - 1; i >= 0; i--)
         {
             var quoteContainer = RenderSingleQuote(collapsedQuotes[i], context);
             collapsedContent.Children.Add(quoteContainer);
@@ -952,11 +941,11 @@ public class FlatQuoteRenderStrategy : IRenderStrategy
     // 创建分割线
     private static Border CreateSeparator()
     {
-        return new Border
+        return new()
         {
             Height = 1,
             Background = new SolidColorBrush(Color.FromArgb(0x33, 0x00, 0x00, 0x00)),
-            Margin = new Thickness(0, 5, 0, 5),
+            Margin = new(0, 5, 0, 5),
             HorizontalAlignment = HorizontalAlignment.Stretch
         };
     }
@@ -967,7 +956,7 @@ public class FlatQuoteRenderStrategy : IRenderStrategy
         var contentPanel = new StackPanel
         {
             Spacing = 4,
-            Margin = new Thickness(0)
+            Margin = new(0)
         };
 
         // 创建临时渲染上下文，确保复制 Control
@@ -976,7 +965,7 @@ public class FlatQuoteRenderStrategy : IRenderStrategy
             Control = context.Control, // 关键：复制 Control 引用
             Container = contentPanel,
             Properties = context.Properties,
-            PanelStack = new Stack<Panel>(),
+            PanelStack = new(),
             QuoteNestingLevel = context.QuoteNestingLevel
         };
 
@@ -984,11 +973,11 @@ public class FlatQuoteRenderStrategy : IRenderStrategy
         RenderQuoteContent(quoteNode, tempContext);
 
         // 添加左侧边框作为视觉指示
-        return new Border
+        return new()
         {
             Background = new SolidColorBrush(Colors.Transparent),
-            Padding = new Thickness(8, 6, 8, 6),
-            Margin = new Thickness(0, 2, 0, 2),
+            Padding = new(8, 6, 8, 6),
+            Margin = new(0, 2, 0, 2),
             Child = contentPanel
         };
     }
@@ -1025,7 +1014,7 @@ public class AudioRenderStrategy : IRenderStrategy
                         Title = title == "" ? "音频" : title.Replace("title=", ""),
                         LoadMediaCallback = new SmartMediaLoader(),
                         Src = src,
-                        Margin = new Thickness(10),
+                        Margin = new(10),
                     };
                     player.DownloadStarted += (s, e) =>
                     {
@@ -1065,7 +1054,7 @@ public class VideoRenderStrategy : IRenderStrategy
                     LoadVideoCallback = new SmartMediaLoader(),
                     Src = src,
                     MaxHeight = 400,
-                    Margin = new Thickness(10),
+                    Margin = new(10),
                     AutoPlay = false,
                 };
 
@@ -1105,26 +1094,26 @@ public class TableRenderStrategy : IRenderStrategy
         var columns = GetMaxColumns(rows);
 
         if (rows.Count == 0 || columns == 0)
-            return new Grid();
+            return new();
 
         var grid = new Grid();
 
         // 添加列定义
-        for (int i = 0; i < columns; i++)
+        for (var i = 0; i < columns; i++)
         {
-            grid.ColumnDefinitions.Add(new ColumnDefinition
+            grid.ColumnDefinitions.Add(new()
             {
-                Width = new GridLength(1, GridUnitType.Star) // 默认等宽
+                Width = new(1, GridUnitType.Star) // 默认等宽
             });
         }
 
         // 添加行定义并填充内容
-        for (int i = 0; i < rows.Count; i++)
+        for (var i = 0; i < rows.Count; i++)
         {
-            grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+            grid.RowDefinitions.Add(new() { Height = GridLength.Auto });
 
             var cells = rows[i];
-            for (int j = 0; j < cells.Count; j++)
+            for (var j = 0; j < cells.Count; j++)
             {
                 var cell = cells[j];
                 var cellContent = RenderCellContent(cell, context);
@@ -1163,7 +1152,7 @@ public class TableRenderStrategy : IRenderStrategy
 
     private static int GetMaxColumns(List<List<UbbNode>> rows)
     {
-        int max = 0;
+        var max = 0;
         foreach (var row in rows)
         {
             max = Math.Max(max, row.Count);
@@ -1176,8 +1165,8 @@ public class TableRenderStrategy : IRenderStrategy
         var container = new Border
         {
             BorderBrush = new SolidColorBrush(Color.FromArgb(0xFF, 0xDD, 0xDD, 0xDD)),
-            BorderThickness = new Thickness(1),
-            Padding = new Thickness(8, 4, 8, 4)
+            BorderThickness = new(1),
+            Padding = new(8, 4, 8, 4)
         };
 
         var contentPanel = new StackPanel();
@@ -1189,7 +1178,7 @@ public class TableRenderStrategy : IRenderStrategy
             Control = context.Control,
             Container = contentPanel,
             Properties = context.Properties,
-            PanelStack = new Stack<Panel>()
+            PanelStack = new()
         };
 
         foreach (var child in cellNode.Children)
@@ -1206,7 +1195,7 @@ public class TableRenderStrategy : IRenderStrategy
         // 设置表格宽度
         if (width != "auto" && width.EndsWith('%'))
         {
-            if (double.TryParse(width.TrimEnd('%'), out double percent))
+            if (double.TryParse(width.TrimEnd('%'), out var percent))
             {
                 grid.Width = context.Container?.ActualWidth * percent / 100 ?? 0;
             }
@@ -1221,7 +1210,7 @@ public class TableRenderStrategy : IRenderStrategy
         };
 
         // 设置边框（Grid 本身不显示边框，边框在单元格上）
-        grid.Margin = new Thickness(0, 8, 0, 8);
+        grid.Margin = new(0, 8, 0, 8);
 
         // 如果有需要，可以为整个表格添加外边框
         if (border != "0")
@@ -1333,7 +1322,7 @@ public class FileRenderStrategy : IRenderStrategy
                 {
                     Src = src,
                     HorizontalAlignment = HorizontalAlignment.Left,
-                    Margin=new Thickness(0,10,0,10)
+                    Margin=new(0,10,0,10)
                 };
                 card.DownloadRequested += (s,e)=> {
                     context.Control.OnMediaClicked(src, MediaType.File);

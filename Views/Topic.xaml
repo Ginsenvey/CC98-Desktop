@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Page
     x:Class="CC98.Topic"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
@@ -40,7 +40,7 @@
                     </StackPanel>
                 </HyperlinkButton>
 
-                <Border  Grid.Row="1" Padding="10" CornerRadius="4" Background="{ThemeResource MarkdownBackgroudBrush}">
+                <Border  Grid.Row="1" Padding="10" CornerRadius="4" Background="{ThemeResource MarkdownBackgroundBrush}">
                     <ubb:UbbTextBlock UbbText="{x:Bind Content,Mode=OneWay}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" BoldFontFamily="{StaticResource HarmonySansBold}" QuoteBackground="{ThemeResource QuoteBackgroundBrush}" CodeBackground="{ThemeResource QuoteBackgroundBrush}" MediaClicked="UbbTextBlock_MediaClicked" HideImage="{x:Bind svc:AppSettings.Current.HideImage, Mode=OneWay}"></ubb:UbbTextBlock>
                 </Border>
 
@@ -125,7 +125,7 @@
                     </StackPanel>
                 </HyperlinkButton>
 
-                <Border  Grid.Row="1" Padding="10" CornerRadius="4" Background="{ThemeResource MarkdownBackgroudBrush}">
+                <Border  Grid.Row="1" Padding="10" CornerRadius="4" Background="{ThemeResource MarkdownBackgroundBrush}">
                     <tool:MarkdownTextBlock Text="{x:Bind Content,Mode=OneWay}" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
                 </Border>
 
@@ -260,7 +260,7 @@
         
         <ScrollViewer Grid.Row="1"   HorizontalScrollMode="Enabled" x:Name="RootViewer" >
 
-            <ItemsRepeater x:Name="ReplyRepeater" ItemTemplate="{StaticResource ReplyTemplateSelector}" ItemsSource="{x:Bind replies,Mode=OneWay}" VerticalCacheLength="96"></ItemsRepeater>
+            <ItemsRepeater x:Name="ReplyRepeater" ItemTemplate="{StaticResource ReplyTemplateSelector}" ItemsSource="{x:Bind Replies,Mode=OneWay}" VerticalCacheLength="96"></ItemsRepeater>
             
         </ScrollViewer>
         
@@ -333,20 +333,20 @@
                     <ColumnDefinition Width="*"></ColumnDefinition>
                     <ColumnDefinition Width="*"></ColumnDefinition>
                 </Grid.ColumnDefinitions>
-                <PersonPicture Tag="{x:Bind profile.PortraitUrl,Mode=OneWay}" Grid.Column="0" Grid.Row="0" Grid.RowSpan="2" Width="50" Height="50" x:Name="SmallProfile" Loaded="SmallProfile_Loaded" Unloaded="SmallProfile_Unloaded"></PersonPicture>
-                <TextBlock Grid.Row="0" Grid.Column="1" Text="{x:Bind profile.PostCount,Mode=OneWay}" FontWeight="SemiBold" HorizontalAlignment="Center"></TextBlock>
-                <TextBlock Grid.Row="0" Grid.Column="2" Text="{x:Bind profile.FanCount,Mode=OneWay}" FontWeight="SemiBold" HorizontalAlignment="Center"></TextBlock>
-                <TextBlock Grid.Row="0" Grid.Column="3" Text="{x:Bind profile.Popularity,Mode=OneWay}" FontWeight="SemiBold" HorizontalAlignment="Center" ></TextBlock>
+                <PersonPicture Tag="{x:Bind Profile.PortraitUrl,Mode=OneWay}" Grid.Column="0" Grid.Row="0" Grid.RowSpan="2" Width="50" Height="50" x:Name="SmallProfile" Loaded="SmallProfile_Loaded" Unloaded="SmallProfile_Unloaded"></PersonPicture>
+                <TextBlock Grid.Row="0" Grid.Column="1" Text="{x:Bind Profile.PostCount,Mode=OneWay}" FontWeight="SemiBold" HorizontalAlignment="Center"></TextBlock>
+                <TextBlock Grid.Row="0" Grid.Column="2" Text="{x:Bind Profile.FanCount,Mode=OneWay}" FontWeight="SemiBold" HorizontalAlignment="Center"></TextBlock>
+                <TextBlock Grid.Row="0" Grid.Column="3" Text="{x:Bind Profile.Popularity,Mode=OneWay}" FontWeight="SemiBold" HorizontalAlignment="Center" ></TextBlock>
                 <TextBlock Grid.Row="1" Grid.Column="1" Text="发帖"  Foreground="{ThemeResource TextFillColorSecondaryBrush}" FontSize="12" HorizontalAlignment="Center"></TextBlock>
                 <TextBlock Grid.Row="1" Grid.Column="2" Text="粉丝"  Foreground="{ThemeResource TextFillColorSecondaryBrush}" FontSize="12" HorizontalAlignment="Center"></TextBlock>
                 <TextBlock Grid.Row="1" Grid.Column="3" Text="风评" Foreground="{ThemeResource TextFillColorSecondaryBrush}" FontSize="12" HorizontalAlignment="Center"></TextBlock>
                 <StackPanel Orientation="Horizontal" Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="4" Spacing="15">
-                    <TextBlock Text="{x:Bind profile.Name,Mode=OneWay}"  FontWeight="Bold" Foreground="#4d9891" IsTextSelectionEnabled="True"></TextBlock>
-                    <Border Background="{ThemeResource MarkdownBackgroudBrush}" Padding="3,0,3,0" CornerRadius="3">
-                        <TextBlock Text="{x:Bind profile.Id,Mode=OneWay}"  Foreground="{ThemeResource TextFillColorSecondaryBrush}" FontSize="12" IsTextSelectionEnabled="True"></TextBlock>
+                    <TextBlock Text="{x:Bind Profile.Name,Mode=OneWay}"  FontWeight="Bold" Foreground="#4d9891" IsTextSelectionEnabled="True"></TextBlock>
+                    <Border Background="{ThemeResource MarkdownBackgroundBrush}" Padding="3,0,3,0" CornerRadius="3">
+                        <TextBlock Text="{x:Bind Profile.Id,Mode=OneWay}"  Foreground="{ThemeResource TextFillColorSecondaryBrush}" FontSize="12" IsTextSelectionEnabled="True"></TextBlock>
                     </Border>
                 </StackPanel>
-                <ubb:UbbTextBlock UbbText="{x:Bind profile.SignatureCode,Mode=OneWay}"  Grid.Column="0" Grid.ColumnSpan="4" Grid.Row="3" Foreground="{ThemeResource TextFillColorSecondaryBrush}" BoldFontFamily="{StaticResource HarmonySansBold}" Background="Transparent" QuoteBackground="{ThemeResource QuoteBackgroundBrush}"/>
+                <ubb:UbbTextBlock UbbText="{x:Bind Profile.SignatureCode,Mode=OneWay}"  Grid.Column="0" Grid.ColumnSpan="4" Grid.Row="3" Foreground="{ThemeResource TextFillColorSecondaryBrush}" BoldFontFamily="{StaticResource HarmonySansBold}" Background="Transparent" QuoteBackground="{ThemeResource QuoteBackgroundBrush}"/>
             </Grid>
         </TeachingTip>
 

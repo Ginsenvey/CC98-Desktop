@@ -5,12 +5,12 @@ namespace UbbRender.Tokenizer;
 /// 将原始文本分解为一系列 Token 的词法分析器。
 /// </summary>
 /// <param name="input"></param>
-public class UBBTokenizer(string input)
+public class UbbTokenizer(string input)
 {
     private readonly string _input = input ?? "";
     private int _pos = 0;
     private bool _inTag = false;
-    private TokenType _lastType = TokenType.EOF; // 记录上一个 Token 类型以判断上下文
+    private TokenType _lastType = TokenType.Eof; // 记录上一个 Token 类型以判断上下文
 
     public IEnumerable<Token> ScanTokens()
     {
@@ -23,11 +23,11 @@ public class UBBTokenizer(string input)
             }
             else
             {
-                char c = Peek();
+                var c = Peek();
                 if (c == '[')
                 {
                     _inTag = true;
-                    token = new Token(TokenType.LeftBracket, Advance().ToString(), _pos - 1);
+                    token = new(TokenType.LeftBracket, Advance().ToString(), _pos - 1);
                 }
                 else if (c == '$')
                 {
@@ -47,32 +47,32 @@ public class UBBTokenizer(string input)
             yield return token;
         }
 
-        yield return new Token(TokenType.EOF, "", _pos);
+        yield return new(TokenType.Eof, "", _pos);
     }
 
     private Token ScanInTag()
     {
-        char c = Peek();
+        var c = Peek();
 
         switch (c)
         {
             case ']':
                 _inTag = false;
-                return new Token(TokenType.RightBracket, Advance().ToString(), _pos - 1);
+                return new(TokenType.RightBracket, Advance().ToString(), _pos - 1);
             case ',':
-                return new Token(TokenType.Comma, Advance().ToString(), _pos - 1);
+                return new(TokenType.Comma, Advance().ToString(), _pos - 1);
             case '=':
                 // 关键修复：只有在 TagName 之后，等号才是属性开始的分隔符
                 if (_lastType == TokenType.TagName)
                 {
-                    return new Token(TokenType.Equal, Advance().ToString(), _pos - 1);
+                    return new(TokenType.Equal, Advance().ToString(), _pos - 1);
                 }
                 // 否则（例如在 URL 内部），它是属性内容的一部分，交给 ScanTagContent 处理
                 return ScanTagContent();
             case '/':
                 if (_lastType == TokenType.LeftBracket)
                 {
-                    return new Token(TokenType.Slash, Advance().ToString(), _pos - 1);
+                    return new(TokenType.Slash, Advance().ToString(), _pos - 1);
                 }
                 return ScanTagContent();
             default:
@@ -84,45 +84,45 @@ public class UBBTokenizer(string input)
 
     private Token ScanTagContent()
     {
-        int start = _pos;
+        var start = _pos;
         while (_pos < _input.Length && !IsTagDelimiter(Peek()))
         {
             Advance();
         }
 
-        string value = _input[start.._pos];
+        var value = _input[start.._pos];
 
         // 核心逻辑：根据上一个 Token 判断当前内容的性质
         // 如果前面是 '[' 或 '[/'，则当前是标签名
         if (_lastType == TokenType.LeftBracket || _lastType == TokenType.Slash)
         {
-            return new Token(TokenType.TagName, value, start);
+            return new(TokenType.TagName, value, start);
         }
 
         // 否则（前面是 '=' 或 ','），视为属性值
-        return new Token(TokenType.AttrValue, value, start);
+        return new(TokenType.AttrValue, value, start);
     }
 
     private Token ScanText()
     {
-        int start = _pos;
+        var start = _pos;
         while (_pos < _input.Length && Peek() != '[' && Peek() != '$' && Peek() != '@')
         {
             Advance();
         }
-        return new Token(TokenType.Text, _input[start.._pos], start);
+        return new(TokenType.Text, _input[start.._pos], start);
     }
     
     private Token ScanMathDelimiter()
     {
-        int start = _pos;
+        var start = _pos;
         Advance();
         if (Peek() == '$')
         {
             Advance();
-            return new Token(TokenType.DoubleDollar, "$$", start);
+            return new(TokenType.DoubleDollar, "$$", start);
         }
-        return new Token(TokenType.Dollar, "$", start);
+        return new(TokenType.Dollar, "$", start);
     }
     /// <summary>
     /// 扫描@提及，格式：@用户名（后跟空格）
@@ -130,18 +130,18 @@ public class UBBTokenizer(string input)
     /// </summary>
     private Token ScanAtMention()
     {
-        int start = _pos;
+        var start = _pos;
         Advance(); // 消费 '@'
 
-        int nameStart = _pos;
+        var nameStart = _pos;
         //这个长度是字符长度
-        int nameLength = 0;
-        bool isValid = true;
+        var nameLength = 0;
+        var isValid = true;
 
         // 解析用户名
         while (_pos < _input.Length)
         {
-            char c = Peek();
+            var c = Peek();
 
             // 用户名后必须紧跟空格才结束
             if (c == ' ')
@@ -150,7 +150,7 @@ public class UBBTokenizer(string input)
             }
 
             // 检查字符是否合法
-            bool isValidChar = IsValidUsernameChar(c);
+            var isValidChar = IsValidUsernameChar(c);
             if (!isValidChar)
             {
                 isValid = false;
@@ -160,7 +160,7 @@ public class UBBTokenizer(string input)
             nameLength++;
 
             // 这里的长度是等效长度，每个汉字占2字节（而实际上有的字是3）
-            int length = GetUserNameLength(_input, nameStart, nameLength);
+            var length = GetUserNameLength(_input, nameStart, nameLength);
             if (length > 10)  // 总字节长度限制为10
             {
                 isValid = false;
@@ -173,15 +173,15 @@ public class UBBTokenizer(string input)
         // 验证有效性：必须有用户名，且后跟空格
         if (isValid && nameLength > 0 && _pos < _input.Length && Peek() == ' ')
         {
-            string username = _input[nameStart.._pos];
+            var username = _input[nameStart.._pos];
             Advance(); // 消费空格
-            return new Token(TokenType.At, username, start);
+            return new(TokenType.At, username, start);
         }
 
         // 无效情况：回退，将@作为普通文本处理
         // 将_pos重置到start + 1，然后返回一个Text token
         _pos = start + 1;
-        return new Token(TokenType.Text, "@", start);
+        return new(TokenType.Text, "@", start);
     }
 
 
@@ -230,10 +230,10 @@ public class UBBTokenizer(string input)
     /// </summary>
     private static int GetUserNameLength(string input, int start, int length)
     {
-        int totalLength = 0;
-        for (int i = start; i < start + length && i < input.Length; i++)
+        var totalLength = 0;
+        for (var i = start; i < start + length && i < input.Length; i++)
         {
-            char c = input[i];
+            var c = input[i];
 
             // 字母或数字计1
             if (char.IsLetterOrDigit(c))

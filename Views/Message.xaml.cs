@@ -1,94 +1,72 @@
-using CC98.Objects;
+Ôªøusing CC98.Objects;
 using CC98.Services;
 using CC98.Services.Extensions;
-using CommunityToolkit.WinUI.Controls;
-using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml.Controls.Primitives;
-using Microsoft.UI.Xaml.Data;
-using Microsoft.UI.Xaml.Input;
-using Microsoft.UI.Xaml.Media;
-using Microsoft.UI.Xaml.Media.Animation;
-using Microsoft.UI.Xaml.Navigation;
-using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.ComponentModel;
-using System.IO;
-using System.Linq;
-using System.Runtime.InteropServices.WindowsRuntime;
-using System.Text;
-using System.Threading.Tasks;
-using Windows.ApplicationModel.Contacts;
-using Windows.Foundation;
-using Windows.Foundation.Collections;
-using Windows.Media.Devices;
 using Windows.Storage;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
 
-namespace CC98
-{
-    public sealed partial class Message : Page
-    {
-        public MessageNavigationInfo NavigationInfo { get; set; }=new MessageNavigationInfo();
-        public ApplicationDataContainer Set = ApplicationData.Current.LocalSettings;
-        public GlobalService GlobalService =GlobalService.Instance;
-        public Message()
-        {
-            this.InitializeComponent();
-        }
-        protected override void OnNavigatedTo(Microsoft.UI.Xaml.Navigation.NavigationEventArgs e)
-        {
-            base.OnNavigatedTo(e);
+namespace CC98;
 
-            if (GlobalService.ShouldReplaceNavigationArgs)
-            {
-                if(GlobalService.NavigationAnchor is int targetIndex)
-                {
-                    NaviBar.SelectedItem = NaviBar.Items[targetIndex];
-                }
-                else
-                {
-                    NaviBar.SelectedItem = NaviBar.Items[0];
-                }
-                return;
-            }
-            var args = e.TryGetParameter<MessageNavigationInfo>();
-            if (args == null) return;
-            NavigationInfo = args;
-            NaviBar.SelectedItem = NaviBar.Items[0];
-        }
-        
-        private void NaviBar_SelectionChanged(SelectorBar sender, SelectorBarSelectionChangedEventArgs args)
+public sealed partial class Message : Page
+{
+    public MessageNavigationInfo NavigationInfo { get; set; }=new();
+    public ApplicationDataContainer Set = ApplicationData.Current.LocalSettings;
+    public GlobalService GlobalService =GlobalService.Instance;
+    public Message()
+    {
+        this.InitializeComponent();
+    }
+    protected override void OnNavigatedTo(Microsoft.UI.Xaml.Navigation.NavigationEventArgs e)
+    {
+        base.OnNavigatedTo(e);
+
+        if (GlobalService.ShouldReplaceNavigationArgs)
         {
-            var bar = NaviBar.SelectedItem as SelectorBarItem;
-            var selected=NaviBar.Items.IndexOf(bar);
-            GlobalService.Instance.NavigationAnchor = selected;
-            if (bar?.Tag is not string tag) return;
-            switch (tag)
+            if(GlobalService.NavigationAnchor is int targetIndex)
             {
-                case "Chat":
-                    MsgFrame.Navigate(typeof(Chat), NavigationInfo);
-                    MsgCount.Text = $"{GlobalService.MessageCount}ÃıŒ¥∂¡–≈œ¢";
-                    break;
-                case "System":
-                    MsgFrame.Navigate(typeof(NoticePage), NoticeType.System);
-                    MsgCount.Text = $"{GlobalService.SystemCount}ÃıŒ¥∂¡–≈œ¢";
-                    break;
-                case "Reply":
-                    MsgFrame.Navigate(typeof(NoticePage), NoticeType.Reply);
-                    MsgCount.Text = $"{GlobalService.ReplyCount}ÃıŒ¥∂¡–≈œ¢";
-                    break;
-                case "At":
-                    MsgFrame.Navigate(typeof(NoticePage), NoticeType.At);
-                    MsgCount.Text = $"{GlobalService.AtCount}ÃıŒ¥∂¡–≈œ¢";
-                    break;
+                NaviBar.SelectedItem = NaviBar.Items[targetIndex];
             }
-           
+            else
+            {
+                NaviBar.SelectedItem = NaviBar.Items[0];
+            }
+            return;
         }
+        var args = e.TryGetParameter<MessageNavigationInfo>();
+        if (args == null) return;
+        NavigationInfo = args;
+        NaviBar.SelectedItem = NaviBar.Items[0];
+    }
+        
+    private void NaviBar_SelectionChanged(SelectorBar sender, SelectorBarSelectionChangedEventArgs args)
+    {
+        var bar = NaviBar.SelectedItem as SelectorBarItem;
+        var selected=NaviBar.Items.IndexOf(bar);
+        GlobalService.Instance.NavigationAnchor = selected;
+        if (bar?.Tag is not string tag) return;
+        switch (tag)
+        {
+            case "Chat":
+                MsgFrame.Navigate(typeof(Chat), NavigationInfo);
+                MsgCount.Text = $"{GlobalService.MessageCount}Êù°Êú™ËØª‰ø°ÊÅØ";
+                break;
+            case "System":
+                MsgFrame.Navigate(typeof(NoticePage), NoticeType.System);
+                MsgCount.Text = $"{GlobalService.SystemCount}Êù°Êú™ËØª‰ø°ÊÅØ";
+                break;
+            case "Reply":
+                MsgFrame.Navigate(typeof(NoticePage), NoticeType.Reply);
+                MsgCount.Text = $"{GlobalService.ReplyCount}Êù°Êú™ËØª‰ø°ÊÅØ";
+                break;
+            case "At":
+                MsgFrame.Navigate(typeof(NoticePage), NoticeType.At);
+                MsgCount.Text = $"{GlobalService.AtCount}Êù°Êú™ËØª‰ø°ÊÅØ";
+                break;
+        }
+           
+    }
 
       
-    }
 }

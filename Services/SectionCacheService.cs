@@ -16,15 +16,15 @@ public class BoardSectionManager
 
     // 单例实现
     private static BoardSectionManager? _instance;
-    private static readonly object _lock = new();
+    private static readonly object Lock = new();
 
     public static BoardSectionManager Instance
     {
         get
         {
-            lock (_lock)
+            lock (Lock)
             {
-                return _instance ??= new BoardSectionManager();
+                return _instance ??= new();
             }
         }
     }
@@ -44,9 +44,9 @@ public class BoardSectionManager
     {
         try
         {
-            var res= await LoginService.vpn.GetAsync(apiUrl);
+            var res= await LoginService.Vpn.GetAsync(apiUrl);
 
-            string jsonResponse = await res.Content.ReadAsStringAsync();
+            var jsonResponse = await res.Content.ReadAsStringAsync();
 
             // 2. 解析并提取所需数据
             var sections = ParseSections(jsonResponse);

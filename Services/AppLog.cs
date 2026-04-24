@@ -1,5 +1,4 @@
 ﻿using CC98.Objects;
-using CC98.Services;
 using CC98.Services.Extensions;
 using System;
 using System.Collections.Generic;
@@ -124,12 +123,12 @@ public class AppLog
 
         try
         {
-            string fileName = customName ?? GetDefaultLogFileName();
-            string filePath = Path.Combine(_logDirectory, fileName);
+            var fileName = customName ?? GetDefaultLogFileName();
+            var filePath = Path.Combine(_logDirectory, fileName);
 
             var logsToSave = GetRecentLogs(maxCount: null); // 保存所有日志
 
-            string json = JsonSerialize.Serialize(logsToSave);
+            var json = JsonSerialize.Serialize(logsToSave);
 
             await LocalCache.SaveJsonAsync(filePath, json, validateJson: false);
 
@@ -152,11 +151,11 @@ public class AppLog
 
         try
         {
-            string desktopPath = Environment.GetFolderPath(
+            var desktopPath = Environment.GetFolderPath(
                 Environment.SpecialFolder.Desktop);
 
-            string targetFileName = fileName ?? $"{_appName}_日志_{DateTime.Now:yyyy年MM月dd日_HH时mm分}.json";
-            string targetPath = Path.Combine(desktopPath, targetFileName);
+            var targetFileName = fileName ?? $"{_appName}_日志_{DateTime.Now:yyyy年MM月dd日_HH时mm分}.json";
+            var targetPath = Path.Combine(desktopPath, targetFileName);
 
             // 确定要保存的日志
             var logsToSave = GetRecentLogs(maxLogs);
@@ -177,7 +176,7 @@ public class AppLog
                 Logs = logsToSave
             };
 
-            string json = JsonSerialize.Serialize(exportData);
+            var json = JsonSerialize.Serialize(exportData);
 
             var result = await LocalCache.SaveJsonAsync(
                 targetPath, json, validateJson: false);
@@ -208,7 +207,7 @@ public class AppLog
         {
             if (string.IsNullOrWhiteSpace(filePath))
             {
-                string desktopPath = Environment.GetFolderPath(
+                var desktopPath = Environment.GetFolderPath(
                     Environment.SpecialFolder.Desktop);
                 filePath = Path.Combine(desktopPath,
                     $"{_appName}_日志_{DateTime.Now:yyyyMMdd_HHmmss}.txt");
@@ -273,8 +272,8 @@ public class AppLog
                 .Where(f => f.Name.StartsWith($"{_appName}_log_"))
                 .ToList();
 
-            int deletedCount = 0;
-            DateTime cutoffDate = DateTime.Now.AddDays(-daysToKeep);
+            var deletedCount = 0;
+            var cutoffDate = DateTime.Now.AddDays(-daysToKeep);
 
             foreach (var file in logFiles)
             {
@@ -423,7 +422,7 @@ public class AppLog
     private static string SanitizeFileName(string fileName)
     {
         var invalidChars = Path.GetInvalidFileNameChars();
-        return new string([.. fileName.Where(ch => !invalidChars.Contains(ch))]);
+        return new([.. fileName.Where(ch => !invalidChars.Contains(ch))]);
     }
 
     /// <summary>

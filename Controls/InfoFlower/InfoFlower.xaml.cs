@@ -1,17 +1,6 @@
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Runtime.InteropServices.WindowsRuntime;
-using Windows.Foundation;
-using Windows.Foundation.Collections;
+ï»¿using System;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml.Controls.Primitives;
-using Microsoft.UI.Xaml.Data;
-using Microsoft.UI.Xaml.Input;
-using Microsoft.UI.Xaml.Media;
-using Microsoft.UI.Xaml.Navigation;
 using CC98.Objects;
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -33,9 +22,9 @@ public sealed partial class InfoFlower : UserControl
         _ => "\uE779",
     };
 
-    public void Play(string Glyph,string message)
+    public void Play(string glyph,string message)
     {
-        this.FlowIcon.Glyph = Glyph;
+        this.FlowIcon.Glyph = glyph;
         this.FlowInfo.Text = message;
         FlowerTransform.TranslateY = 0;
         Flower.Opacity = 0;
@@ -59,7 +48,7 @@ public sealed partial class InfoFlower : UserControl
         FlowerAnimation.Completed -= OnAnimationCompleted;
         FlowerAnimation.Stop();
 
-        // ´¥·¢Íê³ÉÊÂ¼ş
+        // è§¦å‘å®Œæˆäº‹ä»¶
         AnimationCompleted?.Invoke(this, EventArgs.Empty);
     }
 
@@ -72,7 +61,7 @@ public sealed partial class InfoFlower : UserControl
             "Text",
             typeof(string),
             typeof(InfoFlower),
-            new PropertyMetadata(string.Empty, OnTextChanged));
+            new(string.Empty, OnTextChanged));
 
     public string Text
     {
@@ -84,7 +73,7 @@ public sealed partial class InfoFlower : UserControl
             "Glyph",
             typeof(string),
             typeof(InfoFlower),
-            new PropertyMetadata(string.Empty, OnGlyphChanged));
+            new(string.Empty, OnGlyphChanged));
 
     public string Glygh
     {
@@ -98,7 +87,7 @@ public sealed partial class InfoFlower : UserControl
         {
             control.FlowInfo.Text = (string)e.NewValue;
 
-            // ¸ù¾İÎÄ±¾ÄÚÈİµ÷Õû¿É¼ûĞÔ
+            // æ ¹æ®æ–‡æœ¬å†…å®¹è°ƒæ•´å¯è§æ€§
             control.FlowInfo.Visibility =
                 string.IsNullOrEmpty((string)e.NewValue) ?
                 Visibility.Collapsed :
@@ -113,6 +102,6 @@ public sealed partial class InfoFlower : UserControl
             control.FlowIcon.Glyph = (string)e.NewValue;
         }
     }
-    // ¶¯»­Íê³ÉÊÂ¼ş
+    // åŠ¨ç”»å®Œæˆäº‹ä»¶
     public event EventHandler AnimationCompleted;
 }

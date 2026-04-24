@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Page
     x:Class="CC98.Section"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
@@ -36,7 +36,7 @@
             </Grid.RowDefinitions>
             <TextBlock Grid.Row="0" Text="版面" FontWeight="Bold" FontSize="22" Margin="10"></TextBlock>
             <ScrollViewer Grid.Row="1">
-                <ItemsRepeater x:Name="SectionPresenter" ItemsSource="{x:Bind allSections}" ItemTemplate="{StaticResource SectionCase}">
+                <ItemsRepeater x:Name="SectionPresenter" ItemsSource="{x:Bind AllSections}" ItemTemplate="{StaticResource SectionCase}">
                     <ItemsRepeater.Layout>
                         <StackLayout Orientation="Vertical"></StackLayout>
                     </ItemsRepeater.Layout>

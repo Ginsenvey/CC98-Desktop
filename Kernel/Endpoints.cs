@@ -1,9 +1,4 @@
-﻿using Microsoft.Security.Authentication.OAuth;
-using System.Data;
-using System.Text.RegularExpressions;
-using static CC98.Kernel.ApiScope.ApiEndpoints;
-
-namespace CC98.Kernel.ApiScope;
+﻿namespace CC98.Kernel.ApiScope;
 /// <summary>
 /// API终结点定义
 /// </summary>
@@ -132,7 +127,7 @@ public static class ApiEndpoints
         public static string SendReply(int topicId)=> $"{Base}/topic/{topicId}/post";
     }
 
-    public static class OpenID
+    public static class OpenId
     {
         /// <summary>
         /// 鉴权服务起点

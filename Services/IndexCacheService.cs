@@ -13,15 +13,15 @@ using System.Threading.Tasks;
 public class IndexDataService
 {
     private static IndexDataService? _instance;
-    private static readonly object _lock = new();
+    private static readonly object Lock = new();
 
     public static IndexDataService Instance
     {
         get
         {
-            lock (_lock)
+            lock (Lock)
             {
-                return _instance ??= new IndexDataService();
+                return _instance ??= new();
             }
         }
     }
@@ -76,8 +76,8 @@ public class IndexDataService
     {
         try
         {
-            var res= await LoginService.vpn.GetAsync(apiUrl);
-            string jsonResponse = await res.Content.ReadAsStringAsync();
+            var res= await LoginService.Vpn.GetAsync(apiUrl);
+            var jsonResponse = await res.Content.ReadAsStringAsync();
             var homeData = ParseAndExtractData(jsonResponse);
             return await SaveToCacheAsync(homeData);
         }
@@ -130,7 +130,7 @@ public class IndexDataService
             return topics;
         }
 
-        return new List<IndexTopic>();
+        return new();
     }
 
     /// <summary>
@@ -150,7 +150,7 @@ public class IndexDataService
             return recommendations;
         }
 
-        return new List<FlipTopic>();
+        return new();
     }
 
     /// <summary>

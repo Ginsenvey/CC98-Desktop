@@ -1,22 +1,11 @@
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Runtime.InteropServices.WindowsRuntime;
-using Windows.Foundation;
-using Windows.Foundation.Collections;
+ï»¿using System;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Controls.Primitives;
-using Microsoft.UI.Xaml.Data;
 // MusicPlayer.xaml.cs
-using Microsoft.UI.Xaml.Media;
-using Microsoft.UI.Xaml.Media.Imaging;
 using System.Diagnostics;
 using System.Threading.Tasks;
-using Windows.Media.Core;
 using Windows.Media.Playback;
-using Windows.Storage.Streams;
 using CC98.Share.Controls.Primitives;
 using UbbRender.Common;
 
@@ -37,19 +26,19 @@ public sealed partial class MusicPlayer : UserControl, IDisposable
         SetupProgressTimer();
     }
 
-    #region ÒÀÀµÊôĞÔ
+    #region ä¾èµ–å±æ€§
 
     public static readonly DependencyProperty SrcProperty =
         DependencyProperty.Register("Src", typeof(string), typeof(MusicPlayer),
-            new PropertyMetadata(null, OnSrcChanged));
+            new(null, OnSrcChanged));
 
     public static readonly DependencyProperty TitleProperty =
         DependencyProperty.Register("Title", typeof(string), typeof(MusicPlayer),
-            new PropertyMetadata("ÒôÆµ"));
+            new("éŸ³é¢‘"));
 
     public static readonly DependencyProperty LoadMediaCallbackProperty =
         DependencyProperty.Register("LoadMediaCallback", typeof(IMediaLoader),
-            typeof(MusicPlayer), new PropertyMetadata(new DefaultMediaLoader()));
+            typeof(MusicPlayer), new(new DefaultMediaLoader()));
 
     public string Src
     {
@@ -71,25 +60,25 @@ public sealed partial class MusicPlayer : UserControl, IDisposable
 
     #endregion
 
-    #region ÊÂ¼ş
+    #region äº‹ä»¶
 
     public event EventHandler<MediaClickEventArgs> DownloadStarted;
 
     private void OnDownloadStarted()
     {
-        DownloadStarted?.Invoke(this, new MediaClickEventArgs(Src,MediaType.Audio));
+        DownloadStarted?.Invoke(this, new(Src,MediaType.Audio));
     }
 
     #endregion
 
-    #region ³õÊ¼»¯
+    #region åˆå§‹åŒ–
 
     private void InitializeMediaPlayer()
     {
-        // Ê¹ÓÃÈ«¾Öµ¥Àı MediaPlayer
+        // ä½¿ç”¨å…¨å±€å•ä¾‹ MediaPlayer
         _globalPlayer = GlobalMediaPlayer.Instance;
 
-        //¶©ÔÄÊÂ¼ş£¨Ö»¶©ÔÄ£¬²»´¦Àíµ×²ãÊÍ·Å£©
+        //è®¢é˜…äº‹ä»¶ï¼ˆåªè®¢é˜…ï¼Œä¸å¤„ç†åº•å±‚é‡Šæ”¾ï¼‰
         _globalPlayer.MediaOpened += OnMediaOpened;
         _globalPlayer.MediaEnded += OnMediaEnded;
         _globalPlayer.MediaFailed += OnMediaFailed;
@@ -98,7 +87,7 @@ public sealed partial class MusicPlayer : UserControl, IDisposable
 
     private void SetupProgressTimer()
     {
-        _progressTimer = new DispatcherTimer();
+        _progressTimer = new();
         _progressTimer.Interval = TimeSpan.FromMilliseconds(250);
         _progressTimer.Tick += UpdateProgress;
     }
@@ -108,13 +97,13 @@ public sealed partial class MusicPlayer : UserControl, IDisposable
         if (d is MusicPlayer player && !player._isPlaying)
         {
             player._isInitialized = false;
-            player.ResetUI();
+            player.ResetUi();
         }
     }
 
     #endregion
 
-    #region ²¥·Å¿ØÖÆ
+    #region æ’­æ”¾æ§åˆ¶
 
     private async void PlayPauseButton_Click(object sender, RoutedEventArgs e)
     {
@@ -133,8 +122,8 @@ public sealed partial class MusicPlayer : UserControl, IDisposable
         }
         catch (Exception ex)
         {
-            await App.Logger.WriteAsync("MusicPlayer","³õÊ¼»¯Ã½Ìå³ö´í",ex.Message);
-            ShowErrorMessage("²¥·ÅÊ§°Ü");
+            await App.Logger.WriteAsync("MusicPlayer","åˆå§‹åŒ–åª’ä½“å‡ºé”™",ex.Message);
+            ShowErrorMessage("æ’­æ”¾å¤±è´¥");
         }
     }
 
@@ -142,7 +131,7 @@ public sealed partial class MusicPlayer : UserControl, IDisposable
     {
         if (string.IsNullOrEmpty(Src))
         {
-            ShowErrorMessage("ÒôÆµÔ´Îª¿Õ");
+            ShowErrorMessage("éŸ³é¢‘æºä¸ºç©º");
             return;
         }
         LoadingIndicator.Visibility = Visibility.Visible;
@@ -152,15 +141,15 @@ public sealed partial class MusicPlayer : UserControl, IDisposable
 
             if (mediaSource == null)
             {
-                ShowErrorMessage($"ÎŞ·¨¼ÓÔØÃ½Ìå:{Src}");
+                ShowErrorMessage($"æ— æ³•åŠ è½½åª’ä½“:{Src}");
                 return;
             }
 
-            // Ê¹ÓÃÈ«¾Ö²¥·ÅÆ÷ÉèÖÃÔ´²¢²¥·Å
+            // ä½¿ç”¨å…¨å±€æ’­æ”¾å™¨è®¾ç½®æºå¹¶æ’­æ”¾
             _globalPlayer.SetSource(mediaSource);
             _isInitialized = true;
             ProgressSlider.IsEnabled = true;
-            // ¿ªÊ¼²¥·Å
+            // å¼€å§‹æ’­æ”¾
             _globalPlayer.Play();
             
             _isPlaying = true;
@@ -169,8 +158,8 @@ public sealed partial class MusicPlayer : UserControl, IDisposable
         }
         catch (Exception ex)
         {
-            Debug.WriteLine($"³õÊ¼»¯Ê§°Ü: {ex.Message}");
-            ShowErrorMessage("³õÊ¼»¯Ê§°Ü");
+            Debug.WriteLine($"åˆå§‹åŒ–å¤±è´¥: {ex.Message}");
+            ShowErrorMessage("åˆå§‹åŒ–å¤±è´¥");
             _isInitialized = false;
         }
         finally
@@ -197,13 +186,13 @@ public sealed partial class MusicPlayer : UserControl, IDisposable
 
     private void UpdatePlayPauseButton()
     {
-        PlayPauseIcon.Glyph = _isPlaying ? "\uE103" : "\uE102"; // ÔİÍ£/²¥·ÅÍ¼±ê
-        ToolTipService.SetToolTip(PlayPauseButton, _isPlaying ? "ÔİÍ£" : "²¥·Å");
+        PlayPauseIcon.Glyph = _isPlaying ? "\uE103" : "\uE102"; // æš‚åœ/æ’­æ”¾å›¾æ ‡
+        ToolTipService.SetToolTip(PlayPauseButton, _isPlaying ? "æš‚åœ" : "æ’­æ”¾");
     }
 
     #endregion
 
-    #region ½ø¶ÈÌõ¿ØÖÆ
+    #region è¿›åº¦æ¡æ§åˆ¶
 
     private void UpdateProgress(object sender, object e)
     {
@@ -220,7 +209,7 @@ public sealed partial class MusicPlayer : UserControl, IDisposable
         }
     }
 
-    // Ê¹ÓÃÕıÈ·µÄÊÂ¼şÇ©Ãû (RangeBaseValueChangedEventArgs) À´´¦Àí»¬¿éÍÏ¶¯
+    // ä½¿ç”¨æ­£ç¡®çš„äº‹ä»¶ç­¾å (RangeBaseValueChangedEventArgs) æ¥å¤„ç†æ»‘å—æ‹–åŠ¨
     private void ProgressSlider_ValueChanged(object sender, RangeBaseValueChangedEventArgs e)
     {
         var session = _globalPlayer?.PlaybackSession;
@@ -240,7 +229,7 @@ public sealed partial class MusicPlayer : UserControl, IDisposable
 
     #endregion
 
-    #region ÏÂÔØ¹¦ÄÜ
+    #region ä¸‹è½½åŠŸèƒ½
 
     private void DownloadButton_Click(object sender, RoutedEventArgs e)
     {
@@ -250,7 +239,7 @@ public sealed partial class MusicPlayer : UserControl, IDisposable
         }
         else
         {
-            ShowErrorMessage("Ã»ÓĞ¿ÉÏÂÔØµÄÒôÆµÔ´");
+            ShowErrorMessage("æ²¡æœ‰å¯ä¸‹è½½çš„éŸ³é¢‘æº");
         }
     }
 
@@ -258,11 +247,11 @@ public sealed partial class MusicPlayer : UserControl, IDisposable
 
     #endregion
 
-    #region MediaPlayer ÊÂ¼ş´¦Àí
+    #region MediaPlayer äº‹ä»¶å¤„ç†
 
     private void OnMediaOpened(MediaPlayer sender, object args)
     {
-        // Ã½Ìå´ò¿ª³É¹¦
+        // åª’ä½“æ‰“å¼€æˆåŠŸ
         DispatcherQueue.TryEnqueue(() =>
         {
             TotalTimeText.Text = FormatTime(sender.PlaybackSession.NaturalDuration.TotalSeconds);
@@ -285,31 +274,31 @@ public sealed partial class MusicPlayer : UserControl, IDisposable
     {
         DispatcherQueue.TryEnqueue(() =>
         {
-            ShowErrorMessage($"²¥·ÅÊ§°Ü: {args.ErrorMessage}");
+            ShowErrorMessage($"æ’­æ”¾å¤±è´¥: {args.ErrorMessage}");
             _isPlaying = false;
             _isInitialized = false;
             UpdatePlayPauseButton();
             _progressTimer.Stop();
-            ResetUI();
+            ResetUi();
         });
     }
 
     private void OnCurrentStateChanged(MediaPlayer sender, object args)
     {
-        // ¿ÉÒÔ¸ù¾İĞèÒª´¦Àí×´Ì¬±ä»¯
+        // å¯ä»¥æ ¹æ®éœ€è¦å¤„ç†çŠ¶æ€å˜åŒ–
     }
 
     #endregion
 
-    #region UI ¸¨Öú·½·¨
+    #region UI è¾…åŠ©æ–¹æ³•
 
-    private void ResetUI()
+    private void ResetUi()
     {
         ProgressSlider.Value = 0;
         CurrentTimeText.Text = "0:00";
         TotalTimeText.Text = "0:00";
         PlayPauseIcon.Glyph = "\uE102";
-        ToolTipService.SetToolTip(PlayPauseButton, "²¥·Å");
+        ToolTipService.SetToolTip(PlayPauseButton, "æ’­æ”¾");
     }
 
     private void ShowErrorMessage(string message)
@@ -317,7 +306,7 @@ public sealed partial class MusicPlayer : UserControl, IDisposable
         ErrorTextBlock.Text = message;
         ErrorTextBlock.Visibility = Visibility.Visible;
 
-        // 3ÃëºóÒş²Ø´íÎóĞÅÏ¢
+        // 3ç§’åéšè—é”™è¯¯ä¿¡æ¯
         var timer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(3) };
         timer.Tick += (s, e) =>
         {
@@ -329,7 +318,7 @@ public sealed partial class MusicPlayer : UserControl, IDisposable
 
     #endregion
 
-    #region IDisposable ÊµÏÖ
+    #region IDisposable å®ç°
 
     public void Dispose()
     {
@@ -342,13 +331,13 @@ public sealed partial class MusicPlayer : UserControl, IDisposable
 
             if (_globalPlayer != null)
             {
-                //Ö»È¡Ïû¶©ÔÄÊÂ¼ş£¬²»ÊÍ·ÅÈ«¾Ö²¥·ÅÆ÷
+                //åªå–æ¶ˆè®¢é˜…äº‹ä»¶ï¼Œä¸é‡Šæ”¾å…¨å±€æ’­æ”¾å™¨
                 _globalPlayer.MediaOpened -= OnMediaOpened;
                 _globalPlayer.MediaEnded -= OnMediaEnded;
                 _globalPlayer.MediaFailed -= OnMediaFailed;
                 _globalPlayer.CurrentStateChanged -= OnCurrentStateChanged;
 
-                // ²»Òªµ÷ÓÃ Dispose ÔÚÈ«¾Ö²¥·ÅÆ÷ÉÏ
+                // ä¸è¦è°ƒç”¨ Dispose åœ¨å…¨å±€æ’­æ”¾å™¨ä¸Š
             }
 
             GC.SuppressFinalize(this);

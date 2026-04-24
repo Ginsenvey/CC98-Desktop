@@ -1,329 +1,301 @@
-using CC98.Kernel;
-using CC98.Kernel.UserExperience;
+Ôªøusing CC98.Kernel;
 using DevWinUI;
-using HtmlAgilityPack;
-using Microsoft.Security.Authentication.OAuth;
 using Microsoft.UI.Composition.SystemBackdrops;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml.Controls.Primitives;
-using Microsoft.UI.Xaml.Data;
-using Microsoft.UI.Xaml.Input;
-using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Media.Imaging;
-using Microsoft.UI.Xaml.Navigation;
-using Microsoft.Windows.AppNotifications;
-using Microsoft.Windows.AppNotifications.Builder;
-using Microsoft.Windows.BadgeNotifications;
 using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Diagnostics;
 using System.IO;
-using System.Linq;
-using System.Net;
-using System.Net.Http;
-using System.Reflection.Emit;
-using System.Runtime.InteropServices.WindowsRuntime;
-using System.Threading.Tasks;
-using Windows.ApplicationModel.DataTransfer;
-using Windows.Foundation;
-using Windows.Foundation.Collections;
-using Windows.Media.Protection.PlayReady;
-using Windows.Security.Credentials;
 using Windows.Storage;
-using System.Text.Json;
 using CC98.Services;
-using CC98.Services.Extensions;
 using CC98.Objects;
 using Microsoft.Windows.AppLifecycle;
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
 
-namespace CC98
+namespace CC98;
+
+/// <summary>
+/// An empty page that can be used on its own or navigated to within a Frame.
+/// </summary>
+public sealed partial class Setting : Page
 {
-    /// <summary>
-    /// An empty page that can be used on its own or navigated to within a Frame.
-    /// </summary>
-    public sealed partial class Setting : Page
+    public ObservableCollection<ThemePicture> Pics = new();
+    public Setting()
     {
-        public ObservableCollection<ThemePicture> pics = new ObservableCollection<ThemePicture>();
-        public Setting()
+        this.InitializeComponent();
+        LoadSettings();
+        LoadPics();
+    }
+    //Á¨¨‰∏ÄÊ¨°ËøõÂÖ•Êó∂ÔºåÂàùÂßãÂåñËÆæÁΩÆÈ°π„ÄÇ
+    //Â¶ÇÊûúÈ°πÂ≠òÂú®‰∏îÊúâÂÄºÔºå‰∏∫ÈÄâÈ°πËµãÂÄº„ÄÇ
+    private void LoadSettings()
+    {
+        if (Set.Values.ContainsKey("Effect"))
         {
-            this.InitializeComponent();
-            LoadSettings();
-            LoadPics();
-        }
-        //µ⁄“ª¥ŒΩ¯»Î ±£¨≥ı ºªØ…Ë÷√œÓ°£
-        //»Áπ˚œÓ¥Ê‘⁄«“”–÷µ£¨Œ™—°œÓ∏≥÷µ°£
-        private void LoadSettings()
-        {
-            if (Set.Values.ContainsKey("Effect"))
-            {
-                string effect = (string)Set.Values["Effect"];
-                EffectHistory = effect;
-                switch (effect)
-                {
-                    case "0":
-                        Mica.IsChecked = true;
-                        
-                        break;
-                    case "1":
-                        MicaAlt.IsChecked = true;
-                        
-                        break;
-                    case "2":
-                        AcrylicBase.IsChecked = true;
-                        
-                        break;
-                    case "3":
-                        AcrylicThin.IsChecked = true;
-                        
-                        break;
-
-                    default:
-                        Mica.IsChecked = true;
-                        
-                        break;
-                }
-            }
-            else
-            {
-                Set.Values["Effect"] = "0";
-                EffectHistory = "0";
-                Mica.IsChecked = true;
-            }
-            if (Set.Values.ContainsKey("Theme"))
-            {
-                string theme = (string)Set.Values["Theme"];
-                if (theme == "0")
-                {
-                    Follow.IsChecked = true;
-                }
-                else if (theme == "1")
-                {
-                    Light.IsChecked = true;
-                }
-                else
-                {
-                    Dark.IsChecked = true;
-                }
-            }
-            else
-            {
-                Set.Values["Theme"] = "2";
-                Follow.IsChecked = true;
-            }
-            string pic = ValidationHelper.GetValue(Set, "Themepic");
-            if (pic!="0")
-            {  
-                var bitmap = new BitmapImage(new Uri(pic));
-                PicPreview.ImageSource = bitmap;
-            }
-            else
-            {
-                //’‚÷÷«Èøˆ≤ª¥Ê‘⁄°£
-            }
-            if (ValidationHelper.GetValue(Set,"TitlePage") != "0")
-            {
-                TitlePage.SelectedIndex = Convert.ToInt32(Set.Values["TitlePage"])-1;
-            }
-            else
-            {
-                Set.Values["TitlePage"] = "1";
-            }
-            
-            string _IsTailVisible = ValidationHelper.GetValue(Set, "IsTailVisible");
-            if (_IsTailVisible == "0")
-            {
-                Set.Values["IsTailVisible"] = "2";//≥ı ºªØŒ™≤ªœ‘ æ
-                TailVisibility.IsOn = false;
-            }
-            else
-            {
-                if (_IsTailVisible == "1")
-                {
-                    TailVisibility.IsOn = true;//1
-                }
-                else
-                {
-                    TailVisibility.IsOn = false;//2
-                }
-            }
-            var showBigPaper = ValidationHelper.GetValue(Set, "ShowBigPaper");
-            if (showBigPaper == "0")
-            {
-                //∏≥”Ëƒ¨»œ÷µ£∫¥Úø™
-                showBigPaper = "1";
-                Set.Values["ShowBigPaper"] = "1";
-            }
-            ShowBigPaper.IsOn = showBigPaper == "1";
-        }
-        public string EffectHistory = "";
-        public ApplicationDataContainer Set=ApplicationData.Current.LocalSettings;
-        private void ToFeedBack_Click(object sender, RoutedEventArgs e)
-        {
-            //÷∏œÚø™∑¢º«¬º¬•
-            var param = new TopicNavigationInfo
-            {
-                IsJumpingMode = false,
-                TopicId = 6173309
-            };
-            Frame.Navigate(typeof(Topic), param);
-        }
-
-        
-
-        private void Effect_Checked(object sender, RoutedEventArgs e)
-        {
-            var button= (RadioButton)sender;
-            if (button == null) return;
-            var tag=button.Tag;
-            if(tag is not string effect) return;
-            Set.Values["Effect"]=effect;
-            if (effect == EffectHistory) return;//µ±—°œÓ”Î‘≠…Ë÷√≤ªÕ¨ ±£¨≤≈Ω¯––…Ë÷√°£
-            EffectHistory =effect;
+            var effect = (string)Set.Values["Effect"];
+            EffectHistory = effect;
             switch (effect)
             {
                 case "0":
                     Mica.IsChecked = true;
-                    App.Current.AppMainWindow.SystemBackdrop = new MicaSystemBackdrop();
+                        
                     break;
                 case "1":
                     MicaAlt.IsChecked = true;
-                    App.Current.AppMainWindow.SystemBackdrop = new MicaSystemBackdrop(MicaKind.BaseAlt);
+                        
                     break;
                 case "2":
                     AcrylicBase.IsChecked = true;
-                    App.Current.AppMainWindow.SystemBackdrop = new AcrylicSystemBackdrop();
+                        
                     break;
                 case "3":
                     AcrylicThin.IsChecked = true;
-                    App.Current.AppMainWindow.SystemBackdrop = new AcrylicSystemBackdrop(DesktopAcrylicKind.Thin);
+                        
                     break;
+
                 default:
                     Mica.IsChecked = true;
-                    App.Current.AppMainWindow.SystemBackdrop = new MicaSystemBackdrop();
+                        
                     break;
             }
-
         }
-
-        private void Light_Checked(object sender, RoutedEventArgs e)
+        else
         {
-            if (((RadioButton)sender)?.Tag is not string theme) return;
-            Set.Values["Theme"] = theme;
-            if (theme == "1")
+            Set.Values["Effect"] = "0";
+            EffectHistory = "0";
+            Mica.IsChecked = true;
+        }
+        if (Set.Values.ContainsKey("Theme"))
+        {
+            var theme = (string)Set.Values["Theme"];
+            if (theme == "0")
             {
-
-                App.RaiseThemeChanged(ElementTheme.Light);
-
+                Follow.IsChecked = true;
             }
-            else if (theme == "2")
+            else if (theme == "1")
             {
-
-                App.RaiseThemeChanged(ElementTheme.Dark);
-
+                Light.IsChecked = true;
             }
             else
             {
-                App.RaiseThemeChanged(ElementTheme.Default);
+                Dark.IsChecked = true;
             }
         }
-
-        
-
-        private  void LoadPics()
+        else
         {
+            Set.Values["Theme"] = "2";
+            Follow.IsChecked = true;
+        }
+        var pic = ValidationHelper.GetValue(Set, "Themepic");
+        if (pic!="0")
+        {  
+            var bitmap = new BitmapImage(new(pic));
+            PicPreview.ImageSource = bitmap;
+        }
+        else
+        {
+            //ËøôÁßçÊÉÖÂÜµ‰∏çÂ≠òÂú®„ÄÇ
+        }
+        if (ValidationHelper.GetValue(Set,"TitlePage") != "0")
+        {
+            TitlePage.SelectedIndex = Convert.ToInt32(Set.Values["TitlePage"])-1;
+        }
+        else
+        {
+            Set.Values["TitlePage"] = "1";
+        }
             
-            string themesPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Themes");
-            var Files = Directory.GetFiles(themesPath, "*.jpg", SearchOption.AllDirectories);
-            pics.Clear();
-            foreach ( var file in Files)
-            {  
-                string filename = Path.GetFileName(file);
-                pics.Add(new ThemePicture{ FileName = filename, FilePath = file });  
-            }
-            ThemesGrid.ItemsSource = pics;
-        }
-
-        private void ThemesGrid_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        var isTailVisible = ValidationHelper.GetValue(Set, "IsTailVisible");
+        if (isTailVisible == "0")
         {
-            if (ThemesGrid.SelectedItem!=null)
+            Set.Values["IsTailVisible"] = "2";//ÂàùÂßãÂåñ‰∏∫‰∏çÊòæÁ§∫
+            TailVisibility.IsOn = false;
+        }
+        else
+        {
+            if (isTailVisible == "1")
             {
-                var selected = pics[ThemesGrid.SelectedIndex];
-                var bitmap=new BitmapImage(new Uri(selected.FilePath));
-                PicPreview.ImageSource = bitmap;
-                Set.Values["ThemePic"] = selected.FilePath;
-            }
-            
-
-        }
-
-       
-
-        private void LocalSetManager_Expanded(object sender, EventArgs e)
-        {
-            string settings = "";
-            foreach (var item in Set.Values)
-            {
-                //≤ªœ‘ æ ’≤ÿº–£¨√¿ªØ¥Ú”°Ã´≥§
-                if (item.Key == "Favorites") continue;
-                settings += $"{item.Key}:{item.Value}\n";
-            }
-            LocalSet.Text = settings;
-
-            LocalSetManager.IsExpanded = true;
-        }
-
-        private  void SwitchUser_Click(object sender, RoutedEventArgs e)
-        {
-            //µ«≥ˆ£∫«Â¿Ì…Ë÷√£¨«Â¿Ì√‹¬Î£¨ÕÀ≥ˆ”¶”√
-            Set.Values.Clear();
-            PasswordManager.Logout();
-            //÷ÿ∆Ù”¶”√
-            AppInstance.Restart("");
-        }
-        
-
-        private void TitlePage_SelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-            var c = TitlePage.SelectedIndex;
-            if (c != -1)
-            {
-                Set.Values["TitlePage"] = (c+1).ToString();
-            }
-        }
-       
-
-
-        private void TailVisibility_Toggled(object sender, RoutedEventArgs e)
-        {
-            Set.Values["IsTailVisible"] = TailVisibility.IsOn?1:2;
-        }
-
-        private async void ExportLog_Click(object sender, RoutedEventArgs e)
-        {
-            var r= await App.Logger.SaveToDesktopAsync();
-            if (r.Success)
-            {
-                Flower.Play(FlowStatus.Success, "µº≥ˆ»’÷æ≥…π¶");
+                TailVisibility.IsOn = true;//1
             }
             else
             {
-                Flower.Play(FlowStatus.Fail, "µº≥ˆ ß∞‹");
+                TailVisibility.IsOn = false;//2
             }
         }
-
-        private void ShowBigPaper_Toggled(object sender, RoutedEventArgs e)
+        var showBigPaper = ValidationHelper.GetValue(Set, "ShowBigPaper");
+        if (showBigPaper == "0")
         {
-            Set.Values["ShowBigPaper"] = ShowBigPaper.IsOn?1:2;
+            //Ëµã‰∫àÈªòËÆ§ÂÄºÔºöÊâìÂºÄ
+            showBigPaper = "1";
+            Set.Values["ShowBigPaper"] = "1";
         }
+        ShowBigPaper.IsOn = showBigPaper == "1";
     }
-    public class ThemePicture
+    public string EffectHistory = "";
+    public ApplicationDataContainer Set=ApplicationData.Current.LocalSettings;
+    private void ToFeedBack_Click(object sender, RoutedEventArgs e)
     {
-        public string FileName { get; set; } = "";
-        public string FilePath { get; set; } = "";
+        //ÊåáÂêëÂºÄÂèëËÆ∞ÂΩïÊ•º
+        var param = new TopicNavigationInfo
+        {
+            IsJumpingMode = false,
+            TopicId = 6173309
+        };
+        Frame.Navigate(typeof(Topic), param);
     }
-    
+
+        
+
+    private void Effect_Checked(object sender, RoutedEventArgs e)
+    {
+        var button= (RadioButton)sender;
+        if (button == null) return;
+        var tag=button.Tag;
+        if(tag is not string effect) return;
+        Set.Values["Effect"]=effect;
+        if (effect == EffectHistory) return;//ÂΩìÈÄâÈ°π‰∏éÂéüËÆæÁΩÆ‰∏çÂêåÊó∂ÔºåÊâçËøõË°åËÆæÁΩÆ„ÄÇ
+        EffectHistory =effect;
+        switch (effect)
+        {
+            case "0":
+                Mica.IsChecked = true;
+                App.Current.AppMainWindow.SystemBackdrop = new MicaSystemBackdrop();
+                break;
+            case "1":
+                MicaAlt.IsChecked = true;
+                App.Current.AppMainWindow.SystemBackdrop = new MicaSystemBackdrop(MicaKind.BaseAlt);
+                break;
+            case "2":
+                AcrylicBase.IsChecked = true;
+                App.Current.AppMainWindow.SystemBackdrop = new AcrylicSystemBackdrop();
+                break;
+            case "3":
+                AcrylicThin.IsChecked = true;
+                App.Current.AppMainWindow.SystemBackdrop = new AcrylicSystemBackdrop(DesktopAcrylicKind.Thin);
+                break;
+            default:
+                Mica.IsChecked = true;
+                App.Current.AppMainWindow.SystemBackdrop = new MicaSystemBackdrop();
+                break;
+        }
+
+    }
+
+    private void Light_Checked(object sender, RoutedEventArgs e)
+    {
+        if (((RadioButton)sender)?.Tag is not string theme) return;
+        Set.Values["Theme"] = theme;
+        if (theme == "1")
+        {
+
+            App.RaiseThemeChanged(ElementTheme.Light);
+
+        }
+        else if (theme == "2")
+        {
+
+            App.RaiseThemeChanged(ElementTheme.Dark);
+
+        }
+        else
+        {
+            App.RaiseThemeChanged(ElementTheme.Default);
+        }
+    }
+
+        
+
+    private  void LoadPics()
+    {
+            
+        var themesPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Themes");
+        var files = Directory.GetFiles(themesPath, "*.jpg", SearchOption.AllDirectories);
+        Pics.Clear();
+        foreach ( var file in files)
+        {  
+            var filename = Path.GetFileName(file);
+            Pics.Add(new() { FileName = filename, FilePath = file });  
+        }
+        ThemesGrid.ItemsSource = Pics;
+    }
+
+    private void ThemesGrid_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (ThemesGrid.SelectedItem!=null)
+        {
+            var selected = Pics[ThemesGrid.SelectedIndex];
+            var bitmap=new BitmapImage(new(selected.FilePath));
+            PicPreview.ImageSource = bitmap;
+            Set.Values["ThemePic"] = selected.FilePath;
+        }
+            
+
+    }
+
+       
+
+    private void LocalSetManager_Expanded(object sender, EventArgs e)
+    {
+        var settings = "";
+        foreach (var item in Set.Values)
+        {
+            //‰∏çÊòæÁ§∫Êî∂ËóèÂ§πÔºåÁæéÂåñÊâìÂç∞Â§™Èïø
+            if (item.Key == "Favorites") continue;
+            settings += $"{item.Key}:{item.Value}\n";
+        }
+        LocalSet.Text = settings;
+
+        LocalSetManager.IsExpanded = true;
+    }
+
+    private  void SwitchUser_Click(object sender, RoutedEventArgs e)
+    {
+        //ÁôªÂá∫ÔºöÊ∏ÖÁêÜËÆæÁΩÆÔºåÊ∏ÖÁêÜÂØÜÁ†ÅÔºåÈÄÄÂá∫Â∫îÁî®
+        Set.Values.Clear();
+        PasswordManager.Logout();
+        //ÈáçÂêØÂ∫îÁî®
+        AppInstance.Restart("");
+    }
+        
+
+    private void TitlePage_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        var c = TitlePage.SelectedIndex;
+        if (c != -1)
+        {
+            Set.Values["TitlePage"] = (c+1).ToString();
+        }
+    }
+       
+
+
+    private void TailVisibility_Toggled(object sender, RoutedEventArgs e)
+    {
+        Set.Values["IsTailVisible"] = TailVisibility.IsOn?1:2;
+    }
+
+    private async void ExportLog_Click(object sender, RoutedEventArgs e)
+    {
+        var r= await App.Logger.SaveToDesktopAsync();
+        if (r.Success)
+        {
+            Flower.Play(FlowStatus.Success, "ÂØºÂá∫Êó•ÂøóÊàêÂäü");
+        }
+        else
+        {
+            Flower.Play(FlowStatus.Fail, "ÂØºÂá∫Â§±Ë¥•");
+        }
+    }
+
+    private void ShowBigPaper_Toggled(object sender, RoutedEventArgs e)
+    {
+        Set.Values["ShowBigPaper"] = ShowBigPaper.IsOn?1:2;
+    }
+}
+public class ThemePicture
+{
+    public string FileName { get; set; } = "";
+    public string FilePath { get; set; } = "";
 }

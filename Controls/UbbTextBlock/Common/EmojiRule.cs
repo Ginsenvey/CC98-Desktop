@@ -1,9 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 
 namespace UbbRender.Common;
 /// <summary>
@@ -17,7 +15,7 @@ public class EmoticonRule
 
     public EmoticonRule(string pattern, string urlTemplate, string name = null)
     {
-        Pattern = new Regex($"^{pattern}$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+        Pattern = new($"^{pattern}$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
         UrlTemplate = urlTemplate;
         Name = name;
     }
@@ -29,19 +27,19 @@ public class EmoticonRule
 // 表情规则管理器
 public static class EmoticonRules
 {
-    private static readonly List<EmoticonRule> _rules = new List<EmoticonRule>
+    private static readonly List<EmoticonRule> Rules = new()
     {
         // ac娘：ac + 2-4位数字
-        new EmoticonRule(@"ac(\d{2,4})", "ms-appx:///Assets/Emoji/ac-white/ac$1.png", "ac娘"),
+        new(@"ac(\d{2,4})", "ms-appx:///Assets/Emoji/ac-white/ac$1.png", "ac娘"),
         
         // 经典表情：em + 2位数字
-        new EmoticonRule(@"em(\d{2})", "ms-appx:///Assets/Emoji/em/em$1.gif", "经典表情"),
+        new(@"em(\d{2})", "ms-appx:///Assets/Emoji/em/em$1.gif", "经典表情"),
         
         // 贴吧/雀魂等：任意2字母 + 2位数字
-        new EmoticonRule(@"([a-zA-Z]{2})(\d{2})", "ms-appx:///Assets/Emoji/$1/$1$2.png", "通用表情"),
+        new(@"([a-zA-Z]{2})(\d{2})", "ms-appx:///Assets/Emoji/$1/$1$2.png", "通用表情"),
         
         // CC98：cc98 + 2位数字
-        new EmoticonRule(@"cc98(\d{2})", "ms-appx:///Assets/Emoji/CC98/CC98$1.png", "CC98表情")
+        new(@"cc98(\d{2})", "ms-appx:///Assets/Emoji/CC98/CC98$1.png", "CC98表情")
     };
 
     public static bool IsEmoticonTag(string tagName)
@@ -50,7 +48,7 @@ public static class EmoticonRules
             return false;
 
         // 检查是否匹配任何表情规则
-        return _rules.Any(rule => rule.IsMatch(tagName));
+        return Rules.Any(rule => rule.IsMatch(tagName));
     }
 
     public static string GetEmoticonUrl(string tagName)
@@ -59,7 +57,7 @@ public static class EmoticonRules
             return null;
 
         // 按照规则顺序匹配，返回第一个匹配的URL
-        foreach (var rule in _rules)
+        foreach (var rule in Rules)
         {
             if (rule.IsMatch(tagName))
             {
@@ -75,7 +73,7 @@ public static class EmoticonRules
         if (string.IsNullOrEmpty(tagName))
             return null;
 
-        foreach (var rule in _rules)
+        foreach (var rule in Rules)
         {
             if (rule.IsMatch(tagName))
             {
@@ -91,7 +89,7 @@ public static class EmoticonRules
     {
         var prefixes = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
-        foreach (var rule in _rules)
+        foreach (var rule in Rules)
         {
             // 从正则模式中提取可能的字符前缀
             var pattern = rule.Pattern.ToString().TrimStart('^');

@@ -1,15 +1,10 @@
-﻿using CC98.Share.Extensions;
-using Microsoft.UI;
+﻿using Microsoft.UI;
 using DevWinUI;
-using Microsoft.UI.Text;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml.Controls.Primitives;
 using Microsoft.UI.Xaml.Documents;
 using Microsoft.UI.Xaml.Media;
-using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Text;
 using UbbRender.Parser;
 using UbbRender.Render;
@@ -23,7 +18,7 @@ public class RenderContext
     public RichTextBlock CurrentRichTextBlock { get; set; }
     private Paragraph CurrentParagraph { get; set; }
 
-    public Stack<Panel> PanelStack { get; set; } = new Stack<Panel>();
+    public Stack<Panel> PanelStack { get; set; } = new();
     public Stack<Inline> InlineStack = new();
     // 临时存储当前正在构建的内联容器
     private Inline CurrentInline;
@@ -32,7 +27,7 @@ public class RenderContext
 
     public void RenderNode(UbbNode node)
     {
-        if (UbbTextBlock.renderStrategies.TryGetValue(node.Type, out var strategy))
+        if (UbbTextBlock.RenderStrategies.TryGetValue(node.Type, out var strategy))
         {
             strategy.Render(node, this);
         }
@@ -156,12 +151,12 @@ public class RenderContext
             if (CurrentParagraph == null || CurrentRichTextBlock == null)
             {
                 //直接创建新的 RichTextBlock，避免循环调用 StartNewTextBlock()
-                CurrentRichTextBlock = new RichTextBlock
+                CurrentRichTextBlock = new()
                 {
                     FontSize = Control.FontSize,
                     TextWrapping = TextWrapping.Wrap
                 };
-                CurrentParagraph = new Paragraph();
+                CurrentParagraph = new();
                 CurrentRichTextBlock.Blocks.Add(CurrentParagraph);
             }
             CurrentParagraph?.Inlines.Add(completedInline);
@@ -201,7 +196,7 @@ public class RenderContext
     {
         FinalizeCurrentTextBlock();
 
-        CurrentRichTextBlock = new RichTextBlock
+        CurrentRichTextBlock = new()
         {
             FontSize = Control.FontSize,
             Foreground = Control.Foreground ?? new SolidColorBrush(Colors.Black),
@@ -209,7 +204,7 @@ public class RenderContext
             ContextFlyout= CreateCustomContextMenu()
         };
 
-        CurrentParagraph = new Paragraph();
+        CurrentParagraph = new();
         CurrentRichTextBlock.Blocks.Add(CurrentParagraph);
     }
     #region 自定义右键菜单
@@ -266,7 +261,7 @@ public class RenderContext
 
     private void OnCopyClicked(object sender, RoutedEventArgs e)
     {
-        string selectedText = GetSelectedText();
+        var selectedText = GetSelectedText();
         if (!string.IsNullOrEmpty(selectedText))
         {
             var dataPackage = new DataPackage();

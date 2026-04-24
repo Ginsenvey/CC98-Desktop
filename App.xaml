@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Application
     x:Class="CC98.App"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
@@ -42,7 +42,7 @@
                 </ResourceDictionary>
             </ResourceDictionary.ThemeDictionaries>
             <SolidColorBrush x:Key="UserNameForegroundBrush" Color="{ThemeResource UserNameForegroundColor}"></SolidColorBrush>
-            <SolidColorBrush x:Key="MarkdownBackgroudBrush" Color="{ThemeResource MarkdownBackgroudColor}"></SolidColorBrush>
+            <SolidColorBrush x:Key="MarkdownBackgroundBrush" Color="{ThemeResource MarkdownBackgroudColor}"></SolidColorBrush>
             <SolidColorBrush x:Key="QuoteBorderBrush" Color="{ThemeResource QuoteBorderColor}"></SolidColorBrush>
             <SolidColorBrush x:Key="StandardBrush" Color="{ThemeResource Standard}"></SolidColorBrush>
             <SolidColorBrush x:Key="QuoteBackgroundBrush" Color="{ThemeResource QuoteBackgroundColor}"></SolidColorBrush>

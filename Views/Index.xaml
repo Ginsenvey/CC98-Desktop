@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Page
     x:Class="CC98.Index"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
@@ -27,7 +27,7 @@
                         <ColumnDefinition Width="*"></ColumnDefinition>
                     </Grid.ColumnDefinitions>
                     <TextBlock Text="{x:Bind Title}" Grid.Column="1" FontSize="14"  VerticalAlignment="Center" Foreground="{ThemeResource TextFillColorSecondaryBrush}" HorizontalAlignment="Left" MaxLines="1"></TextBlock>
-                    <Border Grid.Column="0" Background="{ThemeResource MarkdownBackgroudBrush}" CornerRadius="3" VerticalAlignment="Center" Padding="3" Visibility="{x:Bind IsHotTopic}">
+                    <Border Grid.Column="0" Background="{ThemeResource MarkdownBackgroundBrush}" CornerRadius="3" VerticalAlignment="Center" Padding="3" Visibility="{x:Bind IsHotTopic}">
                         <TextBlock Text="{x:Bind BoardName}"   FontSize="12" Grid.Row="0"   Foreground="{ThemeResource AccentAAFillColorSecondaryBrush}"></TextBlock>
                     </Border>
                 </Grid>
@@ -56,7 +56,7 @@
             <RowDefinition Height="Auto"></RowDefinition>
         </Grid.RowDefinitions>
 
-        <FlipView  Grid.Row="0"  x:Name="RecomList" ItemsSource="{x:Bind flipTopics}" VerticalAlignment="Top" CornerRadius="0,0,6,6">
+        <FlipView  Grid.Row="0"  x:Name="RecommendList" ItemsSource="{x:Bind FlipTopics}" VerticalAlignment="Top" CornerRadius="0,0,6,6">
             <FlipView.Background>
                 <ImageBrush x:Name="ThemePresenter" Opacity="0.6" Stretch="UniformToFill"></ImageBrush>
             </FlipView.Background>
@@ -83,9 +83,9 @@
                 </DataTemplate>
             </FlipView.ItemTemplate>
         </FlipView>
-        <PipsPager x:Name="Pips" Grid.Row="0" VerticalAlignment="Bottom" HorizontalAlignment="Center"  SelectedPageIndex="{x:Bind Path=RecomList.SelectedIndex,Mode=TwoWay}"></PipsPager>
+        <PipsPager x:Name="Pips" Grid.Row="0" VerticalAlignment="Bottom" HorizontalAlignment="Center"  SelectedPageIndex="{x:Bind Path=RecommendList.SelectedIndex,Mode=TwoWay}"></PipsPager>
         <ScrollViewer Grid.Row="1" Margin="10,0,10,0" Padding="10">
-            <ItemsRepeater x:Name="SectionRepeater" ItemTemplate="{StaticResource SectionCardStyle}" ItemsSource="{x:Bind sections}" HorizontalAlignment="Stretch" VerticalCacheLength="32">
+            <ItemsRepeater x:Name="SectionRepeater" ItemTemplate="{StaticResource SectionCardStyle}" ItemsSource="{x:Bind Sections}" HorizontalAlignment="Stretch" VerticalCacheLength="32">
                 <ItemsRepeater.Layout>
                     <tool:StaggeredLayout ItemsStretch="Fill" ColumnSpacing="30" RowSpacing="45" DesiredColumnWidth="450"></tool:StaggeredLayout>
                 </ItemsRepeater.Layout>

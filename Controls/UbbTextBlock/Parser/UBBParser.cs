@@ -1,21 +1,20 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Xml.Linq;
 using UbbRender.Tokenizer;
 
 namespace UbbRender.Parser;
 /// <summary>
 /// 将词元序列转换为 UBB 文档树的核心类。
 /// </summary>
-public class UBBParser(IEnumerable<Token> tokens)
+public class UbbParser(IEnumerable<Token> tokens)
 {
     private readonly List<Token> _tokens = [.. tokens];
     private int _index = 0;
     private readonly List<UbbNode> _allNodes = [];
 
-    private Token Peek() => _index < _tokens.Count ? _tokens[_index] : new Token(TokenType.EOF, "", -1);
+    private Token Peek() => _index < _tokens.Count ? _tokens[_index] : new(TokenType.Eof, "", -1);
     private Token Consume() => _tokens[_index++];
 
     public UbbDocument Parse()
@@ -40,7 +39,7 @@ public class UBBParser(IEnumerable<Token> tokens)
                 var nextTagNameToken = PeekOffset(2);
                 if (nextTagNameToken?.Type == TokenType.TagName)
                 {
-                    UbbNodeType foundType = MapToNodeType(nextTagNameToken.Value);
+                    var foundType = MapToNodeType(nextTagNameToken.Value);
                     if (closingTag != null && closingTag == foundType)
                     {
                         // 消费 [/tag] 并返回
@@ -59,7 +58,7 @@ public class UBBParser(IEnumerable<Token> tokens)
 
                 if (node is TagNode tag && !IsSelfClosing(tag.Type))
                 {
-                    if (tag.Type == UbbNodeType.Code || tag.Type == UbbNodeType.NoUBB||tag.Type==UbbNodeType.Markdown)
+                    if (tag.Type == UbbNodeType.Code || tag.Type == UbbNodeType.NoUbb||tag.Type==UbbNodeType.Markdown)
                     {
                         // 进入“逐字模式”，直接寻找闭合标签
                         ParseVerbatimContent(tag);
@@ -91,7 +90,7 @@ public class UBBParser(IEnumerable<Token> tokens)
                 Consume(); // 消耗 '['
                 return ParseTagHeaderOrFallback();
 
-            case TokenType.EOF:
+            case TokenType.Eof:
                 return null;
 
             default:
@@ -105,7 +104,7 @@ public class UBBParser(IEnumerable<Token> tokens)
     private UbbNode ParseTagHeaderOrFallback()
     {
         // 记录进入此方法前的起始索引（即 '[' 之后的位置，由于 '[' 已消费，起始应为 _index - 1）
-        int startIndex = _index - 1;
+        var startIndex = _index - 1;
 
         // 1. 检查 TagName
         if (Peek().Type != TokenType.TagName)
@@ -113,8 +112,8 @@ public class UBBParser(IEnumerable<Token> tokens)
             return new TextNode("[");
         }
 
-        string name = Consume().Value;
-        UbbNodeType type = MapToNodeType(name);
+        var name = Consume().Value;
+        var type = MapToNodeType(name);
 
         // 2. 如果是未知标签，直接回退
         if (type == UbbNodeType.Text)
@@ -124,10 +123,10 @@ public class UBBParser(IEnumerable<Token> tokens)
 
 
         var attributes = new Dictionary<string, string>();
-        int attrCount = 0;
+        var attrCount = 0;
 
         // 3. 解析属性循环
-        while (Peek().Type != TokenType.RightBracket && Peek().Type != TokenType.EOF)
+        while (Peek().Type != TokenType.RightBracket && Peek().Type != TokenType.Eof)
         {
             var t = Consume();
 
@@ -149,7 +148,7 @@ public class UBBParser(IEnumerable<Token> tokens)
                         return FallbackToText(startIndex);
                     }
 
-                    string key = attrCount == 0 ?  GetAttributeName(type): $"value{attrCount}";
+                    var key = attrCount == 0 ?  GetAttributeName(type): $"value{attrCount}";
                     attributes[key] = valToken.Value;
                     attrCount++;
                 }
@@ -195,7 +194,7 @@ public class UBBParser(IEnumerable<Token> tokens)
     {
         var sb = new StringBuilder();
         // 确定我们要找的闭合标签名（统一转小写处理）
-        UbbNodeType targetType = GetVerbatimTagType(parent.Type);
+        var targetType = GetVerbatimTagType(parent.Type);
 
         while (_index < _tokens.Count)
         {
@@ -244,11 +243,11 @@ public class UBBParser(IEnumerable<Token> tokens)
         //[math]是TagNode而不是LatexNode,尽管它们的Type属性相同
         //用CollectText获得公式块的Latex,用Latex属性获得行内公式的Latex
         var token = Consume();
-        bool isBlock = token.Type == TokenType.DoubleDollar;
-        string latex = "";
+        var isBlock = token.Type == TokenType.DoubleDollar;
+        var latex = "";
         if (Peek().Type == TokenType.Text) latex = Consume().Value;
         if (Peek().Type == token.Type) Consume();
-        return new LatexNode(latex, isBlock);
+        return new(latex, isBlock);
     }
     private bool IsKnownType(UbbNodeType type) => type != UbbNodeType.Text && type != UbbNodeType.Document;
 
@@ -270,7 +269,7 @@ public class UBBParser(IEnumerable<Token> tokens)
         return src switch
         {
             UbbNodeType.Code => UbbNodeType.Code,
-            UbbNodeType.NoUBB => UbbNodeType.NoUBB,
+            UbbNodeType.NoUbb => UbbNodeType.NoUbb,
             UbbNodeType.Markdown => UbbNodeType.Markdown,
             _ => throw new InvalidOperationException()
         };
@@ -313,7 +312,7 @@ public class UBBParser(IEnumerable<Token> tokens)
             "math"=>UbbNodeType.Latex,
             "bili" => UbbNodeType.Bilibili,
             "upload" =>UbbNodeType.Upload,
-            "noubb" => UbbNodeType.NoUBB,
+            "noubb" => UbbNodeType.NoUbb,
             "md"=>UbbNodeType.Markdown,
             "replyview"=>UbbNodeType.ReplyView,
             "needreply"=>UbbNodeType.NeedReply,
@@ -329,11 +328,11 @@ public class UBBParser(IEnumerable<Token> tokens)
     {
         var sb = new System.Text.StringBuilder();
         // 从最初的 '[' 开始拼接
-        for (int i = startIndex; i < _index; i++)
+        for (var i = startIndex; i < _index; i++)
         {
             sb.Append(_tokens[i].Value);
         }
-        return new TextNode(sb.ToString());
+        return new(sb.ToString());
     }
 
 }

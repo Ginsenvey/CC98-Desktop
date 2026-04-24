@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 
 namespace UbbRender.Parser;
 
@@ -33,7 +33,7 @@ public enum UbbNodeType
     Latex,           // 公式
     Upload,         //上传
     Bilibili,       //B站视频
-    NoUBB, //非UBB内容块
+    NoUbb, //非UBB内容块
     Markdown, //markdown内容
     NeedReply, //需要回复
     ReplyView, //设置回复可见,
@@ -44,7 +44,7 @@ public enum UbbNodeType
 public static class UbbNodeTypeExtensions
 {
     
-    private static readonly HashSet<UbbNodeType> _blockTypes =
+    private static readonly HashSet<UbbNodeType> BlockTypes =
     [
         UbbNodeType.Code,
         UbbNodeType.Quote,
@@ -60,7 +60,7 @@ public static class UbbNodeTypeExtensions
         UbbNodeType.Left,
         UbbNodeType.Center,
         UbbNodeType.Right,
-        UbbNodeType.NoUBB,
+        UbbNodeType.NoUbb,
         UbbNodeType.Markdown,
         UbbNodeType.ReplyView,
     ];
@@ -68,7 +68,7 @@ public static class UbbNodeTypeExtensions
     // 使用 HashSet 的 Contains 方法判断
     public static bool IsBlock(this UbbNodeType type)
     {
-        return _blockTypes.Contains(type);
+        return BlockTypes.Contains(type);
     }
 
 }

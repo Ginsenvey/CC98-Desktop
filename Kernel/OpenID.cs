@@ -1,24 +1,21 @@
 ﻿using CC98.Kernel.ApiScope;
-using Duende.IdentityModel;
 using Duende.IdentityModel.Client;
 using System;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
-using System.Text.Json;
-using System.Threading.Tasks;
-using System.Web;
+
 namespace CC98.Kernel.OpenID;
 /// <summary>
 /// 用于PKCE的OpenID认证流程生成
 /// </summary>
-public class OpenID()
+public class OpenId()
 {
     public (string url,string veri,string state) GenerateAuthLoop()
     {
         var (verifier, challenge) = GeneratePkce();
-        string state = GenerateState();
-        var endpoint = ApiEndpoints.OpenID.GetAuthorizeUrl();
+        var state = GenerateState();
+        var endpoint = ApiEndpoints.OpenId.GetAuthorizeUrl();
         var request = new RequestUrl(endpoint);//终结点
         var url = request.CreateAuthorizeUrl(
             responseType: "code",//授权码模式
@@ -36,19 +33,19 @@ public class OpenID()
     static string GenerateNonce()
     {
         // 第一部分：高精度时间戳 (UTC 100ns 精度)
-        long timestamp = DateTime.UtcNow.Ticks;
+        var timestamp = DateTime.UtcNow.Ticks;
 
         // 第二部分：随机数 (32字节)
-        byte[] randomBytes = new byte[32];
+        var randomBytes = new byte[32];
         using (var rng = RandomNumberGenerator.Create())
         {
             rng.GetBytes(randomBytes);
         }
-        string randomPart = UrlSafeBase64(randomBytes);
+        var randomPart = UrlSafeBase64(randomBytes);
 
         // 第三部分：数字签名 (HMAC-SHA256)
         using var hmac = new HMACSHA256(randomBytes);
-        byte[] signature = hmac.ComputeHash(
+        var signature = hmac.ComputeHash(
             Encoding.UTF8.GetBytes(timestamp + randomPart)
         );
 
@@ -58,18 +55,18 @@ public class OpenID()
     static string GenerateState()
     {
         // 第一部分：随机数 (24字节)
-        byte[] randomBytes = new byte[24];
+        var randomBytes = new byte[24];
         using (var rng = RandomNumberGenerator.Create())
         {
             rng.GetBytes(randomBytes);
         }
 
         // 第二部分：时间戳 (Unix 毫秒)
-        long timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+        var timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
 
         // 第三部分：签名保护
         using var hmac = new HMACSHA256(randomBytes);
-        byte[] signature = hmac.ComputeHash(
+        var signature = hmac.ComputeHash(
             BitConverter.GetBytes(timestamp)
         );
 
@@ -89,11 +86,11 @@ public class OpenID()
 
     static byte[] CombineArrays(params byte[][] arrays)
     {
-        int length = 0;
+        var length = 0;
         foreach (var array in arrays) length += array.Length;
 
-        byte[] result = new byte[length];
-        int offset = 0;
+        var result = new byte[length];
+        var offset = 0;
 
         foreach (var array in arrays)
         {

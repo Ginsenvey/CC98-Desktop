@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
-    <TargetFramework>net10.0-windows10.0.26100.1</TargetFramework>
+    <TargetFramework>net10.0-windows10.0.26100.0</TargetFramework>
 	<LangVersion>preview</LangVersion>
     <TargetPlatformMinVersion>10.0.17763.0</TargetPlatformMinVersion>
     <RootNamespace>CC98</RootNamespace>
@@ -341,6 +341,7 @@
     <ApplicationIcon>Assets\cc98.ico</ApplicationIcon>
     <AllowUnsafeBlocks>False</AllowUnsafeBlocks>
     <SignAssembly>False</SignAssembly>
+    <SupportedOSPlatformVersion>10.0.22000.0</SupportedOSPlatformVersion>
     
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x86'">

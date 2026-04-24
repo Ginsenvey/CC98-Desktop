@@ -6,7 +6,7 @@ namespace CC98.Kernel.Network;
 public class VpnLoginResult
 {
     [JsonIgnore]
-    public VPNLoginStatus Status { get; set; }
+    public VpnLoginStatus Status { get; set; }
 
     [JsonIgnore]
     public string Description { get; set; } = string.Empty;
@@ -32,13 +32,13 @@ public class VpnLoginResult
     public HttpStatusCode? HttpStatusCode { get; set; }
 
     public static VpnLoginResult Success(string? url = null, string? message = null) =>
-        new() { Status=VPNLoginStatus.Success };
+        new() { Status=VpnLoginStatus.Success };
     
     public static VpnLoginResult Failure(string description) =>
-        new() { Status=VPNLoginStatus.Error, Description=description };
+        new() { Status=VpnLoginStatus.Error, Description=description };
 
     public static VpnLoginResult ConfirmRequired() =>
-        new() { Status = VPNLoginStatus.NeedConfirm, Description = "需要确认登录" };
+        new() { Status = VpnLoginStatus.NeedConfirm, Description = "需要确认登录" };
    
 
 }

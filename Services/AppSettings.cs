@@ -1,58 +1,55 @@
-using System;
-using System.Collections.Generic;
-using System.ComponentModel;
+ï»¿using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using Windows.Storage;
 
-namespace CC98.Services
+namespace CC98.Services;
+
+/// <summary>
+/// åº”ç”¨è®¾ç½®å•ä¾‹ã€‚å°†è®¾ç½®æŒä¹…åŒ–åˆ° ApplicationData.Current.LocalSettingsã€‚
+/// å¯åœ¨ XAML ä¸­ä½œä¸º StaticResource æˆ–ç»‘å®šæºä½¿ç”¨ï¼Œæ”¯æŒ PropertyChanged é€šçŸ¥ã€‚
+/// </summary>
+public sealed partial class AppSettings : INotifyPropertyChanged
 {
-    /// <summary>
-    /// Ó¦ÓÃÉèÖÃµ¥Àı¡£½«ÉèÖÃ³Ö¾Ã»¯µ½ ApplicationData.Current.LocalSettings¡£
-    /// ¿ÉÔÚ XAML ÖĞ×÷Îª StaticResource »ò°ó¶¨Ô´Ê¹ÓÃ£¬Ö§³Ö PropertyChanged Í¨Öª¡£
-    /// </summary>
-    public sealed partial class AppSettings : INotifyPropertyChanged
+    //éœ€è¦è¿ç§»çš„è®¾ç½®é¡¹
+
+    private ApplicationDataContainer LocalSettings => ApplicationData.Current.LocalSettings;
+    public static AppSettings Current { get; } = new();
+
+    private T? GetValueByName<T>(string key)
     {
-        //ĞèÒªÇ¨ÒÆµÄÉèÖÃÏî
-
-        private ApplicationDataContainer LocalSettings => ApplicationData.Current.LocalSettings;
-        public static AppSettings Current { get; } = new();
-
-        private T? GetValueByName<T>(string key)
+        if (LocalSettings.Values.TryGetValue(key, out var value) && value is T propertyValue)
         {
-            if (LocalSettings.Values.TryGetValue(key, out var value) && value is T propertyValue)
-            {
-                return propertyValue;
-            }
-            else
-            {
-                return default;
-            }
+            return propertyValue;
         }
-        /// <summary>
-        /// ÊÇ·ñÒş²ØÍ¼Æ¬¡£ÉèÖÃÊ±»á±£´æµ½ ApplicationData ²¢´¥·¢ PropertyChanged¡£
-        /// </summary>
-        public bool HideImage
+        else
         {
-            get => GetValueByName<bool>(nameof(HideImage));
-            set
-            {
-                try
-                {
-                    LocalSettings.Values[nameof(HideImage)] = value;
-                }
-                catch
-                {
-                    // ºöÂÔ´æ´¢Òì³££¨ÀıÈçÈ¨ÏŞµÈ£©£¬ÈÔÈ»´¥·¢Í¨Öª
-                }
-                OnPropertyChanged();
-            }
+            return default;
         }
-
-        public event PropertyChangedEventHandler? PropertyChanged;
-
-        private void OnPropertyChanged([CallerMemberName] string? propertyName = null)
+    }
+    /// <summary>
+    /// æ˜¯å¦éšè—å›¾ç‰‡ã€‚è®¾ç½®æ—¶ä¼šä¿å­˜åˆ° ApplicationData å¹¶è§¦å‘ PropertyChangedã€‚
+    /// </summary>
+    public bool HideImage
+    {
+        get => GetValueByName<bool>(nameof(HideImage));
+        set
         {
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+            try
+            {
+                LocalSettings.Values[nameof(HideImage)] = value;
+            }
+            catch
+            {
+                // å¿½ç•¥å­˜å‚¨å¼‚å¸¸ï¼ˆä¾‹å¦‚æƒé™ç­‰ï¼‰ï¼Œä»ç„¶è§¦å‘é€šçŸ¥
+            }
+            OnPropertyChanged();
         }
+    }
+
+    public event PropertyChangedEventHandler? PropertyChanged;
+
+    private void OnPropertyChanged([CallerMemberName] string? propertyName = null)
+    {
+        PropertyChanged?.Invoke(this, new(propertyName));
     }
 }

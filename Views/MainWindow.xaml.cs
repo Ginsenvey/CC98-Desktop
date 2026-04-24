@@ -4,604 +4,568 @@ using CC98.Kernel.UserExperience;
 using CC98.Objects;
 using CC98.Services;
 using CC98.Services.Extensions;
-using CC98.Share.Controls.Primitives;
-using CommunityToolkit.Mvvm.ComponentModel;
-using CommunityToolkit.WinUI.Converters;
 using DevWinUI;
-using FluentIcons.Common;
-using FluentIcons.WinUI;
 using Microsoft.UI.Composition.SystemBackdrops;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml.Controls.Primitives;
-using Microsoft.UI.Xaml.Data;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Media.Animation;
-using Microsoft.UI.Xaml.Media.Imaging;
 using Microsoft.UI.Xaml.Navigation;
 using Microsoft.Windows.AppLifecycle;
 using Microsoft.Windows.AppNotifications;
 using Microsoft.Windows.AppNotifications.Builder;
 using Microsoft.Windows.BadgeNotifications;
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.ComponentModel;
-using System.Data;
-using System.Diagnostics;
-using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 using System.Net;
-using System.Net.Http;
-using System.Net.Http.Headers;
-using System.Net.Http.Json;
-using System.Net.Security;
-using System.Reflection;
-using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices.WindowsRuntime;
-using System.Text.Json;
-using System.Text.Json.Serialization;
-using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using System.Xml.Linq;
-using Windows.ApplicationModel.Core;
-using Windows.ApplicationModel.DataTransfer;
-using Windows.Foundation;
-using Windows.Foundation.Collections;
-using Windows.Media.Protection.PlayReady;
-using Windows.Security.Credentials;
-using Windows.Security.Cryptography.Certificates;
 using Windows.Storage;
-using Windows.Storage.Streams;
-using static CC98.Kernel.ApiScope.ApiEndpoints;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
 
-namespace CC98
+namespace CC98;
+
+/// <summary>
+/// An empty window that can be used on its own or navigated to within a Frame.
+/// </summary>
+public sealed partial class MainWindow : Window
 {
-    /// <summary>
-    /// An empty window that can be used on its own or navigated to within a Frame.
-    /// </summary>
-    public sealed partial class MainWindow : Window
+    public ObservableCollection<CategoryBase> MenuItems { get; } = [];
+    public ObservableCollection<CategoryBase> FooterMenuItems { get; } = [];
+    public Frame RootFrame => ContentFrame;//用于在嵌套的Frame中导航
+    public NavigationView NavigationView => Navi;
+    public ApplicationDataContainer Set = ApplicationData.Current.LocalSettings;
+    public ObservableCollection<string> Collections=[];
+    public GlobalService GlobalService = GlobalService.Instance;
+    public int UnreadCount { get; set; }
+    public MainWindow()
     {
-        public ObservableCollection<CategoryBase> MenuItems { get; } = [];
-        public ObservableCollection<CategoryBase> FooterMenuItems { get; } = [];
-        public Frame RootFrame => ContentFrame;//用于在嵌套的Frame中导航
-        public NavigationView NavigationView => Navi;
-        public ApplicationDataContainer Set = ApplicationData.Current.LocalSettings;
-        public ObservableCollection<string> collections=[];
-        public GlobalService GlobalService = GlobalService.Instance;
-        public int UnreadCount { get; set; }
-        public MainWindow()
-        {
-            this.InitializeComponent();
-            this.ExtendsContentIntoTitleBar = true;
-            this.SetTitleBar(UserArea);
-            AppWindow.TitleBar.PreferredHeightOption = TitleBarHeightOption.Tall;
-            var iconPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "cc98.ico");
-            AppWindow.SetIcon(iconPath);
-            AppWindow.SetTaskbarIcon(iconPath);
-            this.AppWindow.Changed += AppWindow_Changed; ;
-            LoadSettings();
-            App.ThemeChanged += OnAppThemeChanged;
-            Messenger.Instance.NavigationItemAdded += OnNavigationItemAdded;
-            Surfing();
-        }
+        this.InitializeComponent();
+        this.ExtendsContentIntoTitleBar = true;
+        this.SetTitleBar(UserArea);
+        AppWindow.TitleBar.PreferredHeightOption = TitleBarHeightOption.Tall;
+        var iconPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "cc98.ico");
+        AppWindow.SetIcon(iconPath);
+        AppWindow.SetTaskbarIcon(iconPath);
+        this.AppWindow.Changed += AppWindow_Changed; ;
+        LoadSettings();
+        App.ThemeChanged += OnAppThemeChanged;
+        Messenger.Instance.NavigationItemAdded += OnNavigationItemAdded;
+        Surfing();
+    }
 
-        private void AppWindow_Changed(Microsoft.UI.Windowing.AppWindow sender, Microsoft.UI.Windowing.AppWindowChangedEventArgs args)
+    private void AppWindow_Changed(Microsoft.UI.Windowing.AppWindow sender, Microsoft.UI.Windowing.AppWindowChangedEventArgs args)
+    {
+        if (args.DidPresenterChange && this.AppWindow.Presenter is OverlappedPresenter presenter)
         {
-            if (args.DidPresenterChange && this.AppWindow.Presenter is OverlappedPresenter presenter)
+            // 检查窗口是否最小化
+            if (presenter.State == OverlappedPresenterState.Minimized)
             {
-                // 检查窗口是否最小化
-                if (presenter.State == OverlappedPresenterState.Minimized)
-                {
-                    // 取消最小化到任务栏，改为隐藏到托盘
-                    this.AppWindow.Hide();
-                }
+                // 取消最小化到任务栏，改为隐藏到托盘
+                this.AppWindow.Hide();
             }
         }
+    }
 
-        private void Surfing()
+    private void Surfing()
+    {
+        CheckLoginStatus();
+        LoadPortrait();
+        LoadMenuItem();
+        InitializeTimer();
+    }
+    private async void LoadPortrait()
+    {
+        var portraitUrl = ValidationHelper.GetValue(Set, "Portrait");
+        if (portraitUrl == "0")
         {
-            CheckLoginStatus();
-            LoadPortrait();
-            LoadMenuItem();
-            InitializeTimer();
-        }
-        private async void LoadPortrait()
-        {
-            string portraitUrl = ValidationHelper.GetValue(Set, "Portrait");
-            if (portraitUrl == "0")
-            {
-                string profileUrl = ApiEndpoints.User.UserProfile(true, 0);
-                var profileResult = await RequestSender.Fetch<UserInfo>(profileUrl);
-                if (!profileResult.IsSuccess || profileResult.Data == null)
-                {
-                    return;
-                }
-                var data = profileResult.Data;
-                portraitUrl = data.PortraitUrl;
-                Set.Values["Portrait"] = data.PortraitUrl;
-            }
-            MyPicture.Src = portraitUrl;
-        }
-        private void OnNavigationItemAdded(NavigationItem item)
-        {
-            bool flag = true;
-            foreach (var menu in MenuItems)
-            {
-                if(menu is NavigationItem i)
-                {
-                    if (i.Tag == item.Tag)
-                    {
-                        flag = false;
-                    }
-                }
-            }
-            if (flag)
-            {
-                MenuItems.Add(item);
-            }
-        }
-        private void LoadMenuItem()
-        {
-            var Favorite=new NavigationGroup {Name="集锦", IsEditable = false };
-            var PinnedGroup = new NavigationGroup{Name = "推荐", IsEditable = true };
-            MenuItems.Add(new NavigationItem{Name = "今日话题",IconSymbol = FluentIcons.Common.Symbol.Grid,Tag = "Index",IsEditable=false} );
-            MenuItems.Add(new NavigationItem { Name = "全部版面", IconSymbol = FluentIcons.Common.Symbol.Board, Tag = "Section", IsEditable = false });
-            MenuItems.Add(new NavigationItem { Name = "新帖", IconSymbol = FluentIcons.Common.Symbol.DesignIdeas, Tag = "Discover", IsEditable = false });
-            MenuItems.Add(Favorite);
-            MenuItems.Add(new NavigationItem { Name = "动态", IconSymbol = FluentIcons.Common.Symbol.Home, Tag = "Focus", IsEditable = false });    
-            MenuItems.Add(new NavigationItem { Name = "收藏集", IconSymbol = FluentIcons.Common.Symbol.StarLineHorizontal3, Tag = "Favorite", IsEditable = false });
-            MenuItems.Add(PinnedGroup);      
-            FooterMenuItems.Add(new NavigationItem { Name = "消息", IconSymbol = FluentIcons.Common.Symbol.MailRead, Tag = "Message",IsEditable=false });
-            FooterMenuItems.Add(new NavigationItem { Name = "设置", IconSymbol = FluentIcons.Common.Symbol.StarSettings, Tag = "Setting",IsEditable=false});
-        }
-        private async void PinOff_Click(object sender, RoutedEventArgs e)
-        {
-            if ((sender as MenuFlyoutItem)?.Tag is not string tag) return;
-            int boardId=int.Parse(tag);
-            string url = ApiEndpoints.Board.EditFocusBoards(boardId);
-            var result = await RequestSender.Delete(url);
-            if (!result.IsSuccess)
-            {
-                //
-                return;
-            }
-            string custom_boards = ValidationHelper.GetValue(Set, "CustomBoards");
-            if (custom_boards != "0")
-            {
-                var boardinfo = JsonSerialize.Deserialize<Dictionary<string, string>>(custom_boards);
-                boardinfo?.Remove(tag);
-            }
-            var item = MenuItems.OfType<NavigationItem>().First(g => g.Tag == tag);
-            MenuItems.Remove(item);
-
-        }
-
-        private async void GetFocusBoards()//同步客户端和在线关注版块的信息
-        {
-            string custom_boards = ValidationHelper.GetValue(Set, "CustomBoards");
-            if (custom_boards!="0")
-            {
-                memory = JsonSerialize.Deserialize<Dictionary<int, string>>(custom_boards)??[];
-            }
-            else
-            {
-                Set.Values["CustomBoards"] = "0";
-            }
-            //初始化本地缓存
-            string profileUrl = ApiEndpoints.User.UserProfile(true,0);
+            var profileUrl = ApiEndpoints.User.UserProfile(true, 0);
             var profileResult = await RequestSender.Fetch<UserInfo>(profileUrl);
             if (!profileResult.IsSuccess || profileResult.Data == null)
             {
-                if (memory != null)
-                {
-                    foreach (var b in memory)
-                    {
-                        MenuItems.Add(new NavigationItem { Name = b.Value, IconSymbol = BoardIcon.GetSymbol(b.Key, b.Value), Tag = b.Key.ToString(), IsEditable = true });
-                    }
-                }
                 return;
             }
             var data = profileResult.Data;
-            var boards = data.CustomBoards;
-            foreach (var board in boards)
-            {
-                AddBoards(board);
-            }   
+            portraitUrl = data.PortraitUrl;
+            Set.Values["Portrait"] = data.PortraitUrl;
         }
-        public Dictionary<int, string> memory = [];
-        private async void AddBoards(int boardId)
+        MyPicture.Src = portraitUrl;
+    }
+    private void OnNavigationItemAdded(NavigationItem item)
+    {
+        var flag = true;
+        foreach (var menu in MenuItems)
         {
-            //此方法将检测本地是否已存储板块，没有则添加。无论本地是否已经存在，都会加载到导航栏。
-            //先判断本地存储是否有此板块
-            if (!memory.ContainsKey(boardId))
+            if(menu is NavigationItem i)
             {
-                string boardDataUrl = ApiEndpoints.Board.BoardInfo(boardId);
-                var boardDataResult = await RequestSender.Fetch<BoardData>(boardDataUrl);
-                if (!boardDataResult.IsSuccess || boardDataResult.Data == null)
+                if (i.Tag == item.Tag)
                 {
-                    return;
+                    flag = false;
                 }
-                var data=boardDataResult.Data;
-                memory.Add(boardId, data.Name);
-                MenuItems.Add(new NavigationItem { Name = data.Name, IconSymbol = BoardIcon.GetSymbol(boardId, data.Name), Tag = boardId.ToString(), IsEditable = true });
-                string boardjsontext = JsonSerialize.Serialize(memory);
-                Set.Values["CustomBoards"] = boardjsontext;
+            }
+        }
+        if (flag)
+        {
+            MenuItems.Add(item);
+        }
+    }
+    private void LoadMenuItem()
+    {
+        var favorite=new NavigationGroup {Name="集锦", IsEditable = false };
+        var pinnedGroup = new NavigationGroup{Name = "推荐", IsEditable = true };
+        MenuItems.Add(new NavigationItem{Name = "今日话题",IconSymbol = FluentIcons.Common.Symbol.Grid,Tag = "Index",IsEditable=false} );
+        MenuItems.Add(new NavigationItem { Name = "全部版面", IconSymbol = FluentIcons.Common.Symbol.Board, Tag = "Section", IsEditable = false });
+        MenuItems.Add(new NavigationItem { Name = "新帖", IconSymbol = FluentIcons.Common.Symbol.DesignIdeas, Tag = "Discover", IsEditable = false });
+        MenuItems.Add(favorite);
+        MenuItems.Add(new NavigationItem { Name = "动态", IconSymbol = FluentIcons.Common.Symbol.Home, Tag = "Focus", IsEditable = false });    
+        MenuItems.Add(new NavigationItem { Name = "收藏集", IconSymbol = FluentIcons.Common.Symbol.StarLineHorizontal3, Tag = "Favorite", IsEditable = false });
+        MenuItems.Add(pinnedGroup);      
+        FooterMenuItems.Add(new NavigationItem { Name = "消息", IconSymbol = FluentIcons.Common.Symbol.MailRead, Tag = "Message",IsEditable=false });
+        FooterMenuItems.Add(new NavigationItem { Name = "设置", IconSymbol = FluentIcons.Common.Symbol.StarSettings, Tag = "Setting",IsEditable=false});
+    }
+    private async void PinOff_Click(object sender, RoutedEventArgs e)
+    {
+        if ((sender as MenuFlyoutItem)?.Tag is not string tag) return;
+        var boardId=int.Parse(tag);
+        var url = ApiEndpoints.Board.EditFocusBoards(boardId);
+        var result = await RequestSender.Delete(url);
+        if (!result.IsSuccess)
+        {
+            //
+            return;
+        }
+        var customBoards = ValidationHelper.GetValue(Set, "CustomBoards");
+        if (customBoards != "0")
+        {
+            var boardinfo = JsonSerialize.Deserialize<Dictionary<string, string>>(customBoards);
+            boardinfo?.Remove(tag);
+        }
+        var item = MenuItems.OfType<NavigationItem>().First(g => g.Tag == tag);
+        MenuItems.Remove(item);
+
+    }
+
+    private async void GetFocusBoards()//同步客户端和在线关注版块的信息
+    {
+        var customBoards = ValidationHelper.GetValue(Set, "CustomBoards");
+        if (customBoards!="0")
+        {
+            Memory = JsonSerialize.Deserialize<Dictionary<int, string>>(customBoards)??[];
+        }
+        else
+        {
+            Set.Values["CustomBoards"] = "0";
+        }
+        //初始化本地缓存
+        var profileUrl = ApiEndpoints.User.UserProfile(true,0);
+        var profileResult = await RequestSender.Fetch<UserInfo>(profileUrl);
+        if (!profileResult.IsSuccess || profileResult.Data == null)
+        {
+            if (Memory != null)
+            {
+                foreach (var b in Memory)
+                {
+                    MenuItems.Add(new NavigationItem { Name = b.Value, IconSymbol = BoardIcon.GetSymbol(b.Key, b.Value), Tag = b.Key.ToString(), IsEditable = true });
+                }
+            }
+            return;
+        }
+        var data = profileResult.Data;
+        var boards = data.CustomBoards;
+        foreach (var board in boards)
+        {
+            AddBoards(board);
+        }   
+    }
+    public Dictionary<int, string> Memory = [];
+    private async void AddBoards(int boardId)
+    {
+        //此方法将检测本地是否已存储板块，没有则添加。无论本地是否已经存在，都会加载到导航栏。
+        //先判断本地存储是否有此板块
+        if (!Memory.ContainsKey(boardId))
+        {
+            var boardDataUrl = ApiEndpoints.Board.BoardInfo(boardId);
+            var boardDataResult = await RequestSender.Fetch<BoardData>(boardDataUrl);
+            if (!boardDataResult.IsSuccess || boardDataResult.Data == null)
+            {
+                return;
+            }
+            var data=boardDataResult.Data;
+            Memory.Add(boardId, data.Name);
+            MenuItems.Add(new NavigationItem { Name = data.Name, IconSymbol = BoardIcon.GetSymbol(boardId, data.Name), Tag = boardId.ToString(), IsEditable = true });
+            var boardjsontext = JsonSerialize.Serialize(Memory);
+            Set.Values["CustomBoards"] = boardjsontext;
                
-            }
-            else
-            {
-                //如果本地存储有此板块，则直接添加
-                MenuItems.Add(new NavigationItem { Name = memory[boardId], IconSymbol = BoardIcon.GetSymbol(boardId, memory[boardId]), Tag = boardId.ToString(), IsEditable = true });
-            }
         }
-        private async void LoadIndex()
+        else
         {
-            string tag = ValidationHelper.GetValue(Set, "TitlePage");
-            if (tag!="0")
+            //如果本地存储有此板块，则直接添加
+            MenuItems.Add(new NavigationItem { Name = Memory[boardId], IconSymbol = BoardIcon.GetSymbol(boardId, Memory[boardId]), Tag = boardId.ToString(), IsEditable = true });
+        }
+    }
+    private async void LoadIndex()
+    {
+        var tag = ValidationHelper.GetValue(Set, "TitlePage");
+        if (tag!="0")
+        {
+            switch (tag)
             {
-                switch (tag)
-                {
-                    case "1":
+                case "1":
 
-                        var index = await FetchIndex();
-                        if (!index)
-                        {
-                            Flower.Play(FlowStatus.Fail, "刷新首页失败");
-                        }
-                        ContentFrame.Navigate(typeof(Index));
-                        break;
-                    
-                    case"2":
-                        var param = new ProfileNavigationInfo { IsMe = true };
-                        ContentFrame.Navigate(typeof(Profile),param);
-                        break;
-                    case "3":
-                        ContentFrame.Navigate(typeof(Discover));
-                        break;
-                    
-                }
-            }
-            else
-            {
-                Set.Values["TitlePage"] = "1";
-                var index = await FetchIndex();
-                if (index)
-                {
+                    var index = await FetchIndex();
+                    if (!index)
+                    {
+                        Flower.Play(FlowStatus.Fail, "刷新首页失败");
+                    }
                     ContentFrame.Navigate(typeof(Index));
-                }  
+                    break;
+                    
+                case"2":
+                    var param = new ProfileNavigationInfo { IsMe = true };
+                    ContentFrame.Navigate(typeof(Profile),param);
+                    break;
+                case "3":
+                    ContentFrame.Navigate(typeof(Discover));
+                    break;
+                    
             }
-            
         }
-        private  void InitializeTimer()
+        else
         {
-            SyncTimer = new DispatcherTimer
+            Set.Values["TitlePage"] = "1";
+            var index = await FetchIndex();
+            if (index)
             {
-                Interval = TimeSpan.FromSeconds(240)
-            };
-            SyncTimer.Tick += DispatcherTimer_Tick;  
-            SyncTimer.Start();  
+                ContentFrame.Navigate(typeof(Index));
+            }  
         }
+            
+    }
+    private  void InitializeTimer()
+    {
+        SyncTimer = new()
+        {
+            Interval = TimeSpan.FromSeconds(240)
+        };
+        SyncTimer.Tick += DispatcherTimer_Tick;  
+        SyncTimer.Start();  
+    }
         
         
-        private  async void DispatcherTimer_Tick(object? sender, object e)
+    private  async void DispatcherTimer_Tick(object? sender, object e)
+    {
+        await FetchIndex();
+        RefreshMessage();
+    }
+    private async Task<bool> FetchIndex()
+    {
+        var url = ApiEndpoints.Forum.Index();
+        return await IndexDataService.Instance.RefreshFromApiAsync(url);
+    }
+    private  void LoadSettings()
+    {
+        var effect = ValidationHelper.GetValue(Set, "Effect");
+        this.SystemBackdrop = effect switch
         {
-            await FetchIndex();
-            RefreshMessage();
-        }
-        private async Task<bool> FetchIndex()
+            "0" => new MicaSystemBackdrop(),
+            "1" => new MicaSystemBackdrop(MicaKind.BaseAlt),
+            "2" => new AcrylicSystemBackdrop(),
+            "3" => new AcrylicSystemBackdrop(DesktopAcrylicKind.Thin),
+            "4" => null,
+            _ => new MicaSystemBackdrop(),
+        };
+        var theme = ValidationHelper.GetValue(Set, "Theme");
+        RootGrid.RequestedTheme = theme switch
         {
-            string url = ApiEndpoints.Forum.Index();
-            return await IndexDataService.Instance.RefreshFromApiAsync(url);
-        }
-        private  void LoadSettings()
-        {
-            string effect = ValidationHelper.GetValue(Set, "Effect");
-            this.SystemBackdrop = effect switch
-            {
-                "0" => new MicaSystemBackdrop(),
-                "1" => new MicaSystemBackdrop(MicaKind.BaseAlt),
-                "2" => new AcrylicSystemBackdrop(),
-                "3" => new AcrylicSystemBackdrop(DesktopAcrylicKind.Thin),
-                "4" => null,
-                _ => new MicaSystemBackdrop(),
-            };
-            string theme = ValidationHelper.GetValue(Set, "Theme");
-            RootGrid.RequestedTheme = theme switch
-            {
-                "1" => ElementTheme.Light,
-                "2" => ElementTheme.Dark,
-                _ => ElementTheme.Default
-            };
+            "1" => ElementTheme.Light,
+            "2" => ElementTheme.Dark,
+            _ => ElementTheme.Default
+        };
             
             
-            if (ValidationHelper.GetValue(Set,"ThemePic")=="0")
-            {
-                string themesPath = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Themes");
-                var Files = Directory.GetFiles(themesPath, "*.jpg", SearchOption.AllDirectories);
-                var file = Files[0];
-                Set.Values["Themepic"]= file;
-            }
+        if (ValidationHelper.GetValue(Set,"ThemePic")=="0")
+        {
+            var themesPath = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Themes");
+            var files = Directory.GetFiles(themesPath, "*.jpg", SearchOption.AllDirectories);
+            var file = files[0];
+            Set.Values["Themepic"]= file;
+        }
 
-        }
+    }
         
-        private DispatcherTimer SyncTimer { get; set; }
-        private void OnAppThemeChanged(ElementTheme theme)
+    private DispatcherTimer SyncTimer { get; set; }
+    private void OnAppThemeChanged(ElementTheme theme)
+    {
+        // 更新 RootGrid 的主题
+        RootGrid.RequestedTheme = theme;
+    }
+        
+        
+    private async void CheckLoginStatus()   
+    {
+        var access = PasswordManager.RetrievePassword("Access");
+        if (string.IsNullOrEmpty(access))
         {
-            // 更新 RootGrid 的主题
-            RootGrid.RequestedTheme = theme;
+            ShowTips("登录凭据未保存", "请重新登录");
+            //应该只清除CC98相关的凭据
+            Logout();
+            return;
         }
-        
-        
-        private async void CheckLoginStatus()   
+        LoginService.Vpn.Client.DefaultRequestHeaders.Authorization = new("Bearer", access);
+        var url = ApiEndpoints.User.UnreadMessage();
+        var result = await RequestSender.Fetch<UnreadMessageInfo>(url);
+        if (!result.IsSuccess || result.Data == null)
         {
-            string Access = PasswordManager.RetrievePassword("Access");
-            if (string.IsNullOrEmpty(Access))
+            //
+            if (result.StatusCode == (int)HttpStatusCode.Unauthorized)
             {
-                ShowTips("登录凭据未保存", "请重新登录");
-                //应该只清除CC98相关的凭据
+                //登录失效
+                ShowTips("登录状态已过期", "请重新登录");
                 Logout();
-                return;
             }
-            LoginService.vpn.client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", Access);
-            var url = ApiEndpoints.User.UnreadMessage();
-            var result = await RequestSender.Fetch<UnreadMessageInfo>(url);
-            if (!result.IsSuccess || result.Data == null)
-            {
-                //
-                if (result.StatusCode == (int)HttpStatusCode.Unauthorized)
-                {
-                    //登录失效
-                    ShowTips("登录状态已过期", "请重新登录");
-                    Logout();
-                }
-                return;
-            }
-            var data= result.Data;
-            GlobalService.AtCount = data.AtCount; GlobalService.ReplyCount = data.ReplyCount;
-            GlobalService.SystemCount = data.SystemCount; GlobalService.MessageCount = data.MessageCount;
-            UnreadCount = data.MessageCount + data.AtCount + data.ReplyCount + data.SystemCount;
-            BadgeNotificationManager.Current.SetBadgeAsCount((uint)UnreadCount);
-            GetFocusBoards();
-            await GetFavorites();
-            LoadIndex();
+            return;
         }
+        var data= result.Data;
+        GlobalService.AtCount = data.AtCount; GlobalService.ReplyCount = data.ReplyCount;
+        GlobalService.SystemCount = data.SystemCount; GlobalService.MessageCount = data.MessageCount;
+        UnreadCount = data.MessageCount + data.AtCount + data.ReplyCount + data.SystemCount;
+        BadgeNotificationManager.Current.SetBadgeAsCount((uint)UnreadCount);
+        GetFocusBoards();
+        await GetFavorites();
+        LoadIndex();
+    }
         
         
 
-        private async void RefreshMessage()
+    private async void RefreshMessage()
+    {
+        var url = ApiEndpoints.User.UnreadMessage();
+        var result = await RequestSender.Fetch<UnreadMessageInfo>(url);
+        if (!result.IsSuccess || result.Data == null)
         {
-            var url = ApiEndpoints.User.UnreadMessage();
-            var result = await RequestSender.Fetch<UnreadMessageInfo>(url);
-            if (!result.IsSuccess || result.Data == null)
-            {
-                await App.Logger.WriteAsync("MainWindow", "刷新未读消息失败", $"{result.StatusCode}:{result.Message}");
-                return;
-            }
-            var data = result.Data;
-            GlobalService.AtCount = data.AtCount;GlobalService.ReplyCount = data.ReplyCount;
-            GlobalService.SystemCount = data.SystemCount;GlobalService.MessageCount = data.MessageCount;
-            UnreadCount = data.MessageCount + data.AtCount + data.ReplyCount + data.SystemCount;
-            BadgeNotificationManager.Current.SetBadgeAsCount((uint)UnreadCount);
+            await App.Logger.WriteAsync("MainWindow", "刷新未读消息失败", $"{result.StatusCode}:{result.Message}");
+            return;
         }
+        var data = result.Data;
+        GlobalService.AtCount = data.AtCount;GlobalService.ReplyCount = data.ReplyCount;
+        GlobalService.SystemCount = data.SystemCount;GlobalService.MessageCount = data.MessageCount;
+        UnreadCount = data.MessageCount + data.AtCount + data.ReplyCount + data.SystemCount;
+        BadgeNotificationManager.Current.SetBadgeAsCount((uint)UnreadCount);
+    }
 
         
-        private async Task<bool> GetFavorites()
+    private async Task<bool> GetFavorites()
+    {
+        var favoritesInfoUrl=ApiEndpoints.User.FavoritesList();
+        var favoritesInfoResult = await RequestSender.Fetch<FavoritesInfo>(favoritesInfoUrl);
+        if (!favoritesInfoResult.IsSuccess || favoritesInfoResult.Data == null)
         {
-            string favoritesInfoUrl=ApiEndpoints.User.FavoritesList();
-            var favoritesInfoResult = await RequestSender.Fetch<FavoritesInfo>(favoritesInfoUrl);
-            if (!favoritesInfoResult.IsSuccess || favoritesInfoResult.Data == null)
-            {
-                //
-                return false;
-            }
-            var data= favoritesInfoResult.Data;
-            var groups = data.FavoriteTopicGroups;
-            if (groups.Count > 0)
-            {
-                //临时存储收藏夹列表
-                string FavoJson = JsonSerialize.Serialize(groups);
-                Set.Values["Favorites"] = FavoJson;
-                return true;
-            }
-            else
-            {
-                Flower.Play(FlowStatus.Info, "暂无收藏夹");
-                return false;
-            }
+            //
+            return false;
+        }
+        var data= favoritesInfoResult.Data;
+        var groups = data.FavoriteTopicGroups;
+        if (groups.Count > 0)
+        {
+            //临时存储收藏夹列表
+            var favoJson = JsonSerialize.Serialize(groups);
+            Set.Values["Favorites"] = favoJson;
+            return true;
+        }
+        else
+        {
+            Flower.Play(FlowStatus.Info, "暂无收藏夹");
+            return false;
+        }
             
-        }
+    }
         
 
 
-        private void Back_PointerEntered(object sender, PointerRoutedEventArgs e)
-        {
-            AnimatedIcon.SetState(BackIcon, "PointerOver");
-        }
+    private void Back_PointerEntered(object sender, PointerRoutedEventArgs e)
+    {
+        AnimatedIcon.SetState(BackIcon, "PointerOver");
+    }
 
-        private void Back_PointerExited(object sender, PointerRoutedEventArgs e)
-        {
-            AnimatedIcon.SetState(BackIcon, "Normal");
+    private void Back_PointerExited(object sender, PointerRoutedEventArgs e)
+    {
+        AnimatedIcon.SetState(BackIcon, "Normal");
             
-        }
+    }
 
-        private void Back_Click(object sender, RoutedEventArgs e)
+    private void Back_Click(object sender, RoutedEventArgs e)
+    {
+        if (ContentFrame.CanGoBack)
         {
-            if (ContentFrame.CanGoBack)
-            {
-                ContentFrame.GoBack();
-            }
+            ContentFrame.GoBack();
         }
+    }
 
-        private void Navi_ItemInvoked(NavigationView sender, NavigationViewItemInvokedEventArgs args)
+    private void Navi_ItemInvoked(NavigationView sender, NavigationViewItemInvokedEventArgs args)
+    {
+        if(args.InvokedItemContainer?.Tag is string tag)
         {
-            if(args.InvokedItemContainer?.Tag is string tag)
+            var item = args.InvokedItem as NavigationViewItem;
+            switch (tag)
             {
-                var item = args.InvokedItem as NavigationViewItem;
-                switch (tag)
-                {
-                    case "Index":
-                        ContentFrame.Navigate(typeof(Index));
-                        break;
-                    case "Section":
-                        ContentFrame.Navigate(typeof(Section));
-                        break;
-                    case "Discover":
-                        ContentFrame.Navigate(typeof(Discover));
-                        break;
-                    case "Favorite":
-                        ContentFrame.Navigate(typeof(Favorite));
-                        break;
-                    case "Setting":
-                        ContentFrame.Navigate(typeof(Setting));
-                        break;
-                    case "Message":
-                        var param = new MessageNavigationInfo {HasTarget = false };
-                        ContentFrame.Navigate(typeof(Message), param);
-                        break;
-                    case "Focus":
-                        ContentFrame.Navigate(typeof(Focus));
-                        break;
-                    default:
-                        if (tag.All(char.IsDigit))
+                case "Index":
+                    ContentFrame.Navigate(typeof(Index));
+                    break;
+                case "Section":
+                    ContentFrame.Navigate(typeof(Section));
+                    break;
+                case "Discover":
+                    ContentFrame.Navigate(typeof(Discover));
+                    break;
+                case "Favorite":
+                    ContentFrame.Navigate(typeof(Favorite));
+                    break;
+                case "Setting":
+                    ContentFrame.Navigate(typeof(Setting));
+                    break;
+                case "Message":
+                    var param = new MessageNavigationInfo {HasTarget = false };
+                    ContentFrame.Navigate(typeof(Message), param);
+                    break;
+                case "Focus":
+                    ContentFrame.Navigate(typeof(Focus));
+                    break;
+                default:
+                    if (tag.All(char.IsDigit))
+                    {
+                        try
                         {
-                            try
-                            {
-                                ContentFrame.Navigate(typeof(Board),int.Parse(tag));
-                            }
-                            catch
-                            {
-
-                            }
+                            ContentFrame.Navigate(typeof(Board),int.Parse(tag));
                         }
+                        catch
+                        {
+
+                        }
+                    }
                         
-                        break;
-                }
+                    break;
             }
         }
+    }
 
-        private void PaneExpand_Click(object sender, RoutedEventArgs e)
-        {
-            Navi.IsPaneOpen=!Navi.IsPaneOpen;
-        }
+    private void PaneExpand_Click(object sender, RoutedEventArgs e)
+    {
+        Navi.IsPaneOpen=!Navi.IsPaneOpen;
+    }
 
-        private void PaneExpand_PointerEntered(object sender, PointerRoutedEventArgs e)
-        {
-            AnimatedIcon.SetState(NaviIcon, "PointerOver");
-        }
+    private void PaneExpand_PointerEntered(object sender, PointerRoutedEventArgs e)
+    {
+        AnimatedIcon.SetState(NaviIcon, "PointerOver");
+    }
 
-        private void PaneExpand_PointerExited(object sender, PointerRoutedEventArgs e)
-        {
-            AnimatedIcon.SetState(NaviIcon, "Normal");
-        }
+    private void PaneExpand_PointerExited(object sender, PointerRoutedEventArgs e)
+    {
+        AnimatedIcon.SetState(NaviIcon, "Normal");
+    }
       
 
-        private void Me_PointerEntered(object sender, PointerRoutedEventArgs e)
+    private void Me_PointerEntered(object sender, PointerRoutedEventArgs e)
+    {
+        AnimateButton(PortScaleTransform, 0.95, 0.95);
+    }
+
+    private void Me_PointerExited(object sender, PointerRoutedEventArgs e)
+    {
+        AnimateButton(PortScaleTransform, 1, 1);
+    }
+    private void AnimateButton(ScaleTransform transform, double x, double y)
+    {
+        var storyboard = new Storyboard();
+
+        var animationX = new DoubleAnimation
         {
-            AnimateButton(PortScaleTransform, 0.95, 0.95);
-        }
+            To = x,
+            Duration = TimeSpan.FromSeconds(0.2),
+            EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
+        };
+        Storyboard.SetTarget(animationX, transform);
+        Storyboard.SetTargetProperty(animationX, "ScaleX");
 
-        private void Me_PointerExited(object sender, PointerRoutedEventArgs e)
+        var animationY = new DoubleAnimation
         {
-            AnimateButton(PortScaleTransform, 1, 1);
-        }
-        private void AnimateButton(ScaleTransform transform, double X, double Y)
-        {
-            var storyboard = new Storyboard();
+            To = y,
+            Duration = TimeSpan.FromSeconds(0.2),
+            EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
+        };
+        Storyboard.SetTarget(animationY, transform);
+        Storyboard.SetTargetProperty(animationY, "ScaleY");
 
-            var animationX = new DoubleAnimation
-            {
-                To = X,
-                Duration = TimeSpan.FromSeconds(0.2),
-                EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
-            };
-            Storyboard.SetTarget(animationX, transform);
-            Storyboard.SetTargetProperty(animationX, "ScaleX");
+        storyboard.Children.Add(animationX);
+        storyboard.Children.Add(animationY);
+        storyboard.Begin();
+    }
 
-            var animationY = new DoubleAnimation
-            {
-                To = Y,
-                Duration = TimeSpan.FromSeconds(0.2),
-                EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
-            };
-            Storyboard.SetTarget(animationY, transform);
-            Storyboard.SetTargetProperty(animationY, "ScaleY");
+    private void Me_PointerPressed(object sender, PointerRoutedEventArgs e)
+    {
+        AnimateButton(PortScaleTransform, 0.85, 0.85);
+    }
 
-            storyboard.Children.Add(animationX);
-            storyboard.Children.Add(animationY);
-            storyboard.Begin();
-        }
+    private void Me_PointerReleased(object sender, PointerRoutedEventArgs e)
+    {
+        AnimateButton(PortScaleTransform, 1, 1);
+    }
 
-        private void Me_PointerPressed(object sender, PointerRoutedEventArgs e)
-        {
-            AnimateButton(PortScaleTransform, 0.85, 0.85);
-        }
+    private void Me_PointerCanceled(object sender, PointerRoutedEventArgs e)
+    {
+        AnimateButton(PortScaleTransform, 1, 1);
+    }
 
-        private void Me_PointerReleased(object sender, PointerRoutedEventArgs e)
-        {
-            AnimateButton(PortScaleTransform, 1, 1);
-        }
-
-        private void Me_PointerCanceled(object sender, PointerRoutedEventArgs e)
-        {
-            AnimateButton(PortScaleTransform, 1, 1);
-        }
-
-        private void Me_Click(object sender, RoutedEventArgs e)
-        {
-            var param = new ProfileNavigationInfo { IsMe = true };
-            ContentFrame.Navigate(typeof(Profile), param);
-        }
+    private void Me_Click(object sender, RoutedEventArgs e)
+    {
+        var param = new ProfileNavigationInfo { IsMe = true };
+        ContentFrame.Navigate(typeof(Profile), param);
+    }
 
         
-        //本方法只控制全局状态记忆类的参量，而不更改导航栈本身的导航参数
-        private void ContentFrame_Navigating(object sender, Microsoft.UI.Xaml.Navigation.NavigatingCancelEventArgs e)
-        {
-            if (ContentFrame.Content is not Page currentPage) return;
-            Type fromPage = currentPage.GetType();
-            Type toPage=e.SourcePageType;
-            GlobalService.ShouldReplaceNavigationArgs = e.NavigationMode == NavigationMode.Back && rules.Contains((fromPage, toPage));
-        }
-        private readonly HashSet<(Type from, Type to)> rules =
-        [
-            (typeof(Sketch),typeof(Topic)),
-            (typeof(Topic),typeof(Message)),
-            (typeof(Topic),typeof(Focus)),
-            (typeof(Profile),typeof(Follow)),
-        ];
+    //本方法只控制全局状态记忆类的参量，而不更改导航栈本身的导航参数
+    private void ContentFrame_Navigating(object sender, Microsoft.UI.Xaml.Navigation.NavigatingCancelEventArgs e)
+    {
+        if (ContentFrame.Content is not Page currentPage) return;
+        var fromPage = currentPage.GetType();
+        var toPage=e.SourcePageType;
+        GlobalService.ShouldReplaceNavigationArgs = e.NavigationMode == NavigationMode.Back && _rules.Contains((fromPage, toPage));
+    }
+    private readonly HashSet<(Type from, Type to)> _rules =
+    [
+        (typeof(Sketch),typeof(Topic)),
+        (typeof(Topic),typeof(Message)),
+        (typeof(Topic),typeof(Focus)),
+        (typeof(Profile),typeof(Follow)),
+    ];
 
 
-        #region 辅助方法
+    #region 辅助方法
 
 
-        private void Logout()
-        {
-            //清除凭据
-            PasswordManager.ClearAllPasswords("Access");
-            PasswordManager.ClearAllPasswords("Refresh");
-            Set.Values["Portrait"] = "0";
-            Set.Values["IsActive"] = "0";
-            //退出，重启
-            AppInstance.Restart("");
-        }
-        private void ShowTips(string title,string description)
-        {
-            AppNotification notification = new AppNotificationBuilder()
+    private void Logout()
+    {
+        //清除凭据
+        PasswordManager.ClearAllPasswords("Access");
+        PasswordManager.ClearAllPasswords("Refresh");
+        Set.Values["Portrait"] = "0";
+        Set.Values["IsActive"] = "0";
+        //退出，重启
+        AppInstance.Restart("");
+    }
+    private void ShowTips(string title,string description)
+    {
+        var notification = new AppNotificationBuilder()
             .AddText(title)
             .AddText(description)
             .BuildNotification();
 
-            AppNotificationManager.Default.Show(notification);
-        }
-        #endregion
+        AppNotificationManager.Default.Show(notification);
     }
-
+    #endregion
 }

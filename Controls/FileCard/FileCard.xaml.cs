@@ -1,114 +1,102 @@
-using CC98.Share.Controls;
-using CC98.Share.Controls.Primitives;
+ï»¿using CC98.Share.Controls.Primitives;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml.Controls.Primitives;
-using Microsoft.UI.Xaml.Data;
-using Microsoft.UI.Xaml.Input;
-using Microsoft.UI.Xaml.Media;
-using Microsoft.UI.Xaml.Navigation;
 using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Runtime.InteropServices.WindowsRuntime;
 using UbbRender.Common;
-using Windows.Foundation;
-using Windows.Foundation.Collections;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
 
-namespace CC98.Share.Controls
+namespace CC98.Share.Controls;
+
+public sealed partial class FileCard : UserControl
 {
-    public sealed partial class FileCard : UserControl
+    public FileCard()
     {
-        public FileCard()
-        {
-            InitializeComponent();
-        }
-        #region ÒÀÀµÊôĞÔ
+        InitializeComponent();
+    }
+    #region ä¾èµ–å±æ€§
 
-        public static readonly DependencyProperty SrcProperty =
-            DependencyProperty.Register(
-                "Src",
-                typeof(string),
-                typeof(FileCard),
-                new PropertyMetadata("",OnSrcChanged));
-        public string Src
-        {
-            get => (string)GetValue(SrcProperty);
-            set => SetValue(SrcProperty, value);
-        }
+    public static readonly DependencyProperty SrcProperty =
+        DependencyProperty.Register(
+            "Src",
+            typeof(string),
+            typeof(FileCard),
+            new("",OnSrcChanged));
+    public string Src
+    {
+        get => (string)GetValue(SrcProperty);
+        set => SetValue(SrcProperty, value);
+    }
 
-        #endregion
-        #region ¼ÓÔØÊÂ¼ş
-        private static void OnSrcChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
-        {
-            if(d is not FileCard fileCard)return;
-            fileCard.LoadFile();
-        }
+    #endregion
+    #region åŠ è½½äº‹ä»¶
+    private static void OnSrcChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+    {
+        if(d is not FileCard fileCard)return;
+        fileCard.LoadFile();
+    }
 
-        public event EventHandler<MediaClickEventArgs> DownloadRequested;
+    public event EventHandler<MediaClickEventArgs> DownloadRequested;
 
-        private void Root_Click(object sender, RoutedEventArgs e)
-        {
-            DownloadRequested?.Invoke(this, new MediaClickEventArgs(Src, MediaType.File));
-        }
-        private void LoadFile()
-        {
-            string extension = Path.GetExtension(Src)?.ToUpper() ?? "Î´ÖªÀàĞÍ";
-            extension = extension.Replace(".", "");
-            string fileName = ExtractFileNameFromUrl(Src);
-            ExtensionNameBox.Text = extension;
-            FileNameBox.Text = fileName;
-            TypeIcon.Symbol = GetFileTypeIcon(fileName);
-        }
-        #endregion
+    private void Root_Click(object sender, RoutedEventArgs e)
+    {
+        DownloadRequested?.Invoke(this, new(Src, MediaType.File));
+    }
+    private void LoadFile()
+    {
+        var extension = Path.GetExtension(Src)?.ToUpper() ?? "æœªçŸ¥ç±»å‹";
+        extension = extension.Replace(".", "");
+        var fileName = ExtractFileNameFromUrl(Src);
+        ExtensionNameBox.Text = extension;
+        FileNameBox.Text = fileName;
+        TypeIcon.Symbol = GetFileTypeIcon(fileName);
+    }
+    #endregion
 
 
-        #region ¸¨Öúº¯Êı
-        private static FluentIcons.Common.Symbol GetFileTypeIcon(string fileName)
+    #region è¾…åŠ©å‡½æ•°
+    private static FluentIcons.Common.Symbol GetFileTypeIcon(string fileName)
+    {
+        var extension = Path.GetExtension(fileName)?.ToLower();
+        return extension switch
         {
-            var extension = Path.GetExtension(fileName)?.ToLower();
-            return extension switch
+            ".pdf" => FluentIcons.Common.Symbol.DocumentPdf,
+            ".xls" or ".xlsx" => FluentIcons.Common.Symbol.Table,
+            ".ppt" or ".pptx" => FluentIcons.Common.Symbol.DocumentFlowchart,
+            "zip" or ".rar" => FluentIcons.Common.Symbol.FolderZip,
+            "mp3" or ".wav" or "m4a" => FluentIcons.Common.Symbol.MusicNote1,
+            "mp4" or ".avi" => FluentIcons.Common.Symbol.Video,
+            "jpg" or ".jpeg" or ".png" or ".gif" or "webp" => FluentIcons.Common.Symbol.Image,
+            _ => FluentIcons.Common.Symbol.Document
+        };
+    }
+
+
+    /// <summary>
+    /// ä»URLä¸­æå–æ–‡ä»¶å
+    /// </summary>
+    private static string ExtractFileNameFromUrl(string url)
+    {
+        try
+        {
+            var uri = new Uri(url);
+            var fileName = Path.GetFileName(uri.LocalPath);
+            // å¦‚æœæ–‡ä»¶åæ— æ•ˆï¼Œç”Ÿæˆé»˜è®¤æ–‡ä»¶å
+            if (string.IsNullOrEmpty(fileName) || !fileName.Contains('.'))
             {
-                ".pdf" => FluentIcons.Common.Symbol.DocumentPdf,
-                ".xls" or ".xlsx" => FluentIcons.Common.Symbol.Table,
-                ".ppt" or ".pptx" => FluentIcons.Common.Symbol.DocumentFlowchart,
-                "zip" or ".rar" => FluentIcons.Common.Symbol.FolderZip,
-                "mp3" or ".wav" or "m4a" => FluentIcons.Common.Symbol.MusicNote1,
-                "mp4" or ".avi" => FluentIcons.Common.Symbol.Video,
-                "jpg" or ".jpeg" or ".png" or ".gif" or "webp" => FluentIcons.Common.Symbol.Image,
-                _ => FluentIcons.Common.Symbol.Document
-            };
-        }
-
-
-        /// <summary>
-        /// ´ÓURLÖĞÌáÈ¡ÎÄ¼şÃû
-        /// </summary>
-        private static string ExtractFileNameFromUrl(string url)
-        {
-            try
-            {
-                var uri = new Uri(url);
-                var fileName = Path.GetFileName(uri.LocalPath);
-                // Èç¹ûÎÄ¼şÃûÎŞĞ§£¬Éú³ÉÄ¬ÈÏÎÄ¼şÃû
-                if (string.IsNullOrEmpty(fileName) || !fileName.Contains('.'))
-                {
-                    fileName = $"CC{DateTime.Now:MMdd_HHmm}.pdf";
-                }
-
-                return fileName;
+                fileName = $"CC{DateTime.Now:MMdd_HHmm}.pdf";
             }
-            catch
-            {
-                return $"CC{DateTime.Now:MMdd_HHmm}.pdf";
-            }
+
+            return fileName;
         }
-        #endregion
+        catch
+        {
+            return $"CC{DateTime.Now:MMdd_HHmm}.pdf";
+        }
+    }
+    #endregion
 
         
-    }
 }

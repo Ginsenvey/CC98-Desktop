@@ -1,8 +1,5 @@
 ﻿using CC98.Share.Controls.Primitives;
-using Microsoft.UI.Xaml.Navigation;
-using System;
 using System.Collections.Generic;
-using Windows.Networking.NetworkOperators;
 
 namespace CC98.Objects;
 
@@ -33,7 +30,7 @@ public class MessageNavigationInfo
     /// 如果从私信功能跳转(True)，那么MessageNavigationInfo将会传输要私信的用户信息
     /// </summary>
     public bool HasTarget { get; set; } = false;
-    public ChatInfo ChatUserInfo {  get; set; } = new ChatInfo();
+    public ChatInfo ChatUserInfo {  get; set; } = new();
 
 }
 

@@ -1,26 +1,24 @@
 ﻿using Microsoft.UI.Xaml.Media.Imaging;
 using System;
 using System.Threading.Tasks;
-using Windows.Media.Core;
 
-namespace CC98.Share.Controls.Primitives
+namespace CC98.Share.Controls.Primitives;
+
+public class DefaultImageLoader : IImageLoader
 {
-    public class DefaultImageLoader : IImageLoader
+    public async Task<BitmapSource?> LoadImage(string src)
     {
-        public async Task<BitmapSource?> LoadImage(string src)
+        try
         {
-            try
+            if (Uri.TryCreate(src, UriKind.Absolute, out var uri))
             {
-                if (Uri.TryCreate(src, UriKind.Absolute, out var uri))
-                {
-                    return await Task.FromResult(new BitmapImage(uri));
-                }
-                return null;
+                return await Task.FromResult(new BitmapImage(uri));
             }
-            catch
-            {
-                return null;
-            }
+            return null;
+        }
+        catch
+        {
+            return null;
         }
     }
 }

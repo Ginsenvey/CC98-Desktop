@@ -1,93 +1,92 @@
-using System;
+ï»¿using System;
 using Windows.Foundation;
 using Windows.Media.Core;
 using Windows.Media.Playback;
 
-namespace CC98.Share.Controls
+namespace CC98.Share.Controls;
+
+// å…¨å±€å•ä¾‹å°è£… MediaPlayerï¼Œè´Ÿè´£åª’ä½“æºã€æ’­æ”¾æ§åˆ¶å’Œäº‹ä»¶è½¬å‘
+public sealed class GlobalMediaPlayer : IDisposable
 {
- // È«¾Öµ¥Àı·â×° MediaPlayer£¬¸ºÔğÃ½ÌåÔ´¡¢²¥·Å¿ØÖÆºÍÊÂ¼ş×ª·¢
- public sealed class GlobalMediaPlayer : IDisposable
- {
- private static readonly Lazy<GlobalMediaPlayer> _lazy = new(() => new GlobalMediaPlayer());
- public static GlobalMediaPlayer Instance => _lazy.Value;
+    private static readonly Lazy<GlobalMediaPlayer> Lazy = new(() => new());
+    public static GlobalMediaPlayer Instance => Lazy.Value;
 
- private readonly MediaPlayer _player;
+    private readonly MediaPlayer _player;
 
- private GlobalMediaPlayer()
- {
- _player = new MediaPlayer
- {
- AutoPlay = false,
- IsLoopingEnabled = false
- };
+    private GlobalMediaPlayer()
+    {
+        _player = new()
+        {
+            AutoPlay = false,
+            IsLoopingEnabled = false
+        };
 
- //Ö±½Ó°Ñµ×²ãÊÂ¼ş×ª·¢³öÈ¥£¬¶©ÔÄÕß¿ÉÒÔÏñÖ®Ç°ÄÇÑùÊ¹ÓÃÏàÍ¬µÄ´¦Àíº¯ÊıÇ©Ãû
- _player.MediaOpened += (s, e) => MediaOpened?.Invoke(s, e);
- _player.MediaEnded += (s, e) => MediaEnded?.Invoke(s, e);
- _player.MediaFailed += (s, e) => MediaFailed?.Invoke(s, e);
- _player.CurrentStateChanged += (s, e) => CurrentStateChanged?.Invoke(s, e);
+        //ç›´æ¥æŠŠåº•å±‚äº‹ä»¶è½¬å‘å‡ºå»ï¼Œè®¢é˜…è€…å¯ä»¥åƒä¹‹å‰é‚£æ ·ä½¿ç”¨ç›¸åŒçš„å¤„ç†å‡½æ•°ç­¾å
+        _player.MediaOpened += (s, e) => MediaOpened?.Invoke(s, e);
+        _player.MediaEnded += (s, e) => MediaEnded?.Invoke(s, e);
+        _player.MediaFailed += (s, e) => MediaFailed?.Invoke(s, e);
+        _player.CurrentStateChanged += (s, e) => CurrentStateChanged?.Invoke(s, e);
 
- //Ò²¿ÉÒÔ×ª·¢²¥·Å»á»°Î»ÖÃ±ä»¯£¨Èç¹ûĞèÒª£©
- if (_player.PlaybackSession != null)
- {
- _player.PlaybackSession.PositionChanged += (s, e) => PlaybackSessionPositionChanged?.Invoke(s, e);
- }
- }
+        //ä¹Ÿå¯ä»¥è½¬å‘æ’­æ”¾ä¼šè¯ä½ç½®å˜åŒ–ï¼ˆå¦‚æœéœ€è¦ï¼‰
+        if (_player.PlaybackSession != null)
+        {
+            _player.PlaybackSession.PositionChanged += (s, e) => PlaybackSessionPositionChanged?.Invoke(s, e);
+        }
+    }
 
- // ×ª·¢ÊÂ¼ş£¬±£³ÖÓë MediaPlayerÊÂ¼şÇ©Ãû¼æÈİ
- public event TypedEventHandler<MediaPlayer, object> MediaOpened;
- public event TypedEventHandler<MediaPlayer, object> MediaEnded;
- public event TypedEventHandler<MediaPlayer, MediaPlayerFailedEventArgs> MediaFailed;
- public event TypedEventHandler<MediaPlayer, object> CurrentStateChanged;
+    // è½¬å‘äº‹ä»¶ï¼Œä¿æŒä¸ MediaPlayeräº‹ä»¶ç­¾åå…¼å®¹
+    public event TypedEventHandler<MediaPlayer, object> MediaOpened;
+    public event TypedEventHandler<MediaPlayer, object> MediaEnded;
+    public event TypedEventHandler<MediaPlayer, MediaPlayerFailedEventArgs> MediaFailed;
+    public event TypedEventHandler<MediaPlayer, object> CurrentStateChanged;
 
- // Èç¹û UIĞèÒª¼àÌı PlaybackSession µÄ PositionChanged
- public event TypedEventHandler<MediaPlaybackSession, object> PlaybackSessionPositionChanged;
+    // å¦‚æœ UIéœ€è¦ç›‘å¬ PlaybackSession çš„ PositionChanged
+    public event TypedEventHandler<MediaPlaybackSession, object> PlaybackSessionPositionChanged;
 
- public MediaPlaybackSession PlaybackSession => _player.PlaybackSession;
+    public MediaPlaybackSession PlaybackSession => _player.PlaybackSession;
 
- public bool IsPlaying { get; private set; }
+    public bool IsPlaying { get; private set; }
 
- public void SetSource(MediaSource source)
- {
- _player.Source = source;
- }
+    public void SetSource(MediaSource source)
+    {
+        _player.Source = source;
+    }
 
- public void Play()
- {
- _player.Play();
- IsPlaying = true;
- }
+    public void Play()
+    {
+        _player.Play();
+        IsPlaying = true;
+    }
 
- public void Pause()
- {
- _player.Pause();
- IsPlaying = false;
- }
+    public void Pause()
+    {
+        _player.Pause();
+        IsPlaying = false;
+    }
 
- public void TogglePlayPause()
- {
- if (IsPlaying) Pause(); else Play();
- }
+    public void TogglePlayPause()
+    {
+        if (IsPlaying) Pause(); else Play();
+    }
 
- public void Seek(TimeSpan position)
- {
- if (_player.PlaybackSession != null)
- {
- _player.PlaybackSession.Position = position;
- }
- }
+    public void Seek(TimeSpan position)
+    {
+        if (_player.PlaybackSession != null)
+        {
+            _player.PlaybackSession.Position = position;
+        }
+    }
 
- public void Dispose()
- {
- // µ¥ÀıÍ¨³£²»ĞèÒª±»ÊÍ·Å£¬³ı·Ç³ÌĞòÍË³ö»òÃ÷È·ĞèÒªÇåÀí
- try
- {
- _player?.Pause();
- _player?.Dispose();
- }
- catch
- {
- }
- }
- }
+    public void Dispose()
+    {
+        // å•ä¾‹é€šå¸¸ä¸éœ€è¦è¢«é‡Šæ”¾ï¼Œé™¤éç¨‹åºé€€å‡ºæˆ–æ˜ç¡®éœ€è¦æ¸…ç†
+        try
+        {
+            _player?.Pause();
+            _player?.Dispose();
+        }
+        catch
+        {
+        }
+    }
 }

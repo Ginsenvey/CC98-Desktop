@@ -1,45 +1,20 @@
-﻿using CC98.Kernel.ApiScope;
-using CC98.Kernel.Network;
-using CC98.Objects;
-using CC98.Services;
+﻿using CC98.Objects;
 using CC98.Services.Extensions;
-using ColorCode.Compilation.Languages;
-using FluentIcons.Common;
-using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml.Hosting;
-using Microsoft.UI.Xaml.Media.Animation;
-using Microsoft.UI.Xaml.Media.Imaging;
-using Microsoft.Windows.AppNotifications;
-using Microsoft.Windows.AppNotifications.Builder;
-using Microsoft.Windows.Security.AccessControl;
-
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.IO;
 using System.Linq;
-using System.Net;
 using System.Net.Http;
-using System.Net.Http.Headers;
 using System.Net.Http.Json;
-using System.Net.Mime;
 using System.Text;
-using System.Text.Encodings.Web;
 using System.Text.Json;
-using System.Text.Json.Serialization;
-using System.Text.Json.Serialization.Metadata;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
-using Windows.Graphics.Imaging;
-using Windows.Media.AppBroadcasting;
-using Windows.Media.Core;
-using Windows.Media.Protection.PlayReady;
-using Windows.Security.Credentials;
 using Windows.Storage;
 using Windows.Storage.Streams;
-using static CC98.Kernel.ApiScope.ApiEndpoints;
+
 namespace CC98.Kernel;
 
 /// <summary>
@@ -54,7 +29,7 @@ public static class RequestSender
     {
         try
         {
-            var res = await LoginService.vpn.GetAsync(endpoint);
+            var res = await LoginService.Vpn.GetAsync(endpoint);
             return await Deserialize<T>(res);
         }
         catch (HttpRequestException ex)
@@ -83,7 +58,7 @@ public static class RequestSender
     {
         try
         {
-            var res = await LoginService.vpn.PutAsync(endpoint, content);
+            var res = await LoginService.Vpn.PutAsync(endpoint, content);
             var json = await res.Content.ReadAsStringAsync();
             return res.IsSuccessStatusCode ?
                 ApiResponse.Success(json) :
@@ -113,7 +88,7 @@ public static class RequestSender
     {
         try
         {
-            var res = await LoginService.vpn.DeleteAsync(endpoint);
+            var res = await LoginService.Vpn.DeleteAsync(endpoint);
             var json = await res.Content.ReadAsStringAsync();
             return res.IsSuccessStatusCode ?
                 ApiResponse.Success(json) :
@@ -147,7 +122,7 @@ public static class RequestSender
     {
         try
         {
-            var res = await LoginService.vpn.PostAsync(endpoint, content);
+            var res = await LoginService.Vpn.PostAsync(endpoint, content);
             return await Deserialize<T>(res);
         }
         catch (HttpRequestException ex)
@@ -178,7 +153,7 @@ public static class RequestSender
 
         try
         {
-            var obj = await res.Content.ReadFromJsonAsync(typeof(T), CC98JsonContext.Default, cancellationToken);
+            var obj = await res.Content.ReadFromJsonAsync(typeof(T), Cc98JsonContext.Default, cancellationToken);
             return ApiResponse<T>.Success((T?)obj!);
         }
         catch (JsonException ex)
@@ -193,14 +168,14 @@ public static class RequestSender
    
     public static async Task<string> SendVoteResult(string id, List<int> list)
     {
-        string url = $"https://api.cc98.org/topic/{id}/vote";
+        var url = $"https://api.cc98.org/topic/{id}/vote";
         var post = new Dictionary<string, object>()
             {
                 {"items",list}
             };
-        string post_text = JsonSerialize.Serialize(post);
-        var request_body = new StringContent(post_text, Encoding.UTF8, "application/json");
-        var r = await LoginService.vpn.PostAsync(url, request_body);
+        var postText = JsonSerialize.Serialize(post);
+        var requestBody = new StringContent(postText, Encoding.UTF8, "application/json");
+        var r = await LoginService.Vpn.PostAsync(url, requestBody);
         if (r.IsSuccessStatusCode)
         {
             return "1";
@@ -215,7 +190,7 @@ public static class RequestSender
     public static async Task<ApiResponse<string>> GetBoardTags(string bid)
     {
         List<string> tags = new();
-        string url = $"https://api.cc98.org/board/{bid}/tag";
+        var url = $"https://api.cc98.org/board/{bid}/tag";
         return await Fetch<string>(url);
     }
 }
@@ -250,10 +225,10 @@ public static class ValidationHelper
         {
             if (token != null)
             {
-                var _token = token.ToString();
-                if (!string.IsNullOrEmpty(_token))
+                var token = token.ToString();
+                if (!string.IsNullOrEmpty(token))
                 {
-                    return _token;
+                    return token;
                 }
             }
         }
@@ -268,10 +243,10 @@ public static class ValidationHelper
         {
             if (value != null)
             {
-                var _value = value.ToString();
-                if (_value != null)
+                var value = value.ToString();
+                if (value != null)
                 {
-                    return _value;
+                    return value;
                 }
             }
         }
@@ -280,7 +255,7 @@ public static class ValidationHelper
     public static int GetKeyAsInt(Dictionary<string, object> dic, string key)//值不可为"0".
     {
         if (dic == null) return 0;
-        if (dic.TryGetValue(key, out var _value) && _value != null)
+        if (dic.TryGetValue(key, out var value) && value != null)
         {
             if (_value is int value)
             {
@@ -294,7 +269,7 @@ public static class ValidationHelper
             {
                 return (int)d;
             }
-            if (_value is string s && int.TryParse(s, out int result))
+            if (_value is string s && int.TryParse(s, out var result))
             {
                 return result;
             }
@@ -306,9 +281,9 @@ public static class ValidationHelper
         if (collection.AllKeys.Contains(key))
         {
             var value = collection[key];
-            if (value is string _value)
+            if (value is string value)
             {
-                return _value;
+                return value;
             }
         }
         return "0";
@@ -319,17 +294,17 @@ public static class ValidationHelper
 
 public static class UbbToMd
 {
-    public static string Convert(string ubbText, bool IsImageVisible, bool escapeMarkdown = false)
+    public static string Convert(string ubbText, bool isImageVisible, bool escapeMarkdown = false)
     {
         var text = Preprocess(ubbText);
         // 处理块级元素（优先级从高到低）
         text = ConvertCodeBlocks(text);
-        text = ConvertUBBTable(text);
+        text = ConvertUbbTable(text);
         text = ConvertQuotes(text);
         text = ConvertLists(text);
 
         // 处理行内元素
-        text = ConvertImages(text, IsImageVisible);
+        text = ConvertImages(text, isImageVisible);
         text = ConvertLinks(text);
         text = ConvertEmoji(text);
         text = ConvertColor(text);
@@ -356,7 +331,7 @@ public static class UbbToMd
             m => $"```\n{m.Groups[1].Value.Trim()}\n```",
             RegexOptions.Singleline | RegexOptions.IgnoreCase);
     }
-    public static string ConvertUBBTable(string input)
+    public static string ConvertUbbTable(string input)
     {
         // 匹配UBB表格标签
         var tableRegex = new Regex(@"\[table\](.*?)\[/table\]", RegexOptions.Singleline | RegexOptions.IgnoreCase);
@@ -365,21 +340,21 @@ public static class UbbToMd
 
     private static string ConvertTable(Match tableMatch)
     {
-        string tableContent = tableMatch.Groups[1].Value;
+        var tableContent = tableMatch.Groups[1].Value;
         var rowRegex = new Regex(@"\[tr\](.*?)\[/tr\]", RegexOptions.Singleline | RegexOptions.IgnoreCase);
         var rows = new List<List<string>>();
 
         // 提取所有行
         foreach (Match rowMatch in rowRegex.Matches(tableContent))
         {
-            string rowContent = rowMatch.Groups[1].Value;
+            var rowContent = rowMatch.Groups[1].Value;
             var cellRegex = new Regex(@"\[(th|td)\](.*?)\[/\1\]", RegexOptions.Singleline | RegexOptions.IgnoreCase);
             var rowCells = new List<string>();
 
             // 提取行内所有单元格
             foreach (Match cellMatch in cellRegex.Matches(rowContent))
             {
-                string cellValue = cellMatch.Groups[2].Value;
+                var cellValue = cellMatch.Groups[2].Value;
                 // 转义Markdown特殊字符 | 和换行符
                 cellValue = cellValue.Replace("|", "\\|").Replace("\r\n", " ").Replace("\n", " ");
                 rowCells.Add(cellValue);
@@ -390,7 +365,7 @@ public static class UbbToMd
         if (rows.Count == 0) return string.Empty;
 
         // 确定最大列数
-        int maxCols = rows.Max(row => row.Count);
+        var maxCols = rows.Max(row => row.Count);
         if (maxCols == 0) return string.Empty;
 
         // 补齐空单元格
@@ -404,7 +379,7 @@ public static class UbbToMd
 
         // 构建Markdown表格
         var markdown = new StringBuilder();
-        for (int i = 0; i < rows.Count; i++)
+        for (var i = 0; i < rows.Count; i++)
         {
             markdown.Append("| ");
             markdown.Append(string.Join(" | ", rows[i]));
@@ -414,7 +389,7 @@ public static class UbbToMd
             if (i == 0)
             {
                 markdown.Append("| ");
-                for (int j = 0; j < maxCols; j++)
+                for (var j = 0; j < maxCols; j++)
                 {
                     markdown.Append("---");
                     if (j < maxCols - 1) markdown.Append(" | ");
@@ -428,23 +403,23 @@ public static class UbbToMd
     private static string ConvertQuotes(string input)
     {
 
-        string pattern = @"(\[quote\])|(\[/quote\])";
+        var pattern = @"(\[quote\])|(\[/quote\])";
 
         // 使用栈来处理嵌套层级。实际上栈不起作用，只是为了借用栈的思想。
 
-        StringBuilder output = new StringBuilder();
-        int currentLevel = 0;
+        var output = new StringBuilder();
+        var currentLevel = 0;
 
         // 当前处理的文本
-        int lastIndex = 0;
+        var lastIndex = 0;
 
         // 正则匹配标签并进行替换
         foreach (Match match in Regex.Matches(input, pattern))
         {
             // 获取标签的开始位置
-            int matchStart = match.Index;
+            var matchStart = match.Index;
             // 获取标签的结束位置
-            int matchEnd = match.Index + match.Length;
+            var matchEnd = match.Index + match.Length;
 
             // 先处理标签之前的文本
 
@@ -515,10 +490,10 @@ public static class UbbToMd
     }
     private static string ConvertColor(string input)
     {
-        string pattern = @"\[color=[^\]]*\](.*?)\[/color\]";
+        var pattern = @"\[color=[^\]]*\](.*?)\[/color\]";
 
         // 循环处理，逐层去除嵌套的 color 标签
-        string result = input;
+        var result = input;
         while (Regex.IsMatch(result, pattern))
         {
             result = Regex.Replace(result, pattern, "$1");
@@ -560,26 +535,26 @@ public static class UbbToMd
 
     private static string ConvertTrimTextStyles(string input)
     {
-        var TrimList = new List<KeyValuePair<string, string>>()
+        var trimList = new List<KeyValuePair<string, string>>()
             {
-                new KeyValuePair<string, string>(@"\[b\](.*?)\[/b\]","**"),
-                new KeyValuePair<string, string>(@"\[i\](.*?)\[/i\]","*"),
-                new KeyValuePair<string, string>(@"\[u\](.*?)\[/u\]",""),
-                new KeyValuePair<string, string>(@"\[del\](.*?)\[/del\]","~~")
+                new(@"\[b\](.*?)\[/b\]","**"),
+                new(@"\[i\](.*?)\[/i\]","*"),
+                new(@"\[u\](.*?)\[/u\]",""),
+                new(@"\[del\](.*?)\[/del\]","~~")
             };
-        foreach (var kvp in TrimList)
+        foreach (var kvp in trimList)
         {
             input = Regex.Replace(input, kvp.Key, match =>
             {
-                string content = match.Groups[1].Value;
+                var content = match.Groups[1].Value;
                 // 分割内容为多个段落    
-                string[] paragraphs = content.Split(new[] { "  \n" }, StringSplitOptions.None);
+                var paragraphs = content.Split(new[] { "  \n" }, StringSplitOptions.None);
 
                 // 为每个段落单独添加加粗标记
-                for (int i = 0; i < paragraphs.Length; i++)
+                for (var i = 0; i < paragraphs.Length; i++)
                 {
                     // 移除每段前后的空白，但保留内部格式
-                    string trimmed = paragraphs[i].Trim();
+                    var trimmed = paragraphs[i].Trim();
                     if (!string.IsNullOrEmpty(trimmed))
                     {
                         paragraphs[i] = $"{kvp.Value}{trimmed}{kvp.Value}";
@@ -652,66 +627,66 @@ public static class LinkAnalyzer
             if (link.Contains("user/name"))
             {
 
-                string pattern = @"https:\/\/api\.cc98\.org\/user\/name\/([^\/\s]+)";
-                MatchCollection matches = Regex.Matches(link, pattern);
+                var pattern = @"https:\/\/api\.cc98\.org\/user\/name\/([^\/\s]+)";
+                var matches = Regex.Matches(link, pattern);
                 if (matches.Count == 1)
                 {
-                    string username = matches[0].Groups[1].Value;
-                    return new KeyValuePair<string, string>("user", username);
+                    var username = matches[0].Groups[1].Value;
+                    return new("user", username);
                 }
                 else
                 {
-                    return new KeyValuePair<string, string>("null", link);
+                    return new("null", link);
                 }
 
             }
             else if (link.Contains("/topic/") && (!link.Contains("#")))
             {
-                string pattern = @"\/topic\/([^\/\s]+)";
-                MatchCollection matches = Regex.Matches(link, pattern);
+                var pattern = @"\/topic\/([^\/\s]+)";
+                var matches = Regex.Matches(link, pattern);
                 if (matches.Count == 1)
                 {
-                    string pid = matches[0].Groups[1].Value;
-                    return new KeyValuePair<string, string>("topic", pid);
+                    var pid = matches[0].Groups[1].Value;
+                    return new("topic", pid);
                 }
                 else
                 {
-                    return new KeyValuePair<string, string>("null", link);
+                    return new("null", link);
                 }
             }
             else if (link.Contains("#"))
             {
-                Match match = Regex.Match(link, @"/topic/(\d{7})/(\d+)#(\d+)");
+                var match = Regex.Match(link, @"/topic/(\d{7})/(\d+)#(\d+)");
                 if (match.Success)
                 {
-                    string numberAfterHash = match.Groups[1].Value;
-                    return new KeyValuePair<string, string>("anchor", link);//返回索引楼层
+                    var numberAfterHash = match.Groups[1].Value;
+                    return new("anchor", link);//返回索引楼层
                 }
-                return new KeyValuePair<string, string>("null", link);
+                return new("null", link);
             }
 
             else if (link.Contains("https://www.bilibili.com/video"))
             {
-                return new KeyValuePair<string, string>("backlink", "bili");
+                return new("backlink", "bili");
             }
             else if (link.Contains("board"))
             {
-                Match match = Regex.Match(link, @"\/board\/(\d{2,3})");
+                var match = Regex.Match(link, @"\/board\/(\d{2,3})");
                 if (match.Success)
                 {
-                    string board_id = match.Groups[1].Value;
-                    return new KeyValuePair<string, string>("board", board_id);
+                    var boardId = match.Groups[1].Value;
+                    return new("board", boardId);
                 }
-                return new KeyValuePair<string, string>("null", link);
+                return new("null", link);
             }
             else
             {
-                return new KeyValuePair<string, string>("null", link);
+                return new("null", link);
             }
         }
         else
         {
-            return new KeyValuePair<string, string>("null", link);
+            return new("null", link);
         }
 
     }

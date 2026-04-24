@@ -3,7 +3,7 @@ public enum NetworkStatus
 {
     InCampus = 0,                   //在校园网内
     NotInCampus = 1,
-    ByVPN = 2,                      //使用WebVPN连接到内网
+    ByVpn = 2,                      //使用WebVPN连接到内网
     TicketMissing = 3,              // Ticket令牌缺失
     TicketParseFailed = 4,          // Ticket解析失败
     CredentialsError = 5,           // 凭据错误或VPN欠费
@@ -16,7 +16,7 @@ public enum NetworkStatus
 }
 
 
-public enum VPNLoginStatus
+public enum VpnLoginStatus
 {
     Success = 0,
     NeedCaptcha=1,        //欠费或凭据错误
