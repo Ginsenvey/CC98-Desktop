@@ -1,14 +1,4 @@
-﻿
-using CC98.Kernel;
-using CC98.Kernel.ApiScope;
-using CC98.Kernel.UserExperience;
-using CC98.Objects;
-using CC98.Services;
-using CC98.Services.Extensions;
-using DevWinUI;
-using Microsoft.UI.Xaml;
-using Microsoft.UI.Xaml.Controls;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Net.Http;
@@ -16,9 +6,14 @@ using System.Text;
 using System.Threading.Tasks;
 using Windows.Storage;
 using Windows.System;
+using CC98.Kernel;
+using CC98.Objects;
+using CC98.Services;
+using DevWinUI;
+using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
 
-
-namespace CC98;
+namespace CC98.Views;
 
 public sealed partial class Board : Page
 {
@@ -32,7 +27,7 @@ public sealed partial class Board : Page
     public BoardData BoardData = new() { BoardMasters = [],Id=0,BigPaper="",Description="", Name = "版面", TodayCount = 9898, TopicCount = 9898 };
     public Board()
     {
-        this.InitializeComponent();
+        InitializeComponent();
         LoadSet();
     }
 

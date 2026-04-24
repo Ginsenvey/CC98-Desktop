@@ -1,18 +1,18 @@
-﻿using CC98.Kernel;
+﻿using System;
+using System.Collections.Generic;
+using System.IO;
+using CC98.Controls.Primitives;
+using CC98.Kernel;
 using CC98.Objects;
 using CC98.Services;
-using CC98.Share.Controls.Primitives;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
-using System;
-using System.Collections.Generic;
-using System.IO;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
 
-namespace CC98;
+namespace CC98.Views;
 
 /// <summary>
 /// An empty window that can be used on its own or navigated to within a Frame.
@@ -29,22 +29,22 @@ public sealed partial class MediaViewer : Window
     public string ScaleText=>Scale.ToString("P0");
     public MediaViewer(ViewerNavigationInfo info)
     {
-        this.InitializeComponent();
+        InitializeComponent();
         //初始化环境参数
         _mediaType=info.Type;
         CurrentIndex = info.CurrentIndex;
         Pictures.AddRange(info.Urls);
         //初始化UI
-        this.Title = "资源预览";
-        this.ExtendsContentIntoTitleBar = true;
-        this.SetTitleBar(GridTitleBar);
+        Title = "资源预览";
+        ExtendsContentIntoTitleBar = true;
+        SetTitleBar(GridTitleBar);
         AppWindow.TitleBar.PreferredHeightOption = Microsoft.UI.Windowing.TitleBarHeightOption.Tall;
         var iconPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "cc98.ico");
         AppWindow.SetIcon(iconPath);
         AppWindow.SetTaskbarIcon(iconPath);
-        this.SystemBackdrop=new MicaBackdrop();
+        SystemBackdrop=new MicaBackdrop();
         Activated += MediaViewer_Activated;
-        this.Closed += MediaViewer_Closed;
+        Closed += MediaViewer_Closed;
     }
 
     private void LoadImage()
@@ -53,12 +53,12 @@ public sealed partial class MediaViewer : Window
         ImageTransform.Angle = CurrentAngle;
         Scale = 1.0f;
         ScaleImage();
-        this.InnerImage.Src = CurrentUrl;
+        InnerImage.Src = CurrentUrl;
         MediaInfo.Text = CurrentUrl;
         Posi.Text = $"{CurrentIndex + 1} / {Pictures.Count}";
     }
        
-    private async void MediaViewer_Activated(object sender, Microsoft.UI.Xaml.WindowActivatedEventArgs args)
+    private async void MediaViewer_Activated(object sender, WindowActivatedEventArgs args)
     {
         switch (_mediaType)
         {

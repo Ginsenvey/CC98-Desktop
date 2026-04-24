@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Page
-    x:Class="CC98.Game"
+    x:Class="CC98.Views.Game"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:local="using:CC98"
@@ -11,6 +11,8 @@
     xmlns:ic="using:FluentIcons.WinUI"
     xmlns:image="using:CC98.Controls"
     xmlns:obj="using:CC98.Objects"
+    xmlns:smartImage="using:CC98.Controls.SmartImage"
+    xmlns:infoFlower="using:CC98.Controls.InfoFlower"
     Background="{ThemeResource DesktopAcrylicTransparentBrush}">
 
     <Grid Padding="15" RowSpacing="15" ColumnSpacing="10">
@@ -149,7 +151,7 @@
                                 <Image Source="/Assets/Card.jpg" Width="175" Height="280" Stretch="UniformToFill"></Image>
                             </dev:FlipSide.Side1>
                             <dev:FlipSide.Side2>
-                                <image:SmartImage Source="{x:Bind ImageUri}"  Width="175" Height="280" ToolTipService.ToolTip="{x:Bind Name}"></image:SmartImage>
+                                <smartImage:SmartImage Source="{x:Bind ImageUri}"  Width="175" Height="280" ToolTipService.ToolTip="{x:Bind Name}"></smartImage:SmartImage>
                             </dev:FlipSide.Side2>
                         </dev:FlipSide >
                     </DataTemplate>
@@ -157,7 +159,7 @@
             </ItemsRepeater>
         </ScrollViewer>
 
-        <local:InfoFlower x:Name="Flower" Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2" Grid.RowSpan="2" HorizontalAlignment="Center" VerticalAlignment="Bottom"></local:InfoFlower>
+        <infoFlower:InfoFlower x:Name="Flower" Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2" Grid.RowSpan="2" HorizontalAlignment="Center" VerticalAlignment="Bottom"></infoFlower:InfoFlower>
         
     </Grid>
 </Page>

@@ -1,13 +1,12 @@
-﻿using CC98.Objects;
+﻿using Windows.Storage;
+using CC98.Objects;
 using CC98.Services;
-using CC98.Services.Extensions;
 using Microsoft.UI.Xaml.Controls;
-using Windows.Storage;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
 
-namespace CC98;
+namespace CC98.Views;
 
 public sealed partial class Message : Page
 {
@@ -16,7 +15,7 @@ public sealed partial class Message : Page
     public GlobalService GlobalService =GlobalService.Instance;
     public Message()
     {
-        this.InitializeComponent();
+        InitializeComponent();
     }
     protected override void OnNavigatedTo(Microsoft.UI.Xaml.Navigation.NavigationEventArgs e)
     {

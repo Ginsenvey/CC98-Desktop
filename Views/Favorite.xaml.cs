@@ -1,19 +1,18 @@
-﻿using Microsoft.UI.Xaml;
-using Microsoft.UI.Xaml.Controls;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using Windows.Storage;
 using System.Threading.Tasks;
+using Windows.Storage;
 using CC98.Kernel;
 using CC98.Objects;
+using CC98.Services;
 using DevWinUI;
-using CC98.Kernel.ApiScope;
-using CC98.Services.Extensions;
+using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
 
-namespace CC98;
+namespace CC98.Views;
 
 /// <summary>
 /// An empty page that can be used on its own or navigated to within a Frame.
@@ -30,7 +29,7 @@ public sealed partial class Favorite : Page
     public PostOrder CurrenOrder = PostOrder.Mark;
     public Favorite()
     {
-        this.InitializeComponent();
+        InitializeComponent();
     }
         
         

@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace UbbRender.Tokenizer;
+namespace CC98.Controls.UbbTextBlock.Tokenizer;
 /// <summary>
 /// 将原始文本分解为一系列 Token 的词法分析器。
 /// </summary>

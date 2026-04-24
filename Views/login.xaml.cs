@@ -1,23 +1,22 @@
-﻿using CC98.Kernel;
-using CC98.Kernel.OpenID;
-using CC98.Services;
-using Microsoft.UI.Windowing;
-using Microsoft.UI.Xaml;
-using Microsoft.Windows.AppNotifications;
-using Microsoft.Windows.AppNotifications.Builder;
-using System;
+﻿using System;
 using System.Net;
 using System.Threading.Tasks;
 using Windows.Storage;
 using Windows.System;
-using CC98.Objects;
+using CC98.Kernel;
 using CC98.Kernel.Network;
+using CC98.Objects;
+using CC98.Services;
+using Microsoft.UI.Windowing;
+using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Media.Imaging;
+using Microsoft.Windows.AppNotifications;
+using Microsoft.Windows.AppNotifications.Builder;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
 
-namespace CC98;
+namespace CC98.Views;
 
 /// <summary>
 /// An empty window that can be used on its own or navigated to within a Frame.
@@ -27,11 +26,11 @@ public sealed partial class Login : Window
     public ApplicationDataContainer Set;
     public Login(int mode)
     {
-        this.InitializeComponent();
-        this.ExtendsContentIntoTitleBar= true;
-        this.SetTitleBar(GridTitleBar);
-        this.RootGrid.RequestedTheme = ElementTheme.Light;
-        AppWindow.TitleBar.PreferredHeightOption = Microsoft.UI.Windowing.TitleBarHeightOption.Standard;
+        InitializeComponent();
+        ExtendsContentIntoTitleBar= true;
+        SetTitleBar(GridTitleBar);
+        RootGrid.RequestedTheme = ElementTheme.Light;
+        AppWindow.TitleBar.PreferredHeightOption = TitleBarHeightOption.Standard;
         var presenter = OverlappedPresenter.Create();
         presenter.IsResizable = false;
         presenter.IsMaximizable = false;
@@ -46,7 +45,7 @@ public sealed partial class Login : Window
     public int Mode = 0;
     private void LoadParams(int mode)
     {
-        this.Mode = mode;
+        Mode = mode;
         if (mode == 0) { }//普通登录
         else if(mode==1)//用户已经登录过，只需要添加VPN凭据
         {
@@ -366,9 +365,9 @@ public sealed partial class Login : Window
         {
             App.Current.AppMainWindow= new MainWindow();
             App.Current.AppMainWindow .Activate();
-            this.DispatcherQueue.TryEnqueue(() =>
+            DispatcherQueue.TryEnqueue(() =>
             {
-                this.Close();
+                Close();
             });//尝试修复竞争条件
         }
     }
@@ -452,9 +451,9 @@ public sealed partial class Login : Window
         Set.Values["IsActive"] = "2";
         App.Current.AppMainWindow = new MainWindow();
         App.Current.AppMainWindow.Activate();
-        this.DispatcherQueue.TryEnqueue(() =>
+        DispatcherQueue.TryEnqueue(() =>
         {
-            this.Close();
+            Close();
         });
     }
 

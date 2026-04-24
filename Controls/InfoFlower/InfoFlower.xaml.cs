@@ -1,17 +1,18 @@
 ﻿using System;
+using CC98.Objects;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-using CC98.Objects;
+
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
 
-namespace CC98;
+namespace CC98.Controls.InfoFlower;
 
 public sealed partial class InfoFlower : UserControl
 {
     public InfoFlower()
     {
-        this.InitializeComponent();
+        InitializeComponent();
     }
     public string GetGlyphFromStatus(FlowStatus status)=>status switch
     {
@@ -24,8 +25,8 @@ public sealed partial class InfoFlower : UserControl
 
     public void Play(string glyph,string message)
     {
-        this.FlowIcon.Glyph = glyph;
-        this.FlowInfo.Text = message;
+        FlowIcon.Glyph = glyph;
+        FlowInfo.Text = message;
         FlowerTransform.TranslateY = 0;
         Flower.Opacity = 0;
         Flower.Visibility = Visibility.Visible;
@@ -34,8 +35,8 @@ public sealed partial class InfoFlower : UserControl
     }
     public void Play(FlowStatus status, string message)
     {
-        this.FlowIcon.Glyph = GetGlyphFromStatus(status);
-        this.FlowInfo.Text = message;
+        FlowIcon.Glyph = GetGlyphFromStatus(status);
+        FlowInfo.Text = message;
         FlowerTransform.TranslateY = 0;
         Flower.Opacity = 0;
         Flower.Visibility = Visibility.Visible;

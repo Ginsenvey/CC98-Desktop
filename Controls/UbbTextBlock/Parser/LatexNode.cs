@@ -1,4 +1,4 @@
-﻿namespace UbbRender.Parser;
+﻿namespace CC98.Controls.UbbTextBlock.Parser;
 /// <summary>
 /// 为行内数学公式提供特别的类型
 /// </summary>

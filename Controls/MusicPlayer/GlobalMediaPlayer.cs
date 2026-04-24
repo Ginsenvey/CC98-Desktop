@@ -3,7 +3,7 @@ using Windows.Foundation;
 using Windows.Media.Core;
 using Windows.Media.Playback;
 
-namespace CC98.Share.Controls;
+namespace CC98.Controls.MusicPlayer;
 
 // 全局单例封装 MediaPlayer，负责媒体源、播放控制和事件转发
 public sealed class GlobalMediaPlayer : IDisposable

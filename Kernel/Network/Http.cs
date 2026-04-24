@@ -23,7 +23,7 @@ public partial class VpnService
             throw new("WebVPN未连接");
         try
         {
-            var targeturl = LoginService.Vpn.IsVpnEnabled ? VpnService.ConvertUrl(url) : url;
+            var targeturl = LoginService.Vpn.IsVpnEnabled ? ConvertUrl(url) : url;
             using var res = await LoginService.Vpn.Client.GetAsync(targeturl, HttpCompletionOption.ResponseHeadersRead);
             if (res.IsSuccessStatusCode)
             {

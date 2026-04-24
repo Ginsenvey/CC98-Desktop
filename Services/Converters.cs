@@ -1,13 +1,13 @@
-﻿using CC98.Kernel;
+﻿using System;
+using Windows.UI;
+using CC98.Kernel;
 using FluentIcons.Common;
 using Microsoft.UI;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Data;
 using Microsoft.UI.Xaml.Media;
-using System;
-using Windows.UI;
 
-namespace CC98.Services.Converters;
+namespace CC98.Services;
 
 public partial class UbbTextConverter : IValueConverter
 {

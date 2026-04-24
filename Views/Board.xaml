@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Page
-    x:Class="CC98.Board"
+    x:Class="CC98.Views.Board"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:local="using:CC98"
@@ -11,6 +11,8 @@
     xmlns:ic="using:FluentIcons.WinUI"
     xmlns:ubb="using:UbbRender.Render"
     xmlns:obj="using:CC98.Objects"
+    xmlns:ubbTextBlock="using:CC98.Controls.UbbTextBlock"
+    xmlns:infoFlower="using:CC98.Controls.InfoFlower"
     Background="{ThemeResource DesktopAcrylicTransparentBrush}">
     <Grid>
         <Grid.RowDefinitions>
@@ -45,7 +47,7 @@
                 </Grid>
 
                 <Border Padding="10,10,10,0" x:Name="BannerBox">
-                    <ubb:UbbTextBlock x:Name="Banner" UbbText="{x:Bind BoardData.BigPaper,Mode=OneWay}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" BoldFontFamily="{StaticResource HarmonySansBold}"/>
+                    <ubbTextBlock:UbbTextBlock x:Name="Banner" UbbText="{x:Bind BoardData.BigPaper,Mode=OneWay}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" BoldFontFamily="{StaticResource HarmonySansBold}"/>
                 </Border>
 
                 <SelectorBar>
@@ -117,6 +119,6 @@
             </AppBarButton>
 
         </CommandBar>
-        <local:InfoFlower Grid.Row="0" Grid.RowSpan="2" x:Name="Flower"  HorizontalAlignment="Center" VerticalAlignment="Bottom"></local:InfoFlower>
+        <infoFlower:InfoFlower Grid.Row="0" Grid.RowSpan="2" x:Name="Flower"  HorizontalAlignment="Center" VerticalAlignment="Bottom"></infoFlower:InfoFlower>
     </Grid>
 </Page>

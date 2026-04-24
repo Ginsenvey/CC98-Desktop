@@ -1,14 +1,13 @@
-﻿
-using CC98.Kernel.UserExperience;
+﻿using System;
+using CC98.Kernel;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
-using System;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
 
-namespace CC98.Controls;
+namespace CC98.Controls.SmartImage;
 
 public sealed partial class SmartImage : UserControl
 {
@@ -58,7 +57,7 @@ public sealed partial class SmartImage : UserControl
 
     public SmartImage()
     {
-        this.InitializeComponent();
+        InitializeComponent();
     }
 
     private static void OnSourceChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)

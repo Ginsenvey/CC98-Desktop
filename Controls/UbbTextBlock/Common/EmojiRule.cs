@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
 
-namespace UbbRender.Common;
+namespace CC98.Controls.UbbTextBlock.Common;
 /// <summary>
 /// 对于其他使用UBB的论坛，修改或添加表情规则请在此处进行。
 /// </summary>

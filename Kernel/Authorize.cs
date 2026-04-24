@@ -1,5 +1,4 @@
-﻿using CC98.Kernel.ApiScope;
-using CC98.Kernel.Network;
+﻿using CC98.Kernel.Network;
 using Windows.Storage;
 using System.Collections.Generic;
 using System.Net.Http;
@@ -105,7 +104,7 @@ public static class LoginService
         var rft = PasswordManager.RetrievePassword("Refresh");
         if (!string.IsNullOrEmpty(rft))
         {
-            var result = await LoginService.GetNewToken(rft, mode);
+            var result = await GetNewToken(rft, mode);
             if (result == null) return "0:请求失败";
             if (result.IsSucceeded)
             {
@@ -115,7 +114,7 @@ public static class LoginService
                     //密码登录使用不变刷新令牌
                     PasswordManager.SavePassword(result.RefreshToken, "Refresh");
                 }
-                LoginService.Vpn.Client.DefaultRequestHeaders.Authorization = new("Bearer", result.AccessToken);
+                Vpn.Client.DefaultRequestHeaders.Authorization = new("Bearer", result.AccessToken);
                 return "1";
 
             }

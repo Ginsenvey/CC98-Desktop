@@ -1,18 +1,17 @@
-﻿using Microsoft.UI.Xaml;
-using Microsoft.UI.Xaml.Controls;
-using System.Collections.ObjectModel;
-using Windows.Storage;
+﻿using System.Collections.ObjectModel;
 using System.Threading.Tasks;
+using Windows.Storage;
 using CC98.Kernel;
-using CC98.Kernel.ApiScope;
-using DevWinUI;
-using CC98.Services.Extensions;
 using CC98.Objects;
+using CC98.Services;
+using DevWinUI;
+using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
 
-namespace CC98;
+namespace CC98.Views;
 
 /// <summary>
 /// An empty page that can be used on its own or navigated to within a Frame.
@@ -24,7 +23,7 @@ public sealed partial class Section : Page
     public BoardSectionManager Manager = BoardSectionManager.Instance;
     public Section()
     {
-        this.InitializeComponent();
+        InitializeComponent();
         InitializeBoardSectionsAsync();
         LoadSet();
     }

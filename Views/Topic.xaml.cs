@@ -1,22 +1,4 @@
-﻿using CC98.Kernel;
-using CC98.Kernel.ApiScope;
-using CC98.Kernel.Network;
-using CC98.Kernel.UserExperience;
-using CC98.Objects;
-using CC98.Services;
-using CC98.Services.Extensions;
-using CC98.Share.Controls;
-using CC98.Share.Controls.Primitives;
-using CC98.Share.Extensions;
-
-using DevWinUI;
-
-using Microsoft.UI.Xaml;
-using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml.Input;
-using Microsoft.UI.Xaml.Navigation;
-
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
@@ -26,15 +8,24 @@ using System.Net.Http;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-
-using UbbRender.Common;
-using UbbRender.Parser;
-using UbbRender.Render;
-
 using Windows.ApplicationModel.DataTransfer;
 using Windows.Storage;
+using CC98.Controls.MusicPlayer;
+using CC98.Controls.Primitives;
+using CC98.Controls.UbbTextBlock;
+using CC98.Controls.UbbTextBlock.Common.Events;
+using CC98.Controls.UbbTextBlock.Parser;
+using CC98.Kernel;
+using CC98.Kernel.Network;
+using CC98.Objects;
+using CC98.Services;
+using DevWinUI;
+using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Input;
+using Microsoft.UI.Xaml.Navigation;
 
-namespace CC98;
+namespace CC98.Views;
 
 public sealed partial class Topic : Page
 {
@@ -51,10 +42,10 @@ public sealed partial class Topic : Page
     public GlobalService GlobalService = GlobalService.Instance;
     public Topic()
     {
-        this.InitializeComponent();
+        InitializeComponent();
         LoadSet();
         LoadFavorites();
-        this.Unloaded += Topic_Unloaded;
+        Unloaded += Topic_Unloaded;
     }
 
     private void Topic_Unloaded(object sender, RoutedEventArgs e)
@@ -95,7 +86,7 @@ public sealed partial class Topic : Page
         }
 
     }
-    protected override async void OnNavigatedTo(Microsoft.UI.Xaml.Navigation.NavigationEventArgs e)
+    protected override async void OnNavigatedTo(NavigationEventArgs e)
     {
         base.OnNavigatedTo(e);
 
@@ -352,7 +343,7 @@ public sealed partial class Topic : Page
         var info = new ProfileNavigationInfo { IsMe = t.IsMe, UserId = t.UserId ?? 0 };
         Frame.Navigate(typeof(Profile), info);
     }
-    private async void Pager_SelectedIndexChanged(DevWinUI.PagerControl sender, DevWinUI.PagerControlSelectedIndexChangedEventArgs args)
+    private async void Pager_SelectedIndexChanged(PagerControl sender, PagerControlSelectedIndexChangedEventArgs args)
     {
         //此方法在页面加载完成后会被调用一次，Pager的SelectedIndex会被设置为0。
         //所以页面构造函数处不需要单独调用LoadReply方法。
@@ -531,7 +522,7 @@ public sealed partial class Topic : Page
                     {
 
                         var userProfile = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
-                        var downloadsFolder = System.IO.Path.Combine(userProfile, "Downloads");
+                        var downloadsFolder = Path.Combine(userProfile, "Downloads");
                         var downloadLocation = "";
                         var filepattern = @"(?<=https://file\.cc98\.org/v4-upload/d/\d{4}/\d{4}/)[^/]+";
                         var fileregex = new Regex(filepattern);
@@ -542,7 +533,7 @@ public sealed partial class Topic : Page
                         }
                         else
                         {
-                            downloadLocation = System.IO.Path.Combine(downloadsFolder, "CC98_Download_" + DateTime.Now.ToString("yyyyMMdd_HHmmss") + ".pdf");
+                            downloadLocation = Path.Combine(downloadsFolder, "CC98_Download_" + DateTime.Now.ToString("yyyyMMdd_HHmmss") + ".pdf");
                         }
                         try
                         {

@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Page
-    x:Class="CC98.Chat"
+    x:Class="CC98.Views.Chat"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:local="using:CC98"
@@ -11,6 +11,9 @@
     xmlns:obj="using:CC98.Objects"
     xmlns:ubb="using:UbbRender.Render"
     xmlns:share="using:CC98.Share.Controls"
+    xmlns:picture="using:CC98.Controls.Picture"
+    xmlns:ubbTextBlock="using:CC98.Controls.UbbTextBlock"
+    xmlns:infoFlower="using:CC98.Controls.InfoFlower"
     Background="{ThemeResource DesktopAcrylicTransparentBrush}">
    
     <Grid>
@@ -29,7 +32,7 @@
                                     <ColumnDefinition Width="*"></ColumnDefinition>
                                 </Grid.ColumnDefinitions>
                                 <Border Grid.Column="0" Grid.Row="0" Grid.RowSpan="2" CornerRadius="5" Height="45" Width="45">
-                                    <share:Picture Src="{x:Bind PortraitUrl}" Stretch="UniformToFill" LoadImageCallback="{StaticResource PortraitLoader}"/>
+                                    <picture:Picture Src="{x:Bind PortraitUrl}" Stretch="UniformToFill" LoadImageCallback="{StaticResource PortraitLoader}"/>
                                 </Border>
                                 <TextBlock Text="{x:Bind Name}" Grid.Column="1" Grid.Row="0" FontSize="15"></TextBlock>
                                 <TextBlock Text="{x:Bind LastContent}" Grid.Column="1" Grid.Row="1" FontSize="13" Foreground="{ThemeResource TextFillColorSecondaryBrush}" MaxLines="1"></TextBlock>
@@ -62,7 +65,7 @@
                                 <DataTemplate x:DataType="obj:ChatMessage">
                                     <Border Margin="0,10" HorizontalAlignment="{x:Bind IsMe,Converter={StaticResource AlignmentConverter}}" BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}" Background="Transparent" BorderThickness="1" CornerRadius="5" Padding="10" Height="Auto" MaxWidth="350" MinWidth="200">
                                         <StackPanel>
-                                            <ubb:UbbTextBlock UbbText="{x:Bind Content}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" QuoteBackground="{ThemeResource QuoteBackgroundBrush}" BoldFontFamily="{StaticResource HarmonySansBold}"></ubb:UbbTextBlock>
+                                            <ubbTextBlock:UbbTextBlock UbbText="{x:Bind Content}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" QuoteBackground="{ThemeResource QuoteBackgroundBrush}" BoldFontFamily="{StaticResource HarmonySansBold}"></ubbTextBlock:UbbTextBlock>
                                             <TextBlock Text="{x:Bind Time}" Style="{ThemeResource CaptionTextBlockStyle}" HorizontalAlignment="Right" FontSize="10"/>
                                         </StackPanel>
                                     </Border>
@@ -82,7 +85,7 @@
                 </Grid>
             </SplitView.Content>
         </SplitView>
-        <local:InfoFlower x:Name="Flower"  HorizontalAlignment="Center" VerticalAlignment="Bottom"></local:InfoFlower>
+        <infoFlower:InfoFlower x:Name="Flower"  HorizontalAlignment="Center" VerticalAlignment="Bottom"></infoFlower:InfoFlower>
     </Grid>
     
 </Page>

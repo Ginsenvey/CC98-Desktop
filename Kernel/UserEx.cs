@@ -1,6 +1,4 @@
-﻿using FluentIcons.Common;
-using Microsoft.UI.Xaml.Media.Imaging;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Runtime.InteropServices;
@@ -8,16 +6,18 @@ using System.Runtime.InteropServices.WindowsRuntime;
 using System.Threading.Tasks;
 using Windows.Storage;
 using Windows.Storage.Streams;
+using FluentIcons.Common;
+using Microsoft.UI.Xaml.Media.Imaging;
 
-namespace CC98.Kernel.UserExperience; //用户体验模型，包括:版面图标；语义搜索；图像解析。
+namespace CC98.Kernel; //用户体验模型，包括:版面图标；语义搜索；图像解析。
 
 public static class BoardIcon
 {
-    public static FluentIcons.Common.Symbol GetSymbol(int id, string name)
+    public static Symbol GetSymbol(int id, string name)
     {
-        if (BoardIcon.Icons.ContainsKey(id))
+        if (Icons.ContainsKey(id))
         {
-            return BoardIcon.Icons[id];
+            return Icons[id];
         }
         else
         {
@@ -25,18 +25,18 @@ public static class BoardIcon
             {
                 if (name.Contains("答疑"))
                 {
-                    return FluentIcons.Common.Symbol.Teaching;
+                    return Symbol.Teaching;
                 }
                 else if (name.Contains("院"))
                 {
-                    return FluentIcons.Common.Symbol.ChartPerson;
+                    return Symbol.ChartPerson;
                 }
 
             }
-            return FluentIcons.Common.Symbol.Tag;
+            return Symbol.Tag;
         }
     }
-    private static readonly Dictionary<int, FluentIcons.Common.Symbol> Icons = new()
+    private static readonly Dictionary<int, Symbol> Icons = new()
     {
         {758,Symbol.LeafOne},
         {182,Symbol.Heart },
@@ -177,9 +177,9 @@ public static class UrlEx
         if (path.StartsWith("ms-appx:///") || path.StartsWith("ms-appdata:///"))
         {
             // 应用资源路径
-            return new BitmapImage(new(await UrlEx.LocateEmoji(path)));
+            return new BitmapImage(new(await LocateEmoji(path)));
         }
-        else if (System.IO.File.Exists(path))
+        else if (File.Exists(path))
         {
             // 本地文件路径
             var file = await StorageFile.GetFileFromPathAsync(path);

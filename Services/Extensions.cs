@@ -1,13 +1,13 @@
-﻿using CC98.Objects;
-using Microsoft.UI.Dispatching;
-using Microsoft.UI.Xaml.Navigation;
-using System;
+﻿using System;
 using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
+using CC98.Objects;
+using Microsoft.UI.Dispatching;
+using Microsoft.UI.Xaml.Navigation;
 
-namespace CC98.Services.Extensions;
+namespace CC98.Services;
 
 
 public static class NavigationEventArgsExtensions

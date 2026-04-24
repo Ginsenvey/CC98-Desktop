@@ -1,7 +1,6 @@
-﻿using UbbRender.Parser;
-using UbbRender.Tokenizer;
+﻿using CC98.Controls.UbbTextBlock.Tokenizer;
 
-namespace UbbRender.Common;
+namespace CC98.Controls.UbbTextBlock.Parser;
 
 
 /// <summary>

@@ -1,9 +1,14 @@
-﻿using CC98.Kernel;
-using CC98.Kernel.ApiScope;
-using CC98.Kernel.UserExperience;
+﻿using System;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.IO;
+using System.Linq;
+using System.Net;
+using System.Threading.Tasks;
+using Windows.Storage;
+using CC98.Kernel;
 using CC98.Objects;
 using CC98.Services;
-using CC98.Services.Extensions;
 using DevWinUI;
 using Microsoft.UI.Composition.SystemBackdrops;
 using Microsoft.UI.Windowing;
@@ -17,19 +22,11 @@ using Microsoft.Windows.AppLifecycle;
 using Microsoft.Windows.AppNotifications;
 using Microsoft.Windows.AppNotifications.Builder;
 using Microsoft.Windows.BadgeNotifications;
-using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.IO;
-using System.Linq;
-using System.Net;
-using System.Threading.Tasks;
-using Windows.Storage;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
 
-namespace CC98;
+namespace CC98.Views;
 
 /// <summary>
 /// An empty window that can be used on its own or navigated to within a Frame.
@@ -46,29 +43,29 @@ public sealed partial class MainWindow : Window
     public int UnreadCount { get; set; }
     public MainWindow()
     {
-        this.InitializeComponent();
-        this.ExtendsContentIntoTitleBar = true;
-        this.SetTitleBar(UserArea);
+        InitializeComponent();
+        ExtendsContentIntoTitleBar = true;
+        SetTitleBar(UserArea);
         AppWindow.TitleBar.PreferredHeightOption = TitleBarHeightOption.Tall;
         var iconPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "cc98.ico");
         AppWindow.SetIcon(iconPath);
         AppWindow.SetTaskbarIcon(iconPath);
-        this.AppWindow.Changed += AppWindow_Changed; ;
+        AppWindow.Changed += AppWindow_Changed; ;
         LoadSettings();
         App.ThemeChanged += OnAppThemeChanged;
         Messenger.Instance.NavigationItemAdded += OnNavigationItemAdded;
         Surfing();
     }
 
-    private void AppWindow_Changed(Microsoft.UI.Windowing.AppWindow sender, Microsoft.UI.Windowing.AppWindowChangedEventArgs args)
+    private void AppWindow_Changed(AppWindow sender, AppWindowChangedEventArgs args)
     {
-        if (args.DidPresenterChange && this.AppWindow.Presenter is OverlappedPresenter presenter)
+        if (args.DidPresenterChange && AppWindow.Presenter is OverlappedPresenter presenter)
         {
             // 检查窗口是否最小化
             if (presenter.State == OverlappedPresenterState.Minimized)
             {
                 // 取消最小化到任务栏，改为隐藏到托盘
-                this.AppWindow.Hide();
+                AppWindow.Hide();
             }
         }
     }
@@ -271,7 +268,7 @@ public sealed partial class MainWindow : Window
     private  void LoadSettings()
     {
         var effect = ValidationHelper.GetValue(Set, "Effect");
-        this.SystemBackdrop = effect switch
+        SystemBackdrop = effect switch
         {
             "0" => new MicaSystemBackdrop(),
             "1" => new MicaSystemBackdrop(MicaKind.BaseAlt),
@@ -291,7 +288,7 @@ public sealed partial class MainWindow : Window
             
         if (ValidationHelper.GetValue(Set,"ThemePic")=="0")
         {
-            var themesPath = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Themes");
+            var themesPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Themes");
             var files = Directory.GetFiles(themesPath, "*.jpg", SearchOption.AllDirectories);
             var file = files[0];
             Set.Values["Themepic"]= file;
@@ -529,7 +526,7 @@ public sealed partial class MainWindow : Window
 
         
     //本方法只控制全局状态记忆类的参量，而不更改导航栈本身的导航参数
-    private void ContentFrame_Navigating(object sender, Microsoft.UI.Xaml.Navigation.NavigatingCancelEventArgs e)
+    private void ContentFrame_Navigating(object sender, NavigatingCancelEventArgs e)
     {
         if (ContentFrame.Content is not Page currentPage) return;
         var fromPage = currentPage.GetType();

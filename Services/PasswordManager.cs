@@ -155,11 +155,11 @@ public static class PasswordManager
     }
     public static void Logout()
     {
-        PasswordManager.ClearAllPasswords("Access");
-        PasswordManager.ClearAllPasswords("Refresh");
-        PasswordManager.ClearAllPasswords("Ticket");
-        PasswordManager.ClearAllPasswords("Route");
-        PasswordManager.ClearAllPasswords("VpnUserName");
-        PasswordManager.ClearAllPasswords("VpnPassWord");
+        ClearAllPasswords("Access");
+        ClearAllPasswords("Refresh");
+        ClearAllPasswords("Ticket");
+        ClearAllPasswords("Route");
+        ClearAllPasswords("VpnUserName");
+        ClearAllPasswords("VpnPassWord");
     }
 }

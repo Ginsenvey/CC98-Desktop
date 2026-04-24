@@ -1,4 +1,4 @@
-﻿namespace UbbRender.Parser;
+﻿namespace CC98.Controls.UbbTextBlock.Parser;
 
 /// <summary>
 /// @提及节点

@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace UbbRender.Parser;
+namespace CC98.Controls.UbbTextBlock.Parser;
 
 public class TagNode : UbbNode
 {

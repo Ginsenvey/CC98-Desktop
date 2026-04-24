@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Page
-    x:Class="CC98.Index"
+    x:Class="CC98.Views.Index"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:local="using:CC98"
@@ -11,7 +11,8 @@
     xmlns:ic="using:FluentIcons.WinUI"
     xmlns:obj="using:CC98.Objects"
     xmlns:tool="using:CommunityToolkit.WinUI.Controls"
-    
+    xmlns:infoFlower="using:CC98.Controls.InfoFlower"
+
     Background="{ThemeResource CardGradient1Brush}">
     <Page.Resources>
         <DataTemplate x:Key="Presenter" x:DataType="obj:IndexTopic">
@@ -137,6 +138,6 @@
                 </ListView>
             </TeachingTip.Content>
         </TeachingTip>
-        <local:InfoFlower x:Name="Flower" Grid.Row="0" Grid.RowSpan="3" HorizontalAlignment="Center" VerticalAlignment="Bottom"></local:InfoFlower>
+        <infoFlower:InfoFlower x:Name="Flower" Grid.Row="0" Grid.RowSpan="3" HorizontalAlignment="Center" VerticalAlignment="Bottom"></infoFlower:InfoFlower>
     </Grid>
 </Page>

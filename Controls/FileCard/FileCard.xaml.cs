@@ -1,14 +1,14 @@
-﻿using CC98.Share.Controls.Primitives;
+﻿using System;
+using System.IO;
+using CC98.Controls.Primitives;
+using CC98.Controls.UbbTextBlock.Common.Events;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-using System;
-using System.IO;
-using UbbRender.Common;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
 
-namespace CC98.Share.Controls;
+namespace CC98.Controls.FileCard;
 
 public sealed partial class FileCard : UserControl
 {

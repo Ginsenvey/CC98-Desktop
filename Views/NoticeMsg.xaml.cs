@@ -1,18 +1,15 @@
-﻿using CC98.Kernel;
-using CC98.Kernel.ApiScope;
-using CC98.Objects;
-using CC98.Services.Extensions;
-using DevWinUI;
-using Microsoft.UI.Xaml;
-using Microsoft.UI.Xaml.Controls;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
+using CC98.Kernel;
+using CC98.Objects;
+using CC98.Services;
+using DevWinUI;
+using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
 
-
-
-namespace CC98;
+namespace CC98.Views;
 
 public sealed partial class NoticePage : Page
 {

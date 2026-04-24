@@ -3,7 +3,7 @@ using System.Text.Json.Serialization;
 using CC98.Kernel;
 using CC98.Kernel.Network;
 using static CC98.Services.AppLog;
-using static IndexDataService;
+using static CC98.Services.IndexDataService;
 
 namespace CC98.Objects;
 

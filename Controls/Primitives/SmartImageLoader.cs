@@ -1,10 +1,11 @@
-﻿using CC98.Kernel.UserExperience;
-using Microsoft.UI.Xaml.Media.Imaging;
-using System;
+﻿using System;
 using System.Collections.Concurrent;
 using System.Threading.Tasks;
+using CC98.Controls.Picture;
+using CC98.Kernel;
+using Microsoft.UI.Xaml.Media.Imaging;
 
-namespace CC98.Share.Controls.Primitives;
+namespace CC98.Controls.Primitives;
 public class SmartImageLoader : IImageLoader
 {
     // 单例实例

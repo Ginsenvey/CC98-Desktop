@@ -1,15 +1,15 @@
-﻿using Microsoft.UI;
+﻿using System.Collections.Generic;
+using System.Text;
+using Windows.ApplicationModel.DataTransfer;
+using CC98.Controls.UbbTextBlock.Parser;
 using DevWinUI;
+using Microsoft.UI;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Documents;
 using Microsoft.UI.Xaml.Media;
-using System.Collections.Generic;
-using System.Text;
-using UbbRender.Parser;
-using UbbRender.Render;
-using Windows.ApplicationModel.DataTransfer;
-namespace UbbRender.Common;
+
+namespace CC98.Controls.UbbTextBlock.Common;
 public class RenderContext
 {
     public UbbTextBlock Control { get; set; }

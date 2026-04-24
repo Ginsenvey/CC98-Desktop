@@ -1,4 +1,4 @@
-﻿namespace CC98.Share.Controls.Primitives;
+﻿namespace CC98.Controls.Primitives;
 /// <summary>
 /// UBB 中媒体内容的类型
 /// </summary>

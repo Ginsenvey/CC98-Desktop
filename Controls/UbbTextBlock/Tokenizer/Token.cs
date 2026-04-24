@@ -1,4 +1,4 @@
-﻿namespace UbbRender.Tokenizer;
+﻿namespace CC98.Controls.UbbTextBlock.Tokenizer;
 
 public class Token(TokenType type, string value, int position)
 {

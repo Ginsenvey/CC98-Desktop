@@ -1,6 +1,4 @@
 ﻿using CC98.Objects;
-using CC98.Services.Extensions;
-
 using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
@@ -16,6 +14,7 @@ using System.Threading.Tasks;
 
 using Windows.Storage;
 using Windows.Storage.Streams;
+using CC98.Services;
 
 namespace CC98.Kernel;
 

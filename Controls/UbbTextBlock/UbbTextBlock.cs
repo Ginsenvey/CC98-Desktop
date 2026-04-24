@@ -1,15 +1,16 @@
-﻿using CC98.Share.Controls.Primitives;
+﻿using System;
+using System.Collections.Generic;
+using Windows.UI;
+using CC98.Controls.Primitives;
+using CC98.Controls.UbbTextBlock.Common;
+using CC98.Controls.UbbTextBlock.Common.Events;
+using CC98.Controls.UbbTextBlock.Parser;
 using Microsoft.UI;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
-using System;
-using System.Collections.Generic;
-using UbbRender.Common;
-using UbbRender.Parser;
-using Windows.UI;
 
-namespace UbbRender.Render;
+namespace CC98.Controls.UbbTextBlock;
 
 public sealed partial class UbbTextBlock : Control
 {
@@ -196,7 +197,7 @@ public sealed partial class UbbTextBlock : Control
 
     public UbbTextBlock()
     {
-        this.DefaultStyleKey = typeof(UbbTextBlock);
+        DefaultStyleKey = typeof(UbbTextBlock);
     }
     #region 事件
     public event EventHandler<MediaClickEventArgs> MediaClicked;
@@ -230,7 +231,7 @@ public sealed partial class UbbTextBlock : Control
 
         try
         {
-            _document =UbbRender.Common.Parser.Parse(UbbText);
+            _document =Parser.Parser.Parse(UbbText);
             Context = new()
             {
                 Control = this,

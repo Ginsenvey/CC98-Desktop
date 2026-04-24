@@ -1,4 +1,4 @@
-﻿namespace UbbRender.Tokenizer;
+﻿namespace CC98.Controls.UbbTextBlock.Tokenizer;
 /// <summary>
 /// 定义UBB语法的最小单元。
 /// </summary>

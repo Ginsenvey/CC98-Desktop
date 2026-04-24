@@ -1,6 +1,5 @@
 ﻿using CC98.Kernel;
 using CC98.Kernel.Network;
-using CC98.Kernel.UserExperience;
 using CC98.Services;
 using DevWinUI;
 
@@ -40,7 +39,7 @@ public partial class App : Application
 
     private static AppLog _logger;
     public static AppLog Logger => _logger ?? throw new InvalidOperationException("Logger未初始化");
-    private DevWinUI.SystemTrayIcon? _trayIcon;
+    private SystemTrayIcon? _trayIcon;
 
     public static event Action<ElementTheme>? ThemeChanged;
 
@@ -50,7 +49,7 @@ public partial class App : Application
     }
     public App()
     {
-        this.InitializeComponent();
+        InitializeComponent();
     }
 
 
@@ -96,7 +95,7 @@ public partial class App : Application
         catch (Exception ex)
         {
             //弹出
-            System.Diagnostics.Debug.WriteLine(ex.Message);
+            Debug.WriteLine(ex.Message);
             throw;
         }
         AppDomain.CurrentDomain.UnhandledException += async (s, e) =>
@@ -111,7 +110,7 @@ public partial class App : Application
         try
         {
             //必须在构造函数前加上异常处理
-            AppMainWindow = new MainWindow();
+            AppMainWindow = new Views.MainWindow();
             AppMainWindow.Closed += Window_Closed;
             AppMainWindow.Activate();
             DisplayTrayIcon();
@@ -125,7 +124,7 @@ public partial class App : Application
 
     private void ActivateLogin(int mode)
     {
-        LoginPage = new Login(mode);
+        LoginPage = new Views.Login(mode);
         var hWnd = WinRT.Interop.WindowNative.GetWindowHandle(LoginPage);
         var windowStyle = Win32Interop.GetWindowLong(hWnd, Win32Interop.GwlStyle);
         Win32Interop.SetWindowLong(hWnd, Win32Interop.GwlStyle, windowStyle & ~Win32Interop.WsThickframe);
@@ -209,7 +208,7 @@ public partial class App : Application
         PasswordManager.SavePassword(result.AccessToken, "Access");
         PasswordManager.SavePassword(result.RefreshToken, "Refresh");
         Set.Values["IsActive"] = "1";
-        AppMainWindow = new MainWindow();
+        AppMainWindow = new Views.MainWindow();
         AppMainWindow.Activate();
     }
     #endregion

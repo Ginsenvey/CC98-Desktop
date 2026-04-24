@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Window
-    x:Class="CC98.MainWindow"
+    x:Class="CC98.Views.MainWindow"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:local="using:CC98"
@@ -12,6 +12,8 @@
     xmlns:ic="using:FluentIcons.WinUI"
     xmlns:obj="using:CC98.Objects"
     xmlns:share="using:CC98.Share.Controls"
+    xmlns:picture="using:CC98.Controls.Picture"
+    xmlns:infoFlower="using:CC98.Controls.InfoFlower"
     SystemBackdrop="{ThemeResource AcrylicBackgroundFillColorDefaultBackdrop}">
     
     <Grid x:Name="RootGrid" UseLayoutRounding="True">
@@ -54,7 +56,7 @@
                 </AnimatedIcon>
             </Button>
             <Button Grid.Column="5" HorizontalAlignment="Right" Width="30" Height="30" BorderThickness="0" Background="Transparent"  VerticalAlignment="Center" x:Name="Me" CornerRadius="9999" Padding="0" RenderTransformOrigin="0.5,0.5" PointerEntered="Me_PointerEntered" PointerExited="Me_PointerExited" PointerPressed="Me_PointerPressed" PointerReleased="Me_PointerReleased" PointerCanceled="Me_PointerCanceled" Click="Me_Click" >
-                <share:Picture x:Name="MyPicture" LoadImageCallback="{StaticResource PortraitLoader}"></share:Picture>
+                <picture:Picture x:Name="MyPicture" LoadImageCallback="{StaticResource PortraitLoader}"></picture:Picture>
                 <Button.RenderTransform>
                     <ScaleTransform ScaleX="1" ScaleY="1" x:Name="PortScaleTransform"></ScaleTransform>
                 </Button.RenderTransform>
@@ -118,6 +120,6 @@
             <Frame x:Name="ContentFrame" Navigating="ContentFrame_Navigating" ></Frame>
 
         </NavigationView>
-        <local:InfoFlower Grid.Row="0" Grid.RowSpan="3" x:Name="Flower"></local:InfoFlower>
+        <infoFlower:InfoFlower Grid.Row="0" Grid.RowSpan="3" x:Name="Flower"></infoFlower:InfoFlower>
     </Grid>
 </Window>

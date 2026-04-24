@@ -1,8 +1,8 @@
-﻿using CC98.Kernel;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 using Windows.Media.Core;
+using CC98.Kernel;
 
-namespace CC98.Share.Controls.Primitives;
+namespace CC98.Controls.Primitives;
 
 public class SmartMediaLoader : IMediaLoader
 {

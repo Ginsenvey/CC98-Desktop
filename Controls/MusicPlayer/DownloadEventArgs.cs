@@ -1,7 +1,8 @@
 ﻿// DownloadEventArgs.cs
+
 using System;
 
-namespace CC98.Share.Controls.Primitives;
+namespace CC98.Controls.MusicPlayer;
 
 public class DownloadEventArgs : EventArgs
 {

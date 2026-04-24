@@ -5,7 +5,9 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:tool="using:CommunityToolkit.WinUI.Controls"
     xmlns:pr="using:CC98.Share.Controls.Primitives"
-    xmlns:cv="using:CC98.Services.Converters">
+    xmlns:cv="using:CC98.Services.Converters"
+    xmlns:primitives="using:CC98.Controls.Primitives"
+    xmlns:services="using:CC98.Services">
     <Application.Resources>
         <ResourceDictionary >
 
@@ -69,15 +71,15 @@
             </Style>
             
             
-            <pr:SmartImageLoader x:Key="PortraitLoader" LowRes="True"></pr:SmartImageLoader>
-            <pr:SmartImageLoader x:Key="CustomPortraitLoader" LowRes="False"></pr:SmartImageLoader>
-            <cv:HexToBrushConverter x:Key="HexToColorBrush"/>
-            <cv:LikeToVariantConverter x:Key="LikeToVariantConverter"></cv:LikeToVariantConverter>
-            <cv:DisLikeToVariantConverter x:Key="DisLikeToVariantConverter"></cv:DisLikeToVariantConverter>
-            <cv:BoolToVariantConverter x:Key="BoolToVariantConverter"></cv:BoolToVariantConverter>
-            <cv:BooltoVisibilityConverter x:Key="BoolToVisibility"></cv:BooltoVisibilityConverter>
-            <cv:ReBooltoVisibilityConverter x:Key="ReBoolToVisibility"></cv:ReBooltoVisibilityConverter>
-            <cv:BoolToAlignmentConverter x:Key="AlignmentConverter"></cv:BoolToAlignmentConverter>
+            <primitives:SmartImageLoader x:Key="PortraitLoader" LowRes="True"></primitives:SmartImageLoader>
+            <primitives:SmartImageLoader x:Key="CustomPortraitLoader" LowRes="False"></primitives:SmartImageLoader>
+            <services:HexToBrushConverter x:Key="HexToColorBrush"/>
+            <services:LikeToVariantConverter x:Key="LikeToVariantConverter"></services:LikeToVariantConverter>
+            <services:DisLikeToVariantConverter x:Key="DisLikeToVariantConverter"></services:DisLikeToVariantConverter>
+            <services:BoolToVariantConverter x:Key="BoolToVariantConverter"></services:BoolToVariantConverter>
+            <services:BooltoVisibilityConverter x:Key="BoolToVisibility"></services:BooltoVisibilityConverter>
+            <services:ReBooltoVisibilityConverter x:Key="ReBoolToVisibility"></services:ReBooltoVisibilityConverter>
+            <services:BoolToAlignmentConverter x:Key="AlignmentConverter"></services:BoolToAlignmentConverter>
         </ResourceDictionary>
     </Application.Resources>
 </Application>

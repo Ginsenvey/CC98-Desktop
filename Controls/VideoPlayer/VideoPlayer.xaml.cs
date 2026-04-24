@@ -1,14 +1,14 @@
 ﻿// VideoPlayer.xaml.cs
 
-using CC98.Share.Controls.Primitives;
-using Microsoft.UI.Xaml;
-using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml.Media;
 using System;
 using System.Diagnostics;
 using System.Threading.Tasks;
-using CC98.Share.Extensions;
-namespace CC98.Share.Controls;
+using CC98.Controls.Primitives;
+using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Media;
+
+namespace CC98.Controls.VideoPlayer;
 
 public sealed partial class VideoPlayer : UserControl, IDisposable
 {
@@ -18,9 +18,9 @@ public sealed partial class VideoPlayer : UserControl, IDisposable
 
     public VideoPlayer()
     {
-        this.InitializeComponent();
-        this.Loaded += OnLoaded;
-        this.Unloaded += OnUnloaded;
+        InitializeComponent();
+        Loaded += OnLoaded;
+        Unloaded += OnUnloaded;
     }
 
     #region 依赖属性

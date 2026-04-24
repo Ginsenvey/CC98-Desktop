@@ -1,11 +1,10 @@
-﻿using CC98.Kernel.ApiScope;
-using Duende.IdentityModel.Client;
-using System;
+﻿using System;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
+using Duende.IdentityModel.Client;
 
-namespace CC98.Kernel.OpenID;
+namespace CC98.Kernel;
 /// <summary>
 /// 用于PKCE的OpenID认证流程生成
 /// </summary>

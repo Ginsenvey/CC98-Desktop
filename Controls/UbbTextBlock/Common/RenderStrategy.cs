@@ -1,7 +1,11 @@
-﻿using CC98.Share.Controls;
-using CC98.Share.Controls.Primitives;
-using CC98.Share.Controls.Primitives.LatexBlock;
-using CC98.Share.Extensions;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using Windows.UI;
+using Windows.UI.Text;
+using CC98.Controls.Primitives;
+using CC98.Controls.UbbTextBlock.Parser;
 using CommunityToolkit.WinUI.Controls;
 using Microsoft.UI;
 using Microsoft.UI.Xaml;
@@ -10,15 +14,8 @@ using Microsoft.UI.Xaml.Controls.Primitives;
 using Microsoft.UI.Xaml.Documents;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Shapes;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using UbbRender.Parser;
-using Windows.UI;
-using Windows.UI.Text;
 
-namespace UbbRender.Common;
+namespace CC98.Controls.UbbTextBlock.Common;
 
 
 // 渲染策略接口
@@ -108,7 +105,7 @@ public class StrikethroughRenderStrategy : IRenderStrategy
     {
         var span = new Span
         {
-            TextDecorations = Windows.UI.Text.TextDecorations.Strikethrough
+            TextDecorations = TextDecorations.Strikethrough
         };
         context.BeginInlineContainer(span);
         foreach (var child in node.Children)
@@ -249,7 +246,7 @@ public class ImageRenderStrategy : IRenderStrategy
             }
             if (src.IsValidUrl(false))
             {
-                var image = new Picture()
+                var image = new Picture.Picture()
                 {
                     //自定义图片加载器必须在Src设置之前赋值
                     //否则OnSrcChanged事件会触发，但此时将使用默认加载器
@@ -286,7 +283,7 @@ public class CodeRenderStrategy : IRenderStrategy
     {
         context.FinalizeCurrentTextBlock();
         var languageName = node is TagNode tagNode ? tagNode.GetAttribute("language") : "PlainText";
-        var viewer = new CodeBlock
+        var viewer = new CodeBlock.CodeBlock
         {
             LanguageName = languageName,
             Code = RenderHelper.CollectText(node),
@@ -575,7 +572,7 @@ public class EmojiRenderStrategy : IRenderStrategy
                 {
                     if (!string.IsNullOrEmpty(imageUrl))
                     {
-                        var image = new Picture
+                        var image = new Picture.Picture
                         {
                             LoadImageCallback = SmartImageLoader.Default,
                             Src = imageUrl,
@@ -628,7 +625,7 @@ public class LatexRenderStrategy : IRenderStrategy
     }
     private static InlineUIContainer InlineLatex(string latex)
     {
-        var textBlock = new LatexBlock
+        var textBlock = new LatexBlock.LatexBlock
         {
             FontSize = 14,
             LaTeX = latex
@@ -637,10 +634,10 @@ public class LatexRenderStrategy : IRenderStrategy
         var container=new InlineUIContainer { Child=textBlock };
         return container;
     }
-    private static LatexBlock BlockLatex(string latex)
+    private static LatexBlock.LatexBlock BlockLatex(string latex)
     {
 
-        var textBlock = new LatexBlock
+        var textBlock = new LatexBlock.LatexBlock
         {
             FontSize = 14,
             LaTeX = latex
@@ -1009,7 +1006,7 @@ public class AudioRenderStrategy : IRenderStrategy
                 var src = child.Content;
                 if (src.IsValidUrl(false))
                 {
-                    var player = new MusicPlayer
+                    var player = new MusicPlayer.MusicPlayer
                     {
                         Title = title == "" ? "音频" : title.Replace("title=", ""),
                         LoadMediaCallback = new SmartMediaLoader(),
@@ -1049,7 +1046,7 @@ public class VideoRenderStrategy : IRenderStrategy
 
             if (!string.IsNullOrEmpty(src))
             {
-                var player = new VideoPlayer
+                var player = new VideoPlayer.VideoPlayer
                 {
                     LoadVideoCallback = new SmartMediaLoader(),
                     Src = src,
@@ -1318,7 +1315,7 @@ public class FileRenderStrategy : IRenderStrategy
 
             if (src.IsValidUrl())
             {
-                var card = new FileCard()
+                var card = new FileCard.FileCard()
                 {
                     Src = src,
                     HorizontalAlignment = HorizontalAlignment.Left,

@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Page
-    x:Class="CC98.Focus"
+    x:Class="CC98.Views.Focus"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:local="using:CC98"
@@ -11,6 +11,8 @@
     xmlns:controls="using:CommunityToolkit.WinUI.Controls"
     xmlns:obj="using:CC98.Objects"
     xmlns:share="using:CC98.Share.Controls"
+    xmlns:picture="using:CC98.Controls.Picture"
+    xmlns:infoFlower="using:CC98.Controls.InfoFlower"
     Background="{ThemeResource DesktopAcrylicTransparentBrush}">
 
     <Grid Padding="15,5,15,15">
@@ -42,7 +44,7 @@
                             </Grid.RenderTransform>
                             <StackPanel Grid.Row="0"  Orientation="Horizontal" Spacing="10">
                                 <Border Width="30" Height="30" BorderThickness="0" CornerRadius="9999" Background="{ThemeResource PortraitBackgroundColor}">
-                                    <share:Picture  x:Name="portrait" Src="{x:Bind PortraitUrl}" LoadImageCallback="{StaticResource PortraitLoader}"></share:Picture>
+                                    <picture:Picture  x:Name="portrait" Src="{x:Bind PortraitUrl}" LoadImageCallback="{StaticResource PortraitLoader}"></picture:Picture>
                                 </Border>
                                 <TextBlock Text="{x:Bind UserName}"  VerticalAlignment="Center" FontFamily="{StaticResource HarmonySansBold}" Foreground="LightSeaGreen"></TextBlock>
                             </StackPanel>
@@ -69,7 +71,7 @@
                 </ItemsRepeater.ItemTemplate>
             </ItemsRepeater>
         </ScrollViewer>
-        <local:InfoFlower x:Name="Flower" Grid.Row="0" Grid.RowSpan="2" HorizontalAlignment="Center" VerticalAlignment="Bottom"></local:InfoFlower>
+        <infoFlower:InfoFlower x:Name="Flower" Grid.Row="0" Grid.RowSpan="2" HorizontalAlignment="Center" VerticalAlignment="Bottom"></infoFlower:InfoFlower>
 
     </Grid>
 </Page>

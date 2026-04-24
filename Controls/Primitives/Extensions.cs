@@ -1,7 +1,8 @@
-﻿using Microsoft.UI.Dispatching;
-using System;
+﻿using System;
 using System.Threading.Tasks;
-namespace CC98.Share.Extensions;
+using Microsoft.UI.Dispatching;
+
+namespace CC98.Controls.Primitives;
 public static class DispatcherQueueExtensions
 {
     public static async Task EnqueueAsync(this DispatcherQueue dispatcher,

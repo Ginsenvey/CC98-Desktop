@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Window
-    x:Class="CC98.MediaViewer"
+    x:Class="CC98.Views.MediaViewer"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:local="using:CC98"
@@ -9,6 +9,8 @@
     mc:Ignorable="d"
     xmlns:share="using:CC98.Share.Controls"
     xmlns:ic="using:FluentIcons.WinUI"
+    xmlns:picture="using:CC98.Controls.Picture"
+    xmlns:infoFlower="using:CC98.Controls.InfoFlower"
     Title="预览">
     
     <Grid x:Name="RootGrid" >
@@ -63,11 +65,11 @@
                 <FontIcon FontSize="{ThemeResource FlipViewButtonFontSize}" Glyph="&#xedd9;" />
             </Button>
             <ScrollViewer x:Name="Viewer" Grid.Column="2" ZoomMode="Enabled" ViewChanged="Viewer_ViewChanged" HorizontalContentAlignment="Center" VerticalAlignment="Stretch" HorizontalScrollMode="Enabled" HorizontalScrollBarVisibility="Visible" HorizontalAlignment="Stretch">
-                <share:Picture x:Name="InnerImage"  Stretch="UniformToFill" LoadImageCallback="{StaticResource CustomPortraitLoader}" RenderTransformOrigin="0.5,0.5" HorizontalAlignment="Center"> 
-                    <share:Picture.RenderTransform>
+                <picture:Picture x:Name="InnerImage"  Stretch="UniformToFill" LoadImageCallback="{StaticResource CustomPortraitLoader}" RenderTransformOrigin="0.5,0.5" HorizontalAlignment="Center"> 
+                    <picture:Picture.RenderTransform>
                         <RotateTransform x:Name="ImageTransform"  Angle="0"/>
-                    </share:Picture.RenderTransform>
-                </share:Picture>
+                    </picture:Picture.RenderTransform>
+                </picture:Picture>
             </ScrollViewer>
             
             <Button x:Name="next" Grid.Column="3" Width="30" Height="30" CornerRadius="9999" HorizontalAlignment="Center" VerticalAlignment="Center" Style="{StaticResource ScrollButtonStyle}" Click="next_Click">
@@ -89,7 +91,7 @@
         </MediaPlayerElement>
         <Border Grid.Row="3" Height="1" VerticalAlignment="Top" BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}" BorderThickness="1"></Border>
         <TextBlock x:Name="MediaInfo" Grid.Row="3" Margin="5,0,0,0" Foreground="{ThemeResource TextFillColorSecondaryBrush}" IsTextSelectionEnabled="True"></TextBlock>
-        <local:InfoFlower x:Name="Flower" Grid.Row="0" Grid.RowSpan="4" HorizontalAlignment="Center" VerticalAlignment="Bottom"></local:InfoFlower>
+        <infoFlower:InfoFlower x:Name="Flower" Grid.Row="0" Grid.RowSpan="4" HorizontalAlignment="Center" VerticalAlignment="Bottom"></infoFlower:InfoFlower>
     </Grid>
 
 

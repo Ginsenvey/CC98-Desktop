@@ -1,6 +1,6 @@
 ﻿namespace CC98.Services;
 
-using CC98.Kernel;
+using Kernel;
 using System;
 using System.IO;
 using System.Runtime.InteropServices.WindowsRuntime;

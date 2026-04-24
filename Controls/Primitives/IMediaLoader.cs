@@ -1,7 +1,7 @@
 ﻿using System.Threading.Tasks;
 using Windows.Media.Core;
 
-namespace CC98.Share.Controls.Primitives;
+namespace CC98.Controls.Primitives;
 
 public interface IMediaLoader
 {

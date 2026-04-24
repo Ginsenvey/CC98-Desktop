@@ -1,7 +1,7 @@
-﻿using Microsoft.UI.Xaml.Media.Imaging;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
+using Microsoft.UI.Xaml.Media.Imaging;
 
-namespace CC98.Share.Controls.Primitives;
+namespace CC98.Controls.Picture;
 
 public interface IImageLoader
 {

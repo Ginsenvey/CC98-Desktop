@@ -1,13 +1,13 @@
-﻿using ColorCode;
+﻿using System.Globalization;
+using ColorCode;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Documents;
-using System.Globalization;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
 
-namespace CC98.Share.Controls;
+namespace CC98.Controls.CodeBlock;
 
 public sealed partial class CodeBlock : UserControl
 {
@@ -50,14 +50,14 @@ public sealed partial class CodeBlock : UserControl
             languageName = "PlainText";
         }
         var displayName = string.Empty;
-        var language = ColorCode.Languages.Cpp;
+        var language = Languages.Cpp;
         if (languageName == "PlainText")
         {
             displayName = languageName;
         }
         else
         {
-            language = ColorCode.Languages.FindById(languageName) ?? ColorCode.Languages.Cpp;
+            language = Languages.FindById(languageName) ?? Languages.Cpp;
             displayName = GetLanguageDisplayName(language, languageName);
         }
         LanguageTag.Text = displayName;
@@ -86,7 +86,7 @@ public sealed partial class CodeBlock : UserControl
 
     #region 辅助函数
 
-    private string GetLanguageDisplayName(ColorCode.ILanguage language, string languageName)
+    private string GetLanguageDisplayName(ILanguage language, string languageName)
     {
         // 如果语言对象有 Name 属性，使用它
         if (!string.IsNullOrEmpty(language.Name))

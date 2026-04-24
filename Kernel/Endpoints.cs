@@ -1,4 +1,4 @@
-﻿namespace CC98.Kernel.ApiScope;
+﻿namespace CC98.Kernel;
 /// <summary>
 /// API终结点定义
 /// </summary>

@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Page
-    x:Class="CC98.Sketch"
+    x:Class="CC98.Views.Sketch"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:local="using:CC98"
@@ -12,6 +12,8 @@
     xmlns:dev="using:DevWinUI"
     xmlns:ubb="using:UbbRender.Render"
     xmlns:obj="using:CC98.Objects"
+    xmlns:ubbTextBlock="using:CC98.Controls.UbbTextBlock"
+    xmlns:infoFlower="using:CC98.Controls.InfoFlower"
     Background="{ThemeResource DesktopAcrylicTransparentBrush}">
 
 
@@ -276,7 +278,7 @@
                 <ScrollViewer>
                     <Grid>
                         <controls:MarkdownTextBlock Background="{ThemeResource MarkdownBackgroundBrush}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" x:Name="MdViewer" Visibility="Collapsed"></controls:MarkdownTextBlock>
-                        <ubb:UbbTextBlock ImageMaxWidth="320" Background="{ThemeResource MarkdownBackgroundBrush}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" QuoteBackground="{ThemeResource QuoteBackgroundBrush}" CodeBackground="{ThemeResource QuoteBackgroundBrush}" BoldFontFamily="{ThemeResource HarmonySansBold}" x:Name="UbbViewer"/>
+                        <ubbTextBlock:UbbTextBlock ImageMaxWidth="320" Background="{ThemeResource MarkdownBackgroundBrush}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" QuoteBackground="{ThemeResource QuoteBackgroundBrush}" CodeBackground="{ThemeResource QuoteBackgroundBrush}" BoldFontFamily="{ThemeResource HarmonySansBold}" x:Name="UbbViewer"/>
                     </Grid>
                 </ScrollViewer>
             </SplitView.Pane>
@@ -301,7 +303,7 @@
             </HyperlinkButton>
 
         </Grid>
-        <local:InfoFlower x:Name="Flower" Grid.Row="0" Grid.RowSpan="3" HorizontalAlignment="Center" ></local:InfoFlower>
+        <infoFlower:InfoFlower x:Name="Flower" Grid.Row="0" Grid.RowSpan="3" HorizontalAlignment="Center" ></infoFlower:InfoFlower>
     </Grid>
 
 

@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Diagnostics;
 
-namespace UbbRender.Parser;
+namespace CC98.Controls.UbbTextBlock.Parser;
 
 [DebuggerDisplay("{DebuggerDisplay,nq}")]
 public abstract class UbbNode
@@ -63,7 +63,7 @@ public abstract class UbbNode
     {
         var result = new List<UbbNode>();
 
-        if (includeSelf && this.Type == nodeType)
+        if (includeSelf && Type == nodeType)
         {
             result.Add(this);
         }

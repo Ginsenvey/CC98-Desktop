@@ -68,9 +68,9 @@ public class Increment
     public int StartIndex => CurrentPage * PageSize;
     public Increment(int pageSize = 10,int currentPage = 0, bool hasMore = false)
     {
-        this.PageSize = pageSize;
-        this.CurrentPage = currentPage;
-        this.HasMore = hasMore;
+        PageSize = pageSize;
+        CurrentPage = currentPage;
+        HasMore = hasMore;
     }
 
     public void Clear()

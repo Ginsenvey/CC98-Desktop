@@ -1,21 +1,19 @@
-﻿
+﻿using System;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Threading.Tasks;
+using Windows.Storage;
 using CC98.Kernel;
-using CC98.Kernel.ApiScope;
 using CC98.Objects;
 using DevWinUI;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
-using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Threading.Tasks;
-using Windows.Storage;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
 
-namespace CC98;
+namespace CC98.Views;
 
 /// <summary>
 /// An empty page that can be used on its own or navigated to within a Frame.
@@ -29,7 +27,7 @@ public sealed partial class Game : Page
     public ObservableCollection<GachaInfo> GachaInfo2 = [];
     public Game()
     {
-        this.InitializeComponent();
+        InitializeComponent();
         DisplayOdd();
         RefreshStat();
         CardList.ItemsSource = Cards;
@@ -165,7 +163,7 @@ public sealed partial class Game : Page
                 }
                 break;
             case "destroy-all":
-                DestroyCardDialog.XamlRoot = this.XamlRoot;
+                DestroyCardDialog.XamlRoot = XamlRoot;
                 var r = await DestroyCardDialog.ShowAsync();
                 if (r == ContentDialogResult.Primary)
                 {

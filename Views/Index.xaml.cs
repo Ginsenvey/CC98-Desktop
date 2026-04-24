@@ -1,10 +1,12 @@
-﻿
+﻿using System;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Threading.Tasks;
+using Windows.Storage;
+using Windows.System;
 using CC98.Kernel;
-using CC98.Kernel.ApiScope;
-using CC98.Kernel.UserExperience;
 using CC98.Objects;
 using CC98.Services;
-using CC98.Services.Extensions;
 using DevWinUI;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -12,17 +14,11 @@ using Microsoft.UI.Xaml.Documents;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Media.Imaging;
-using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Threading.Tasks;
-using Windows.Storage;
-using Windows.System;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
 
-namespace CC98;
+namespace CC98.Views;
 
 /// <summary>
 /// An empty page that can be used on its own or navigated to within a Frame.
@@ -37,7 +33,7 @@ public sealed partial class Index : Page
     public ImageSource? ThemePic;
     public Index()
     {
-        this.InitializeComponent();
+        InitializeComponent();
         _indexService=IndexDataService.Instance;
         LoadSet();
     }
@@ -114,7 +110,7 @@ public sealed partial class Index : Page
 
         
 
-    private void RecomHyperlink_Click(Microsoft.UI.Xaml.Documents.Hyperlink sender, Microsoft.UI.Xaml.Documents.HyperlinkClickEventArgs args)
+    private void RecomHyperlink_Click(Hyperlink sender, HyperlinkClickEventArgs args)
     {
         var url = (sender as Hyperlink).NavigateUri.ToString();
         if (!string.IsNullOrEmpty(url))

@@ -1,13 +1,12 @@
-﻿using CC98.Share.Controls.Primitives;
+﻿using System.Threading.Tasks;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
-using System.Threading.Tasks;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
 
-namespace CC98.Share.Controls;
+namespace CC98.Controls.Picture;
 
 public sealed partial class Picture : UserControl
 {

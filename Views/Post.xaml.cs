@@ -1,9 +1,13 @@
-﻿
+﻿using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Net.Http;
+using System.Text;
+using System.Threading.Tasks;
+using Windows.Storage;
 using CC98.Kernel;
-using CC98.Kernel.ApiScope;
 using CC98.Objects;
 using CC98.Services;
-using CC98.Services.Extensions;
 using CommunityToolkit.WinUI.Controls;
 using DevWinUI;
 using Microsoft.UI.Xaml;
@@ -11,17 +15,11 @@ using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Navigation;
 using Microsoft.Windows.Storage.Pickers;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Net.Http;
-using System.Text;
-using System.Threading.Tasks;
-using Windows.Storage;
+
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
 
-namespace CC98;
+namespace CC98.Views;
 
 /// <summary>
 /// An empty page that can be used on its own or navigated to within a Frame.
@@ -31,7 +29,7 @@ public sealed partial class Sketch : Page
     public ApplicationDataContainer Set=ApplicationData.Current.LocalSettings;
     public Sketch()
     {
-        this.InitializeComponent();
+        InitializeComponent();
         if (App.Current.AppMainWindow is MainWindow mainwindow)
         {
             mainwindow.NavigationView.IsPaneOpen = false;
@@ -222,17 +220,17 @@ public sealed partial class Sketch : Page
                 break;
             case "图片":
                 CurrentLabel = "img";
-                FileHelper.XamlRoot = this.XamlRoot;
+                FileHelper.XamlRoot = XamlRoot;
                 await FileHelper.ShowAsync();
                 break;
             case "视频":
                 CurrentLabel = "video";
-                FileHelper.XamlRoot = this.XamlRoot;
+                FileHelper.XamlRoot = XamlRoot;
                 await FileHelper.ShowAsync();
                 break;
             case "音频":
                 CurrentLabel = "audio";
-                FileHelper.XamlRoot = this.XamlRoot;
+                FileHelper.XamlRoot = XamlRoot;
                 await FileHelper.ShowAsync();
                 break;
             case "哔哩":
@@ -240,7 +238,7 @@ public sealed partial class Sketch : Page
                 break;
             case "文档":
                 CurrentLabel = "upload";
-                FileHelper.XamlRoot = this.XamlRoot;
+                FileHelper.XamlRoot = XamlRoot;
                 await FileHelper.ShowAsync();
                 break;
             case "分割线":
@@ -457,7 +455,7 @@ public sealed partial class Sketch : Page
     {
         try
         {
-            var picker = new FileOpenPicker(this.XamlRoot.ContentIslandEnvironment.AppWindowId)
+            var picker = new FileOpenPicker(XamlRoot.ContentIslandEnvironment.AppWindowId)
             {
                 CommitButtonText = "上传",
                 SuggestedStartLocation = location

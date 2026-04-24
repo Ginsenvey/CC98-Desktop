@@ -2,9 +2,9 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using UbbRender.Tokenizer;
+using CC98.Controls.UbbTextBlock.Tokenizer;
 
-namespace UbbRender.Parser;
+namespace CC98.Controls.UbbTextBlock.Parser;
 /// <summary>
 /// 将词元序列转换为 UBB 文档树的核心类。
 /// </summary>
@@ -326,7 +326,7 @@ public class UbbParser(IEnumerable<Token> tokens)
     // 辅助方法：将当前解析进度涉及的所有 Token 还原为原始文本
     private TextNode FallbackToText(int startIndex)
     {
-        var sb = new System.Text.StringBuilder();
+        var sb = new StringBuilder();
         // 从最初的 '[' 开始拼接
         for (var i = startIndex; i < _index; i++)
         {

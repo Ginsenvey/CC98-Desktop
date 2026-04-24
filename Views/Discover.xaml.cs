@@ -1,24 +1,23 @@
-﻿using CC98.Kernel;
-using CC98.Kernel.ApiScope;
+﻿using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Linq;
+using System.Net;
+using System.Threading.Tasks;
+using Windows.Storage;
+using CC98.Kernel;
 using CC98.Objects;
-using CC98.Services.Extensions;
+using CC98.Services;
 using DevWinUI;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Navigation;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Linq;
-using System.Net;
-using System.Threading.Tasks;
-using Windows.Storage;
-using CC98.Services;
+
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
 
-namespace CC98;
+namespace CC98.Views;
 
 /// <summary>
 /// An empty page that can be used on its own or navigated to within a Frame.
@@ -32,7 +31,7 @@ public sealed partial class Discover : Page
     public Increment Increment = new(20);
     public Discover()
     {
-        this.InitializeComponent();
+        InitializeComponent();
         SizeChanged += Discover_SizeChanged;
     }
 

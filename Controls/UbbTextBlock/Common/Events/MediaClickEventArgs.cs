@@ -1,7 +1,7 @@
-﻿using CC98.Share.Controls.Primitives;
-using System;
+﻿using System;
+using CC98.Controls.Primitives;
 
-namespace UbbRender.Common;
+namespace CC98.Controls.UbbTextBlock.Common.Events;
 
 //媒体事件统一参数
 public class MediaClickEventArgs : EventArgs

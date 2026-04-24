@@ -3,11 +3,14 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:local="using:CC98.Controls"
     xmlns:ubb="using:UbbRender.Render"
-    xmlns:share="using:CC98.Share.Controls">
-    <Style TargetType="local:SmartImage" >
+    xmlns:share="using:CC98.Share.Controls"
+    xmlns:smartImage="using:CC98.Controls.SmartImage"
+    xmlns:ubbTextBlock="using:CC98.Controls.UbbTextBlock"
+    xmlns:fileCard="using:CC98.Controls.FileCard">
+    <Style TargetType="smartImage:SmartImage" >
         <Setter Property="Template">
             <Setter.Value>
-                <ControlTemplate TargetType="local:SmartImage">
+                <ControlTemplate TargetType="smartImage:SmartImage">
                     <Border
                         Background="{TemplateBinding Background}"
                         BorderBrush="{TemplateBinding BorderBrush}"
@@ -18,12 +21,12 @@
         </Setter>
     </Style>
 
-    <Style TargetType="ubb:UbbTextBlock">
+    <Style TargetType="ubbTextBlock:UbbTextBlock">
         <Setter Property="Background" Value="Transparent"/>
        
         <Setter Property="Template">
             <Setter.Value>
-                <ControlTemplate TargetType="ubb:UbbTextBlock">
+                <ControlTemplate TargetType="ubbTextBlock:UbbTextBlock">
                     <Border
                     Background="{TemplateBinding Background}"
                     BorderBrush="{TemplateBinding BorderBrush}"
@@ -38,10 +41,10 @@
 
     
 
-    <Style TargetType="share:FileCard">
+    <Style TargetType="fileCard:FileCard">
         <Setter Property="Template">
             <Setter.Value>
-                <ControlTemplate TargetType="share:FileCard">
+                <ControlTemplate TargetType="fileCard:FileCard">
                     <Border
                         Background="{TemplateBinding Background}"
                         BorderBrush="{TemplateBinding BorderBrush}"

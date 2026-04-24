@@ -1,11 +1,11 @@
-﻿using CSharpMath.SkiaSharp;
+﻿using System;
+using CSharpMath.SkiaSharp;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using SkiaSharp;
 using SkiaSharp.Views.Windows;
-using System;
 
-namespace CC98.Share.Controls.Primitives.LatexBlock;
+namespace CC98.Controls.LatexBlock;
 
 public sealed partial class LatexBlock : UserControl 
 {
@@ -80,11 +80,11 @@ public sealed partial class LatexBlock : UserControl
         grid.Children.Add(_canvas);
 
             
-        this.Content = grid;
+        Content = grid;
 
             
-        this.HorizontalAlignment = HorizontalAlignment.Center;
-        this.VerticalAlignment = VerticalAlignment.Bottom;
+        HorizontalAlignment = HorizontalAlignment.Center;
+        VerticalAlignment = VerticalAlignment.Bottom;
 
         _canvas.PaintSurface += OnPaintSurface;
     }
@@ -101,7 +101,7 @@ public sealed partial class LatexBlock : UserControl
             );
 
             // 测量Content
-            if (this.Content is FrameworkElement c)
+            if (Content is FrameworkElement c)
             {
                 c.Measure(emptySize);
             }
@@ -156,7 +156,7 @@ public sealed partial class LatexBlock : UserControl
         var desiredSize = new Windows.Foundation.Size(totalWidth, totalHeight);
 
         // 测量Content
-        if (this.Content is FrameworkElement content)
+        if (Content is FrameworkElement content)
         {
             content.Measure(desiredSize);
         }
@@ -171,7 +171,7 @@ public sealed partial class LatexBlock : UserControl
         System.Diagnostics.Debug.WriteLine($"ArrangeOverride 收到: {finalSize.Width:F1}x{finalSize.Height:F1}");
 
         // 排列Content
-        if (this.Content is FrameworkElement content)
+        if (Content is FrameworkElement content)
         {
             content.Arrange(new(0, 0, finalSize.Width, finalSize.Height));
         }

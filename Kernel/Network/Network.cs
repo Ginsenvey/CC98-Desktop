@@ -1,5 +1,4 @@
 ﻿using CC98.Objects;
-using CC98.Services.Extensions;
 using HtmlAgilityPack;
 using System;
 using System.Collections.Generic;
@@ -10,6 +9,7 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
+using CC98.Services;
 
 namespace CC98.Kernel.Network;
 /// <summary>

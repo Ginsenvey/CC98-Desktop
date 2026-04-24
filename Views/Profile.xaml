@@ -1,6 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Page
-    x:Class="CC98.Profile"
+    x:Class="CC98.Views.Profile"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:local="using:CC98"
@@ -11,11 +11,14 @@
     xmlns:ic="using:FluentIcons.WinUI"
     xmlns:obj="using:CC98.Objects"
     xmlns:cv="using:CC98.Services.Converters"
+    xmlns:services="using:CC98.Services"
+    xmlns:ubbTextBlock="using:CC98.Controls.UbbTextBlock"
+    xmlns:infoFlower="using:CC98.Controls.InfoFlower"
     Background="{ThemeResource DesktopAcrylicTransparentBrush}">
     <Page.Resources>
-        <cv:BooltoVisibilityConverter x:Key="BoolToVisibility"></cv:BooltoVisibilityConverter>
-        <cv:LikeToVariantConverter x:Key="BoolToVariant"></cv:LikeToVariantConverter>
-        <cv:BoolToFollowTextConverter x:Key="FollowConverter"/>
+        <services:BooltoVisibilityConverter x:Key="BoolToVisibility"></services:BooltoVisibilityConverter>
+        <services:LikeToVariantConverter x:Key="BoolToVariant"></services:LikeToVariantConverter>
+        <services:BoolToFollowTextConverter x:Key="FollowConverter"/>
     </Page.Resources>
     <Grid>
         <ScrollViewer>
@@ -99,7 +102,7 @@
                 <TextBlock Text="签名档" FontSize="23" FontWeight="Bold" Foreground="#A9A9A9" Margin="0,5,0,0"></TextBlock>
                 
                 <Border Height="1" BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}" HorizontalAlignment="Stretch" BorderThickness="1"></Border>
-                <ubb:UbbTextBlock x:Name="SignBoard" UbbText="{x:Bind UserProfile.SignatureCode,Mode=OneWay}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" BoldFontFamily="{StaticResource HarmonySansBold}" QuoteBackground="{ThemeResource QuoteBackgroundBrush}"></ubb:UbbTextBlock>
+                <ubbTextBlock:UbbTextBlock x:Name="SignBoard" UbbText="{x:Bind UserProfile.SignatureCode,Mode=OneWay}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" BoldFontFamily="{StaticResource HarmonySansBold}" QuoteBackground="{ThemeResource QuoteBackgroundBrush}"></ubbTextBlock:UbbTextBlock>
                 <TextBlock Text="主题" FontSize="23" FontWeight="Bold" Foreground="#A9A9A9" x:Name="de" IsTextSelectionEnabled="True"></TextBlock>
                 <Border Height="1" BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}" HorizontalAlignment="Stretch" BorderThickness="1"></Border>
                 <Border Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1" CornerRadius="5">
@@ -124,6 +127,6 @@
                 </Border>
             </StackPanel>
         </ScrollViewer>
-        <local:InfoFlower x:Name="Flower"  HorizontalAlignment="Center" ></local:InfoFlower>
+        <infoFlower:InfoFlower x:Name="Flower"  HorizontalAlignment="Center" ></infoFlower:InfoFlower>
     </Grid>
 </Page>

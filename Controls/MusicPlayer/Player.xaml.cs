@@ -1,15 +1,15 @@
 ﻿using System;
+using System.Diagnostics;
+using System.Threading.Tasks;
+using Windows.Media.Playback;
+using CC98.Controls.Primitives;
+using CC98.Controls.UbbTextBlock.Common.Events;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Controls.Primitives;
 // MusicPlayer.xaml.cs
-using System.Diagnostics;
-using System.Threading.Tasks;
-using Windows.Media.Playback;
-using CC98.Share.Controls.Primitives;
-using UbbRender.Common;
 
-namespace CC98.Share.Controls;
+namespace CC98.Controls.MusicPlayer;
 
 public sealed partial class MusicPlayer : UserControl, IDisposable
 {
@@ -21,7 +21,7 @@ public sealed partial class MusicPlayer : UserControl, IDisposable
 
     public MusicPlayer()
     {
-        this.InitializeComponent();
+        InitializeComponent();
         InitializeMediaPlayer();
         SetupProgressTimer();
     }

@@ -1,5 +1,4 @@
-﻿using CC98.Services.Extensions;
-using System;
+﻿using System;
 using System.IO;
 using System.Text;
 using System.Text.Json;
@@ -116,7 +115,7 @@ public class LocalCache
             // 1. 确保目录存在
             if (createDirectory)
             {
-                var directory = System.IO.Path.GetDirectoryName(path);
+                var directory = Path.GetDirectoryName(path);
                 if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
                     Directory.CreateDirectory(directory);
             }
@@ -215,7 +214,7 @@ public class LocalCache
             // 1. 确保目录存在
             if (createDirectory)
             {
-                var directory = System.IO.Path.GetDirectoryName(path);
+                var directory = Path.GetDirectoryName(path);
                 if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
                     Directory.CreateDirectory(directory);
             }
@@ -300,7 +299,7 @@ public class LocalCache
             // 确保目录存在
             if (createDirectory)
             {
-                var directory = System.IO.Path.GetDirectoryName(path);
+                var directory = Path.GetDirectoryName(path);
                 if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
                     Directory.CreateDirectory(directory);
             }
@@ -356,7 +355,7 @@ public class LocalCache
             // 确保目录存在
             if (createDirectory)
             {
-                var directory = System.IO.Path.GetDirectoryName(path);
+                var directory = Path.GetDirectoryName(path);
                 if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
                     Directory.CreateDirectory(directory);
             }

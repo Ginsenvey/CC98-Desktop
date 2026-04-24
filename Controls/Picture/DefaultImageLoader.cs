@@ -1,8 +1,8 @@
-﻿using Microsoft.UI.Xaml.Media.Imaging;
-using System;
+﻿using System;
 using System.Threading.Tasks;
+using Microsoft.UI.Xaml.Media.Imaging;
 
-namespace CC98.Share.Controls.Primitives;
+namespace CC98.Controls.Picture;
 
 public class DefaultImageLoader : IImageLoader
 {
