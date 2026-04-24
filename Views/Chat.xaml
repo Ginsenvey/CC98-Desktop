@@ -8,8 +8,6 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d"
     xmlns:ic="using:FluentIcons.WinUI"
-    xmlns:image="using:CC98.Controls"
-    xmlns:cv="using:CC98.Services.Converters"
     xmlns:obj="using:CC98.Objects"
     xmlns:ubb="using:UbbRender.Render"
     xmlns:share="using:CC98.Share.Controls"

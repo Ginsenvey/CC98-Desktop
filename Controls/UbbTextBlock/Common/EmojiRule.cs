@@ -27,20 +27,19 @@ public class EmoticonRule
 // 表情规则管理器
 public static class EmoticonRules
 {
-    private static readonly List<EmoticonRule> Rules = new()
-    {
-        // ac娘：ac + 2-4位数字
+    private static readonly List<EmoticonRule> Rules =
+    [
         new(@"ac(\d{2,4})", "ms-appx:///Assets/Emoji/ac-white/ac$1.png", "ac娘"),
-        
+
         // 经典表情：em + 2位数字
         new(@"em(\d{2})", "ms-appx:///Assets/Emoji/em/em$1.gif", "经典表情"),
-        
+
         // 贴吧/雀魂等：任意2字母 + 2位数字
         new(@"([a-zA-Z]{2})(\d{2})", "ms-appx:///Assets/Emoji/$1/$1$2.png", "通用表情"),
-        
+
         // CC98：cc98 + 2位数字
         new(@"cc98(\d{2})", "ms-appx:///Assets/Emoji/CC98/CC98$1.png", "CC98表情")
-    };
+    ];
 
     public static bool IsEmoticonTag(string tagName)
     {

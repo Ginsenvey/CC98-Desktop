@@ -9,9 +9,7 @@
     mc:Ignorable="d"
     NavigationCacheMode="Disabled"
     xmlns:ic="using:FluentIcons.WinUI"
-    xmlns:lab="using:CommunityToolkit.Labs.WinUI"
     xmlns:obj="using:CC98.Objects"
-    xmlns:cv="using:CC98.Services.Converters"
     xmlns:tool="using:CommunityToolkit.WinUI.Controls"
     
     Background="{ThemeResource CardGradient1Brush}">

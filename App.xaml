@@ -3,12 +3,9 @@
     x:Class="CC98.App"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:lab="using:CommunityToolkit.Labs.WinUI"
-    xmlns:dev="using:DevWinUI"
     xmlns:tool="using:CommunityToolkit.WinUI.Controls"
     xmlns:pr="using:CC98.Share.Controls.Primitives"
-    xmlns:cv="using:CC98.Services.Converters"
-    xmlns:local="using:CC98">
+    xmlns:cv="using:CC98.Services.Converters">
     <Application.Resources>
         <ResourceDictionary >
 
@@ -21,7 +18,7 @@
                 <ResourceDictionary x:Key="Light">
                     <Color x:Key="UserNameForegroundColor">#ddfb7299</Color>
                     <Color x:Key="QuoteBackgroundColor">#E8F4F9</Color>
-                    <Color x:Key="MarkdownBackgroudColor">#77eeeeee</Color>
+                    <Color x:Key="MarkdownBackgroundColor">#77eeeeee</Color>
                     <Color x:Key="QuoteBorderColor">#ffc4ae</Color>
                     <Color x:Key="PlayControl">#FFFFFF</Color>
                     <Color x:Key="Contrast">#000000</Color>
@@ -42,7 +39,7 @@
                 </ResourceDictionary>
             </ResourceDictionary.ThemeDictionaries>
             <SolidColorBrush x:Key="UserNameForegroundBrush" Color="{ThemeResource UserNameForegroundColor}"></SolidColorBrush>
-            <SolidColorBrush x:Key="MarkdownBackgroundBrush" Color="{ThemeResource MarkdownBackgroudColor}"></SolidColorBrush>
+            <SolidColorBrush x:Key="MarkdownBackgroundBrush" Color="{ThemeResource MarkdownBackgroundColor}"></SolidColorBrush>
             <SolidColorBrush x:Key="QuoteBorderBrush" Color="{ThemeResource QuoteBorderColor}"></SolidColorBrush>
             <SolidColorBrush x:Key="StandardBrush" Color="{ThemeResource Standard}"></SolidColorBrush>
             <SolidColorBrush x:Key="QuoteBackgroundBrush" Color="{ThemeResource QuoteBackgroundColor}"></SolidColorBrush>

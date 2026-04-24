@@ -1,5 +1,6 @@
 ﻿using CC98.Objects;
 using CC98.Services.Extensions;
+
 using System;
 using System.Collections.Generic;
 using System.Collections.Specialized;
@@ -12,6 +13,7 @@ using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
+
 using Windows.Storage;
 using Windows.Storage.Streams;
 
@@ -165,7 +167,7 @@ public static class RequestSender
 
     }
 
-   
+
     public static async Task<string> SendVoteResult(string id, List<int> list)
     {
         var url = $"https://api.cc98.org/topic/{id}/vote";
@@ -189,7 +191,7 @@ public static class RequestSender
 
     public static async Task<ApiResponse<string>> GetBoardTags(string bid)
     {
-        List<string> tags = new();
+        List<string> tags = [];
         var url = $"https://api.cc98.org/board/{bid}/tag";
         return await Fetch<string>(url);
     }
@@ -205,17 +207,15 @@ public static class ValidationHelper
         int bytesRead;
 
         // 获取输出流的写入器
-        using (var outputStream = output.GetOutputStreamAt(0))
-        using (var writer = new DataWriter(outputStream))
+        using var outputStream = output.GetOutputStreamAt(0);
+        using var writer = new DataWriter(outputStream);
+        while ((bytesRead = await input.ReadAsync(buffer)) > 0)
         {
-            while ((bytesRead = await input.ReadAsync(buffer)) > 0)
-            {
-                writer.WriteBytes(buffer.AsSpan(0, bytesRead).ToArray());
-                await writer.StoreAsync();
-                await outputStream.FlushAsync();
-            }
-            await writer.FlushAsync();
+            writer.WriteBytes(buffer.AsSpan(0, bytesRead).ToArray());
+            await writer.StoreAsync();
+            await outputStream.FlushAsync();
         }
+        await writer.FlushAsync();
     }
 
 
@@ -225,10 +225,10 @@ public static class ValidationHelper
         {
             if (token != null)
             {
-                var token = token.ToString();
-                if (!string.IsNullOrEmpty(token))
+                var tokenString = token.ToString();
+                if (!string.IsNullOrEmpty(tokenString))
                 {
-                    return token;
+                    return tokenString;
                 }
             }
         }
@@ -243,53 +243,47 @@ public static class ValidationHelper
         {
             if (value != null)
             {
-                var value = value.ToString();
-                if (value != null)
+                var valueString = value.ToString();
+                if (valueString != null)
                 {
-                    return value;
+                    return valueString;
                 }
             }
         }
         return "0";
     }
-    public static int GetKeyAsInt(Dictionary<string, object> dic, string key)//值不可为"0".
+    public static int GetKeyAsInt(Dictionary<string, object>? dic, string key)//值不可为"0".
     {
         if (dic == null) return 0;
-        if (dic.TryGetValue(key, out var value) && value != null)
+
+        if (!dic.TryGetValue(key, out var value))
         {
-            if (_value is int value)
-            {
-                return value;
-            }
-            if (_value is long l)
-            {
-                return (int)l;
-            }
-            if (_value is double d)
-            {
-                return (int)d;
-            }
-            if (_value is string s && int.TryParse(s, out var result))
-            {
-                return result;
-            }
+            return 0;
         }
-        return 0;
+
+        return value switch
+        {
+            int i => i,
+            long l => (int)l,
+            double d => (int)d,
+            string s when int.TryParse(s, out var result) => result,
+            _ => 0,
+        };
     }
     public static string GetValue(NameValueCollection collection, string key)
     {
         if (collection.AllKeys.Contains(key))
         {
             var value = collection[key];
-            if (value is string value)
+            if (value is string str)
             {
-                return value;
+                return str;
             }
         }
         return "0";
     }
-
 }
+
 
 
 public static class UbbToMd
@@ -548,7 +542,7 @@ public static class UbbToMd
             {
                 var content = match.Groups[1].Value;
                 // 分割内容为多个段落    
-                var paragraphs = content.Split(new[] { "  \n" }, StringSplitOptions.None);
+                var paragraphs = content.Split(["  \n"], StringSplitOptions.None);
 
                 // 为每个段落单独添加加粗标记
                 for (var i = 0; i < paragraphs.Length; i++)

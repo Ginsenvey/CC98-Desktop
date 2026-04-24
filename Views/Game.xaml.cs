@@ -25,8 +25,8 @@ public sealed partial class Game : Page
     public ApplicationDataContainer Set = ApplicationData.Current.LocalSettings;
     public ObservableCollection<Objects.Card> Cards = [];
     public CardStat CardDrawStat { get; set; }=new() { Wealth=0,CardCount=0,DrawCount=0,TotalBonus=0,TotalCost=0};
-    public ObservableCollection<GachaInfo> GachaInfo1 = new();
-    public ObservableCollection<GachaInfo> GachaInfo2 = new();
+    public ObservableCollection<GachaInfo> GachaInfo1 = [];
+    public ObservableCollection<GachaInfo> GachaInfo2 = [];
     public Game()
     {
         this.InitializeComponent();
@@ -140,60 +140,55 @@ public sealed partial class Game : Page
     private async void Operate_Click(object sender, RoutedEventArgs e)
     {
         var b = sender as Button;
-        if (b != null)
+        if (b == null || b.Tag is not string tag) return;
+
+        switch (tag)
         {
-            var tag = b.Tag;
-            if (tag is string tag)
-            {
-                switch (tag)
+            case "single-more":
+                if (SingleProperList.ItemsSource == null)
                 {
-                    case "single-more":
-                        if (SingleProperList.ItemsSource == null)
-                        {
-                            SingleProperList.ItemsSource = GachaInfo1;
-                        }
-                        else
-                        {
-                            SingleProperList.ItemsSource = null;
-                        }
-                        break;
-                    case "multi-more":
-                        if (MultiProperList.ItemsSource == null)
-                        {
-                            MultiProperList.ItemsSource = GachaInfo1;
-                        }
-                        else
-                        {
-                            MultiProperList.ItemsSource = null;
-                        }
-                        break;
-                    case "destroy-all":
-                        DestroyCardDialog.XamlRoot = this.XamlRoot;
-                        var r = await DestroyCardDialog.ShowAsync();
-                        if (r == ContentDialogResult.Primary)
-                        {
-                            var url = "https://card.cc98.org/api/collection/all-rest";
-                            var result = await RequestSender.Delete(url);
-                            if (!result.IsSuccess)
-                            {
-                                //
-                                Flower.Play("\uEA39", "分解失败");
-                                return;
-                            }
-                            RefreshStat();
-                            Flower.Play("\uE930", "分解成功");
-      
-                        }
-                        break;
-                    case "ref-stat":
-                        RefreshStat();
-                        Flower.Play("\uE930", "正在刷新数据");
-                        break;
+                    SingleProperList.ItemsSource = GachaInfo1;
                 }
-            }
+                else
+                {
+                    SingleProperList.ItemsSource = null;
+                }
+                break;
+            case "multi-more":
+                if (MultiProperList.ItemsSource == null)
+                {
+                    MultiProperList.ItemsSource = GachaInfo1;
+                }
+                else
+                {
+                    MultiProperList.ItemsSource = null;
+                }
+                break;
+            case "destroy-all":
+                DestroyCardDialog.XamlRoot = this.XamlRoot;
+                var r = await DestroyCardDialog.ShowAsync();
+                if (r == ContentDialogResult.Primary)
+                {
+                    var url = "https://card.cc98.org/api/collection/all-rest";
+                    var result = await RequestSender.Delete(url);
+                    if (!result.IsSuccess)
+                    {
+                        //
+                        Flower.Play("\uEA39", "分解失败");
+                        return;
+                    }
+                    RefreshStat();
+                    Flower.Play("\uE930", "分解成功");
+      
+                }
+                break;
+            case "ref-stat":
+                RefreshStat();
+                Flower.Play("\uE930", "正在刷新数据");
+                break;
         }
-           
-            
+
+
     }
 
 }

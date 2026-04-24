@@ -548,7 +548,7 @@ public sealed partial class Sketch : Page
             {"isAnonymous",IsAnonymous},
             {"notifyPoster",NotifyPoster},
             {"title",SetTitle.Text},
-            {"type",postType}
+            {"type",PostTypeValue}
         };
         var text = JsonSerialize.Serialize(post);
         var requestBody = new StringContent(text, Encoding.UTF8, "application/json");
@@ -630,7 +630,7 @@ public sealed partial class Sketch : Page
     {
         var r = sender as RadioButton;
         if (r?.Tag is not int type) return;
-        postType= type;
+        PostTypeValue= type;
     }
 
     private void ConfirmCustomLink_Click(object sender, RoutedEventArgs e)

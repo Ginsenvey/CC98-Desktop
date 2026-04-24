@@ -11,7 +11,6 @@
     xmlns:controls="using:CommunityToolkit.WinUI.Controls"
     xmlns:dev="using:DevWinUI"
     xmlns:ubb="using:UbbRender.Render"
-    xmlns:c="using:CC98.Controls"
     xmlns:obj="using:CC98.Objects"
     Background="{ThemeResource DesktopAcrylicTransparentBrush}">
 

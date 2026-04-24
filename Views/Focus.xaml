@@ -7,12 +7,10 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d"
-    xmlns:lab="using:CommunityToolkit.Labs.WinUI"
     xmlns:ic="using:FluentIcons.WinUI"
     xmlns:controls="using:CommunityToolkit.WinUI.Controls"
     xmlns:obj="using:CC98.Objects"
     xmlns:share="using:CC98.Share.Controls"
-    xmlns:cv="using:CC98.Services.Converters"
     Background="{ThemeResource DesktopAcrylicTransparentBrush}">
 
     <Grid Padding="15,5,15,15">

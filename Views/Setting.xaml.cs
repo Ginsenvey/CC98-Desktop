@@ -21,7 +21,7 @@ namespace CC98;
 /// </summary>
 public sealed partial class Setting : Page
 {
-    public ObservableCollection<ThemePicture> Pics = new();
+    public ObservableCollection<ThemePicture> Pics = [];
     public Setting()
     {
         this.InitializeComponent();

@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Window
     x:Class="CC98.MediaViewer"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
@@ -8,8 +8,6 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d"
     xmlns:share="using:CC98.Share.Controls"
-    xmlns:dev="using:DevWinUI"
-    xmlns:image="using:CC98.Controls"
     xmlns:ic="using:FluentIcons.WinUI"
     Title="预览">
     

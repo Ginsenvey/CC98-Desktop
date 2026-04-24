@@ -60,13 +60,13 @@ public sealed partial class Index : Page
     {
         //只从缓存中读取。
         List<string> sectionNames = ["hotTopic", "schoolEvent", "academics", "study", "emotion", "fleaMarket", "fullTimeJob", "partTimeJob"];
-        List<string> sectionNames = ["十大话题", "校园活动", "学术通知", "学习天地", "感性·情感", "跳蚤市场", "求职广场", "实习兼职"];
+        List<string> sectionDisplayNames = ["十大话题", "校园活动", "学术通知", "学习天地", "感性·情感", "跳蚤市场", "求职广场", "实习兼职"];
         Sections.Clear();
         FlipTopics.Clear();
         for(var i=0; i<sectionNames.Count; i++)
         {
             var propertyName = sectionNames[i];
-            var name= sectionNames[i];
+            var name= sectionDisplayNames[i];
             var hotTopics = await _indexService.GetTopicPartitionAsync(propertyName);
             var section=new SectionCard { SectionName=name,IndexTopics=hotTopics,HexColor=ColorEx.GenerateMorandiColorHex()};
             Sections.Add(section);

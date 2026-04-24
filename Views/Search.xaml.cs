@@ -2,13 +2,17 @@
 using CC98.Kernel.ApiScope;
 using CC98.Objects;
 using CC98.Services.Extensions;
+
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Threading.Tasks;
 using System.Web;
+
 using Windows.Storage;
+
 using DevWinUI;
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -36,7 +40,7 @@ public sealed partial class Search : Page
         // 获取传递的参数
         var args = e.TryGetParameter<SearchNavigationInfo>();
 
-        if (args!=null)
+        if (args != null)
         {
             Type = args.SearchType;
             Key = args.Key;
@@ -50,23 +54,23 @@ public sealed partial class Search : Page
                     break;
             }
         }
-            
+
 
 
     }
 
     private void SearchUser(string key)
     {
-        var url = ApiEndpoints.User.SearchUserByName(key) ;
+        var url = ApiEndpoints.User.SearchUserByName(key);
         //替换实现
-            
+
     }
 
-    private async Task<bool> SearchTopic(string key,int start)
+    private async Task<bool> SearchTopic(string key, int start)
     {
-        var searchUrl = ApiEndpoints.Topic.SearchTopic(key,start);
+        var searchUrl = ApiEndpoints.Topic.SearchTopic(key, start);
         var searchResult = await RequestSender.Fetch<List<TopicInfo>>(searchUrl);
-        if (!searchResult.IsSuccess|| searchResult.Data== null)
+        if (!searchResult.IsSuccess || searchResult.Data == null)
         {
             //
             return false;
@@ -74,10 +78,10 @@ public sealed partial class Search : Page
         var data = searchResult.Data;
 
         Topics.AddRange(data);
-        if (data.Count>0)return true;
-            
+        if (data.Count > 0) return true;
+
         return false;
-            
+
     }
     public int CurrentIndex = 0;
     private async void NaviBar_Click(object sender, RoutedEventArgs e)
@@ -91,7 +95,7 @@ public sealed partial class Search : Page
                 if (CurrentIndex > 0)
                 {
                     CurrentIndex -= 20;
-                    if(!await SearchTopic(Key, CurrentIndex))
+                    if (!await SearchTopic(Key, CurrentIndex))
                     {
                         CurrentIndex += 20;
                     }
@@ -105,47 +109,35 @@ public sealed partial class Search : Page
             else if (tag == "Forward")
             {
                 CurrentIndex += 20;
-                if(!await SearchTopic(Key, CurrentIndex))
+                if (!await SearchTopic(Key, CurrentIndex))
                 {
                     CurrentIndex -= 20;
                 }
             }
-                
+
             PageIndex.Text = "第 " + (CurrentIndex / 20 + 1).ToString() + " 页";
             RootViewer.ScrollToVerticalOffset(0);
         }
     }
     private void SearchContent_Click(object sender, RoutedEventArgs e)
     {
-        var h = sender as HyperlinkButton;
-        var t = h?.Tag;
+        var h = (HyperlinkButton)sender;
+        if (h.Tag is not string t) return;
 
-        if (t != null)
-        {
-            if (t is string t)
-            {
-                Frame.Navigate(typeof(Topic), t);
-                    
-            }
+        Frame.Navigate(typeof(Topic), t);
 
-        }
     }
 
     private void Person_Click(object sender, RoutedEventArgs e)
     {
-        var h = sender as HyperlinkButton;
-        if (h != null)
+        var h = (HyperlinkButton)sender;
+        if (h.Tag is not string tag || tag == "0") return;
+
+        var param = new Dictionary<string, string>()
         {
-            var tag = h.Tag as string;
-            if (tag != null && tag != "0")
-            {
-                var param = new Dictionary<string, string>()
-                {
-                    {"Mode","Others" },
-                    {"UserId",tag }
-                };
-                Frame.Navigate(typeof(Profile), param);
-            }
-        }
+            {"Mode","Others" },
+            {"UserId",tag }
+        };
+        Frame.Navigate(typeof(Profile), param);
     }
 }

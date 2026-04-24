@@ -16,26 +16,22 @@ public static class Crypto
     /// <returns></returns>
     public static string EncryptStringToHex(string plainText, string key, string iv)
     {
-        var iv = Encoding.UTF8.GetBytes(IV.PadRight(16, ' ')[..16]);
-        var key = Encoding.UTF8.GetBytes(Key.PadRight(16, ' ')[..16]);
-        using (var aes = Aes.Create())
-        {
-            aes.Key = key;
-            aes.IV = iv;
-            aes.Mode = CipherMode.CFB;   // CFB 模式
-            aes.Padding = PaddingMode.None; // 允许任意长度明文
-            aes.FeedbackSize = 128;
-            using (var encryptor = aes.CreateEncryptor())
-            using (var ms = new MemoryStream())
-            using (var cs = new CryptoStream(ms, encryptor, CryptoStreamMode.Write))
-            {
-                //使用提前填充
-                var plainBytes = PadWithZeros(plainText);
-                cs.Write(plainBytes, 0, plainBytes.Length);
-                cs.FlushFinalBlock();
-                return Convert.ToHexString(ms.ToArray()).ToLower();
-            }
-        }
+        using var aes = Aes.Create();
+
+        aes.Key = Encoding.UTF8.GetBytes(key.PadRight(16, ' ')[..16]);
+        aes.IV = Encoding.UTF8.GetBytes(iv.PadRight(16, ' ')[..16]);
+        aes.Mode = CipherMode.CFB;   // CFB 模式
+        aes.Padding = PaddingMode.None; // 允许任意长度明文
+        aes.FeedbackSize = 128;
+
+        using var encryptor = aes.CreateEncryptor(aes.Key, aes.IV);
+        using var ms = new MemoryStream();
+        using var cs = new CryptoStream(ms, encryptor, CryptoStreamMode.Write);
+        //使用提前填充
+        var plainBytes = PadWithZeros(plainText);
+        cs.Write(plainBytes, 0, plainBytes.Length);
+        cs.FlushFinalBlock();
+        return Convert.ToHexString(ms.ToArray()).ToLower();
     }
     /// <summary>
     /// 将输入字符串按 UTF-8 编码后补足到 16 字节整数倍，不足部分补 0x00。

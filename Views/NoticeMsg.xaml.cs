@@ -16,7 +16,7 @@ namespace CC98;
 
 public sealed partial class NoticePage : Page
 {
-    public ObservableCollection<Notice> Notices = new();
+    public ObservableCollection<Notice> Notices = [];
     public NoticeType Type = NoticeType.System;
     public Increment Increment = new(); 
     public string GetTypeName(NoticeType type) => type switch

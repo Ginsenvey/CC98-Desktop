@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Page
     x:Class="CC98.Search"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
@@ -9,7 +9,6 @@
     mc:Ignorable="d"
     xmlns:ic="using:FluentIcons.WinUI"
     xmlns:obj="using:CC98.Objects"
-    xmlns:cv="using:CC98.Services.Converters"
     Background="{ThemeResource DesktopAcrylicTransparentBrush}">
 
     <Grid Padding="15" RowSpacing="15">

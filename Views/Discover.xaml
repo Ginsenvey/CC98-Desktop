@@ -8,11 +8,8 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d"
     xmlns:ic="using:FluentIcons.WinUI"
-    xmlns:image="using:CC98.Controls"
     xmlns:obj="using:CC98.Objects"
     xmlns:share="using:CC98.Share.Controls"
-    xmlns:cv="using:CC98.Services.Converters"
-    xmlns:local1="using:CC98.Controls"
     NavigationCacheMode="Required"
     Background="{ThemeResource DesktopAcrylicTransparentBrush}">
     <Page.Resources>
@@ -109,7 +106,6 @@
                 </StackPanel>
             </Grid>
         </DataTemplate>
-        <obj:TopicTemplateSelector x:Key="TopicTemplateSelector" TextTemplate="{StaticResource TextPost}" ImageTemplate="{StaticResource ImagePost}"></obj:TopicTemplateSelector>
     </Page.Resources>
 
 

@@ -23,7 +23,7 @@ namespace CC98;
 public sealed partial class Follow : Page
 {
     public ApplicationDataContainer Set = ApplicationData.Current.LocalSettings;
-    public ObservableCollection<Friend> Friends = new();
+    public ObservableCollection<Friend> Friends = [];
     public string Type = "follower";
     public Increment Increment= new();
     public GlobalService GlobalService = GlobalService.Instance;
@@ -117,15 +117,12 @@ public sealed partial class Follow : Page
 
     private async void UnFollow_Click(object sender, RoutedEventArgs e)
     {
-        var m = sender as MenuFlyoutItem;
-        if (m != null)
+        var m = (MenuFlyoutItem)sender;
+
+        if (m.Tag is string tag)
         {
-            var tag = m.Tag;
-            if(tag is string tag)
-            {
-                //string restext = await RequestSender.Follow("0", tag);
+            //string restext = await RequestSender.Follow("0", tag);
                     
-            }
         }
     }
 

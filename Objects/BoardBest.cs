@@ -26,6 +26,6 @@ public class BoardInfo
 public class SectionInfo
 {
     public string Name { get; set; } = string.Empty;
-    public List<string> Masters { get; set; } = new();
-    public List<BoardInfo> Boards { get; set; } = new();
+    public List<string> Masters { get; set; } = [];
+    public List<BoardInfo> Boards { get; set; } = [];
 }

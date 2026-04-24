@@ -9,11 +9,9 @@
     mc:Ignorable="d"
     Title="CC98"  
     xmlns:animatedvisuals="using:Microsoft.UI.Xaml.Controls.AnimatedVisuals"
-    xmlns:dev="using:DevWinUI"
     xmlns:ic="using:FluentIcons.WinUI"
     xmlns:obj="using:CC98.Objects"
     xmlns:share="using:CC98.Share.Controls"
-    xmlns:sv="using:CC98.Services"
     SystemBackdrop="{ThemeResource AcrylicBackgroundFillColorDefaultBackdrop}">
     
     <Grid x:Name="RootGrid" UseLayoutRounding="True">

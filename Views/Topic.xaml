@@ -10,12 +10,9 @@
     xmlns:ic="using:FluentIcons.WinUI"
     xmlns:tool="using:CommunityToolkit.WinUI.Controls"
     xmlns:dev="using:DevWinUI"
-    xmlns:image="using:CC98.Controls"
     xmlns:ubb="using:UbbRender.Render"
     xmlns:share="using:CC98.Share.Controls"
-    xmlns:pr="using:CC98.Share.Controls.Primitives"
     xmlns:obj="using:CC98.Objects"
-    xmlns:cv="using:CC98.Services.Converters"
     xmlns:svc="using:CC98.Services"
     NavigationCacheMode="Disabled"
     Background="{ThemeResource DesktopAcrylicTransparentBrush}">

@@ -7,8 +7,6 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:obj="using:CC98.Objects"
-    xmlns:cv="using:CC98.Services.Converters"
-    xmlns:sv="using:CC98.Services"
     mc:Ignorable="d">
     <Page.Resources>
         <DataTemplate x:Key="SystemNoticeTemplate" x:DataType="obj:Notice">

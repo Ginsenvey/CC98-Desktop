@@ -8,10 +8,7 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d"
     xmlns:ic="using:FluentIcons.WinUI"
-    xmlns:lab="using:CommunityToolkit.Labs.WinUI"
-    xmlns:tool="using:CommunityToolkit.WinUI.Controls"
     xmlns:obj="using:CC98.Objects"
-    xmlns:cv="using:CC98.Services.Converters"
     Background="{ThemeResource DesktopAcrylicTransparentBrush}">
 
     <Grid Padding="15,0,15,0">

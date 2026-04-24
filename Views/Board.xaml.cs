@@ -120,51 +120,45 @@ public sealed partial class Board : Page
     private async void Gooey_Click(object sender, RoutedEventArgs e)
     {
         var s = sender as GooeyButtonItem;
-        if (s != null)
-        {
-            var tag = s.Tag;
-            if (tag is string tag)
-            {
-                switch (tag)
-                {
-                    case "Send":
-                        var param = new SketchNavigationInfo
-                        {
-                            EditorMode=EditorMode.DraftNewTopic,
-                            BoardId=BoardId
-                        };
-                        Frame.Navigate(typeof(Sketch), param);
-                        break;
-                    case "Pin":
-                        var url = ApiEndpoints.Board.EditFocusBoards(BoardId);
-                        var content = new StringContent("", Encoding.UTF8, "application/json");
-                        var result = await RequestSender.Put(url, content);
-                        if (!result.IsSuccess)
-                        {
-                            //
-                            return;
-                        }
-                        var i = new NavigationItem
-                        {
-                            IconSymbol = BoardIcon.GetSymbol(BoardId, BoardData.Name),
-                            Name = BoardData.Name,
-                            IsEditable = true,
-                            Tag = BoardId.ToString()
-                        };
-                        Messenger.Instance.AddNavigationItem(i);
-                        break;
-                    case "Best":
-                        //GooeyGroup.Visibility = Visibility.Collapsed;
-                        //BackFromBest.Visibility = Visibility.Visible;
-                        Increment.Clear();
-                        Topics.Clear();
-                        IsBest = true;
-                            
-                        await LoadTopics();
-                        break;
-                }
+        if (s == null || s.Tag is not string tag) return;
 
-            }
+        switch (tag)
+        {
+            case "Send":
+                var param = new SketchNavigationInfo
+                {
+                    EditorMode=EditorMode.DraftNewTopic,
+                    BoardId=BoardId
+                };
+                Frame.Navigate(typeof(Sketch), param);
+                break;
+            case "Pin":
+                var url = ApiEndpoints.Board.EditFocusBoards(BoardId);
+                var content = new StringContent("", Encoding.UTF8, "application/json");
+                var result = await RequestSender.Put(url, content);
+                if (!result.IsSuccess)
+                {
+                    //
+                    return;
+                }
+                var i = new NavigationItem
+                {
+                    IconSymbol = BoardIcon.GetSymbol(BoardId, BoardData.Name),
+                    Name = BoardData.Name,
+                    IsEditable = true,
+                    Tag = BoardId.ToString()
+                };
+                Messenger.Instance.AddNavigationItem(i);
+                break;
+            case "Best":
+                //GooeyGroup.Visibility = Visibility.Collapsed;
+                //BackFromBest.Visibility = Visibility.Visible;
+                Increment.Clear();
+                Topics.Clear();
+                IsBest = true;
+                            
+                await LoadTopics();
+                break;
         }
 
     }

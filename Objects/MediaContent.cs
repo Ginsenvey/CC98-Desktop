@@ -6,5 +6,5 @@ namespace CC98.Objects;
 public class MediaContent
 {
     [JsonPropertyName("thumbnail")]
-    public List<string> Thumbnail { get; set; } = new();
+    public List<string> Thumbnail { get; set; } = [];
 }

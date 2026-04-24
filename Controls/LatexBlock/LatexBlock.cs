@@ -101,9 +101,9 @@ public sealed partial class LatexBlock : UserControl
             );
 
             // 测量Content
-            if (this.Content is FrameworkElement content)
+            if (this.Content is FrameworkElement c)
             {
-                content.Measure(emptySize);
+                c.Measure(emptySize);
             }
 
             return emptySize;
@@ -112,9 +112,9 @@ public sealed partial class LatexBlock : UserControl
         try
         {
             // 使用足够大的宽度测量（公式不需要换行）
-            var measureWidth = 2000f;
+            const float measureWidth = 2000f;
 
-            var lines = _latex.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
+            var lines = _latex.Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries);
 
             _contentWidth = 0;
             _contentHeight = 0;
@@ -239,7 +239,7 @@ public sealed partial class LatexBlock : UserControl
                     Color = SKColors.Blue,
                     Style = SKPaintStyle.Stroke,
                     StrokeWidth = 1.5f,
-                    PathEffect = SKPathEffect.CreateDash(new float[] { 5, 5 }, 0),
+                    PathEffect = SKPathEffect.CreateDash([5, 5], 0),
                     IsAntialias = true
                 };
 
@@ -293,7 +293,7 @@ public sealed partial class LatexBlock : UserControl
             }
 
             // ============ 4. 绘制公式内容 ============
-            var lines = _latex.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
+            var lines = _latex.Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries);
             var currentY = (float)Padding.Top;
 
             for (var i = 0; i < lines.Length; i++)
@@ -385,7 +385,7 @@ public sealed partial class LatexBlock : UserControl
     {
         get
         {
-            var lineCount = _latex?.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries).Length ?? 0;
+            var lineCount = _latex?.Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries).Length ?? 0;
             return $"内容: {_contentWidth:F1}x{_contentHeight:F1}, " +
                    $"控件: {ActualWidth:F1}x{ActualHeight:F1}, " +
                    $"画布: {_canvas.ActualWidth:F1}x{_canvas.ActualHeight:F1}, " +

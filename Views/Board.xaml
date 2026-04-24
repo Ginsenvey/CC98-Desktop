@@ -9,10 +9,8 @@
     mc:Ignorable="d"
     xmlns:lab="using:CommunityToolkit.Labs.WinUI"
     xmlns:ic="using:FluentIcons.WinUI"
-    xmlns:dev="using:DevWinUI"
     xmlns:ubb="using:UbbRender.Render"
     xmlns:obj="using:CC98.Objects"
-    xmlns:cv="using:CC98.Services.Converters"
     Background="{ThemeResource DesktopAcrylicTransparentBrush}">
     <Grid>
         <Grid.RowDefinitions>

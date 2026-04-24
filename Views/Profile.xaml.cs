@@ -4,10 +4,14 @@ using CC98.Kernel.UserExperience;
 using CC98.Objects;
 using CC98.Services;
 using CC98.Services.Extensions;
+
 using DevWinUI;
+
 using FluentIcons.Common;
+
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -15,6 +19,7 @@ using System.Net;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
+
 using Windows.Storage;
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -26,15 +31,16 @@ namespace CC98;
 /// </summary>
 public sealed partial class Profile : Page
 {
-    public ObservableCollection<SimpleTopicInfo> RecentTopics=[];
+    public ObservableCollection<SimpleTopicInfo> RecentTopics = [];
     public ApplicationDataContainer Set = ApplicationData.Current.LocalSettings;
-    public UserInfo UserProfile=new() { 
-        Id=0,
-        Name="未知用户",
-        PortraitUrl="",
-        IsFollowing=false,
+    public UserInfo UserProfile { get; } = new()
+    {
+        Id = 0,
+        Name = "未知用户",
+        PortraitUrl = "",
+        IsFollowing = false,
     };
-    public bool IsMe=false;
+    public bool IsMe = false;
     public int UserId = 0;
     public Increment Increment = new();
     public Profile()
@@ -53,8 +59,8 @@ public sealed partial class Profile : Page
             IsMe = args.IsMe;
             await LoadUserProfile();
             await LoadRecentTopic();
-            if(IsMe)SignIn();
-        } 
+            if (IsMe) SignIn();
+        }
     }
     private async void SignIn()
     {
@@ -89,13 +95,13 @@ public sealed partial class Profile : Page
     //用户个人页面检查跳转参数
     private async Task LoadUserProfile()
     {
-        var UserProfileUrl = ApiEndpoints.User.UserProfile(IsMe,UserId);
+        var UserProfileUrl = ApiEndpoints.User.UserProfile(IsMe, UserId);
         var UserProfileResult = await RequestSender.Fetch<UserInfo>(UserProfileUrl);
         if (!UserProfileResult.IsSuccess || UserProfileResult.Data == null)
         {
             return;
         }
-        var data= UserProfileResult.Data;
+        var data = UserProfileResult.Data;
         UserProfile.Name = data.Name;
         UserProfile.Id = data.Id;
         UserProfile.Popularity = data.Popularity;
@@ -108,7 +114,7 @@ public sealed partial class Profile : Page
         UserProfile.Wealth = data.Wealth;
         UserProfile.RegisterTime = data.RegisterTime;
         UserProfile.IsFollowing = data.IsFollowing;
-        if (IsMe&& ValidationHelper.GetValue(Set, "Uid")=="0")
+        if (IsMe && ValidationHelper.GetValue(Set, "Uid") == "0")
         {
             Set.Values["Uid"] = data.Id.ToString();
             Set.Values["Portrait"] = data.PortraitUrl;
@@ -119,30 +125,30 @@ public sealed partial class Profile : Page
             var source = await UrlEx.LoadWebImage(UserProfile.PortraitUrl);
             MyProfile.ProfilePicture = source;
         }
-        catch(Exception ex)
+        catch (Exception ex)
         {
-            await App.Logger.WriteAsync("UserProfile","加载头像失败", ex.Message);
+            await App.Logger.WriteAsync("UserProfile", "加载头像失败", ex.Message);
         }
         InfoContent.DataContext = UserProfile;
-        SignBoard.DataContext = UserProfile; 
+        SignBoard.DataContext = UserProfile;
     }
     private async Task<bool> LoadRecentTopic()
     {
         var recentTopicUrl = ApiEndpoints.Topic.RecentTopic(IsMe, UserId, Increment.StartIndex);
         var recentTopicResult = await RequestSender.Fetch<List<SimpleTopicInfo>>(recentTopicUrl);
-        if (!recentTopicResult.IsSuccess||recentTopicResult.Data==null)
+        if (!recentTopicResult.IsSuccess || recentTopicResult.Data == null)
         {
             Flower.Play(FlowStatus.Fail, recentTopicResult.Message);
             return false;
         }
-        var data=recentTopicResult.Data;
+        var data = recentTopicResult.Data;
         //移除末尾
-        if(data.Count==11)data.RemoveAt(10);
+        if (data.Count == 11) data.RemoveAt(10);
         Increment.HasMore = data.Count == Increment.PageSize;
         RecentTopics.AddRange(data);
         return true;
     }
-        
+
     private void STileButton_Click(object sender, RoutedEventArgs e)
     {
         var h = sender as HyperlinkButton;
@@ -154,9 +160,9 @@ public sealed partial class Profile : Page
     }
 
 
-        
 
-       
+
+
     private void FollowList_Click(object sender, RoutedEventArgs e)
     {
         if (!IsMe) return;
@@ -165,21 +171,21 @@ public sealed partial class Profile : Page
         GlobalService.Instance.NavigationAnchor = tag;
         Frame.Navigate(typeof(Follow), tag);
     }
-        
-        
+
+
 
     private void StartChat_Click(object sender, RoutedEventArgs e)
     {
         var c = new ChatInfo { UserId = UserProfile.Id, Name = UserProfile.Name, PortraitUrl = UserProfile.PortraitUrl };
-        var param=new MessageNavigationInfo { ChatUserInfo = c ,HasTarget=true};
+        var param = new MessageNavigationInfo { ChatUserInfo = c, HasTarget = true };
         Frame.Navigate(typeof(Message), param);
     }
 
     private void Follow_Click(object sender, RoutedEventArgs e)
     {
         var flag = UserProfile.IsFollowing;
-        var mode=  flag?"0":"1";
-            
+        var mode = flag ? "0" : "1";
+
     }
 
     private async void RecentTopicRepeater_ElementPrepared(ItemsRepeater sender, ItemsRepeaterElementPreparedEventArgs args)

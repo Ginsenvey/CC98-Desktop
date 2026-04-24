@@ -67,7 +67,7 @@ public partial class VpnService
                 var r = await Coordinator.SafeSilentAuth();
                 if (r)
                 {
-                    var res = await Client.GetAsync(targetUrl);
+                    res = await Client.GetAsync(targetUrl);
                     return await res.Content.ReadAsByteArrayAsync();
                 }
             }

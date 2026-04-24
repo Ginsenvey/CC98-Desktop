@@ -33,7 +33,7 @@ public class IndexDataService
     public class CachedIndexData
     {
         public Dictionary<string, List<IndexTopic>> TopicPartitions { get; set; } = new();
-        public List<FlipTopic> RecommendationReading { get; set; } = new();
+        public List<FlipTopic> RecommendationReading { get; set; } = [];
         public ForumStatistics Statistics { get; set; } = new();
         public DateTime LastUpdateTime { get; set; }
     }
@@ -63,10 +63,10 @@ public class IndexDataService
         public const string PartTimeJob = "partTimeJob";
 
         public static readonly string[] All =
-        {
+        [
             HotTopic, SchoolEvent, Academics, Study,
             Emotion, FleaMarket, FullTimeJob, PartTimeJob
-        };
+        ];
     }
 
     /// <summary>
@@ -130,7 +130,7 @@ public class IndexDataService
             return topics;
         }
 
-        return new();
+        return [];
     }
 
     /// <summary>
@@ -150,7 +150,7 @@ public class IndexDataService
             return recommendations;
         }
 
-        return new();
+        return [];
     }
 
     /// <summary>

@@ -23,8 +23,8 @@ namespace CC98;
 /// </summary>
 public sealed partial class Chat : Page
 {
-    public ObservableCollection<ChatInfo> ChatInfoList = new();
-    public ObservableCollection<ChatMessage> Messages = new();
+    public ObservableCollection<ChatInfo> ChatInfoList = [];
+    public ObservableCollection<ChatMessage> Messages = [];
     //是否来自Profile页面的私信跳转功能
     public bool HasTarget = false;
     public ChatInfo TargetUserInfo = new();
