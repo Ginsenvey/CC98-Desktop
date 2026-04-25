@@ -36,7 +36,7 @@ public sealed partial class Board : Page
         base.OnNavigatedTo(e);
         var args = e.TryGetParameter<int>();
         BoardId = args;
-        BoardSymbol.Symbol=BoardIcon.GetSymbol(BoardId,"");
+        BoardSymbol.Symbol=BoardIconHelper.GetSymbol(BoardId,"");
         await GetData();
         await LoadTopics();
     }
@@ -138,7 +138,7 @@ public sealed partial class Board : Page
                 }
                 var i = new NavigationItem
                 {
-                    IconSymbol = BoardIcon.GetSymbol(BoardId, BoardData.Name),
+                    IconSymbol = BoardIconHelper.GetSymbol(BoardId, BoardData.Name),
                     Name = BoardData.Name,
                     IsEditable = true,
                     Tag = BoardId.ToString()
@@ -228,7 +228,7 @@ public sealed partial class Board : Page
         }
         var i = new NavigationItem
         {
-            IconSymbol = BoardIcon.GetSymbol(BoardId, BoardData.Name),
+            IconSymbol = BoardIconHelper.GetSymbol(BoardId, BoardData.Name),
             Name = BoardData.Name,
             IsEditable = true,
             Tag = BoardId.ToString()

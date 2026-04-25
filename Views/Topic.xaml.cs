@@ -766,7 +766,7 @@ public sealed partial class Topic : Page
     {
         var p = sender as PersonPicture;
         if (p?.Tag is not string tag) return;
-        var bitmap = await UrlEx.LoadWebImage(tag);
+        var bitmap = await UrlEx.LoadWebImageAsync(tag);
         p.ProfilePicture = bitmap;
     }
 

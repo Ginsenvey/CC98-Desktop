@@ -168,7 +168,7 @@ public sealed partial class MainWindow : Window
             {
                 foreach (var b in Memory)
                 {
-                    MenuItems.Add(new NavigationItem { Name = b.Value, IconSymbol = BoardIcon.GetSymbol(b.Key, b.Value), Tag = b.Key.ToString(), IsEditable = true });
+                    MenuItems.Add(new NavigationItem { Name = b.Value, IconSymbol = BoardIconHelper.GetSymbol(b.Key, b.Value), Tag = b.Key.ToString(), IsEditable = true });
                 }
             }
             return;
@@ -195,7 +195,7 @@ public sealed partial class MainWindow : Window
             }
             var data=boardDataResult.Data;
             Memory.Add(boardId, data.Name);
-            MenuItems.Add(new NavigationItem { Name = data.Name, IconSymbol = BoardIcon.GetSymbol(boardId, data.Name), Tag = boardId.ToString(), IsEditable = true });
+            MenuItems.Add(new NavigationItem { Name = data.Name, IconSymbol = BoardIconHelper.GetSymbol(boardId, data.Name), Tag = boardId.ToString(), IsEditable = true });
             var boardjsontext = JsonSerialize.Serialize(Memory);
             Set.Values["CustomBoards"] = boardjsontext;
                
@@ -203,7 +203,7 @@ public sealed partial class MainWindow : Window
         else
         {
             //如果本地存储有此板块，则直接添加
-            MenuItems.Add(new NavigationItem { Name = Memory[boardId], IconSymbol = BoardIcon.GetSymbol(boardId, Memory[boardId]), Tag = boardId.ToString(), IsEditable = true });
+            MenuItems.Add(new NavigationItem { Name = Memory[boardId], IconSymbol = BoardIconHelper.GetSymbol(boardId, Memory[boardId]), Tag = boardId.ToString(), IsEditable = true });
         }
     }
     private async void LoadIndex()

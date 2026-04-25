@@ -71,7 +71,7 @@ public class SmartImageLoader : IImageLoader
             }
             else if (UrlEx.IsWebUrl(src))
             {
-                result = await UrlEx.LoadWebImage(src, LowRes);
+                result = await UrlEx.LoadWebImageAsync(src, LowRes);
             }
         }
         catch

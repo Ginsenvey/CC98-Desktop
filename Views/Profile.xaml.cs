@@ -115,7 +115,7 @@ public sealed partial class Profile : Page
         UserProfile.IsOthers = !IsMe;
         try
         {
-            var source = await UrlEx.LoadWebImage(UserProfile.PortraitUrl);
+            var source = await UrlEx.LoadWebImageAsync(UserProfile.PortraitUrl);
             MyProfile.ProfilePicture = source;
         }
         catch (Exception ex)
