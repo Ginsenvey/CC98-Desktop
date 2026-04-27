@@ -28,7 +28,7 @@ public sealed partial class VpnService : IDisposable
 {
     #region URL 地址
 
-    private const string BaseUrl = "https://webvpn.zju.edu.cn";
+    public const string BaseUrl = "https://webvpn.zju.edu.cn";
     private const string LoginAuthUrl = "/login";
     private const string LoginPswUrl = "/do-login";
     private const string LogoutUrl = "/logout";
@@ -153,7 +153,7 @@ public sealed partial class VpnService : IDisposable
     /// <exception cref="InvalidOperationException"></exception>
     private async Task<VpnLoginResult> LoginCoreAsync(string username, string password, CancellationToken cancellationToken = default)
     {
-        var passwordKeyBytes = "wrdvpnisawesome"u8;
+
 
         if (CaptchaValue == "")
         {
@@ -161,7 +161,7 @@ public sealed partial class VpnService : IDisposable
         }
         var csrf = LastRandCode;
         var captchaId = LastCaptchaId;
-        var encryptedPassword = EncryptString(password, passwordKeyBytes);
+        var encryptedPassword = EncryptString(password, PasswordEncryptKey);
         var formData = new Dictionary<string, string>
             {
                 {"_csrf", csrf},
