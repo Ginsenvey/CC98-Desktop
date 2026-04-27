@@ -14,12 +14,3 @@ public enum NetworkStatus
     NoConnection = 10,               //无网络
     MirrorError=11,                  //IP被镜像站拦截访问
 }
-
-
-public enum VpnLoginStatus
-{
-    Success = 0,
-    NeedCaptcha=1,        //欠费或凭据错误
-    NeedConfirm=2,          //需要顶号
-    Error=3,               
-}

@@ -44,7 +44,7 @@ public sealed class Coordinator
     {
         try
         {
-            var r = await LoginService.RefreshToken();
+            var r = await LoginService.GetRefreshTokenAsync();
             if (r == "1")
             {
                 return true;

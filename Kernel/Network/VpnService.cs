@@ -1,15 +1,20 @@
 ﻿using CC98.Objects;
 using HtmlAgilityPack;
 using System;
+using System.Buffers;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Json;
+using System.Security.Cryptography;
+using System.Text;
 using System.Text.Json;
+using System.Text.Unicode;
 using System.Threading;
 using System.Threading.Tasks;
 using CC98.Services;
+using JetBrains.Annotations;
 
 namespace CC98.Kernel.Network;
 /// <summary>
@@ -19,48 +24,75 @@ namespace CC98.Kernel.Network;
 /// 此层面不处理错误，只负责请求发送和响应接收。
 /// 尽可能不依赖于CC98.Kernel的其他部分
 /// </remarks>
-public partial class VpnService : IDisposable
+public sealed partial class VpnService : IDisposable
 {
-    public const string Base = "https://webvpn.zju.edu.cn";
-    private const string LoginAuthUrl = $"{Base}/login";
-    private const string LoginPswUrl = $"{Base}/do-login";
-    private const string LogoutUrl = $"{Base}/logout";
-    private const string ConfirmUrl = $"{Base}/do-confirm-login";
+    #region URL 地址
+
+    private const string BaseUrl = "https://webvpn.zju.edu.cn";
+    private const string LoginAuthUrl = "/login";
+    private const string LoginPswUrl = "/do-login";
+    private const string LogoutUrl = "/logout";
+    private const string ConfirmUrl = "/do-confirm-login";
     private const string MirrorUrl = "https://mirrors.zju.edu.cn/api/is_campus_network";
-    //用于加密凭据的IV和Key
-    private const string Key0 = "wrdvpnisawesome!";
-    //用于转写链接的IV和Key
-    private const string Key1 = "wrdvpnisthebest!";
-    private static string CaptchaUrl(string imageUrl) => $"{Base}/captcha/{imageUrl}";
+
+    #endregion
+
+    /// <summary>
+    /// 加密密码使用的密钥。
+    /// </summary>
+    private const string PasswordEncryptKey = "wrdvpnisawesome!";
+    
+    /// <summary>
+    /// 加密域名所用的密钥。
+    /// </summary>
+    private const string HostEncryptKey = "wrdvpnisthebest!";
+    
+
     private const string RouteCookieName = "route";
     private const string TicketCookieName = "wengine_vpn_ticketwebvpn_zju_edu_cn";
-    public HttpClient Client;
-    public CookieContainer Jar;
-    public bool Logined = false;//可以强行修改这个值来避开检验。由于从缓存中读取凭据不经过Login函数，需要在读取时手动修改这个值。
-    public bool IsVpnEnabled = false;
-    public string CaptchaValue = "";
-    public string LastRandCode = "";
-    public string LastCaptchaId = "";
-    private bool _disposed = false;
-    public Cookie Ticket => Jar.GetCookies(new(Base))[TicketCookieName] ?? new Cookie();
-    public Cookie Route => Jar.GetCookies(new(Base))[RouteCookieName] ?? new Cookie();
+
+    /// <summary>
+    /// 提供 HTTP 服务。
+    /// </summary>
+    public HttpClient HttpClient { get; }
+
+    /// <summary>
+    /// Cookie 容器。
+    /// </summary>
+    public CookieContainer CookieContainer { get; }
+
+    public bool IsLoggedIn { get; set; }
+    public bool IsVpnEnabled { get; set; }
+
+    public string CaptchaValue { get; set; } = "";
+    private string LastRandCode { get; set; } = "";
+    public string LastCaptchaId { get; set; } = "";
+    private bool IsDisposed { get; set; }
+
+    public Cookie Ticket => CookieContainer.GetCookies(new(BaseUrl))[TicketCookieName] ?? new Cookie();
+    public Cookie Route => CookieContainer.GetCookies(new(BaseUrl))[RouteCookieName] ?? new Cookie();
+
     public VpnService()
     {
-        Jar = new();
+        CookieContainer = new();
         //在此处启用Proxy以开始调试
         var handler = new HttpClientHandler
         {
             AllowAutoRedirect = true,
-            CookieContainer = Jar,
+            CookieContainer = CookieContainer,
             UseCookies = true,
-            AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate,
+            AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate
             //Proxy=new WebProxy("127.0.0.1:9000")
         };
 
-        Client = new(handler);
-        Client.DefaultRequestHeaders.Add("Referer", Base);
-        Client.DefaultRequestHeaders.Connection.ParseAdd("keep-alive");
-        Client.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36 Edg/138.0.0.0");
+        HttpClient = new(handler)
+        {
+            BaseAddress = new(BaseUrl)
+        };
+
+        HttpClient.DefaultRequestHeaders.Add("Referer", BaseUrl);
+        HttpClient.DefaultRequestHeaders.Connection.ParseAdd("keep-alive");
+        HttpClient.DefaultRequestHeaders.Add("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36 Edg/138.0.0.0");
     }
     public async Task<VpnLoginResult> LoginAsync(string username, string password, CancellationToken cancellationToken = default)
     {
@@ -88,27 +120,48 @@ public partial class VpnService : IDisposable
         }
     }
 
-    private async Task<VpnLoginResult> LoginCoreAsync(string username, string password, CancellationToken cancellationToken)
+    /// <summary>
+    /// 更新随机代码和验证码ID的核心方法。
+    /// </summary>
+    /// <param name="cancellationToken">用于取消操作的令牌。</param>
+    /// <returns>表示异步操作的任务。</returns>
+    /// <exception cref="InvalidOperationException"></exception>
+    private async Task UpdateCodeCoreAsync(CancellationToken cancellationToken = default)
     {
+        var res = await HttpClient.GetAsync(LoginAuthUrl, cancellationToken);
+        if (res.StatusCode != HttpStatusCode.OK)
+        {
+            throw new InvalidOperationException($"网络请求失败:{res.StatusCode}");
+        }
+        var html = await res.Content.ReadAsStringAsync(cancellationToken);
+        var param = GetRandCode(html);
+        if (param.CsrfToken == "" || param.Captcha == "")
+        {
+            throw new InvalidOperationException("获取登录参数失败");
+        }
+        LastRandCode = param.CsrfToken;
+        LastCaptchaId = param.Captcha;
+    }
+
+    /// <summary>
+    /// 执行 VPN 登录的核心方法。
+    /// </summary>
+    /// <param name="username">登录的用户名。</param>
+    /// <param name="password">登录的密码。</param>
+    /// <param name="cancellationToken">用于取消操作的令牌。</param>
+    /// <returns>表示异步操作的任务。任务结果为登录结果。</returns>
+    /// <exception cref="InvalidOperationException"></exception>
+    private async Task<VpnLoginResult> LoginCoreAsync(string username, string password, CancellationToken cancellationToken = default)
+    {
+        var passwordKeyBytes = "wrdvpnisawesome"u8;
+
         if (CaptchaValue == "")
         {
-            var res = await Client.GetAsync(LoginAuthUrl, cancellationToken);
-            if (res.StatusCode != HttpStatusCode.OK)
-            {
-                throw new InvalidOperationException($"网络请求失败:{res.StatusCode}");
-            }
-            var html = await res.Content.ReadAsStringAsync(cancellationToken);
-            var param = GetRandCode(html);
-            if (param.csrf == "" || param.captcha == "")
-            {
-                throw new InvalidOperationException("获取登录参数失败");
-            }
-            LastRandCode = param.csrf;
-            LastCaptchaId = param.captcha;
+            await UpdateCodeCoreAsync(cancellationToken);
         }
         var csrf = LastRandCode;
         var captchaId = LastCaptchaId;
-        var encrptedPassword = BuildPassword(Key0, password);
+        var encryptedPassword = EncryptString(password, passwordKeyBytes);
         var formData = new Dictionary<string, string>
             {
                 {"_csrf", csrf},
@@ -118,10 +171,10 @@ public partial class VpnService : IDisposable
                 {"needCaptcha", "false"},
                 {"captcha_id", captchaId},
                 {"username",username},
-                {"password",encrptedPassword }
+                {"password",encryptedPassword }
             };
         var content = new FormUrlEncodedContent(formData);
-        var loginRes = await Client.PostAsync(LoginPswUrl, content, cancellationToken);
+        var loginRes = await HttpClient.PostAsync(LoginPswUrl, content, cancellationToken);
         if (loginRes.StatusCode != HttpStatusCode.OK)
         {
             throw new InvalidOperationException($"网络请求失败:{loginRes.StatusCode}");
@@ -142,7 +195,7 @@ public partial class VpnService : IDisposable
             result.Status = VpnLoginStatus.NeedCaptcha;
             return result;
         }
-        Logined = true;
+        IsLoggedIn = true;
         return VpnLoginResult.Success();
     }
 
@@ -150,7 +203,7 @@ public partial class VpnService : IDisposable
     {
         try
         {
-            var res = await Client.PostAsync(ConfirmUrl, null);
+            var res = await HttpClient.PostAsync(ConfirmUrl, null, cancellationToken);
             if (res.StatusCode != HttpStatusCode.OK)
             {
                 return VpnLoginResult.Failure($"网络请求失败:{res.StatusCode}");
@@ -164,7 +217,7 @@ public partial class VpnService : IDisposable
             }
             if (result.IsSuccess)
             {
-                Logined = true;
+                IsLoggedIn = true;
                 return VpnLoginResult.Success();
             }
             return VpnLoginResult.Failure(result.Error ?? "确认登录失败");
@@ -190,7 +243,7 @@ public partial class VpnService : IDisposable
     {
         try
         {
-            var res = await Client.GetAsync(LogoutUrl, cancellationToken);
+            var res = await HttpClient.GetAsync(LogoutUrl, cancellationToken);
         }
         catch (Exception ex)
         {
@@ -206,11 +259,14 @@ public partial class VpnService : IDisposable
     {
         var uri = new Uri(origin);
 
-        var isDefaultProt = uri.Port > 0 &&
-                            !(uri.Scheme == "http" && uri.Port == 80) &&
-                            !(uri.Scheme == "https" && uri.Port == 443);
+        var isDefaultPort = uri switch
+        {
+            { Scheme: "http", Port: 80 } => true,
+            { Scheme: "https", Port: 443 } => true,
+            _ => false
+        };
 
-        var schemaAndPort = isDefaultProt ? $"{uri.Scheme}-{uri.Port}" : uri.Scheme;
+        var schemaAndPort = isDefaultPort ? uri.Scheme : $"{uri.Scheme}-{uri.Port}";
 
         //处理路径和查询字符
         var suffix = uri.PathAndQuery;
@@ -228,7 +284,7 @@ public partial class VpnService : IDisposable
         string[] pathSegments =
         [
             schemaAndPort,
-            BuildPassword(Key1,uri.Host),
+            EncryptString(uri.Host, HostEncryptKey),
         ];
         var builder = new UriBuilder(vpnScheme, vpnHost);
         var sb = new System.Text.StringBuilder();
@@ -236,8 +292,8 @@ public partial class VpnService : IDisposable
             sb.Append('/').Append(Uri.EscapeDataString(seg));
         builder.Path = sb.ToString();
         var fullUri = builder.Uri;
-        var prifix = fullUri.ToString();
-        return prifix + newPathAndQuery;
+        var prefix = fullUri.ToString();
+        return prefix + newPathAndQuery;
     }
 
     /// <summary>
@@ -252,7 +308,7 @@ public partial class VpnService : IDisposable
 
         try
         {
-            var response = await Client.GetAsync(targetUri);
+            var response = await HttpClient.GetAsync(targetUri);
             var resText = await response.Content.ReadAsStringAsync();
             if (response.IsSuccessStatusCode)
             {
@@ -287,41 +343,64 @@ public partial class VpnService : IDisposable
             await App.Logger.WriteAsync("网络检查", "错误", $"{ex.Message}");
             return NetworkStatus.NoConnection;
         }
-
-
     }
 
 
-    public static (string csrf, string captcha, string auth_type) GetRandCode(string html)
+    public static (string CsrfToken, string Captcha, string AuthType) GetRandCode(string html)
     {
         var doc = new HtmlDocument();
         doc.LoadHtml(html);
         var csrfNode = doc.DocumentNode.SelectSingleNode("//input[@type='hidden' and @name='_csrf']");
         var captchaNode = doc.DocumentNode.SelectSingleNode("//input[@type='hidden' and @name='captcha_id']");
         var authTypeNode = doc.DocumentNode.SelectSingleNode("//input[@type='hidden' and @name='auth_type']");
-        var csrf = csrfNode?.GetAttributeValue("value", string.Empty) ?? string.Empty;
-        var captcha = captchaNode?.GetAttributeValue("value", string.Empty) ?? string.Empty;
-        var authType = authTypeNode?.GetAttributeValue("value", string.Empty) ?? string.Empty;
+        var csrf = csrfNode.GetAttributeValue("value", string.Empty);
+        var captcha = captchaNode.GetAttributeValue("value", string.Empty);
+        var authType = authTypeNode.GetAttributeValue("value", string.Empty);
         return (csrf, captcha, authType);
     }
+
+    /// <summary>
+    /// 使用 AES 进行数据加密的核心方法。
+    /// </summary>
+    /// <param name="plainText">要加密的数据。</param>
+    /// <param name="key">加密使用的密钥字节序列。</param>
+    /// <param name="iv">加密使用的初始化向量字节序列。</param>
+    /// <returns>加密后的数据。</returns>
+    private static byte[] EncryptDataWithAes(ReadOnlySpan<byte> plainText, ReadOnlySpan<byte> key, ReadOnlySpan<byte> iv)
+    {
+        using var aes = Aes.Create();
+        aes.Key = key.ToArray();
+
+        return aes.EncryptCfb(plainText, iv, PaddingMode.Zeros, 128);
+    }
+
     /// <summary>
     /// 拼接密钥。需要指明截取长度，并默认IV,Key和前缀一致。
     /// </summary>
-    /// <param name="prefix"></param>
-    /// <param name="plainText"></param>
+    /// <param name="text"></param>
+    /// <param name="key"></param>
     /// <returns></returns>
-    public static string BuildPassword(string prefix, string plainText)
+    private static string EncryptString(string text, string key)
     {
-        //裁剪长度为2倍明文长度
-        var sliceLength = 2 * plainText.Length;
-        var prifixHex = Crypto.StringToAscll(prefix);
-        var fullCore = Crypto.EncryptStringToHex(plainText, prefix, prefix);
-        var core = fullCore[..Math.Min(fullCore.Length, sliceLength)];
-        return $"{prifixHex}{core}";
+        // 转换为字节序列
+        var inputData = Encoding.UTF8.GetBytes(text);
+        var keyData = Encoding.UTF8.GetBytes(key);
+        
+        // 加密并提取结果
+        var encryptedData = EncryptDataWithAes(inputData, keyData, keyData);
+
+        // 将加密头和加密结果链接，其中要求 VPN 实现时加密结果被裁剪为最多原始字符串长度的两倍。
+        var prefixHex = Convert.ToHexStringLower(keyData);
+        var bodyHex = Convert.ToHexStringLower(encryptedData).Cut(text.Length * 2);
+        return $"{prefixHex}{bodyHex}";
     }
 
+    #region 析构方法相关
 
-
+    ~VpnService()
+    {
+        Dispose(false);
+    }
 
     public void Dispose()
     {
@@ -329,17 +408,18 @@ public partial class VpnService : IDisposable
         GC.SuppressFinalize(this);
     }
 
-    protected virtual void Dispose(bool disposing)
+    /// <summary>
+    /// 释放对象所占用的资源。可以选择是否释放托管资源。
+    /// </summary>
+    /// <param name="disposing"></param>
+    private void Dispose(bool disposing)
     {
-        if (!_disposed)
+if (disposing)
         {
-            if (disposing)
-            {
-                Client?.Dispose();
-            }
-            _disposed = true;
+            HttpClient.Dispose();
         }
     }
 
+    #endregion
 }
 

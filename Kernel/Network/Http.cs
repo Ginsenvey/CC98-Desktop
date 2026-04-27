@@ -10,7 +10,7 @@ using Windows.Storage.Streams;
 
 namespace CC98.Kernel.Network;
 
-public partial class VpnService
+public sealed partial class VpnService
 {
     /// <summary>
     /// 协调器对象。
@@ -19,12 +19,12 @@ public partial class VpnService
 
     public async Task<MediaSource?> GetSourceAsync(string url)
     {
-        if (!Logined && IsVpnEnabled)
+        if (!IsLoggedIn && IsVpnEnabled)
             throw new("WebVPN未连接");
         try
         {
             var targeturl = LoginService.Vpn.IsVpnEnabled ? ConvertUrl(url) : url;
-            using var res = await LoginService.Vpn.Client.GetAsync(targeturl, HttpCompletionOption.ResponseHeadersRead);
+            using var res = await LoginService.Vpn.HttpClient.GetAsync(targeturl, HttpCompletionOption.ResponseHeadersRead);
             if (res.IsSuccessStatusCode)
             {
                 var memoryStream = new InMemoryRandomAccessStream();
@@ -39,7 +39,7 @@ public partial class VpnService
             {
                 var r = await Coordinator.SafeSilentAuth();
                 if (!r) return null;
-                using var res1 = await LoginService.Vpn.Client.GetAsync(targeturl, HttpCompletionOption.ResponseHeadersRead);
+                using var res1 = await LoginService.Vpn.HttpClient.GetAsync(targeturl, HttpCompletionOption.ResponseHeadersRead);
                 if (!res1.IsSuccessStatusCode) return null;
                 var memoryStream = new InMemoryRandomAccessStream();
                 using (var contentStream = await res1.Content.ReadAsStreamAsync())
@@ -56,18 +56,18 @@ public partial class VpnService
     }
     public async Task<byte[]> GetByteArrayAsync(string url)
     {
-        if (!Logined && IsVpnEnabled)
+        if (!IsLoggedIn && IsVpnEnabled)
             throw new("WebVPN未连接");
         var targetUrl = IsVpnEnabled ? ConvertUrl(url) : url;
         try
         {
-            var res = await Client.GetAsync(targetUrl);
+            var res = await HttpClient.GetAsync(targetUrl);
             if (res.StatusCode == HttpStatusCode.Unauthorized)
             {
                 var r = await Coordinator.SafeSilentAuth();
                 if (r)
                 {
-                    res = await Client.GetAsync(targetUrl);
+                    res = await HttpClient.GetAsync(targetUrl);
                     return await res.Content.ReadAsByteArrayAsync();
                 }
             }
@@ -116,52 +116,52 @@ public partial class VpnService
     }
     public async Task<HttpResponseMessage> SendAsync(string url, HttpRequestMessage request)
     {
-        if (!Logined && IsVpnEnabled)
+        if (!IsLoggedIn && IsVpnEnabled)
             throw new("WebVPN未连接");
         var targetUrl = IsVpnEnabled ? ConvertUrl(url) : url;
         request.RequestUri = new(targetUrl);
-        var res = await Client.SendAsync(request);
+        var res = await HttpClient.SendAsync(request);
         if (res.StatusCode == HttpStatusCode.Unauthorized)
         {
             var r = await Coordinator.SafeSilentAuth();
             if (r)
             {
-                return await Client.SendAsync(CloneRequest(request));
+                return await HttpClient.SendAsync(CloneRequest(request));
             }
         }
         return res;
     }
     public async Task<HttpResponseMessage> DeleteAsync(string url)
     {
-        if (!Logined && IsVpnEnabled)
+        if (!IsLoggedIn && IsVpnEnabled)
             throw new("WebVPN未连接");
         var targetUrl = IsVpnEnabled ? ConvertUrl(url) : url;
         using var request = new HttpRequestMessage(HttpMethod.Delete, targetUrl);
-        var res = await Client.SendAsync(request);
+        var res = await HttpClient.SendAsync(request);
         if (res.StatusCode == HttpStatusCode.Unauthorized)
         {
             var r = await Coordinator.SafeSilentAuth();
             if (r)
             {
-                return await Client.SendAsync(CloneRequest(request));
+                return await HttpClient.SendAsync(CloneRequest(request));
             }
         }
         return res;
     }
     public async Task<HttpResponseMessage> PutAsync(string url, HttpContent? content)
     {
-        if (!Logined && IsVpnEnabled)
+        if (!IsLoggedIn && IsVpnEnabled)
             throw new("WebVPN未连接");
         var targetUrl = IsVpnEnabled ? ConvertUrl(url) : url;
         using var request = new HttpRequestMessage(HttpMethod.Put, targetUrl);
         request.Content = content;
-        var res = await Client.SendAsync(request);
+        var res = await HttpClient.SendAsync(request);
         if (res.StatusCode == HttpStatusCode.Unauthorized)
         {
             var r = await Coordinator.SafeSilentAuth();
             if (r)
             {
-                return await Client.SendAsync(CloneRequest(request));
+                return await HttpClient.SendAsync(CloneRequest(request));
             }
         }
         return res;
@@ -172,7 +172,7 @@ public partial class VpnService
     private async Task<HttpResponseMessage> SendRequestAsync(HttpMethod method, string url,
         HttpContent content)
     {
-        if (!Logined && IsVpnEnabled)
+        if (!IsLoggedIn && IsVpnEnabled)
             throw new("WebVPN未连接");
         var targetUrl = IsVpnEnabled ? ConvertUrl(url) : url;
         using var request = new HttpRequestMessage(method, targetUrl);
@@ -181,13 +181,13 @@ public partial class VpnService
             request.Content = content;
         }
 
-        var res = await Client.SendAsync(request);
+        var res = await HttpClient.SendAsync(request);
         if (res.StatusCode == HttpStatusCode.Unauthorized)
         {
             var r = await Coordinator.SafeSilentAuth();
             if (r)
             {
-                return await Client.SendAsync(CloneRequest(request));
+                return await HttpClient.SendAsync(CloneRequest(request));
             }
         }
         return res;

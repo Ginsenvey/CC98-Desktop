@@ -58,7 +58,7 @@ public sealed partial class Login : Window
             VpnPane.Visibility = Visibility.Visible;
             var captchaId = LoginService.Vpn.LastCaptchaId;
             var timeStamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
-            var captchaUrl = $"{VpnService.Base}/captcha/{captchaId}.png?reload={timeStamp}";
+            var captchaUrl = $"{VpnService.BaseUrl}/captcha/{captchaId}.png?reload={timeStamp}";
             captcha.Source = new BitmapImage(new(captchaUrl));
             captchabox.Visibility = Visibility.Visible;
         }
@@ -105,7 +105,7 @@ public sealed partial class Login : Window
             var newStatus = await LoginService.Vpn.CheckNetwork(true);
             if (newStatus == NetworkStatus.ByVpn)
             {
-                LoginService.Vpn.Logined = true;
+                LoginService.Vpn.IsLoggedIn = true;
                 LoginService.Vpn.IsVpnEnabled = true;
                 OpenPasswordLoginPane();
                 //启动
@@ -165,8 +165,8 @@ public sealed partial class Login : Window
         {
             return false;
         }
-        LoginService.Vpn.Jar.Add(ticket);
-        LoginService.Vpn.Jar.Add(route);
+        LoginService.Vpn.CookieContainer.Add(ticket);
+        LoginService.Vpn.CookieContainer.Add(route);
         return true;
     }
 
@@ -320,7 +320,7 @@ public sealed partial class Login : Window
                 //从VpnService处直接调用。
                 var captchaId = LoginService.Vpn.LastCaptchaId;
                 var timeStamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
-                var captchaUrl = $"{VpnService.Base}/captcha/{captchaId}.png?reload={timeStamp}";
+                var captchaUrl = $"{VpnService.BaseUrl}/captcha/{captchaId}.png?reload={timeStamp}";
                 captcha.Source = new BitmapImage(new(captchaUrl));
                 captchabox.Visibility = Visibility.Visible;
                 Flower.Play(FlowStatus.Fail, res.Message??"需要验证码");

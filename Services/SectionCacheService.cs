@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.Json;
+using System.Threading;
 using System.Threading.Tasks;
 using CC98.Kernel;
 using CC98.Objects;
@@ -13,39 +14,30 @@ public class BoardSectionManager
 {
     private const string CacheFileName = "board_sections.json";
 
-    // 单例实现
-    private static BoardSectionManager? _instance;
-    private static readonly object Lock = new();
-
-    public static BoardSectionManager Instance
-    {
-        get
-        {
-            lock (Lock)
-            {
-                return _instance ??= new();
-            }
-        }
-    }
+    /// <summary>
+    /// 对象的唯一实例。
+    /// </summary>
+    public static BoardSectionManager Instance { get; } = new();
 
     // 数据模型
-    
-
+    /// <summary>
+    /// 私有构造方法。
+    /// </summary>
     private BoardSectionManager()
     {
         // 私有构造函数
     }
 
     /// <summary>
-    /// 从API刷新分区数据并更新缓存
+    /// 从API刷新分区数据并更新缓存。
     /// </summary>
-    public async Task<bool> RefreshFromApiAsync(string apiUrl)
+    public async Task<bool> RefreshFromApiAsync(string apiUrl, CancellationToken cancellationToken = default)
     {
         try
         {
             var res= await LoginService.Vpn.GetAsync(apiUrl);
 
-            var jsonResponse = await res.Content.ReadAsStringAsync();
+            var jsonResponse = await res.Content.ReadAsStringAsync(cancellationToken);
 
             // 2. 解析并提取所需数据
             var sections = ParseSections(jsonResponse);

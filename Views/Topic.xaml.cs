@@ -538,7 +538,7 @@ public sealed partial class Topic : Page
                         try
                         {
                             var targetUrl = LoginService.Vpn.IsVpnEnabled ? VpnService.ConvertUrl(url) : url;
-                            var fileres = await LoginService.Vpn.Client.GetAsync(targetUrl, HttpCompletionOption.ResponseHeadersRead);
+                            var fileres = await LoginService.Vpn.HttpClient.GetAsync(targetUrl, HttpCompletionOption.ResponseHeadersRead);
                             if (fileres.StatusCode == HttpStatusCode.OK)
                             {
                                 using Stream contentStream = await fileres.Content.ReadAsStreamAsync(),
