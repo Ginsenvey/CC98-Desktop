@@ -10,7 +10,7 @@
     xmlns:ic="using:FluentIcons.WinUI"
     xmlns:controls="using:CommunityToolkit.WinUI.Controls"
     xmlns:dev="using:DevWinUI"
-    xmlns:ubb="using:UbbRender.Render"
+    xmlns:ubb="using:CC98.Controls.UbbTextBlock"
     xmlns:obj="using:CC98.Objects"
     xmlns:ubbTextBlock="using:CC98.Controls.UbbTextBlock"
     xmlns:infoFlower="using:CC98.Controls.InfoFlower"

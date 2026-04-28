@@ -14,7 +14,6 @@ using System.Text.Unicode;
 using System.Threading;
 using System.Threading.Tasks;
 using CC98.Services;
-using JetBrains.Annotations;
 
 namespace CC98.Kernel.Network;
 /// <summary>
