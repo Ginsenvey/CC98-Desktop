@@ -193,13 +193,7 @@ public class JsonSerialize
         WriteIndented = true,
         TypeInfoResolver = CC98JsonContext.Default 
     };
-    /// <summary>
-    /// 基于 <see cref="JsonSerializer"/> 的安全反序列化方法，用于日志的汉化
-    /// LogOptions提供了支持源生成器的类型解析器，从而可以忽略AOT警告
-    /// </summary>
-    /// <typeparam name="T"></typeparam>
-    /// <param name="json"></param>
-    /// <returns></returns>
+  
     public static T? Deserialize<T>(string json)
     {
         try 
