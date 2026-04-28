@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Runtime.InteropServices;
 
-namespace CC98.Kernel;
+namespace CC98.Services.Helpers;
 
 /// <summary>
 /// 提供 Win32 方法的封装。该类型为静态类型。

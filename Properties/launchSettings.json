@@ -1,10 +1,10 @@
 {
   "profiles": {
-    "App3 (Package)": {
+    "CC98 (Package)": {
       "commandName": "MsixPackage",
       "hotReloadEnabled": true
     },
-    "App3 (Unpackaged)": {
+    "CC98 (Unpackaged)": {
       "commandName": "Project"
     }
   }

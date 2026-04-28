@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Text.Json.Serialization;
-using CC98.Kernel;
+using CC98.Kernel.Authorize;
 using CC98.Kernel.Network;
 using static CC98.Services.AppLog;
 using static CC98.Services.IndexDataService;

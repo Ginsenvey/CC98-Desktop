@@ -1,5 +1,6 @@
-﻿namespace CC98.Services;
+﻿namespace CC98.Services.Extensions;
 
+using CC98.Kernel.Authorize;
 using Kernel;
 using System;
 using System.IO;

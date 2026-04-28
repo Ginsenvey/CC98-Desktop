@@ -12,6 +12,8 @@ using CC98.Services;
 using DevWinUI;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using CC98.Services.Extensions;
+using CC98.Services.Helpers;
 
 namespace CC98.Views;
 

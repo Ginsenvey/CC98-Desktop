@@ -183,6 +183,7 @@
     <PackageReference Include="Duende.IdentityModel.OidcClient" Version="7.1.0" />
     <PackageReference Include="FluentIcons.WinUI" Version="2.1.325" />
     <PackageReference Include="HtmlAgilityPack" Version="1.12.4" />
+    <PackageReference Include="Microsoft.Extensions.Http.Resilience" Version="10.5.0" />
     <PackageReference Include="Microsoft.Windows.CsWinRT" Version="2.2.0" />
     <PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.28000.1721" />
     <PackageReference Include="Microsoft.WindowsAppSDK" Version="1.8.260416003" />

@@ -1,7 +1,7 @@
 ﻿using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
-namespace CC98.Services;
+namespace CC98.Services.Extensions;
 
 public static class LocalCacheExtensions
 {

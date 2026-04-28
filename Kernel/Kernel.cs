@@ -14,7 +14,8 @@ using System.Threading.Tasks;
 
 using Windows.Storage;
 using Windows.Storage.Streams;
-using CC98.Services;
+using CC98.Services.Extensions;
+using CC98.Kernel.Authorize;
 
 namespace CC98.Kernel;
 

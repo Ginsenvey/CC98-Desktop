@@ -1,7 +1,7 @@
 ﻿using System;
 using Microsoft.UI.Xaml.Navigation;
 
-namespace CC98.Services;
+namespace CC98.Services.Extensions;
 
 
 public static class NavigationEventArgsExtensions

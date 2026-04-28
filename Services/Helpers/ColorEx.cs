@@ -1,7 +1,7 @@
 ﻿using System;
 using ABI.Windows.UI;
 
-namespace CC98.Kernel;
+namespace CC98.Services.Helpers;
 
 public static class ColorEx
 {

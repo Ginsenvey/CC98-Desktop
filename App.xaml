@@ -4,8 +4,6 @@
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:tool="using:CommunityToolkit.WinUI.Controls"
-    xmlns:pr="using:CC98.Share.Controls.Primitives"
-    xmlns:cv="using:CC98.Services.Converters"
     xmlns:primitives="using:CC98.Controls.Primitives"
     xmlns:services="using:CC98.Services">
     <Application.Resources>

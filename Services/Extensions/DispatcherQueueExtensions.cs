@@ -2,7 +2,7 @@
 using System.Threading.Tasks;
 using Microsoft.UI.Dispatching;
 
-namespace CC98.Services;
+namespace CC98.Services.Extensions;
 
 public static class DispatcherQueueExtensions
 {

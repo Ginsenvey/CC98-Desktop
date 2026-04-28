@@ -1,7 +1,7 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 using System.Text.Json.Serialization;
 
-namespace CC98.Kernel;
+namespace CC98.Kernel.Authorize;
 
 /// <summary>
 /// 表示登录授权的结果。

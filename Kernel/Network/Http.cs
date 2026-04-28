@@ -1,4 +1,5 @@
-﻿using System;
+﻿using CC98.Kernel.Authorize;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Net;

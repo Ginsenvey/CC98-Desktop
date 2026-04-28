@@ -1,9 +1,8 @@
 ﻿using System.Collections.Frozen;
 using System.Collections.Generic;
-
 using FluentIcons.Common;
 
-namespace CC98.Kernel; //用户体验模型，包括:版面图标；语义搜索；图像解析。
+namespace CC98.Services.Helpers; 
 
 /// <summary>
 /// 为版面图标关联提供扩展方法。该类型为静态类型。

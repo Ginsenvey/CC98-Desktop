@@ -1,4 +1,5 @@
-﻿using Microsoft.UI.Xaml;
+﻿using CC98.Kernel.Authorize;
+using Microsoft.UI.Xaml;
 using Microsoft.Windows.AppNotifications;
 using Microsoft.Windows.AppNotifications.Builder;
 

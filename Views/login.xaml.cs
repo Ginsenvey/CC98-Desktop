@@ -12,6 +12,7 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Media.Imaging;
 using Microsoft.Windows.AppNotifications;
 using Microsoft.Windows.AppNotifications.Builder;
+using CC98.Kernel.Authorize;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -405,7 +406,7 @@ public sealed partial class Login : Window
         if (!string.IsNullOrEmpty(ccidbox.Text) && !string.IsNullOrEmpty(ccpassbox.Password))
         {
             LoginWithPassword.IsChecked = true;
-            var result = await LoginService.LoginAsync(ccidbox.Text, ccpassbox.Password);
+            var result = await LoginService.LoginWithPasswordAsync(ccidbox.Text, ccpassbox.Password);
             LoginWithPassword.IsChecked = false;
             if (!result.IsSuccess)
             {

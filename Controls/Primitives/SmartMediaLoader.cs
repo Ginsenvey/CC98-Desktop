@@ -1,6 +1,6 @@
 ﻿using System.Threading.Tasks;
 using Windows.Media.Core;
-using CC98.Kernel;
+using CC98.Kernel.Authorize;
 
 namespace CC98.Controls.Primitives;
 
