@@ -76,3 +76,19 @@ public enum PostType
     Normal=0,
     AcademicNotice=1
 }
+/// <summary>
+/// 表示版面中安装最新，置顶或精华来聚合帖子
+/// </summary>
+public enum BoardTopicFilterType
+{
+    Latest=0,
+    Top=1,
+    Best=2,
+}
+
+public enum ActiveMode
+{
+    InActive=0,//未登录
+    ByOpenId=1,//通过OpenId登录
+    ByPassword = 2//通过用户名密码登录
+}

@@ -22,6 +22,7 @@ public sealed partial class Board : Page
     //是否精华帖
     public bool IsBest = false;
     public int BoardId = 0;
+    public BoardTopicFilterType FilterType = BoardTopicFilterType.Latest;
     public Increment Increment = new(20);
 
     public BoardData BoardData = new() { BoardMasters = [],Id=0,BigPaper="",Description="", Name = "版面", TodayCount = 9898, TopicCount = 9898 };
@@ -59,7 +60,7 @@ public sealed partial class Board : Page
         var boardDataResult = await RequestSender.Fetch<BoardData>(boardDataUrl);
         if (!boardDataResult.IsSuccess || boardDataResult.Data == null) 
         {
-            Flower.Play("\uEA39", boardDataResult.Message);
+            Flower.Play(FlowStatus.Fail, boardDataResult.Message);
             return;
         }
         var data= boardDataResult.Data;
@@ -74,8 +75,9 @@ public sealed partial class Board : Page
 
     private async Task<bool> LoadTopics()
     {
-        var topicUrl = ApiEndpoints.Board.TopicList(IsBest, BoardId, Increment.StartIndex);
-        if (IsBest)
+        var topicUrl = ApiEndpoints.Board.TopicList((int)FilterType, BoardId, Increment.StartIndex);
+        
+        if(FilterType==BoardTopicFilterType.Best)
         {
             var result = await RequestSender.Fetch<BoardBest>(topicUrl);
             if (result.IsNotValid)
@@ -83,8 +85,8 @@ public sealed partial class Board : Page
                 Flower.Play(FlowStatus.Fail, result.Message);
                 return false;
             }
-            var bests= result.Data?.Topics;
-            Increment.HasMore= bests.Count == Increment.PageSize;
+            var bests = result.Data?.Topics;
+            Increment.HasMore = bests.Count == Increment.PageSize;
             Topics.AddRange(bests);
             return true;
         }
@@ -112,61 +114,6 @@ public sealed partial class Board : Page
         Frame.Navigate(typeof(Topic), param);
     }
 
-    private async void Gooey_Click(object sender, RoutedEventArgs e)
-    {
-        var s = sender as GooeyButtonItem;
-        if (s == null || s.Tag is not string tag) return;
-
-        switch (tag)
-        {
-            case "Send":
-                var param = new SketchNavigationInfo
-                {
-                    EditorMode=EditorMode.DraftNewTopic,
-                    BoardId=BoardId
-                };
-                Frame.Navigate(typeof(Sketch), param);
-                break;
-            case "Pin":
-                var url = ApiEndpoints.Board.EditFocusBoards(BoardId);
-                var content = new StringContent("", Encoding.UTF8, "application/json");
-                var result = await RequestSender.Put(url, content);
-                if (!result.IsSuccess)
-                {
-                    //
-                    return;
-                }
-                var i = new NavigationItem
-                {
-                    IconSymbol = BoardIconHelper.GetSymbol(BoardId, BoardData.Name),
-                    Name = BoardData.Name,
-                    IsEditable = true,
-                    Tag = BoardId.ToString()
-                };
-                Messenger.Instance.AddNavigationItem(i);
-                break;
-            case "Best":
-                //GooeyGroup.Visibility = Visibility.Collapsed;
-                //BackFromBest.Visibility = Visibility.Visible;
-                Increment.Clear();
-                Topics.Clear();
-                IsBest = true;
-                            
-                await LoadTopics();
-                break;
-        }
-
-    }
-
-    private async void BackFromBest_Click(object sender, RoutedEventArgs e)
-    {
-        //BackFromBest.Visibility = Visibility.Collapsed;
-        //GooeyGroup.Visibility = Visibility.Visible;
-        IsBest = false;
-        Increment.Clear();
-        Topics.Clear();
-        await LoadTopics();
-    }
 
         
 
@@ -235,5 +182,21 @@ public sealed partial class Board : Page
         };
         Messenger.Instance.AddNavigationItem(i);
         Flower.Play(FlowStatus.Success, "已关注");
+    }
+
+    private async void TypeSelectorBar_SelectionChanged(SelectorBar sender, SelectorBarSelectionChangedEventArgs args)
+    {
+        var item=sender as SelectorBar;
+        if (item?.SelectedItem.Tag is not string tag) return;
+        Increment.Clear();
+        Topics.Clear();
+        //切换时，清除已有列表，重置增量更新，修改当前筛选类型
+        FilterType = tag switch
+        {
+            "latest" => BoardTopicFilterType.Latest,
+            "top" => BoardTopicFilterType.Top,
+            _ => BoardTopicFilterType.Best,
+        };
+        await LoadTopics();
     }
 }
