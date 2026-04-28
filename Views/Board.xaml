@@ -9,6 +9,7 @@
     mc:Ignorable="d"
     xmlns:lab="using:CommunityToolkit.Labs.WinUI"
     xmlns:ic="using:FluentIcons.WinUI"
+    xmlns:ubb="using:UbbRender.Render"
     xmlns:obj="using:CC98.Objects"
     xmlns:ubbTextBlock="using:CC98.Controls.UbbTextBlock"
     xmlns:infoFlower="using:CC98.Controls.InfoFlower"
@@ -49,10 +50,10 @@
                     <ubbTextBlock:UbbTextBlock x:Name="Banner" UbbText="{x:Bind BoardData.BigPaper,Mode=OneWay}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" BoldFontFamily="{StaticResource HarmonySansBold}"/>
                 </Border>
 
-                <SelectorBar>
-                    <SelectorBarItem Text="最新" IsSelected="True"></SelectorBarItem>
-                    <SelectorBarItem Text="置顶"></SelectorBarItem>
-                    <SelectorBarItem  Text="精华"></SelectorBarItem>
+                <SelectorBar x:Name="TypeSelectorBar" SelectionChanged="TypeSelectorBar_SelectionChanged">
+                    <SelectorBarItem Text="最新" IsSelected="True" Tag="latest"></SelectorBarItem>
+                    <SelectorBarItem Text="置顶" Tag="top"></SelectorBarItem>
+                    <SelectorBarItem  Text="精华" Tag="best"></SelectorBarItem>
                 </SelectorBar>
                 <Border Margin="0,10,0,0" BorderThickness="1" BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}" CornerRadius="4" >
                     <ItemsRepeater x:Name="TopicRepeater" ElementPrepared="TopicRepeater_ElementPrepared" ItemsSource="{x:Bind Topics}">
