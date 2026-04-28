@@ -92,10 +92,14 @@ public static class ApiEndpoints
         /// <summary>
         /// 获取版面帖子
         /// </summary>
-        /// <param name="isBest">精华帖模式</param>
-        public static string TopicList(bool isBest, int boardId,int start)
+        public static string TopicList(int type, int boardId,int start)
         {
-            return isBest? $"{Base}/topic/best/board/{boardId}?from={start}&size=20": $"{Base}/board/{boardId}/topic?from={start}&size=20";
+            return type switch
+            {
+                0 => $"{Base}/board/{boardId}/topic?from={start}&size=20",
+                1 => $"{Base}/topic/toptopics?boardid={boardId}",
+                _ => $"{Base}/topic/best/board/{boardId}?from={start}&size=20"
+            };
         }
 
         public static string EditFocusBoards(int boardId) => $"{Base}/me/custom-board/{boardId}";

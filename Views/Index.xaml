@@ -26,7 +26,7 @@
                         <ColumnDefinition Width="*"></ColumnDefinition>
                     </Grid.ColumnDefinitions>
                     <TextBlock Text="{x:Bind Title}" Grid.Column="1" FontSize="14"  VerticalAlignment="Center" Foreground="{ThemeResource TextFillColorSecondaryBrush}" HorizontalAlignment="Left" MaxLines="1"></TextBlock>
-                    <Border Grid.Column="0" Background="{ThemeResource MarkdownBackgroundBrush}" CornerRadius="3" VerticalAlignment="Center" Padding="3" Visibility="{x:Bind IsHotTopic}">
+                    <Border Grid.Column="0" Background="{ThemeResource MarkdownBackgroundBrush}" CornerRadius="3" VerticalAlignment="Center" Padding="3" Visibility="{x:Bind IsHotTopic,Converter={StaticResource BoolToVisibility}}">
                         <TextBlock Text="{x:Bind BoardName}"   FontSize="12" Grid.Row="0"   Foreground="{ThemeResource AccentAAFillColorSecondaryBrush}"></TextBlock>
                     </Border>
                 </Grid>
