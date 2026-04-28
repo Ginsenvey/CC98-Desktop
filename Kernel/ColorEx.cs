@@ -1,4 +1,5 @@
 ﻿using System;
+using ABI.Windows.UI;
 
 namespace CC98.Kernel;
 
@@ -7,7 +8,7 @@ public static class ColorEx
 
     public static string GenerateMorandiColorHex()
     {
-        var random = new Random();
+        var random = Random.Shared;
         double hue = random.Next(0, 360);
 
         // 低饱和度（10-30%）

@@ -3,7 +3,7 @@ using System.Text.Json.Serialization;
 
 namespace CC98.Kernel.Network;
 
-public class VpnLoginResult
+public record VpnLoginResult
 {
     [JsonIgnore]
     public VpnLoginStatus Status { get; set; }

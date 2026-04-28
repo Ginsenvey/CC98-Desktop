@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Net.Http;
 using System.Threading.Tasks;
 using System;
+using System.Threading;
 using CC98.Services;
 using CC98.Objects;
 
@@ -47,7 +48,7 @@ public static class LoginService
         return result;
     }
     //IsPassWordLogin:是否由密码登录
-    public static async Task<AuthorizeResult?> GetNewToken(string refreshToken, bool isPassWordLogin)
+    public static async Task<AuthorizeResult?> GetNewTokenAsync(string refreshToken, bool isPassWordLogin, CancellationToken cancellationToken = default)
     {
         var tokenUrl = ApiEndpoints.OpenId.GetTokenUrl();
         Dictionary<string, string> data;
@@ -96,7 +97,7 @@ public static class LoginService
         }
     }
 
-    public static async Task<string> RefreshToken()
+    public static async Task<string> GetRefreshTokenAsync(CancellationToken cancellationToken = default)
     {
         //刷新函数检查登录方式，在不同的模式下使用不同的刷新方法。
         var isActive = ValidationHelper.GetValue(ApplicationData.Current.LocalSettings, "IsActive");
@@ -104,7 +105,7 @@ public static class LoginService
         var rft = PasswordManager.RetrievePassword("Refresh");
         if (!string.IsNullOrEmpty(rft))
         {
-            var result = await GetNewToken(rft, mode);
+            var result = await GetNewTokenAsync(rft, mode, cancellationToken);
             if (result == null) return "0:请求失败";
             if (result.IsSucceeded)
             {
@@ -114,7 +115,7 @@ public static class LoginService
                     //密码登录使用不变刷新令牌
                     PasswordManager.SavePassword(result.RefreshToken, "Refresh");
                 }
-                Vpn.Client.DefaultRequestHeaders.Authorization = new("Bearer", result.AccessToken);
+                Vpn.HttpClient.DefaultRequestHeaders.Authorization = new("Bearer", result.AccessToken);
                 return "1";
 
             }

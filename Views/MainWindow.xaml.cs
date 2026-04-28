@@ -314,7 +314,7 @@ public sealed partial class MainWindow : Window
             Logout();
             return;
         }
-        LoginService.Vpn.Client.DefaultRequestHeaders.Authorization = new("Bearer", access);
+        LoginService.Vpn.HttpClient.DefaultRequestHeaders.Authorization = new("Bearer", access);
         var url = ApiEndpoints.User.UnreadMessage();
         var result = await RequestSender.Fetch<UnreadMessageInfo>(url);
         if (!result.IsSuccess || result.Data == null)

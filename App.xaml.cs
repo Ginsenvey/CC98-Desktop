@@ -253,7 +253,7 @@ public partial class App : Application
             await Logger.WriteAsync("App", "初始化网络", $"新的网络状态为：{newStatus}");
             if (newStatus == NetworkStatus.ByVpn)
             {
-                LoginService.Vpn.Logined = true;
+                LoginService.Vpn.IsLoggedIn = true;
                 LoginService.Vpn.IsVpnEnabled = true;
                 await StartUp();
                 //启动
@@ -303,8 +303,8 @@ public partial class App : Application
         {
             return false;
         }
-        LoginService.Vpn.Jar.Add(ticket);
-        LoginService.Vpn.Jar.Add(route);
+        LoginService.Vpn.CookieContainer.Add(ticket);
+        LoginService.Vpn.CookieContainer.Add(route);
         return true;
     }
 
