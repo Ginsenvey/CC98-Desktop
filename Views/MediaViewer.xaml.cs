@@ -2,10 +2,9 @@
 using System.Collections.Generic;
 using System.IO;
 using CC98.Controls.Primitives;
-using CC98.Kernel;
+using CC98.Kernel.Authorize;
 using CC98.Objects;
-using CC98.Services;
-using Microsoft.UI.Windowing;
+using CC98.Services.Extensions;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
@@ -16,39 +15,37 @@ using Microsoft.UI.Xaml.Media;
 namespace CC98.Views;
 
 /// <summary>
-///     An empty window that can be used on its own or navigated to within a Frame.
+/// An empty window that can be used on its own or navigated to within a Frame.
 /// </summary>
 public sealed partial class MediaViewer : Window
 {
-    private readonly MediaType _mediaType = MediaType.Image;
-    public int CurrentIndex;
-    public int Direction;
     public List<string> Pictures = [];
+    public int CurrentIndex = 0;
+    private MediaType _mediaType = MediaType.Image;
+    public string CurrentUrl=>Pictures[CurrentIndex];
+    public int Direction = 0;
+    public double CurrentAngle => 90.0 * Direction;
     public float Scale = 1.0f;
-
+    public string ScaleText=>Scale.ToString("P0");
     public MediaViewer(ViewerNavigationInfo info)
     {
         InitializeComponent();
         //初始化环境参数
-        _mediaType = info.Type;
+        _mediaType=info.Type;
         CurrentIndex = info.CurrentIndex;
         Pictures.AddRange(info.Urls);
         //初始化UI
         Title = "资源预览";
         ExtendsContentIntoTitleBar = true;
         SetTitleBar(GridTitleBar);
-        AppWindow.TitleBar.PreferredHeightOption = TitleBarHeightOption.Tall;
+        AppWindow.TitleBar.PreferredHeightOption = Microsoft.UI.Windowing.TitleBarHeightOption.Tall;
         var iconPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "cc98.ico");
         AppWindow.SetIcon(iconPath);
         AppWindow.SetTaskbarIcon(iconPath);
-        SystemBackdrop = new MicaBackdrop();
+        SystemBackdrop=new MicaBackdrop();
         Activated += MediaViewer_Activated;
         Closed += MediaViewer_Closed;
     }
-
-    public string CurrentUrl => Pictures[CurrentIndex];
-    public double CurrentAngle => 90.0 * Direction;
-    public string ScaleText => Scale.ToString("P0");
 
     private void LoadImage()
     {
@@ -60,7 +57,7 @@ public sealed partial class MediaViewer : Window
         MediaInfo.Text = CurrentUrl;
         Posi.Text = $"{CurrentIndex + 1} / {Pictures.Count}";
     }
-
+       
     private async void MediaViewer_Activated(object sender, WindowActivatedEventArgs args)
     {
         switch (_mediaType)
@@ -77,13 +74,14 @@ public sealed partial class MediaViewer : Window
                 if (source == null) return;
                 VideoPlayer.Source = source;
                 break;
-        }
+        }     
     }
 
-
+       
+        
     private void RotateImage()
     {
-        Direction = Direction == 3 ? 0 : Direction + 1;
+        Direction = (Direction == 3) ? 0 : Direction + 1;
         ImageTransform.Angle = CurrentAngle;
     }
 
@@ -98,13 +96,12 @@ public sealed partial class MediaViewer : Window
         VideoPlayer.Source = null;
         InnerImage.Src = "";
     }
-
     private void ScaleImage()
     {
         Viewer.ZoomToFactor(Scale);
-        zoomfactor.Text = ScaleText;
+        zoomfactor.Text=ScaleText;
     }
-
+       
 
     private void zoomout_Click(object sender, RoutedEventArgs e)
     {
@@ -122,44 +119,46 @@ public sealed partial class MediaViewer : Window
 
     private async void CopyPic_Click(object sender, RoutedEventArgs e)
     {
-        var r = await ImageExtension.CopyImageToClipboardAsync(CurrentUrl);
+        var r=await ImageExtension.CopyImageToClipboardAsync(CurrentUrl);
         if (r)
+        {
             Flower.Play(FlowStatus.Success, "已复制图片到剪贴板");
+        }
         else
+        {
             Flower.Play(FlowStatus.Fail, "复制失败");
+        }
     }
 
     private void last_Click(object sender, RoutedEventArgs e)
     {
-        CurrentIndex = CurrentIndex == 0 ? Pictures.Count - 1 : CurrentIndex - 1;
+        CurrentIndex=(CurrentIndex==0)?Pictures.Count-1:CurrentIndex-1;
         LoadImage();
     }
 
     private void next_Click(object sender, RoutedEventArgs e)
     {
-        CurrentIndex = CurrentIndex == Pictures.Count - 1 ? 0 : CurrentIndex + 1;
+        CurrentIndex=(CurrentIndex==Pictures.Count-1)?0:CurrentIndex+1;
         LoadImage();
     }
 
     private void Viewer_ViewChanged(object sender, ScrollViewerViewChangedEventArgs e)
     {
-        Scale = Viewer.ZoomFactor;
+        Scale=Viewer.ZoomFactor;
         zoomfactor.Text = ScaleText;
     }
 
     private async void SavePic_Click(object sender, RoutedEventArgs e)
     {
-        var r = await ImageExtension.DownloadImagesAsync(CurrentUrl);
+        var r=await ImageExtension.DownloadImagesAsync(CurrentUrl);
         if (r == null)
         {
             ShowTip("保存图片出错", "未知原因");
             return;
         }
-
         ShowTip("保存图片成功", r);
     }
-
-    private void ShowTip(string title, string subTitle)
+    private void ShowTip(string title,string subTitle)
     {
         Tip.Title = title;
         Tip.Subtitle = subTitle;

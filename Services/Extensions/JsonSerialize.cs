@@ -2,7 +2,7 @@
 using System.Text.Json;
 using CC98.Objects;
 
-namespace CC98.Services;
+namespace CC98.Services.Extensions;
 
 public class JsonSerialize
 {

@@ -2,7 +2,7 @@
 using CC98.Objects;
 using CC98.Services;
 using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml.Navigation;
+using CC98.Services.Extensions;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -11,39 +11,39 @@ namespace CC98.Views;
 
 public sealed partial class Message : Page
 {
-    public GlobalService GlobalService = GlobalService.Instance;
+    public MessageNavigationInfo NavigationInfo { get; set; }=new();
     public ApplicationDataContainer Set = ApplicationData.Current.LocalSettings;
-
+    public GlobalService GlobalService =GlobalService.Instance;
     public Message()
     {
         InitializeComponent();
     }
-
-    public MessageNavigationInfo NavigationInfo { get; set; } = new();
-
-    protected override void OnNavigatedTo(NavigationEventArgs e)
+    protected override void OnNavigatedTo(Microsoft.UI.Xaml.Navigation.NavigationEventArgs e)
     {
         base.OnNavigatedTo(e);
 
         if (GlobalService.ShouldReplaceNavigationArgs)
         {
-            if (GlobalService.NavigationAnchor is int targetIndex)
+            if(GlobalService.NavigationAnchor is int targetIndex)
+            {
                 NaviBar.SelectedItem = NaviBar.Items[targetIndex];
+            }
             else
+            {
                 NaviBar.SelectedItem = NaviBar.Items[0];
+            }
             return;
         }
-
         var args = e.TryGetParameter<MessageNavigationInfo>();
         if (args == null) return;
         NavigationInfo = args;
         NaviBar.SelectedItem = NaviBar.Items[0];
     }
-
+        
     private void NaviBar_SelectionChanged(SelectorBar sender, SelectorBarSelectionChangedEventArgs args)
     {
-        var bar = NaviBar.SelectedItem;
-        var selected = NaviBar.Items.IndexOf(bar);
+        var bar = NaviBar.SelectedItem as SelectorBarItem;
+        var selected=NaviBar.Items.IndexOf(bar);
         GlobalService.Instance.NavigationAnchor = selected;
         if (bar?.Tag is not string tag) return;
         switch (tag)
@@ -65,5 +65,8 @@ public sealed partial class Message : Page
                 MsgCount.Text = $"{GlobalService.AtCount}条未读信息";
                 break;
         }
+           
     }
+
+      
 }

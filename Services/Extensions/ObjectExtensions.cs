@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace CC98.Services;
+namespace CC98.Services.Extensions;
 
 public static class ObjectExtensions
 {

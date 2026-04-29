@@ -1,4 +1,8 @@
-﻿using System;
+﻿namespace CC98.Services.Extensions;
+
+using CC98.Kernel.Authorize;
+using Kernel;
+using System;
 using System.Diagnostics;
 using System.IO;
 using System.Runtime.InteropServices.WindowsRuntime;

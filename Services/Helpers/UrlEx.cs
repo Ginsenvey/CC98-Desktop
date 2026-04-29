@@ -8,8 +8,9 @@ using System.Threading.Tasks;
 using Windows.Storage;
 using Windows.Storage.Streams;
 using Microsoft.UI.Xaml.Media.Imaging;
+using CC98.Kernel.Authorize;
 
-namespace CC98.Kernel;
+namespace CC98.Services.Helpers;
 
 public static partial class UrlEx
 {

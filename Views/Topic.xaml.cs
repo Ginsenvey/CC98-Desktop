@@ -24,24 +24,24 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Navigation;
-using Symbol = FluentIcons.Common.Symbol;
-using SymbolIcon = FluentIcons.WinUI.SymbolIcon;
+using CC98.Services.Extensions;
+using CC98.Kernel.Authorize;
 
 namespace CC98.Views;
 
 public sealed partial class Topic : Page
 {
-    public int CurrentPage;
-    public GlobalService GlobalService = GlobalService.Instance;
-    public bool IsJumping; //是否正在进行跳转
-    public bool IsVote; //是否为投票贴
-    public int JumpToFloor = -1;
-    public int PageSize = 10;
-    public UserInfo Profile = new() { Popularity = 0, PostCount = 0, FanCount = 0 };
     public ObservableCollection<Reply> Replies = [];
+    public TopicInfo TopicInfo { get; set; } = new() { };
+    public UserInfo Profile = new() { Popularity = 0, PostCount = 0, FanCount = 0 };
     public ApplicationDataContainer Set = ApplicationData.Current.LocalSettings;
-    public int TopicId;
-
+    public bool IsVote = false;//是否为投票贴
+    public bool IsJumping = false;//是否正在进行跳转
+    public int JumpToFloor = -1;
+    public int TopicId = 0;
+    public int CurrentPage = 0;
+    public int PageSize = 10;
+    public GlobalService GlobalService = GlobalService.Instance;
     public Topic()
     {
         InitializeComponent();
@@ -50,11 +50,12 @@ public sealed partial class Topic : Page
         Unloaded += Topic_Unloaded;
     }
 
-    public TopicInfo TopicInfo { get; set; } = new();
-
     private void Topic_Unloaded(object sender, RoutedEventArgs e)
     {
-        if (Pager != null) Pager.SelectedIndexChanged -= Pager_SelectedIndexChanged;
+        if (Pager != null)
+        {
+            Pager.SelectedIndexChanged -= Pager_SelectedIndexChanged;
+        }
         GlobalMediaPlayer.Instance.Pause();
     }
 
@@ -63,9 +64,15 @@ public sealed partial class Topic : Page
         //释放资源
         base.OnNavigatedFrom(e);
         Replies.Clear();
-        foreach (var item in CollectionMenu.Items.OfType<MenuFlyoutItem>()) item.Click -= CollectionItem_Click; // 取消订阅
+        foreach (var item in CollectionMenu.Items.OfType<MenuFlyoutItem>())
+        {
+            item.Click -= CollectionItem_Click;  // 取消订阅
+        }
         CollectionMenu.Items.Clear();
-        if (Pager != null) Pager.SelectedIndexChanged -= Pager_SelectedIndexChanged;
+        if (Pager != null)
+        {
+            Pager.SelectedIndexChanged -= Pager_SelectedIndexChanged;
+        }
         if (VotePanel != null)
         {
             VotePanel.IsOpen = false;
@@ -79,17 +86,19 @@ public sealed partial class Topic : Page
             ProfileViewer.Target = null;
             ProfileViewer.Content = null;
         }
-    }
 
+    }
     protected override async void OnNavigatedTo(NavigationEventArgs e)
     {
         base.OnNavigatedTo(e);
 
-        var args = GlobalService.ShouldReplaceNavigationArgs
-            ? (TopicNavigationInfo?)GlobalService.NavigationAnchor
-            : e.TryGetParameter<TopicNavigationInfo>();
+        var args = GlobalService.ShouldReplaceNavigationArgs ?
+            (TopicNavigationInfo?)GlobalService.NavigationAnchor :
+            e.TryGetParameter<TopicNavigationInfo>();
         if (!GlobalService.ShouldReplaceNavigationArgs)
+        {
             GlobalService.NavigationAnchor = e.TryGetParameter<TopicNavigationInfo>();
+        }
         if (args == null) return;
         TopicId = args.TopicId;
         await LoadTopicInfo();
@@ -98,7 +107,6 @@ public sealed partial class Topic : Page
             Pager.SelectedPageIndex = Pager.NumberOfPages - 1;
             return;
         }
-
         if (args.IsJumpingMode)
         {
             IsJumping = true;
@@ -107,34 +115,36 @@ public sealed partial class Topic : Page
         }
 
         await LoadReply();
-    }
 
+
+    }
     private void LoadSet()
     {
         var hideImage = AppSettings.Current.HideImage;
         HideImageFlyoutItem.Text = hideImage ? "关闭无图模式" : "启用无图模式";
-        ImageOffIcon.Symbol = hideImage ? Symbol.ImageOff : Symbol.Image;
+        ImageOffIcon.Symbol = hideImage ? FluentIcons.Common.Symbol.ImageOff : FluentIcons.Common.Symbol.Image;
     }
-
     /// <summary>
-    ///     加载收藏集
+    /// 加载收藏集
     /// </summary>
     private void LoadFavorites()
     {
         var favoritesJson = ValidationHelper.GetValue(Set, "Favorites");
-        if (favoritesJson == "0") Flower.Play(FlowStatus.Fail, "收藏夹未缓存");
+        if (favoritesJson == "0")
+        {
+            Flower.Play(FlowStatus.Fail, "收藏夹未缓存");
+        }
         var favoritesList = JsonSerialize.Deserialize<List<Favorites>>(favoritesJson);
         if (favoritesList == null)
         {
             Flower.Play(FlowStatus.Fail, "解析收藏夹缓存出错");
             return;
         }
-
         foreach (var favorites in favoritesList)
+        {
             try
             {
-                var item = new MenuFlyoutItem
-                    { Text = favorites.Name, Tag = favorites.Id, Icon = new SymbolIcon { Symbol = Symbol.Tag } };
+                var item = new MenuFlyoutItem { Text = favorites.Name, Tag = favorites.Id, Icon = new FluentIcons.WinUI.SymbolIcon { Symbol = FluentIcons.Common.Symbol.Tag } };
                 item.Click += CollectionItem_Click;
                 CollectionMenu.Items.Add(item);
             }
@@ -142,8 +152,8 @@ public sealed partial class Topic : Page
             {
                 Flower.Play(FlowStatus.Fail, ex.Message);
             }
+        }
     }
-
     //当jumping mode=true时响应。响应包括两种，来自外部页面导航的跳转和用户点击帖子内链接的跳转。
     //floor如17824L，则page为1782，sort为4，此时目标楼层的index是3.sort=1时目标index为0。如果sort=0,则目标页码在上一页。
     private async Task Tp(int floor)
@@ -154,17 +164,23 @@ public sealed partial class Topic : Page
         var currentPage = Pager.SelectedPageIndex;
         // 情况1：目标就在当前页
         if (currentPage == page)
+        {
             await HandleSamePageJump(sort);
+        }
         // 情况2：目标是上一页的最后一个（特殊边界情况）
         else if (currentPage == page - 1 && sort == 0)
+        {
             await HandlePrevPageLastItem();
+        }
         // 情况3：需要翻页
         else
+        {
             HandlePageNavigation(page, sort);
+        }
     }
 
     /// <summary>
-    ///     处理同一页内的跳转
+    /// 处理同一页内的跳转
     /// </summary>
     private async Task HandleSamePageJump(int sort)
     {
@@ -182,7 +198,7 @@ public sealed partial class Topic : Page
     }
 
     /// <summary>
-    ///     处理跳转到上一页最后一个的情况
+    /// 处理跳转到上一页最后一个的情况
     /// </summary>
     private async Task HandlePrevPageLastItem()
     {
@@ -201,7 +217,7 @@ public sealed partial class Topic : Page
     }
 
     /// <summary>
-    ///     处理需要翻页的跳转
+    /// 处理需要翻页的跳转
     /// </summary>
     private void HandlePageNavigation(int targetPage, int targetSort)
     {
@@ -220,21 +236,26 @@ public sealed partial class Topic : Page
     }
 
     /// <summary>
-    ///     确保指定索引的回复已加载并滚动到该位置
+    /// 确保指定索引的回复已加载并滚动到该位置
     /// </summary>
     private async Task EnsureReplyLoadedAndScroll(int targetIndex)
     {
         // 如果目标索引尚未加载，先加载数据
-        if (Replies.Count <= targetIndex) await LoadReply();
+        if (Replies.Count <= targetIndex)
+        {
+            await LoadReply();
+        }
 
         ScrollTo(targetIndex);
     }
-
     private async Task LoadTopicInfo()
     {
         var topicInfoUrl = ApiEndpoints.Topic.TopicInfo(TopicId);
         var topicInfoResult = await RequestSender.Fetch<TopicInfo>(topicInfoUrl);
-        if (!topicInfoResult.IsSuccess || topicInfoResult.Data == null) return;
+        if (!topicInfoResult.IsSuccess || topicInfoResult.Data == null)
+        {
+            return;
+        }
         var data = topicInfoResult.Data;
         TopicInfo.FavoriteCount = data.FavoriteCount;
         TopicInfo.Title = data.Title;
@@ -251,11 +272,13 @@ public sealed partial class Topic : Page
         {
             TopicInfo.IsFavorite = isFavoriteResult.Data;
         }
-
-        Pager.NumberOfPages = TopicInfo.ReplyCount / 10 + 1;
+        Pager.NumberOfPages = (TopicInfo.ReplyCount / 10) + 1;
         PagerFix();
         IsVote = TopicInfo.IsVote;
-        if (IsVote) StartVote.Visibility = Visibility.Visible;
+        if (IsVote)
+        {
+            StartVote.Visibility = Visibility.Visible;
+        }
     }
 
 
@@ -271,16 +294,16 @@ public sealed partial class Topic : Page
             await App.Logger.WriteAsync("Topic", "加载回帖失败", replyResult.Message);
             return;
         }
-
         var data = replyResult.Data;
 
-        var param = string.Join("&",
-            data.Where(x => !x.IsAnonymous && x.UserId.HasValue).Select(x => $"id={x.UserId}").ToHashSet());
+        var param = string.Join("&", data.Where(x => !x.IsAnonymous && x.UserId.HasValue).Select(x => $"id={x.UserId}").ToHashSet());
         var userInfoUrl = ApiEndpoints.User.BasicUserInfoList(param);
         var userInfoResult = await RequestSender.Fetch<List<BasicUserInfo>>(userInfoUrl);
         if (!userInfoResult.IsSuccess || userInfoResult.Data == null)
+        {
             //报错
             return;
+        }
 
         var userInfoList = userInfoResult.Data;
         //提取头像链接
@@ -295,7 +318,6 @@ public sealed partial class Topic : Page
                 //跳过
                 continue;
             }
-
             if (reply.IsAnonymous)
             {
                 var code = reply.UserName;
@@ -306,9 +328,11 @@ public sealed partial class Topic : Page
             }
 
             var user = userInfoList.First(x => x.Id == reply.UserId);
-            if (user != null) reply.PortraitUrl = user.PortraitUrl;
+            if (user != null)
+            {
+                reply.PortraitUrl = user.PortraitUrl;
+            }
         }
-
         Replies.AddRange(data);
     }
 
@@ -321,7 +345,6 @@ public sealed partial class Topic : Page
         var info = new ProfileNavigationInfo { IsMe = t.IsMe, UserId = t.UserId ?? 0 };
         Frame.Navigate(typeof(Profile), info);
     }
-
     private async void Pager_SelectedIndexChanged(PagerControl sender, PagerControlSelectedIndexChangedEventArgs args)
     {
         //此方法在页面加载完成后会被调用一次，Pager的SelectedIndex会被设置为0。
@@ -344,6 +367,7 @@ public sealed partial class Topic : Page
                 }
             }
         }
+
     }
 
     private async void UbbTextBlock_MediaClicked(object sender, MediaClickEventArgs e)
@@ -359,7 +383,10 @@ public sealed partial class Topic : Page
                 if (doc == null) return;
                 var list = new List<string>();
                 var nodes = doc.Root.GetDescendantsByType(UbbNodeType.Image);
-                foreach (var node in nodes) list.Add(ExtractImageUrl(node));
+                foreach (var node in nodes)
+                {
+                    list.Add(ExtractImageUrl(node));
+                }
                 var anchor = list.IndexOf(e.Source);
                 var info = new ViewerNavigationInfo
                 {
@@ -388,21 +415,30 @@ public sealed partial class Topic : Page
                 break;
             case MediaType.File:
                 break;
+
         }
     }
-
     private async Task SearchForUser(string userName)
     {
         var url = ApiEndpoints.User.SearchUserByName(userName);
         var result = await RequestSender.Fetch<UserInfo>(url);
         if (!result.IsSuccess || result.Data == null)
+        {
             //
             return;
+        }
         var user = result.Data;
-        if (user == null) Flower.Play(FlowStatus.Fail, "未找到用户");
-        //这里需要为Auth类加一个ID的静态属性，以便在其他页面进行对比，判断是否为当前用户。
-        //var info = new ProfileNavigationInfo { IsMe = user.Id == LoginService.CurrentUserId, UserId = user.Id };
-        //Frame.Navigate(typeof(Profile), info);
+        if (user == null)
+        {
+            Flower.Play(FlowStatus.Fail, "未找到用户");
+        }
+        else
+        {
+            //这里需要为Auth类加一个ID的静态属性，以便在其他页面进行对比，判断是否为当前用户。
+            //var info = new ProfileNavigationInfo { IsMe = user.Id == LoginService.CurrentUserId, UserId = user.Id };
+            //Frame.Navigate(typeof(Profile), info);
+        }
+
     }
 
     [GeneratedRegex(@"/topic/(\d{7})/(\d+)#(\d+)")]
@@ -414,13 +450,12 @@ public sealed partial class Topic : Page
         if (match.Success)
         {
             var before = int.Parse(match.Groups[2].ValueSpan);
-            var after = int.Parse(match.Groups[3].ValueSpan);
+            var after = int.Parse((match.Groups[3].ValueSpan));
             var floor = 10 * (before - 1) + after;
             IsJumping = true;
             await Tp(floor);
         }
     }
-
     private async void MarkdownTextBlock_LinkClicked(object sender)
     {
         var url = "";
@@ -434,10 +469,10 @@ public sealed partial class Topic : Page
                 await LoadReply();
                 break;
             case "user":
-            {
-                url = "https://api.cc98.org/user/name/" + result.Value;
-                break;
-            }
+                {
+                    url = "https://api.cc98.org/user/name/" + result.Value;
+                    break;
+                }
             //using语句不能在switch语句中直接出现。因此，使用大括号包围这个case.
             case "anchor":
                 var pattern = @"/topic/(\d{7})/(\d+)#(\d+)";
@@ -450,8 +485,8 @@ public sealed partial class Topic : Page
                 if (match.Success)
                 {
                     // 输出匹配的内容
-                    var before = match.Groups[2].Value; // #页码
-                    var after = match.Groups[3].Value; // #楼层
+                    var before = match.Groups[2].Value;  // #页码
+                    var after = match.Groups[3].Value;   // #楼层
                     var page = Convert.ToInt32(before);
                     var floor = Convert.ToInt32(after);
                     try
@@ -470,9 +505,9 @@ public sealed partial class Topic : Page
                     }
                     catch
                     {
+
                     }
                 }
-
                 break;
             case "board":
                 Frame.Navigate(typeof(Board), result.Value);
@@ -480,12 +515,14 @@ public sealed partial class Topic : Page
             case "file":
                 if (result.Value == "image")
                 {
+
                 }
-                else if (result.Value == "doc") //无法预览的媒体文件类
+                else if (result.Value == "doc")//无法预览的媒体文件类
                 {
                     //var Operation = await DownLoadDialog.ShowAsync();
                     if (true)
                     {
+
                         var userProfile = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
                         var downloadsFolder = Path.Combine(userProfile, "Downloads");
                         var downloadLocation = "";
@@ -493,20 +530,21 @@ public sealed partial class Topic : Page
                         var fileregex = new Regex(filepattern);
                         var filematch = fileregex.Match(url);
                         if (filematch.Success)
+                        {
                             downloadLocation = downloadsFolder + "\\" + filematch.Value;
+                        }
                         else
-                            downloadLocation = Path.Combine(downloadsFolder,
-                                "CC98_Download_" + DateTime.Now.ToString("yyyyMMdd_HHmmss") + ".pdf");
+                        {
+                            downloadLocation = Path.Combine(downloadsFolder, "CC98_Download_" + DateTime.Now.ToString("yyyyMMdd_HHmmss") + ".pdf");
+                        }
                         try
                         {
                             var targetUrl = LoginService.Vpn.IsVpnEnabled ? VpnService.ConvertUrl(url) : url;
-                            var fileres = await LoginService.Vpn.HttpClient.GetAsync(targetUrl,
-                                HttpCompletionOption.ResponseHeadersRead);
+                            var fileres = await LoginService.Vpn.HttpClient.GetAsync(targetUrl, HttpCompletionOption.ResponseHeadersRead);
                             if (fileres.StatusCode == HttpStatusCode.OK)
                             {
-                                await using Stream contentStream = await fileres.Content.ReadAsStreamAsync(),
-                                    fileStream = new FileStream(downloadLocation, FileMode.Create, FileAccess.Write,
-                                        FileShare.None);
+                                using Stream contentStream = await fileres.Content.ReadAsStreamAsync(),
+                                    fileStream = new FileStream(downloadLocation, FileMode.Create, FileAccess.Write, FileShare.None);
                                 await contentStream.CopyToAsync(fileStream);
                                 Flower.Play(FlowStatus.Success, "下载文件成功");
                             }
@@ -521,7 +559,6 @@ public sealed partial class Topic : Page
                         }
                     }
                 }
-
                 break;
             case "backlink":
                 if (result.Value == "bili")
@@ -531,18 +568,18 @@ public sealed partial class Topic : Page
                     Clipboard.SetContent(dataPackage);
                     Flower.Play(FlowStatus.Success, "已复制Bili外链");
                 }
-
                 break;
             default: //自动复制到用户剪切板
-            {
-                var dataPackage = new DataPackage();
+                {
+                    var dataPackage = new DataPackage();
 
-                dataPackage.SetText(url);
-                Clipboard.SetContent(dataPackage);
-                Flower.Play(FlowStatus.Success, "已复制外部链接");
-            }
+                    dataPackage.SetText(url);
+                    Clipboard.SetContent(dataPackage);
+                    Flower.Play(FlowStatus.Success, "已复制外部链接");
+                }
                 break;
         }
+
     }
 
 
@@ -552,7 +589,7 @@ public sealed partial class Topic : Page
         {
             EditorMode = EditorMode.ReplyToTopic,
             TopicId = TopicId,
-            HintText = TopicInfo.Title
+            HintText = TopicInfo.Title,
         };
         Frame.Navigate(typeof(Sketch), param);
     }
@@ -599,10 +636,10 @@ public sealed partial class Topic : Page
             Flower.Play(FlowStatus.Fail, result.Message);
             return;
         }
-
         await LoadTopicInfo();
         Flower.Play(FlowStatus.Success, "已收藏");
     }
+
 
 
     private void ScrollTo(int index)
@@ -613,15 +650,15 @@ public sealed partial class Topic : Page
             var options = new BringIntoViewOptions
             {
                 VerticalAlignmentRatio = 0, // 0=顶部对齐，0.5=居中，1=底部
-                AnimationDesired = true // 启用平滑滚动动画
+                AnimationDesired = true       // 启用平滑滚动动画
             };
             element.StartBringIntoView(options);
             //对于没有页码的跳转链接暂时没有处理
         }
-        catch
-        {
-        }
+        catch { }
     }
+
+
 
 
     private void PostOperation_Click(object sender, RoutedEventArgs e)
@@ -632,17 +669,21 @@ public sealed partial class Topic : Page
         switch (tag)
         {
             case "UBB":
-                pack = new();
+                pack = new DataPackage();
                 pack.SetText(reply.Content);
                 Clipboard.SetContent(pack);
                 Flower.Play(FlowStatus.Success, "已复制为原代码");
                 break;
             case "MD":
-                pack = new();
+                pack = new DataPackage();
                 if (reply.ContentType == (int)ContentType.Ubb)
+                {
                     pack.SetText(UbbToMd.Convert(reply.Content, true));
+                }
                 else
+                {
                     pack.SetText(reply.Content);
+                }
                 Clipboard.SetContent(pack);
                 Flower.Play(FlowStatus.Success, "已复制为Markdown文本");
                 break;
@@ -652,8 +693,7 @@ public sealed partial class Topic : Page
                     var floor = reply.Floor;
                     var page = 1 + floor / 10;
                     var location = floor % 10;
-                    var header =
-                        $"[b]以下是引用{floor}楼：用户{reply.UserName}在{reply.Time}的发言：[url=/topic/{TopicId}/{page}#{location}]>>查看原帖<<[/url][/b]\r\n";
+                    var header = $"[b]以下是引用{floor}楼：用户{reply.UserName}在{reply.Time}的发言：[url=/topic/{TopicId}/{page}#{location}]>>查看原帖<<[/url][/b]\r\n";
                     var param = new SketchNavigationInfo
                     {
                         EditorMode = EditorMode.ReplyToPost,
@@ -665,32 +705,31 @@ public sealed partial class Topic : Page
                     };
                     Frame.Navigate(typeof(Sketch), param);
                 }
-
                 break;
             case "EDIT":
-            {
-                var param = new SketchNavigationInfo
                 {
-                    EditorMode = reply.Floor == 1 ? EditorMode.EditMyTopic : EditorMode.EditMyPost,
-                    TopicId = TopicId,
-                    BaseText = reply.Content,
-                    PostId = reply.Id,
-                    HintText = TopicInfo.Title,
-                    Floor = reply.Floor,
-                    ContentType = reply.ContentType
-                };
-                Frame.Navigate(typeof(Sketch), param);
-            }
+                    var param = new SketchNavigationInfo
+                    {
+                        EditorMode = reply.Floor == 1 ? EditorMode.EditMyTopic : EditorMode.EditMyPost,
+                        TopicId = TopicId,
+                        BaseText = reply.Content,
+                        PostId = reply.Id,
+                        HintText = TopicInfo.Title,
+                        Floor = reply.Floor,
+                        ContentType = reply.ContentType
+                    };
+                    Frame.Navigate(typeof(Sketch), param);
+                }
                 break;
         }
     }
-
     private void PagerFix()
     {
-        Pager.NextButtonVisibility = Pager.NumberOfPages == 1
-            ? PagerControlButtonVisibility.Hidden
-            : PagerControlButtonVisibility.Visible;
+        Pager.NextButtonVisibility = Pager.NumberOfPages == 1 ?
+            PagerControlButtonVisibility.Hidden :
+            PagerControlButtonVisibility.Visible;
     }
+
 
 
     private async void Like_Click(object sender, RoutedEventArgs e)
@@ -708,7 +747,6 @@ public sealed partial class Topic : Page
             Flower.Play("\uEA39", "操作失败");
             return;
         }
-
         var newStateUrl = ApiEndpoints.Post.ReactionState(postId);
         var newStateResult = await RequestSender.Fetch<ReactionState>(newStateUrl);
         if (!newStateResult.IsSuccess || newStateResult.Data == null)
@@ -717,12 +755,13 @@ public sealed partial class Topic : Page
             Flower.Play("\uEA39", "获取赞踩数据失败");
             return;
         }
-
         var newState = newStateResult.Data;
         reply.LikeState = newState.LikeState;
         reply.LikeCount = newState.LikeCount;
         reply.DislikeCount = newState.DislikeCount;
     }
+
+
 
 
     private async void SmallProfile_Loaded(object sender, RoutedEventArgs e)
@@ -744,17 +783,24 @@ public sealed partial class Topic : Page
     {
         if (IsVote)
         {
+
             var voteUrl = ApiEndpoints.Topic.Vote(TopicId);
             var voteResult = await RequestSender.Fetch<VoteInfo>(voteUrl);
             if (!voteResult.IsSuccess || voteResult.Data == null)
+            {
                 //
                 return;
+            }
             var data = voteResult.Data;
             VoteList.ItemsSource = data.VoteItems;
             var record = data.MyRecord;
             if (record.Count > 0)
+            {
                 foreach (var i in record)
+                {
                     VoteList.SelectedItems.Add(VoteList.Items[i - 1]);
+                }
+            }
 
             if (data.CanVote && data.IsAvailable)
             {
@@ -766,28 +812,37 @@ public sealed partial class Topic : Page
                 SendVote.IsEnabled = false;
                 VoteList.IsEnabled = false;
                 if (data.IsAvailable)
+                {
                     VoteTitle.Text = "投票(已投票)";
+                }
                 else
+                {
                     VoteTitle.Text = "投票(已过期)";
+                }
             }
-
             VoteList.SelectionChanged += (s, e) =>
             {
                 if (VoteList.SelectedItems.Count > data.MaxVoteCount)
+                {
                     SendVote.IsEnabled = false;
+                }
                 else
+                {
                     SendVote.IsEnabled = true;
+                }
             };
             votetime.Text = $"过期时间:{data.ExpiredTime}";
             voteinfo.Text = $"参与人数:{data.VoteUserCount},票数限制:{data.MaxVoteCount}";
+
+
         }
     }
-
     private async void StartVote_Click(object sender, RoutedEventArgs e)
     {
         await InitializeVote();
         VotePanel.IsOpen = true;
     }
+
 
 
     private void VotePanel_Closed(TeachingTip sender, TeachingTipClosedEventArgs args)
@@ -826,7 +881,10 @@ public sealed partial class Topic : Page
             if (h?.Tag is not Reply t || t.IsAnonymous) return;
             var profileUrl = ApiEndpoints.User.UserProfile(false, t.UserId ?? 0);
             var profileResult = await RequestSender.Fetch<UserInfo>(profileUrl);
-            if (!profileResult.IsSuccess || profileResult.Data == null) return;
+            if (!profileResult.IsSuccess || profileResult.Data == null)
+            {
+                return;
+            }
             var data = profileResult.Data;
             Profile.Name = data.Name;
             Profile.Id = data.Id;
@@ -844,6 +902,8 @@ public sealed partial class Topic : Page
     }
 
 
+
+
     private static string ExtractImageUrl(UbbNode node)
     {
         var src = "";
@@ -854,20 +914,24 @@ public sealed partial class Topic : Page
             {
                 // 尝试从子节点获取URL（对于 [img]url[/img] 格式）
                 var first = node.FirstChild;
-                if (first is TextNode textNode) src = textNode.Content;
+                if (first is TextNode textNode)
+                {
+                    src = textNode.Content;
+                }
             }
             else
             {
                 src = value;
             }
         }
-
         return src;
     }
 
     private void ProfileViewer_Closed(TeachingTip sender, TeachingTipClosedEventArgs args)
     {
-        ProfileViewer.Target = null; // 关键：清理 Target 引用
+        ProfileViewer.Target = null;  // 关键：清理 Target 引用
         ProfileViewer.Tag = null;
     }
+
+
 }

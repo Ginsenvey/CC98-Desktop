@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace CC98.Kernel;
+namespace CC98.Services.Helpers;
 
 public static class ColorEx
 {

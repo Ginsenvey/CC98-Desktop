@@ -6,7 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using CC98.Kernel;
 using CC98.Objects;
-using CC98.Services;
+using CC98.Services.Extensions;
 using DevWinUI;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;

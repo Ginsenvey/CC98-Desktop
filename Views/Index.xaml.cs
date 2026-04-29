@@ -14,7 +14,8 @@ using Microsoft.UI.Xaml.Documents;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Media.Imaging;
-using Microsoft.UI.Xaml.Navigation;
+using CC98.Services.Extensions;
+using CC98.Services.Helpers;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -146,9 +147,9 @@ public sealed partial class Index : Page
                 break;
             case "lottery":
                 //网页端OpenID未注册权限，不支持抽卡
-                if (ValidationHelper.GetValue(Set, "IsActive") != "1")
+                if (AppSettings.Current.ActiveMode== (int)ActiveMode.ByPassword)
                 {
-                    Flower.Play("\uEA39", "当前登录方式不支持抽卡");
+                    Flower.Play(FlowStatus.Info, "当前登录方式不支持抽卡");
                     return;
                 }
 

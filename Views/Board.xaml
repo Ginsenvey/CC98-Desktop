@@ -58,10 +58,10 @@
                                                BoldFontFamily="{StaticResource HarmonySansBold}" />
                 </Border>
 
-                <SelectorBar>
-                    <SelectorBarItem Text="最新" IsSelected="True" />
-                    <SelectorBarItem Text="置顶" />
-                    <SelectorBarItem Text="精华" />
+                <SelectorBar x:Name="TypeSelectorBar" SelectionChanged="TypeSelectorBar_SelectionChanged">
+                    <SelectorBarItem Text="最新" IsSelected="True" Tag="latest"></SelectorBarItem>
+                    <SelectorBarItem Text="置顶" Tag="top"></SelectorBarItem>
+                    <SelectorBarItem  Text="精华" Tag="best"></SelectorBarItem>
                 </SelectorBar>
                 <Border Margin="0,10,0,0" BorderThickness="1"
                         BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}" CornerRadius="4">
