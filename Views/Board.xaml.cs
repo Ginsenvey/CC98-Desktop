@@ -9,11 +9,12 @@ using Windows.System;
 using CC98.Kernel;
 using CC98.Objects;
 using CC98.Services;
-using DevWinUI;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using CC98.Services.Extensions;
 using CC98.Services.Helpers;
+using DevWinUI;
+using Microsoft.UI.Xaml.Navigation;
 
 namespace CC98.Views;
 
@@ -26,11 +27,7 @@ public sealed partial class Board : Page
     public int BoardId = 0;
     public BoardTopicFilterType FilterType = BoardTopicFilterType.Latest;
     public Increment Increment = new(20);
-
-    //是否精华帖
-    public bool IsBest;
-    public ApplicationDataContainer Set = ApplicationData.Current.LocalSettings;
-    public ObservableCollection<SimpleTopicInfo> Topics = [];
+    
 
     public Board()
     {

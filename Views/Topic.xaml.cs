@@ -26,6 +26,7 @@ using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Navigation;
 using CC98.Services.Extensions;
 using CC98.Kernel.Authorize;
+using CC98.Services.Helpers;
 
 namespace CC98.Views;
 

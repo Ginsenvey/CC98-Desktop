@@ -6,7 +6,7 @@ namespace CC98.Services.Helpers;
 /// <summary>
 ///     提供 Win32 方法的封装。该类型为静态类型。
 /// </summary>
-public static partial class Win32Interop
+public static partial class NativeMethods
 {
     public const int GwlStyle = -16;
     public const int WsThickframe = 0x00040000;

@@ -1,7 +1,4 @@
-﻿namespace CC98.Services.Extensions;
-
-using CC98.Kernel.Authorize;
-using Kernel;
+﻿using CC98.Kernel.Authorize;
 using System;
 using System.Diagnostics;
 using System.IO;
@@ -10,9 +7,8 @@ using System.Threading.Tasks;
 using Windows.ApplicationModel.DataTransfer;
 using Windows.Storage;
 using Windows.Storage.Streams;
-using CC98.Kernel;
 
-namespace CC98.Services;
+namespace CC98.Services.Extensions;
 
 public class ImageExtension
 {

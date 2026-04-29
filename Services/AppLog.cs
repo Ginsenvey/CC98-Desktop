@@ -10,7 +10,6 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using Windows.Storage;
-using CC98.Objects;
 
 namespace CC98.Services;
 

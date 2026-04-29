@@ -44,8 +44,7 @@ public static class ApiEndpoints
         }
     }
 
-       
-    }
+
     /// <summary>
     ///     用户个人信息
     /// </summary>
@@ -203,7 +202,7 @@ public static class ApiEndpoints
         /// <summary>
         ///     获取版面帖子
         /// </summary>
-        public static string TopicList(int type, int boardId,int start)
+        public static string TopicList(int type, int boardId, int start)
         {
             return type switch
             {

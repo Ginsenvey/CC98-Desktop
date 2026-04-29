@@ -6,8 +6,11 @@ using CC98.Kernel;
 using CC98.Objects;
 using DevWinUI;
 using Microsoft.UI.Xaml;
-using Microsoft.UI.Xaml.Controls;
 using CC98.Services.Extensions;
+using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Navigation;
+using FluentIcons.Common;
+using Symbol = FluentIcons.Common.Symbol;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.

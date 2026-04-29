@@ -1,13 +1,10 @@
 ﻿using CC98.Kernel.Network;
-using CC98.Objects;
 using CC98.Services;
 using Duende.IdentityModel.Client;
 using System;
-using System.Collections.Generic;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
-using Windows.Media.Protection.PlayReady;
 using Windows.Storage;
 
 namespace CC98.Kernel.Authorize;

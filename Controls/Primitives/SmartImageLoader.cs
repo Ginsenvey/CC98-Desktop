@@ -2,7 +2,7 @@
 using System.Collections.Concurrent;
 using System.Threading.Tasks;
 using CC98.Controls.Picture;
-using CC98.Kernel;
+using CC98.Services.Helpers;
 using Microsoft.UI.Xaml.Media.Imaging;
 
 namespace CC98.Controls.Primitives;

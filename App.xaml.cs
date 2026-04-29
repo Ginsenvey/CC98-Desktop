@@ -16,6 +16,8 @@ using System.Threading.Tasks;
 using Windows.ApplicationModel;
 using Windows.ApplicationModel.Activation;
 using Windows.Storage;
+using CC98.Services.Helpers;
+using NativeMethods = CC98.Services.Helpers.NativeMethods;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -127,19 +129,19 @@ public partial class App : Application
     {
         LoginPage = new Views.Login(mode);
         var hWnd = WinRT.Interop.WindowNative.GetWindowHandle(LoginPage);
-        var windowStyle = Win32Interop.GetWindowLong(hWnd, Win32Interop.GwlStyle);
-        Win32Interop.SetWindowLong(hWnd, Win32Interop.GwlStyle, windowStyle & ~Win32Interop.WsThickframe);
+        var windowStyle = NativeMethods.GetWindowLong(hWnd, NativeMethods.GwlStyle);
+        NativeMethods.SetWindowLong(hWnd, NativeMethods.GwlStyle, windowStyle & ~NativeMethods.WsThickframe);
         var desiredWidth = 720;  // 逻辑像素
         var desiredHeight = 460; // 逻辑像素
-        var dpi = Win32Interop.GetDpiForWindow(hWnd);
+        var dpi = NativeMethods.GetDpiForWindow(hWnd);
         var scalingFactor = dpi / 96.0;
-        Win32Interop.SetWindowPos(
+        NativeMethods.SetWindowPos(
             hWnd,
-            Win32Interop.HwndTop,
+            NativeMethods.HwndTop,
             0, 0,
             (int)(desiredWidth * scalingFactor),
             (int)(desiredHeight * scalingFactor),
-            Win32Interop.SwpNomove | Win32Interop.SwpNozorder);
+            NativeMethods.SwpNomove | NativeMethods.SwpNozorder);
         LoginPage.Title = "登录";
         LoginPage.Activate();
     }

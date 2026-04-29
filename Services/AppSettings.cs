@@ -130,13 +130,6 @@ public sealed partial class AppSettings : INotifyPropertyChanged
     }
     public event PropertyChangedEventHandler? PropertyChanged;
 
-    private T? GetValueByName<T>(string key)
-    {
-        if (LocalSettings.Values.TryGetValue(key, out var value) && value is T propertyValue) return propertyValue;
-
-        return default;
-    }
-
     private void OnPropertyChanged([CallerMemberName] string? propertyName = null)
     {
         PropertyChanged?.Invoke(this, new(propertyName));
