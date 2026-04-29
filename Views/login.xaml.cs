@@ -406,34 +406,34 @@ public sealed partial class Login : Window
             LoginWithPassword.IsChecked = true;
             var result = await LoginService.LoginWithPasswordAsync(ccidbox.Text, ccpassbox.Password);
             LoginWithPassword.IsChecked = false;
-            if (!result.IsSuccess)
+            if (result.IsError)
             {
                 //
-                await App.Logger.WriteAsync("Login", "登录失败", result.Message);
+                await App.Logger.WriteAsync("Login", "登录失败", result.ErrorDescription);
                 LoginWithPassword.ShowError = true;
-                Flower.Play(FlowStatus.Fail, result.Message);
+                Flower.Play(FlowStatus.Fail, result.ErrorDescription);
                 return;
             }
-
-            var token = result.Data;
+            return;//
+            var token = result;
             if (token == null)
             {
                 //
-                await App.Logger.WriteAsync("Login", "登录失败,令牌为空", result.Message);
+                await App.Logger.WriteAsync("Login", "登录失败,令牌为空", result.ErrorDescription);
                 LoginWithPassword.ShowError = true;
                 Flower.Play(FlowStatus.Fail, "发生错误。请报告开发者");
                 return;
             }
 
-            if (token.IsSucceeded)
+            if (!token.IsError)
             {
-                InjectToken(token);
+                //InjectToken(token);
             }
             else
             {
-                await App.Logger.WriteAsync("Login", "登录失败", token.Message);
+                //await App.Logger.WriteAsync("Login", "登录失败", token.Message);
                 LoginWithPassword.ShowError = true;
-                Flower.Play(FlowStatus.Fail, token.Message);
+                //Flower.Play(FlowStatus.Fail, token.Message);
                 Set.Values["IsActive"] = "0";
             }
         }

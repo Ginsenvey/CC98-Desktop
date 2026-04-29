@@ -25,6 +25,8 @@ public sealed partial class Board : Page
     //是否精华帖
     public bool IsBest = false;
     public int BoardId = 0;
+    public BoardData BoardData { get; } = new();
+   
     public BoardTopicFilterType FilterType = BoardTopicFilterType.Latest;
     public Increment Increment = new(20);
     

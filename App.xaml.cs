@@ -174,30 +174,14 @@ public partial class App : Application
         if (veri != null)
         {
             var result = await LoginService.OAuth(veri, code);
-            if (!result.IsSuccess)
+            if (result.IsError)
             {
                 //
-                ShowError("登录失败", "发生错误", result.Message);
+                ShowError("登录失败", "发生错误", result.ErrorDescription);
                 ActivateLogin(0);
                 return;
             }
-            var token = result.Data;
-            if (token == null)
-            {
-                //
-                ActivateLogin(0);
-                return;
-            }
-            if (token.IsSucceeded)
-            {
-                InjectTokenFromAuth(token);
-            }
-            else
-            {
-                Set.Values["IsActive"] = "0";
-                ShowError("登录失败", "未取得有效令牌", token.Message);
-                ActivateLogin(0);
-            }
+            
 
         }
     }
@@ -219,7 +203,7 @@ public partial class App : Application
     #region 网络
     private async void InitializeNetwork()
     {
-        var networkStatus = await LoginService.Vpn.CheckNetwork(false);
+        var networkStatus = await LoginService.Vpn.CheckNetworkAsync(false);
         if (networkStatus == NetworkStatus.InCampus)
         {
             //启动
@@ -252,7 +236,7 @@ public partial class App : Application
                 return;
             }
             await Logger.WriteAsync("App", "初始化网络", "注入已有Cookie成功,启用VPN模式检查网络");
-            var newStatus = await LoginService.Vpn.CheckNetwork(true);
+            var newStatus = await LoginService.Vpn.CheckNetworkAsync(true);
             await Logger.WriteAsync("App", "初始化网络", $"新的网络状态为：{newStatus}");
             if (newStatus == NetworkStatus.ByVpn)
             {

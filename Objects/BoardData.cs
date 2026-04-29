@@ -18,7 +18,7 @@ public partial class BoardData : ObservableObject
     private int _topicCount;
 
     [JsonPropertyName("boardMasters")]
-    public required List<string> BoardMasters
+    public List<string> BoardMasters
     {
         get => _boardMasters;
         set
@@ -28,35 +28,35 @@ public partial class BoardData : ObservableObject
     }
 
     [JsonPropertyName("id")]
-    public required int Id
+    public int Id
     {
         get => _id;
         set => SetProperty(ref _id, value);
     }
 
     [JsonPropertyName("name")]
-    public required string Name
+    public string Name
     {
         get => _name;
         set => SetProperty(ref _name, value);
     }
 
     [JsonPropertyName("description")]
-    public required string Description
+    public string Description
     {
         get => _description;
         set => SetProperty(ref _description, value);
     }
 
     [JsonPropertyName("bigPaper")]
-    public required string BigPaper
+    public string BigPaper
     {
         get => _bigPaper;
         set => SetProperty(ref _bigPaper, value);
     }
 
     [JsonPropertyName("todayCount")]
-    public required int TodayCount
+    public int TodayCount
     {
         get => _todayCount;
         set
@@ -66,7 +66,7 @@ public partial class BoardData : ObservableObject
     }
 
     [JsonPropertyName("topicCount")]
-    public required int TopicCount
+    public int TopicCount
     {
         get => _topicCount;
         set
