@@ -9,10 +9,10 @@ namespace CC98.Objects;
 
 // 配置 System.Text.Json 的源生成器，提前为常用类型生成序列化器/反序列化器，大小写不敏感行为。
 [JsonSourceGenerationOptions(PropertyNameCaseInsensitive = true)]
-[JsonSerializable(typeof(bool))]  
-[JsonSerializable(typeof(int))]    
+[JsonSerializable(typeof(bool))]
+[JsonSerializable(typeof(int))]
 [JsonSerializable(typeof(string))]
-[JsonSerializable(typeof(Dictionary<string,object>))]
+[JsonSerializable(typeof(Dictionary<string, object>))]
 [JsonSerializable(typeof(AuthorizeResult))]
 [JsonSerializable(typeof(Favorites))]
 [JsonSerializable(typeof(FavoritesInfo))]
@@ -55,8 +55,8 @@ namespace CC98.Objects;
 [JsonSerializable(typeof(BrowsingRecord))]
 [JsonSerializable(typeof(PrivateMessage))]
 // 常见 ApiResponse 泛型特化
-[JsonSerializable(typeof(List<int>))] 
-[JsonSerializable(typeof(List<string>))]   
+[JsonSerializable(typeof(List<int>))]
+[JsonSerializable(typeof(List<string>))]
 [JsonSerializable(typeof(List<Reply>))]
 [JsonSerializable(typeof(List<SectionInfo>))]
 [JsonSerializable(typeof(List<BasicUserInfo>))]
@@ -79,5 +79,3 @@ namespace CC98.Objects;
 internal partial class Cc98JsonContext : JsonSerializerContext
 {
 }
-
-

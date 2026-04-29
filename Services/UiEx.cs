@@ -1,6 +1,6 @@
-﻿using Microsoft.UI.Xaml.Media;
+﻿using System;
+using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Media.Animation;
-using System;
 
 namespace CC98.Services;
 
@@ -33,4 +33,3 @@ public class UiEx
         storyboard.Begin();
     }
 }
-

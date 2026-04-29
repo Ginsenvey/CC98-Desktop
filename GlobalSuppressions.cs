@@ -5,4 +5,6 @@
 
 using System.Diagnostics.CodeAnalysis;
 
-[assembly: SuppressMessage("Interoperability", "CA1416:验证平台兼容性", Justification = "<挂起>", Scope = "member", Target = "~M:CC98.Topic.OnNavigatedTo(Microsoft.UI.Xaml.Navigation.NavigationEventArgs)")]
+[assembly:
+    SuppressMessage("Interoperability", "CA1416:验证平台兼容性", Justification = "<挂起>", Scope = "member",
+        Target = "~M:CC98.Topic.OnNavigatedTo(Microsoft.UI.Xaml.Navigation.NavigationEventArgs)")]

@@ -1,21 +1,21 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Text.Json.Serialization;
+using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace CC98.Objects;
 
 /// <summary>
-/// 版面信息
+///     版面信息
 /// </summary>
 public partial class BoardData : ObservableObject
 {
-    private List<string> _boardMasters = [];
-    private string _name = string.Empty;
-    private string _description = string.Empty;
     private string _bigPaper = string.Empty;
-    private int _todayCount = 0;
-    private int _topicCount = 0;
-    private int _id = 0;
+    private List<string> _boardMasters = [];
+    private string _description = string.Empty;
+    private int _id;
+    private string _name = string.Empty;
+    private int _todayCount;
+    private int _topicCount;
 
     [JsonPropertyName("boardMasters")]
     public required List<string> BoardMasters
@@ -23,10 +23,7 @@ public partial class BoardData : ObservableObject
         get => _boardMasters;
         set
         {
-            if (SetProperty(ref _boardMasters, value))
-            {
-                OnPropertyChanged(nameof(BoardMastersString));
-            }
+            if (SetProperty(ref _boardMasters, value)) OnPropertyChanged(nameof(BoardMastersString));
         }
     }
 
@@ -64,10 +61,7 @@ public partial class BoardData : ObservableObject
         get => _todayCount;
         set
         {
-            if (SetProperty(ref _todayCount, value))
-            {
-                OnPropertyChanged(nameof(TodayCountString));
-            }
+            if (SetProperty(ref _todayCount, value)) OnPropertyChanged(nameof(TodayCountString));
         }
     }
 
@@ -77,10 +71,7 @@ public partial class BoardData : ObservableObject
         get => _topicCount;
         set
         {
-            if (SetProperty(ref _topicCount, value))
-            {
-                OnPropertyChanged(nameof(TopicCountString));
-            }
+            if (SetProperty(ref _topicCount, value)) OnPropertyChanged(nameof(TopicCountString));
         }
     }
 

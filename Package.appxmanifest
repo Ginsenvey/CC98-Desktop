@@ -13,7 +13,7 @@
 
   <Identity
     Name="OrangePlanet.CC98"
-    Publisher="CN=Ansherly"
+    Publisher="CN=Sakura"
     Version="1.2.6.0" />
 
   <mp:PhoneIdentity PhoneProductId="5eeae64f-e2f1-4d47-be24-1ca8665fbbe5" PhonePublisherId="00000000-0000-0000-0000-000000000000"/>

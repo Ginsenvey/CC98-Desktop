@@ -8,6 +8,8 @@ using CC98.Services;
 using DevWinUI;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Navigation;
+using Symbol = FluentIcons.Common.Symbol;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -15,31 +17,34 @@ using Microsoft.UI.Xaml.Controls;
 namespace CC98.Views;
 
 /// <summary>
-/// An empty page that can be used on its own or navigated to within a Frame.
+///     An empty page that can be used on its own or navigated to within a Frame.
 /// </summary>
 public sealed partial class Favorite : Page
 {
-    public ApplicationDataContainer Set = ApplicationData.Current.LocalSettings;
-    public ObservableCollection<SimpleTopicInfo> Topics=[];
-    public Favorites? SelectedFavorites { get; set; }
-    public ObservableCollection<Favorites> FavoritesList = [];
-    public int SortId = 0;
-    public int GroupId = 0;
-    public Increment Increment = new();
     public PostOrder CurrenOrder = PostOrder.Mark;
+    public ObservableCollection<Favorites> FavoritesList = [];
+    public int GroupId;
+    public Increment Increment = new();
+    public ApplicationDataContainer Set = ApplicationData.Current.LocalSettings;
+    public int SortId;
+    public ObservableCollection<SimpleTopicInfo> Topics = [];
+
     public Favorite()
     {
         InitializeComponent();
     }
-        
-        
-    protected override async void OnNavigatedTo(Microsoft.UI.Xaml.Navigation.NavigationEventArgs e)
+
+    public Favorites? SelectedFavorites { get; set; }
+
+
+    protected override async void OnNavigatedTo(NavigationEventArgs e)
     {
         base.OnNavigatedTo(e);
 
         LoadFavorites();
         await GetFavoriteTopic();
     }
+
     private void LoadFavorites()
     {
         var f = ValidationHelper.GetValue(Set, "Favorites");
@@ -47,29 +52,28 @@ public sealed partial class Favorite : Page
         {
             //likecollection.MenuItems.Clear();
             var data = JsonSerialize.Deserialize<List<Favorites>>(f);
-            if(data != null)
+            if (data != null)
             {
                 FavoritesList.Clear();
                 FavoritesList.AddRange(data);
-            }   
+            }
         }
     }
+
     private async Task<bool> GetFavoriteTopic()
     {
-        var favoriteTopicUrl = ApiEndpoints.Topic.FavoriteTopicList(Increment.StartIndex,(int)CurrenOrder,GroupId);
+        var favoriteTopicUrl = ApiEndpoints.Topic.FavoriteTopicList(Increment.StartIndex, (int)CurrenOrder, GroupId);
         var favoriteTopicResult = await RequestSender.Fetch<List<SimpleTopicInfo>>(favoriteTopicUrl);
         if (!favoriteTopicResult.IsSuccess || favoriteTopicResult.Data == null)
-        {
             //
             return false;
-        }          
         var data = favoriteTopicResult.Data;
-        if(data.Count==11)data.RemoveAt(10);
+        if (data.Count == 11) data.RemoveAt(10);
         Increment.HasMore = data.Count == Increment.PageSize;
         Topics.AddRange(data);
         return true;
     }
-        
+
 
     private void Content_Click(object sender, RoutedEventArgs e)
     {
@@ -78,11 +82,11 @@ public sealed partial class Favorite : Page
         var param = new TopicNavigationInfo { TopicId = t.Id };
         Frame.Navigate(typeof(Topic), param);
     }
-        
-        
+
+
     private async void ChangeSort_Click(object sender, RoutedEventArgs e)
     {
-        CurrenOrder= (PostOrder)(((int)CurrenOrder + 1) % 3);
+        CurrenOrder = (PostOrder)(((int)CurrenOrder + 1) % 3);
         Topics.Clear();
         Increment.Clear();
 
@@ -91,18 +95,19 @@ public sealed partial class Favorite : Page
         if (CurrenOrder == PostOrder.Time)
         {
             sortMethod = "发帖时间";
-            SortIcon.Symbol = FluentIcons.Common.Symbol.History;
+            SortIcon.Symbol = Symbol.History;
         }
         else if (CurrenOrder == PostOrder.LastReply)
         {
             sortMethod = "最后回复";
-            SortIcon.Symbol = FluentIcons.Common.Symbol.ArrowReply;
+            SortIcon.Symbol = Symbol.ArrowReply;
         }
         else
         {
             sortMethod = "收藏顺序";
-            SortIcon.Symbol = FluentIcons.Common.Symbol.StarAdd;
+            SortIcon.Symbol = Symbol.StarAdd;
         }
+
         Flower.Play("\uE8CB", "切换为" + sortMethod + "排序");
     }
 
@@ -121,9 +126,8 @@ public sealed partial class Favorite : Page
 
     private async void Remove_Click(object sender, RoutedEventArgs e)
     {
-        var m=sender as MenuFlyoutItem;
-        if(m != null)
-        {
+        var m = sender as MenuFlyoutItem;
+        if (m != null)
             if (m?.DataContext is SimpleTopicInfo)
             {
                 //bool res=await RequestSender.RemoveFavorite(t.Id);
@@ -141,10 +145,10 @@ public sealed partial class Favorite : Page
                     Flower.Play("\uEA39", "取消收藏失败");
                 }
             }
-        }
     }
 
-    private async void FavoriteTopicRepeater_ElementPrepared(ItemsRepeater sender, ItemsRepeaterElementPreparedEventArgs args)
+    private async void FavoriteTopicRepeater_ElementPrepared(ItemsRepeater sender,
+        ItemsRepeaterElementPreparedEventArgs args)
     {
         await Increment.LoadMore(args.Index, GetFavoriteTopic);
     }

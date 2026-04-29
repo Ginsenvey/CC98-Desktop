@@ -1,11 +1,11 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
-using System.Text.Json.Serialization;
+﻿using System.Text.Json.Serialization;
+using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace CC98.Objects;
 
 public partial class Card : ObservableObject
 {
-    private bool _isFlipped = false;
+    private bool _isFlipped;
 
     [JsonPropertyName("imageUri")]
     public string ImageUri
@@ -35,7 +35,7 @@ public class CardStatInfoPair
 }
 
 /// <summary>
-/// 抽卡概率信息
+///     抽卡概率信息
 /// </summary>
 public class GachaInfo
 {

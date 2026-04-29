@@ -20,15 +20,16 @@ using Microsoft.UI.Xaml.Navigation;
 namespace CC98.Views;
 
 /// <summary>
-/// An empty page that can be used on its own or navigated to within a Frame.
+///     An empty page that can be used on its own or navigated to within a Frame.
 /// </summary>
 public sealed partial class Discover : Page
 {
-    public ApplicationDataContainer Set=ApplicationData.Current.LocalSettings;
-    public ObservableCollection<TopicInfo> Topics=[];
-    public HashSet<int> TopicIds = [];
-    public ObservableCollection<SimpleTopicInfo> RandomTopics = [];
     public Increment Increment = new(20);
+    public ObservableCollection<SimpleTopicInfo> RandomTopics = [];
+    public ApplicationDataContainer Set = ApplicationData.Current.LocalSettings;
+    public HashSet<int> TopicIds = [];
+    public ObservableCollection<TopicInfo> Topics = [];
+
     public Discover()
     {
         InitializeComponent();
@@ -54,9 +55,9 @@ public sealed partial class Discover : Page
     protected override void OnNavigatedFrom(NavigationEventArgs e)
     {
         base.OnNavigatedFrom(e);
-        SizeChanged-= Discover_SizeChanged;
+        SizeChanged -= Discover_SizeChanged;
     }
-        
+
     private async Task<bool> GetNewTopic()
     {
         var newTopicUrl = ApiEndpoints.Topic.NewTopicList(Increment.StartIndex);
@@ -65,22 +66,22 @@ public sealed partial class Discover : Page
         {
             //忽略加载过快报错
             if (newTopicResult.StatusCode == (int)HttpStatusCode.Forbidden) return false;
-            Flower.Play(FlowStatus.Fail,newTopicResult.Message);
+            Flower.Play(FlowStatus.Fail, newTopicResult.Message);
             await App.Logger.WriteAsync("Discover", "加载新帖失败", newTopicResult.Message);
             return false;
         }
-        var data= newTopicResult.Data;
+
+        var data = newTopicResult.Data;
         Increment.HasMore = data.Count == Increment.PageSize;
-        var param = string.Join("&", data.Where(x => !x.IsAnonymous && x.UserId.HasValue).Select(x => $"id={x.UserId}").ToHashSet());
+        var param = string.Join("&",
+            data.Where(x => !x.IsAnonymous && x.UserId.HasValue).Select(x => $"id={x.UserId}").ToHashSet());
         var userInfoUrl = ApiEndpoints.User.BasicUserInfoList(param);
         var userInfoResult = await RequestSender.Fetch<List<BasicUserInfo>>(userInfoUrl);
         if (!userInfoResult.IsSuccess || userInfoResult.Data == null)
-        {
             //报错
             Flower.Play(FlowStatus.Fail, "获取用户头像出错");
-        }
         var userInfoList = userInfoResult.Data;
-        foreach(var topic in data)
+        foreach (var topic in data)
         {
             if (topic.IsAnonymous)
             {
@@ -88,27 +89,23 @@ public sealed partial class Discover : Page
                 //跳过
                 continue;
             }
+
             var user = userInfoList?.First(x => x.Id == topic.UserId);
-            if (user != null)
-            {
-                topic.PortraitUrl = user.PortraitUrl;
-            }
+            if (user != null) topic.PortraitUrl = user.PortraitUrl;
         }
+
         data = [.. data.Where(x => !TopicIds.Contains(x.Id))];
-        Topics.AddRange(data);   
+        Topics.AddRange(data);
         TopicIds.AddRange(data.Select(x => x.Id));
         return true;
     }
 
-        
+
     private async Task GetRandomTile()
     {
         var randomTopicUrl = ApiEndpoints.Topic.RandomTopicList();
         var randomTopicResult = await RequestSender.Fetch<List<SimpleTopicInfo>>(randomTopicUrl);
-        if (!randomTopicResult.IsSuccess || randomTopicResult.Data == null)
-        {
-            return;
-        }
+        if (!randomTopicResult.IsSuccess || randomTopicResult.Data == null) return;
         var data = randomTopicResult.Data;
         RandomTopics.AddRange(data);
     }
@@ -119,36 +116,27 @@ public sealed partial class Discover : Page
         await GetRandomTile();
     }
 
-        
-
-       
-
-        
 
     private void RandomPost_Click(object sender, RoutedEventArgs e)
     {
         var h = sender as HyperlinkButton;
         if (h != null)
         {
-            var p=h?.DataContext as SimpleTopicInfo;
-            if(p != null)
+            var p = h?.DataContext as SimpleTopicInfo;
+            if (p != null)
             {
                 var param = new TopicNavigationInfo { TopicId = p.Id };
-                Frame.Navigate(typeof(Topic),param);
+                Frame.Navigate(typeof(Topic), param);
             }
         }
     }
 
-     
-
-   
 
     private async void ItemsRepeater_ElementPrepared(ItemsRepeater sender, ItemsRepeaterElementPreparedEventArgs args)
     {
         await Increment.LoadMore(args.Index, GetNewTopic);
     }
 
-       
 
     private void ContentCard_PointerEntered(object sender, PointerRoutedEventArgs e)
     {
@@ -163,7 +151,7 @@ public sealed partial class Discover : Page
         var translate = h?.RenderTransform as TranslateTransform;
         UiEx.AnimateCard(translate!, 0, 0); // 恢复原位
     }
-        
+
 
     private void ContentCard_Tapped(object sender, TappedRoutedEventArgs e)
     {
@@ -176,6 +164,5 @@ public sealed partial class Discover : Page
 
     private void ContentCard_Loaded(object sender, RoutedEventArgs e)
     {
-
     }
 }

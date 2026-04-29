@@ -1,16 +1,17 @@
 ﻿using System.Collections.Generic;
 
 namespace CC98.Controls.UbbTextBlock.Tokenizer;
+
 /// <summary>
-/// 将原始文本分解为一系列 Token 的词法分析器。
+///     将原始文本分解为一系列 Token 的词法分析器。
 /// </summary>
 /// <param name="input"></param>
 public class UbbTokenizer(string input)
 {
     private readonly string _input = input ?? "";
-    private int _pos = 0;
-    private bool _inTag = false;
+    private bool _inTag;
     private TokenType _lastType = TokenType.Eof; // 记录上一个 Token 类型以判断上下文
+    private int _pos;
 
     public IEnumerable<Token> ScanTokens()
     {
@@ -33,7 +34,7 @@ public class UbbTokenizer(string input)
                 {
                     token = ScanMathDelimiter();
                 }
-                else if (c == '@')  // 新增：处理@符号
+                else if (c == '@') // 新增：处理@符号
                 {
                     token = ScanAtMention();
                 }
@@ -63,17 +64,11 @@ public class UbbTokenizer(string input)
                 return new(TokenType.Comma, Advance().ToString(), _pos - 1);
             case '=':
                 // 关键修复：只有在 TagName 之后，等号才是属性开始的分隔符
-                if (_lastType == TokenType.TagName)
-                {
-                    return new(TokenType.Equal, Advance().ToString(), _pos - 1);
-                }
+                if (_lastType == TokenType.TagName) return new(TokenType.Equal, Advance().ToString(), _pos - 1);
                 // 否则（例如在 URL 内部），它是属性内容的一部分，交给 ScanTagContent 处理
                 return ScanTagContent();
             case '/':
-                if (_lastType == TokenType.LeftBracket)
-                {
-                    return new(TokenType.Slash, Advance().ToString(), _pos - 1);
-                }
+                if (_lastType == TokenType.LeftBracket) return new(TokenType.Slash, Advance().ToString(), _pos - 1);
                 return ScanTagContent();
             default:
                 return ScanTagContent();
@@ -81,23 +76,17 @@ public class UbbTokenizer(string input)
     }
 
 
-
     private Token ScanTagContent()
     {
         var start = _pos;
-        while (_pos < _input.Length && !IsTagDelimiter(Peek()))
-        {
-            Advance();
-        }
+        while (_pos < _input.Length && !IsTagDelimiter(Peek())) Advance();
 
         var value = _input[start.._pos];
 
         // 核心逻辑：根据上一个 Token 判断当前内容的性质
         // 如果前面是 '[' 或 '[/'，则当前是标签名
         if (_lastType == TokenType.LeftBracket || _lastType == TokenType.Slash)
-        {
             return new(TokenType.TagName, value, start);
-        }
 
         // 否则（前面是 '=' 或 ','），视为属性值
         return new(TokenType.AttrValue, value, start);
@@ -106,13 +95,10 @@ public class UbbTokenizer(string input)
     private Token ScanText()
     {
         var start = _pos;
-        while (_pos < _input.Length && Peek() != '[' && Peek() != '$' && Peek() != '@')
-        {
-            Advance();
-        }
+        while (_pos < _input.Length && Peek() != '[' && Peek() != '$' && Peek() != '@') Advance();
         return new(TokenType.Text, _input[start.._pos], start);
     }
-    
+
     private Token ScanMathDelimiter()
     {
         var start = _pos;
@@ -122,11 +108,13 @@ public class UbbTokenizer(string input)
             Advance();
             return new(TokenType.DoubleDollar, "$$", start);
         }
+
         return new(TokenType.Dollar, "$", start);
     }
+
     /// <summary>
-    /// 扫描@提及，格式：@用户名（后跟空格）
-    /// 用户名限制：5个以内汉字或10个以内英文/数字，只能是汉字（包括日韩）、数字、外文字母
+    ///     扫描@提及，格式：@用户名（后跟空格）
+    ///     用户名限制：5个以内汉字或10个以内英文/数字，只能是汉字（包括日韩）、数字、外文字母
     /// </summary>
     private Token ScanAtMention()
     {
@@ -144,10 +132,7 @@ public class UbbTokenizer(string input)
             var c = Peek();
 
             // 用户名后必须紧跟空格才结束
-            if (c == ' ')
-            {
-                break;
-            }
+            if (c == ' ') break;
 
             // 检查字符是否合法
             var isValidChar = IsValidUsernameChar(c);
@@ -161,7 +146,7 @@ public class UbbTokenizer(string input)
 
             // 这里的长度是等效长度，每个汉字占2字节（而实际上有的字是3）
             var length = GetUserNameLength(_input, nameStart, nameLength);
-            if (length > 10)  // 总字节长度限制为10
+            if (length > 10) // 总字节长度限制为10
             {
                 isValid = false;
                 break;
@@ -185,9 +170,15 @@ public class UbbTokenizer(string input)
     }
 
 
-    
-    private char Peek() => _pos < _input.Length ? _input[_pos] : '\0';
-    private char Advance() => _input[_pos++];
+    private char Peek()
+    {
+        return _pos < _input.Length ? _input[_pos] : '\0';
+    }
+
+    private char Advance()
+    {
+        return _input[_pos++];
+    }
 
     // 修改判定逻辑：= 是否作为分隔符取决于当前上下文
     private bool IsTagDelimiter(char c)
@@ -196,18 +187,16 @@ public class UbbTokenizer(string input)
         if (c == ']' || c == ',' || c == '\0') return true;
 
         // 只有在寻找 TagName 的阶段，= 才是分隔符
-        if (c == '=' && (_lastType == TokenType.LeftBracket || _lastType == TokenType.Slash))
-        {
-            return true;
-        }
+        if (c == '=' && (_lastType == TokenType.LeftBracket || _lastType == TokenType.Slash)) return true;
 
         return false;
     }
 
     #region 辅助方法
+
     /// <summary>
-    /// 判断字符是否为合法的用户名组成字符
-    /// 包括：汉字（CJK统一表意文字）、字母、数字
+    ///     判断字符是否为合法的用户名组成字符
+    ///     包括：汉字（CJK统一表意文字）、字母、数字
     /// </summary>
     private static bool IsValidUsernameChar(char c)
     {
@@ -217,16 +206,16 @@ public class UbbTokenizer(string input)
 
         // CJK统一表意文字范围（基本汉字）
         // 包括日文、韩文等东亚文字
-        if ((c >= 0x4E00 && c <= 0x9FFF) ||  // CJK统一表意文字
-            (c >= 0x3400 && c <= 0x4DBF) ||  // CJK扩展A
-            (c >= 0x20000 && c <= 0x2A6DF))  // CJK扩展B
+        if ((c >= 0x4E00 && c <= 0x9FFF) || // CJK统一表意文字
+            (c >= 0x3400 && c <= 0x4DBF) || // CJK扩展A
+            (c >= 0x20000 && c <= 0x2A6DF)) // CJK扩展B
             return true;
 
         return false;
     }
 
     /// <summary>
-    /// 获取用户名的字节长度（UTF-8编码）
+    ///     获取用户名的字节长度（UTF-8编码）
     /// </summary>
     private static int GetUserNameLength(string input, int start, int length)
     {
@@ -237,16 +226,14 @@ public class UbbTokenizer(string input)
 
             // 字母或数字计1
             if (char.IsLetterOrDigit(c))
-            {
                 totalLength += 1;
-            }
             else
-            {
                 // 汉字/日文/韩文等东亚文字计2
                 totalLength += 2;
-            }
         }
+
         return totalLength;
     }
+
     #endregion
 }

@@ -13,6 +13,7 @@ using DevWinUI;
 using FluentIcons.Common;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Navigation;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -20,27 +21,30 @@ using Microsoft.UI.Xaml.Controls;
 namespace CC98.Views;
 
 /// <summary>
-/// An empty page that can be used on its own or navigated to within a Frame.
+///     An empty page that can be used on its own or navigated to within a Frame.
 /// </summary>
 public sealed partial class Profile : Page
 {
+    public Increment Increment = new();
+    public bool IsMe;
     public ObservableCollection<SimpleTopicInfo> RecentTopics = [];
     public ApplicationDataContainer Set = ApplicationData.Current.LocalSettings;
+    public int UserId;
+
+    public Profile()
+    {
+        InitializeComponent();
+    }
+
     public UserInfo UserProfile { get; } = new()
     {
         Id = 0,
         Name = "未知用户",
         PortraitUrl = "",
-        IsFollowing = false,
+        IsFollowing = false
     };
-    public bool IsMe = false;
-    public int UserId = 0;
-    public Increment Increment = new();
-    public Profile()
-    {
-        InitializeComponent();
-    }
-    protected override async void OnNavigatedTo(Microsoft.UI.Xaml.Navigation.NavigationEventArgs e)
+
+    protected override async void OnNavigatedTo(NavigationEventArgs e)
     {
         base.OnNavigatedTo(e);
 
@@ -55,6 +59,7 @@ public sealed partial class Profile : Page
             if (IsMe) SignIn();
         }
     }
+
     private async void SignIn()
     {
         var url = ApiEndpoints.User.SignIn();
@@ -66,6 +71,7 @@ public sealed partial class Profile : Page
             SignStatusIcon.IconVariant = IconVariant.Filled;
             return;
         }
+
         if (result.StatusCode == (int)HttpStatusCode.BadRequest)
         {
             var info = result.Data;
@@ -75,6 +81,7 @@ public sealed partial class Profile : Page
                 SignStatusIcon.IconVariant = IconVariant.Regular;
                 return;
             }
+
             if (info == "has_signed_in_today")
             {
                 SignStatus.Text = "已签到";
@@ -82,18 +89,17 @@ public sealed partial class Profile : Page
                 return;
             }
         }
+
         SignStatus.Text = "签到失败";
         SignStatusIcon.IconVariant = IconVariant.Regular;
     }
+
     //用户个人页面检查跳转参数
     private async Task LoadUserProfile()
     {
         var UserProfileUrl = ApiEndpoints.User.UserProfile(IsMe, UserId);
         var UserProfileResult = await RequestSender.Fetch<UserInfo>(UserProfileUrl);
-        if (!UserProfileResult.IsSuccess || UserProfileResult.Data == null)
-        {
-            return;
-        }
+        if (!UserProfileResult.IsSuccess || UserProfileResult.Data == null) return;
         var data = UserProfileResult.Data;
         UserProfile.Name = data.Name;
         UserProfile.Id = data.Id;
@@ -112,6 +118,7 @@ public sealed partial class Profile : Page
             Set.Values["Uid"] = data.Id.ToString();
             Set.Values["Portrait"] = data.PortraitUrl;
         }
+
         UserProfile.IsOthers = !IsMe;
         try
         {
@@ -122,9 +129,11 @@ public sealed partial class Profile : Page
         {
             await App.Logger.WriteAsync("UserProfile", "加载头像失败", ex.Message);
         }
+
         InfoContent.DataContext = UserProfile;
         SignBoard.DataContext = UserProfile;
     }
+
     private async Task<bool> LoadRecentTopic()
     {
         var recentTopicUrl = ApiEndpoints.Topic.RecentTopic(IsMe, UserId, Increment.StartIndex);
@@ -134,6 +143,7 @@ public sealed partial class Profile : Page
             Flower.Play(FlowStatus.Fail, recentTopicResult.Message);
             return false;
         }
+
         var data = recentTopicResult.Data;
         //移除末尾
         if (data.Count == 11) data.RemoveAt(10);
@@ -153,9 +163,6 @@ public sealed partial class Profile : Page
     }
 
 
-
-
-
     private void FollowList_Click(object sender, RoutedEventArgs e)
     {
         if (!IsMe) return;
@@ -166,10 +173,10 @@ public sealed partial class Profile : Page
     }
 
 
-
     private void StartChat_Click(object sender, RoutedEventArgs e)
     {
-        var c = new ChatInfo { UserId = UserProfile.Id, Name = UserProfile.Name, PortraitUrl = UserProfile.PortraitUrl };
+        var c = new ChatInfo
+            { UserId = UserProfile.Id, Name = UserProfile.Name, PortraitUrl = UserProfile.PortraitUrl };
         var param = new MessageNavigationInfo { ChatUserInfo = c, HasTarget = true };
         Frame.Navigate(typeof(Message), param);
     }
@@ -178,10 +185,10 @@ public sealed partial class Profile : Page
     {
         var flag = UserProfile.IsFollowing;
         var mode = flag ? "0" : "1";
-
     }
 
-    private async void RecentTopicRepeater_ElementPrepared(ItemsRepeater sender, ItemsRepeaterElementPreparedEventArgs args)
+    private async void RecentTopicRepeater_ElementPrepared(ItemsRepeater sender,
+        ItemsRepeaterElementPreparedEventArgs args)
     {
         await Increment.LoadMore(args.Index, LoadRecentTopic);
     }

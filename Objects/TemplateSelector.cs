@@ -13,19 +13,12 @@ public partial class NavigationTemplateSelector : DataTemplateSelector
     {
         if (item is NavigationItem n)
         {
-            if (n.IsEditable == true)
-            {
-                return PinnedItemTemplate;
-            }
-            else
-            {
-                return ItemTemplate;
-            }
+            if (n.IsEditable) return PinnedItemTemplate;
+
+            return ItemTemplate;
         }
-        else
-        {
-            return GroupTemplate;
-        }
+
+        return GroupTemplate;
     }
 }
 
@@ -37,12 +30,9 @@ public partial class NoticeTemplateSelector : DataTemplateSelector
     protected override DataTemplate SelectTemplateCore(object item)
     {
         if (item is Notice n)
-        {
             if (n.Type == (int)NoticeType.System)
-            {
                 return SystemTemplate;
-            }
-        }
+
         return ReplyOrAtTemplate;
     }
 }
@@ -55,12 +45,9 @@ public partial class ReplyTemplateSelector : DataTemplateSelector
     protected override DataTemplate SelectTemplateCore(object item)
     {
         if (item is Reply reply)
-        {
             if (reply.ContentType == 0)
-            {
                 return UBBTemplate;
-            }
-        }
+
         return MarkdownTemplate;
     }
 }
@@ -73,12 +60,9 @@ public partial class TopicTemplateSelector : DataTemplateSelector
     protected override DataTemplate SelectTemplateCore(object item)
     {
         if (item is TopicInfo topic)
-        {
-            if (topic.MediaContent.Thumbnail.Count>0)
-            {
+            if (topic.MediaContent.Thumbnail.Count > 0)
                 return ImageTemplate;
-            }
-        }
+
         return TextTemplate;
     }
 }

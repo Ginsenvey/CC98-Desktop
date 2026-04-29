@@ -4,6 +4,7 @@ using CC98.Controls.Primitives;
 using CC98.Controls.UbbTextBlock.Common.Events;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Symbol = FluentIcons.Common.Symbol;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -16,6 +17,7 @@ public sealed partial class FileCard : UserControl
     {
         InitializeComponent();
     }
+
     #region 依赖属性
 
     public static readonly DependencyProperty SrcProperty =
@@ -23,7 +25,8 @@ public sealed partial class FileCard : UserControl
             "Src",
             typeof(string),
             typeof(FileCard),
-            new("",OnSrcChanged));
+            new("", OnSrcChanged));
+
     public string Src
     {
         get => (string)GetValue(SrcProperty);
@@ -31,10 +34,12 @@ public sealed partial class FileCard : UserControl
     }
 
     #endregion
+
     #region 加载事件
+
     private static void OnSrcChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
     {
-        if(d is not FileCard fileCard)return;
+        if (d is not FileCard fileCard) return;
         fileCard.LoadFile();
     }
 
@@ -44,6 +49,7 @@ public sealed partial class FileCard : UserControl
     {
         DownloadRequested?.Invoke(this, new(Src, MediaType.File));
     }
+
     private void LoadFile()
     {
         var extension = Path.GetExtension(Src)?.ToUpper() ?? "未知类型";
@@ -53,29 +59,31 @@ public sealed partial class FileCard : UserControl
         FileNameBox.Text = fileName;
         TypeIcon.Symbol = GetFileTypeIcon(fileName);
     }
+
     #endregion
 
 
     #region 辅助函数
-    private static FluentIcons.Common.Symbol GetFileTypeIcon(string fileName)
+
+    private static Symbol GetFileTypeIcon(string fileName)
     {
         var extension = Path.GetExtension(fileName)?.ToLower();
         return extension switch
         {
-            ".pdf" => FluentIcons.Common.Symbol.DocumentPdf,
-            ".xls" or ".xlsx" => FluentIcons.Common.Symbol.Table,
-            ".ppt" or ".pptx" => FluentIcons.Common.Symbol.DocumentFlowchart,
-            "zip" or ".rar" => FluentIcons.Common.Symbol.FolderZip,
-            "mp3" or ".wav" or "m4a" => FluentIcons.Common.Symbol.MusicNote1,
-            "mp4" or ".avi" => FluentIcons.Common.Symbol.Video,
-            "jpg" or ".jpeg" or ".png" or ".gif" or "webp" => FluentIcons.Common.Symbol.Image,
-            _ => FluentIcons.Common.Symbol.Document
+            ".pdf" => Symbol.DocumentPdf,
+            ".xls" or ".xlsx" => Symbol.Table,
+            ".ppt" or ".pptx" => Symbol.DocumentFlowchart,
+            "zip" or ".rar" => Symbol.FolderZip,
+            "mp3" or ".wav" or "m4a" => Symbol.MusicNote1,
+            "mp4" or ".avi" => Symbol.Video,
+            "jpg" or ".jpeg" or ".png" or ".gif" or "webp" => Symbol.Image,
+            _ => Symbol.Document
         };
     }
 
 
     /// <summary>
-    /// 从URL中提取文件名
+    ///     从URL中提取文件名
     /// </summary>
     private static string ExtractFileNameFromUrl(string url)
     {
@@ -84,10 +92,7 @@ public sealed partial class FileCard : UserControl
             var uri = new Uri(url);
             var fileName = Path.GetFileName(uri.LocalPath);
             // 如果文件名无效，生成默认文件名
-            if (string.IsNullOrEmpty(fileName) || !fileName.Contains('.'))
-            {
-                fileName = $"CC{DateTime.Now:MMdd_HHmm}.pdf";
-            }
+            if (string.IsNullOrEmpty(fileName) || !fileName.Contains('.')) fileName = $"CC{DateTime.Now:MMdd_HHmm}.pdf";
 
             return fileName;
         }
@@ -96,7 +101,6 @@ public sealed partial class FileCard : UserControl
             return $"CC{DateTime.Now:MMdd_HHmm}.pdf";
         }
     }
-    #endregion
 
-        
+    #endregion
 }

@@ -1,18 +1,19 @@
-﻿namespace CC98.Services;
-
-using Kernel;
-using System;
+﻿using System;
+using System.Diagnostics;
 using System.IO;
 using System.Runtime.InteropServices.WindowsRuntime;
 using System.Threading.Tasks;
 using Windows.ApplicationModel.DataTransfer;
 using Windows.Storage;
 using Windows.Storage.Streams;
+using CC98.Kernel;
+
+namespace CC98.Services;
 
 public class ImageExtension
 {
     /// <summary>
-    /// 复制在线图片到剪贴板
+    ///     复制在线图片到剪贴板
     /// </summary>
     /// <param name="imageUrl">图片URL</param>
     /// <returns>是否成功</returns>
@@ -44,12 +45,13 @@ public class ImageExtension
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"复制图片失败: {ex.Message}");
+            Debug.WriteLine($"复制图片失败: {ex.Message}");
             return false;
         }
     }
+
     /// <summary>
-    /// 下载图片到用户下载文件夹
+    ///     下载图片到用户下载文件夹
     /// </summary>
     /// <param name="imageUrl">图片URL</param>
     /// <param name="fileName">文件名（可选，不指定则从URL自动提取）</param>
@@ -62,15 +64,12 @@ public class ImageExtension
             var downloadsFolder = await GetDownloadsFolderAsync();
             if (downloadsFolder == null)
             {
-                System.Diagnostics.Debug.WriteLine("无法访问下载文件夹");
+                Debug.WriteLine("无法访问下载文件夹");
                 return null;
             }
 
             // 如果没有指定文件名，从URL中提取
-            if (string.IsNullOrEmpty(fileName))
-            {
-                fileName = ExtractFileNameFromUrl(imageUrl);
-            }
+            if (string.IsNullOrEmpty(fileName)) fileName = ExtractFileNameFromUrl(imageUrl);
 
             // 处理文件名冲突
             fileName = await GetUniqueFileNameAsync(downloadsFolder, fileName);
@@ -78,21 +77,21 @@ public class ImageExtension
             // 创建文件
             var file = await downloadsFolder.CreateFileAsync(fileName, CreationCollisionOption.ReplaceExisting);
             var imageBytes = await LoginService.Vpn.GetByteArrayAsync(imageUrl);
-            using var stream = await file.OpenStreamForWriteAsync();
+            await using var stream = await file.OpenStreamForWriteAsync();
             await stream.WriteAsync(imageBytes);
-            System.Diagnostics.Debug.WriteLine($"图片已保存到: {file.Path}");
+            Debug.WriteLine($"图片已保存到: {file.Path}");
             return file.Path;
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"下载图片失败: {ex.Message}");
+            Debug.WriteLine($"下载图片失败: {ex.Message}");
             await App.Logger.WriteAsync("ImageDownloader", "图片下载出错", ex.Message);
             return null;
         }
     }
 
     /// <summary>
-    /// 获取用户的下载文件夹
+    ///     获取用户的下载文件夹
     /// </summary>
     private static async Task<StorageFolder> GetDownloadsFolderAsync()
     {
@@ -117,7 +116,7 @@ public class ImageExtension
     }
 
     /// <summary>
-    /// 从URL中提取文件名
+    ///     从URL中提取文件名
     /// </summary>
     private static string ExtractFileNameFromUrl(string url)
     {
@@ -128,9 +127,7 @@ public class ImageExtension
 
             // 如果文件名无效，生成默认文件名
             if (string.IsNullOrEmpty(fileName) || !fileName.Contains('.'))
-            {
                 fileName = $"CC98_{DateTime.Now:yyyyMMdd_HHmmss}.jpg";
-            }
 
             return fileName;
         }
@@ -141,7 +138,7 @@ public class ImageExtension
     }
 
     /// <summary>
-    /// 确保文件名唯一（如果文件已存在，添加数字后缀）
+    ///     确保文件名唯一（如果文件已存在，添加数字后缀）
     /// </summary>
     private static async Task<string> GetUniqueFileNameAsync(StorageFolder folder, string fileName)
     {

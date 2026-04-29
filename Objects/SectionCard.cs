@@ -1,6 +1,6 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Text.Json.Serialization;
+using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace CC98.Objects;
 
@@ -26,10 +26,7 @@ public partial class IndexTopic : ObservableObject
         set => SetProperty(ref field, value);
     }
 
-    [ObservableProperty]
-    public partial int Id { get; set; }
+    [ObservableProperty] public partial int Id { get; set; }
 
-    [JsonIgnore]
-    [ObservableProperty]
-    public partial bool IsHotTopic { get; set; }
+    [JsonIgnore] [ObservableProperty] public partial bool IsHotTopic { get; set; }
 }

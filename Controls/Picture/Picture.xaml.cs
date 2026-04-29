@@ -15,83 +15,6 @@ public sealed partial class Picture : UserControl
         InitializeComponent();
     }
 
-    #region 依赖属性
-
-    public static readonly DependencyProperty StretchProperty =
-        DependencyProperty.Register(
-            nameof(Stretch),
-            typeof(Stretch),
-            typeof(Picture),
-            new(Stretch.Uniform));
-    public static readonly DependencyProperty  SrcProperty =
-        DependencyProperty.Register(
-            "Src",
-            typeof(string),
-            typeof(Picture),
-            new("",OnSrcChanged));
-
-    public static readonly DependencyProperty HideProperty =
-        DependencyProperty.Register(
-            "Hide",
-            typeof(bool),
-            typeof(Picture),
-            new(false));
-
-    public static readonly DependencyProperty LoadImageCallbackProperty =
-        DependencyProperty.Register("LoadImageCallback", typeof(IImageLoader),
-            typeof(Picture), new(new DefaultImageLoader()));
-    public Stretch Stretch
-    {
-        get => (Stretch)GetValue(StretchProperty);
-        set => SetValue(StretchProperty, value);
-    }
-    public string Src
-    {
-        get => (string)GetValue(SrcProperty);
-        set => SetValue(SrcProperty, value);
-    }
-    public bool Hide
-    {
-        get => (bool)GetValue(HideProperty);
-        set => SetValue(HideProperty, value);
-    }
-    public IImageLoader LoadImageCallback
-    {
-        get => (IImageLoader)GetValue(LoadImageCallbackProperty);
-        set => SetValue(LoadImageCallbackProperty, value);
-    }
-    #endregion
-
-
-    #region 事件处理
-
-    private static async void OnSrcChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
-    {
-        if(d is Picture picture)
-        {
-            if (picture.Hide)
-            {
-                picture.DisplayButton.Visibility = Visibility.Visible;
-                picture.shimmer.Visibility = Visibility.Collapsed;
-                picture.Viewer.Source = null;
-            }
-            else
-            {
-                await picture.LoadImage();
-            }
-                    
-        }
-    }
-
-    private async void DisplayButton_Click(object sender, RoutedEventArgs e)
-    {
-        DisplayButton.Visibility = Visibility.Collapsed;
-        shimmer.Visibility = Visibility.Visible;
-        await LoadImage();
-    }
-
-    #endregion
-
     #region 图片加载
 
     private async Task LoadImage()
@@ -107,16 +30,96 @@ public sealed partial class Picture : UserControl
                 shimmer.IsActive = false;
                 shimmer.Visibility = Visibility.Collapsed;
             }
+
             Viewer.Source = bitmap;
         }
-        catch 
-        {                 
+        catch
+        {
             Viewer.Source = null;
         }
-            
     }
 
     #endregion
 
-        
+    #region 依赖属性
+
+    public static readonly DependencyProperty StretchProperty =
+        DependencyProperty.Register(
+            nameof(Stretch),
+            typeof(Stretch),
+            typeof(Picture),
+            new(Stretch.Uniform));
+
+    public static readonly DependencyProperty SrcProperty =
+        DependencyProperty.Register(
+            "Src",
+            typeof(string),
+            typeof(Picture),
+            new("", OnSrcChanged));
+
+    public static readonly DependencyProperty HideProperty =
+        DependencyProperty.Register(
+            "Hide",
+            typeof(bool),
+            typeof(Picture),
+            new(false));
+
+    public static readonly DependencyProperty LoadImageCallbackProperty =
+        DependencyProperty.Register("LoadImageCallback", typeof(IImageLoader),
+            typeof(Picture), new(new DefaultImageLoader()));
+
+    public Stretch Stretch
+    {
+        get => (Stretch)GetValue(StretchProperty);
+        set => SetValue(StretchProperty, value);
+    }
+
+    public string Src
+    {
+        get => (string)GetValue(SrcProperty);
+        set => SetValue(SrcProperty, value);
+    }
+
+    public bool Hide
+    {
+        get => (bool)GetValue(HideProperty);
+        set => SetValue(HideProperty, value);
+    }
+
+    public IImageLoader LoadImageCallback
+    {
+        get => (IImageLoader)GetValue(LoadImageCallbackProperty);
+        set => SetValue(LoadImageCallbackProperty, value);
+    }
+
+    #endregion
+
+
+    #region 事件处理
+
+    private static async void OnSrcChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+    {
+        if (d is Picture picture)
+        {
+            if (picture.Hide)
+            {
+                picture.DisplayButton.Visibility = Visibility.Visible;
+                picture.shimmer.Visibility = Visibility.Collapsed;
+                picture.Viewer.Source = null;
+            }
+            else
+            {
+                await picture.LoadImage();
+            }
+        }
+    }
+
+    private async void DisplayButton_Click(object sender, RoutedEventArgs e)
+    {
+        DisplayButton.Visibility = Visibility.Collapsed;
+        shimmer.Visibility = Visibility.Visible;
+        await LoadImage();
+    }
+
+    #endregion
 }

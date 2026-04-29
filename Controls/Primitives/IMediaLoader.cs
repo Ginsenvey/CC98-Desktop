@@ -7,5 +7,3 @@ public interface IMediaLoader
 {
     Task<MediaSource?> LoadMedia(string src);
 }
-
-

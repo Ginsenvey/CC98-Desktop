@@ -1,12 +1,12 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Text.Json.Serialization;
+using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace CC98.Objects;
 
 /// <summary>
-/// 详细个人信息
+///     详细个人信息
 /// </summary>
 public partial class UserInfo : ObservableObject
 {
@@ -22,17 +22,13 @@ public partial class UserInfo : ObservableObject
         set => SetProperty(ref field, value);
     }
 
-    [ObservableProperty]
-    public partial int Id { get; set; }
+    [ObservableProperty] public partial int Id { get; set; }
 
-    [ObservableProperty]
-    public partial int PostCount { get; set; }
+    [ObservableProperty] public partial int PostCount { get; set; }
 
-    [ObservableProperty]
-    public partial int Wealth { get; set; }
+    [ObservableProperty] public partial int Wealth { get; set; }
 
-    [ObservableProperty]
-    public partial DateTime LastLogOnTime { get; set; }
+    [ObservableProperty] public partial DateTime LastLogOnTime { get; set; }
 
     public string PortraitUrl
     {
@@ -40,24 +36,17 @@ public partial class UserInfo : ObservableObject
         set => SetProperty(ref field, value);
     }
 
-    [ObservableProperty]
-    public partial int Popularity { get; set; }
+    [ObservableProperty] public partial int Popularity { get; set; }
 
-    [ObservableProperty]
-    public partial int FanCount { get; set; }
+    [ObservableProperty] public partial int FanCount { get; set; }
 
-    [ObservableProperty]
-    public partial int FollowCount { get; set; }
+    [ObservableProperty] public partial int FollowCount { get; set; }
 
-    [ObservableProperty]
-    public partial DateTime RegisterTime { get; set; }
+    [ObservableProperty] public partial DateTime RegisterTime { get; set; }
 
-    [JsonIgnore]
-    [ObservableProperty]
-    public partial bool IsOthers { get; set; }
+    [JsonIgnore] [ObservableProperty] public partial bool IsOthers { get; set; }
 
-    [ObservableProperty]
-    public partial bool IsFollowing { get; set; }
+    [ObservableProperty] public partial bool IsFollowing { get; set; }
 
     public List<int> CustomBoards
     {

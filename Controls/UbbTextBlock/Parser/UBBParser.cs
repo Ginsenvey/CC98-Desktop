@@ -5,17 +5,25 @@ using System.Text;
 using CC98.Controls.UbbTextBlock.Tokenizer;
 
 namespace CC98.Controls.UbbTextBlock.Parser;
+
 /// <summary>
-/// 将词元序列转换为 UBB 文档树的核心类。
+///     将词元序列转换为 UBB 文档树的核心类。
 /// </summary>
 public class UbbParser(IEnumerable<Token> tokens)
 {
-    private readonly List<Token> _tokens = [.. tokens];
-    private int _index = 0;
     private readonly List<UbbNode> _allNodes = [];
+    private readonly List<Token> _tokens = [.. tokens];
+    private int _index;
 
-    private Token Peek() => _index < _tokens.Count ? _tokens[_index] : new(TokenType.Eof, "", -1);
-    private Token Consume() => _tokens[_index++];
+    private Token Peek()
+    {
+        return _index < _tokens.Count ? _tokens[_index] : new(TokenType.Eof, "", -1);
+    }
+
+    private Token Consume()
+    {
+        return _tokens[_index++];
+    }
 
     public UbbDocument Parse()
     {
@@ -43,10 +51,13 @@ public class UbbParser(IEnumerable<Token> tokens)
                     if (closingTag != null && closingTag == foundType)
                     {
                         // 消费 [/tag] 并返回
-                        Consume(); Consume(); Consume();
+                        Consume();
+                        Consume();
+                        Consume();
                         if (Peek().Type == TokenType.RightBracket) Consume();
                         return;
                     }
+
                     if (closingTag != null && IsKnownType(foundType)) return;
                 }
             }
@@ -58,20 +69,21 @@ public class UbbParser(IEnumerable<Token> tokens)
 
                 if (node is TagNode tag && !IsSelfClosing(tag.Type))
                 {
-                    if (tag.Type == UbbNodeType.Code || tag.Type == UbbNodeType.NoUbb||tag.Type==UbbNodeType.Markdown)
-                    {
+                    if (tag.Type == UbbNodeType.Code || tag.Type == UbbNodeType.NoUbb ||
+                        tag.Type == UbbNodeType.Markdown)
                         // 进入“逐字模式”，直接寻找闭合标签
                         ParseVerbatimContent(tag);
-                    }
                     else
-                    {
                         ParseContent(tag, tag.Type);
-                    }
                 }
             }
-            else { _index++; }
+            else
+            {
+                _index++;
+            }
         }
-    } 
+    }
+
     private UbbNode ParseElement()
     {
         var token = Peek();
@@ -79,11 +91,11 @@ public class UbbParser(IEnumerable<Token> tokens)
         {
             case TokenType.Text:
                 Consume();
-                return  new TextNode(token.Value);
+                return new TextNode(token.Value);
             case TokenType.Dollar:
             case TokenType.DoubleDollar:
                 return ParseLatex();
-            case TokenType.At:  // 新增：处理@提及
+            case TokenType.At: // 新增：处理@提及
                 Consume();
                 return new AtNode(token.Value);
             case TokenType.LeftBracket:
@@ -107,19 +119,13 @@ public class UbbParser(IEnumerable<Token> tokens)
         var startIndex = _index - 1;
 
         // 1. 检查 TagName
-        if (Peek().Type != TokenType.TagName)
-        {
-            return new TextNode("[");
-        }
+        if (Peek().Type != TokenType.TagName) return new TextNode("[");
 
         var name = Consume().Value;
         var type = MapToNodeType(name);
 
         // 2. 如果是未知标签，直接回退
-        if (type == UbbNodeType.Text)
-        {
-            return new TextNode("[" + name);
-        }
+        if (type == UbbNodeType.Text) return new TextNode("[" + name);
 
 
         var attributes = new Dictionary<string, string>();
@@ -133,22 +139,16 @@ public class UbbParser(IEnumerable<Token> tokens)
             if (t.Type == TokenType.Equal || t.Type == TokenType.Comma)
             {
                 // 关键修复点：如果在等号/逗号后紧跟的是另一个 '['，说明格式非法
-                if (Peek().Type == TokenType.LeftBracket)
-                {
-                    return FallbackToText(startIndex);
-                }
+                if (Peek().Type == TokenType.LeftBracket) return FallbackToText(startIndex);
 
                 if (Peek().Type == TokenType.AttrValue)
                 {
                     var valToken = Consume();
 
                     // 关键修复点：如果 Scanner 错误地将 '[' 包含在 AttrValue 中，这里进行二次检查
-                    if (valToken.Value.Contains('['))
-                    {
-                        return FallbackToText(startIndex);
-                    }
+                    if (valToken.Value.Contains('[')) return FallbackToText(startIndex);
 
-                    var key = attrCount == 0 ?  GetAttributeName(type): $"value{attrCount}";
+                    var key = attrCount == 0 ? GetAttributeName(type) : $"value{attrCount}";
                     attributes[key] = valToken.Value;
                     attrCount++;
                 }
@@ -165,10 +165,8 @@ public class UbbParser(IEnumerable<Token> tokens)
                 return FallbackToText(startIndex);
             }
         }
-        if (type == UbbNodeType.Emoji)
-        {
-            attributes["code"] = name;
-        }
+
+        if (type == UbbNodeType.Emoji) attributes["code"] = name;
         // 4. 检查是否以 ']' 正常结尾
         if (Peek().Type == TokenType.RightBracket)
         {
@@ -179,17 +177,22 @@ public class UbbParser(IEnumerable<Token> tokens)
         // 到达 EOF 仍未闭合，回退
         return FallbackToText(startIndex);
     }
-    public string GetAttributeName(UbbNodeType type)=>type switch
+
+    public string GetAttributeName(UbbNodeType type)
     {
-        UbbNodeType.Size=>"size",
-        UbbNodeType.Font=>"font",
-        UbbNodeType.Color=>"color",
-        UbbNodeType.Url=>"href",
-        UbbNodeType.Code=>"language",
-        UbbNodeType.Quote=>"author",
-        UbbNodeType.Emoji=>"code",
-        _ => "value"
-    };
+        return type switch
+        {
+            UbbNodeType.Size => "size",
+            UbbNodeType.Font => "font",
+            UbbNodeType.Color => "color",
+            UbbNodeType.Url => "href",
+            UbbNodeType.Code => "language",
+            UbbNodeType.Quote => "author",
+            UbbNodeType.Emoji => "code",
+            _ => "value"
+        };
+    }
+
     private void ParseVerbatimContent(TagNode parent)
     {
         var sb = new StringBuilder();
@@ -202,10 +205,7 @@ public class UbbParser(IEnumerable<Token> tokens)
             if (IsClosingTag(targetType))
             {
                 // 1. 将之前积累的所有文本存入 TextNode
-                if (sb.Length > 0)
-                {
-                    parent.AddChild(new TextNode(sb.ToString()));
-                }
+                if (sb.Length > 0) parent.AddChild(new TextNode(sb.ToString()));
 
                 // 2. 消费掉整个闭合标签 [/xxx]
                 Consume(); // [
@@ -221,10 +221,7 @@ public class UbbParser(IEnumerable<Token> tokens)
         }
 
         // 容错：如果直到 EOF 都没找到闭合标签
-        if (sb.Length > 0)
-        {
-            parent.AddChild(new TextNode(sb.ToString()));
-        }
+        if (sb.Length > 0) parent.AddChild(new TextNode(sb.ToString()));
     }
 
     // 辅助方法：精准探测闭合标签
@@ -249,10 +246,21 @@ public class UbbParser(IEnumerable<Token> tokens)
         if (Peek().Type == token.Type) Consume();
         return new(latex, isBlock);
     }
-    private bool IsKnownType(UbbNodeType type) => type != UbbNodeType.Text && type != UbbNodeType.Document;
 
-    private Token PeekNext() => PeekOffset(1);
-    private Token PeekOffset(int offset) => (_index + offset < _tokens.Count) ? _tokens[_index + offset] : null;
+    private bool IsKnownType(UbbNodeType type)
+    {
+        return type != UbbNodeType.Text && type != UbbNodeType.Document;
+    }
+
+    private Token PeekNext()
+    {
+        return PeekOffset(1);
+    }
+
+    private Token PeekOffset(int offset)
+    {
+        return (_index + offset < _tokens.Count) ? _tokens[_index + offset] : null;
+    }
 
     private bool IsSelfClosing(UbbNodeType type)
     {
@@ -274,13 +282,14 @@ public class UbbParser(IEnumerable<Token> tokens)
             _ => throw new InvalidOperationException()
         };
     }
+
     //注册新标签节点必要的映射
     private UbbNodeType MapToNodeType(string tagName)
     {
         tagName = tagName.ToLower();
         // 处理 CC98 特有的表情前缀
-        string[] emojiPrefix = ["cc98", "a:", "c:", "f:", "tb", "ms", "em","ac"];
-        if (emojiPrefix.Any(p=>tagName.StartsWith(p)))
+        string[] emojiPrefix = ["cc98", "a:", "c:", "f:", "tb", "ms", "em", "ac"];
+        if (emojiPrefix.Any(p => tagName.StartsWith(p)))
             return UbbNodeType.Emoji;
 
         return tagName switch
@@ -293,46 +302,40 @@ public class UbbParser(IEnumerable<Token> tokens)
             "font" => UbbNodeType.Font,
             "color" => UbbNodeType.Color,
             "url" => UbbNodeType.Url,
-            "topic"=> UbbNodeType.Topic,
+            "topic" => UbbNodeType.Topic,
             "img" => UbbNodeType.Image,
-            "audio"=>UbbNodeType.Audio,
-            "video"=>UbbNodeType.Video,
+            "audio" => UbbNodeType.Audio,
+            "video" => UbbNodeType.Video,
             "code" => UbbNodeType.Code,
             "quote" => UbbNodeType.Quote,
-            "quotex"=>UbbNodeType.Quote,
+            "quotex" => UbbNodeType.Quote,
             "align" => UbbNodeType.Align,
             "left" => UbbNodeType.Left,
-            "center"=>UbbNodeType.Center,
-            "right"=>UbbNodeType.Right,
+            "center" => UbbNodeType.Center,
+            "right" => UbbNodeType.Right,
             "table" => UbbNodeType.Table,
             "tr" => UbbNodeType.TableRow,
             "td" => UbbNodeType.TableCell,
             "hr" => UbbNodeType.Divider,
-            "line"=>UbbNodeType.Divider,
-            "math"=>UbbNodeType.Latex,
+            "line" => UbbNodeType.Divider,
+            "math" => UbbNodeType.Latex,
             "bili" => UbbNodeType.Bilibili,
-            "upload" =>UbbNodeType.Upload,
+            "upload" => UbbNodeType.Upload,
             "noubb" => UbbNodeType.NoUbb,
-            "md"=>UbbNodeType.Markdown,
-            "replyview"=>UbbNodeType.ReplyView,
-            "needreply"=>UbbNodeType.NeedReply,
+            "md" => UbbNodeType.Markdown,
+            "replyview" => UbbNodeType.ReplyView,
+            "needreply" => UbbNodeType.NeedReply,
             _ => UbbNodeType.Text
         };
     }
 
-
-   
 
     // 辅助方法：将当前解析进度涉及的所有 Token 还原为原始文本
     private TextNode FallbackToText(int startIndex)
     {
         var sb = new StringBuilder();
         // 从最初的 '[' 开始拼接
-        for (var i = startIndex; i < _index; i++)
-        {
-            sb.Append(_tokens[i].Value);
-        }
+        for (var i = startIndex; i < _index; i++) sb.Append(_tokens[i].Value);
         return new(sb.ToString());
     }
-
 }

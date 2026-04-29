@@ -1,45 +1,40 @@
 ﻿<ResourceDictionary
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:local="using:CC98.Controls"
-    xmlns:ubb="using:UbbRender.Render"
-    xmlns:share="using:CC98.Share.Controls"
     xmlns:smartImage="using:CC98.Controls.SmartImage"
     xmlns:ubbTextBlock="using:CC98.Controls.UbbTextBlock"
     xmlns:fileCard="using:CC98.Controls.FileCard">
-    <Style TargetType="smartImage:SmartImage" >
+    <Style TargetType="smartImage:SmartImage">
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="smartImage:SmartImage">
                     <Border
                         Background="{TemplateBinding Background}"
                         BorderBrush="{TemplateBinding BorderBrush}"
-                        BorderThickness="{TemplateBinding BorderThickness}">
-                    </Border>
+                        BorderThickness="{TemplateBinding BorderThickness}" />
                 </ControlTemplate>
             </Setter.Value>
         </Setter>
     </Style>
 
     <Style TargetType="ubbTextBlock:UbbTextBlock">
-        <Setter Property="Background" Value="Transparent"/>
-       
+        <Setter Property="Background" Value="Transparent" />
+
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="ubbTextBlock:UbbTextBlock">
                     <Border
-                    Background="{TemplateBinding Background}"
-                    BorderBrush="{TemplateBinding BorderBrush}"
-                    BorderThickness="{TemplateBinding BorderThickness}">
+                        Background="{TemplateBinding Background}"
+                        BorderBrush="{TemplateBinding BorderBrush}"
+                        BorderThickness="{TemplateBinding BorderThickness}">
 
-                        <StackPanel x:Name="PART_RootPanel" Margin="{TemplateBinding Padding}"/>
+                        <StackPanel x:Name="PART_RootPanel" Margin="{TemplateBinding Padding}" />
                     </Border>
                 </ControlTemplate>
             </Setter.Value>
         </Setter>
     </Style>
 
-    
 
     <Style TargetType="fileCard:FileCard">
         <Setter Property="Template">
@@ -48,8 +43,7 @@
                     <Border
                         Background="{TemplateBinding Background}"
                         BorderBrush="{TemplateBinding BorderBrush}"
-                        BorderThickness="{TemplateBinding BorderThickness}">
-                    </Border>
+                        BorderThickness="{TemplateBinding BorderThickness}" />
                 </ControlTemplate>
             </Setter.Value>
         </Setter>

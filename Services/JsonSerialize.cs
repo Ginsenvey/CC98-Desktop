@@ -10,20 +10,22 @@ public class JsonSerialize
     {
         Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
         WriteIndented = true,
-        TypeInfoResolver = Cc98JsonContext.Default 
+        TypeInfoResolver = Cc98JsonContext.Default
     };
+
     public static T? Deserialize<T>(string json)
     {
-        try 
+        try
         {
             var obj = JsonSerializer.Deserialize<T>(json, LogOptions);
             return obj is T result ? result : default;
         }
-        catch 
+        catch
         {
             return default;
         }
     }
+
     public static string Serialize<T>(T obj)
     {
         try

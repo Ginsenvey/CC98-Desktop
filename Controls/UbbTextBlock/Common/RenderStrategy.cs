@@ -17,12 +17,12 @@ using Microsoft.UI.Xaml.Shapes;
 
 namespace CC98.Controls.UbbTextBlock.Common;
 
-
 // 渲染策略接口
 public interface IRenderStrategy
 {
     void Render(UbbNode node, RenderContext context);
 }
+
 public class TextRenderStrategy : IRenderStrategy
 {
     public void Render(UbbNode node, RenderContext context)
@@ -35,15 +35,10 @@ public class TextRenderStrategy : IRenderStrategy
                 var prevIsBlock = node.PreviousSibling?.Type.IsBlock() ?? false;
                 var nextIsBlock = node.NextSibling?.Type.IsBlock() ?? false;
 
-                if (prevIsBlock)
-                {
-                    content = content.TrimStart('\r', '\n');
-                }
-                if (nextIsBlock)
-                {
-                    content = content.TrimEnd('\r', '\n');
-                }
+                if (prevIsBlock) content = content.TrimStart('\r', '\n');
+                if (nextIsBlock) content = content.TrimEnd('\r', '\n');
             }
+
             var run = new Run { Text = content };
             context.AddInline(run);
         }
@@ -60,10 +55,7 @@ public class BoldRenderStrategy : IRenderStrategy
             FontFamily = (FontFamily)context.Properties["BoldFontFamily"]
         };
         context.BeginInlineContainer(bold);
-        foreach (var child in node.Children)
-        {
-            context.RenderNode(child);
-        }
+        foreach (var child in node.Children) context.RenderNode(child);
         context.EndInlineContainer();
     }
 }
@@ -75,10 +67,7 @@ public class ItalicRenderStrategy : IRenderStrategy
     {
         var italic = new Italic();
         context.BeginInlineContainer(italic);
-        foreach (var child in node.Children)
-        {
-            context.RenderNode(child);
-        }
+        foreach (var child in node.Children) context.RenderNode(child);
         context.EndInlineContainer();
     }
 }
@@ -90,10 +79,7 @@ public class UnderlineRenderStrategy : IRenderStrategy
     {
         var underline = new Underline();
         context.BeginInlineContainer(underline);
-        foreach (var child in node.Children)
-        {
-            context.RenderNode(child);
-        }
+        foreach (var child in node.Children) context.RenderNode(child);
         context.EndInlineContainer();
     }
 }
@@ -108,26 +94,19 @@ public class StrikethroughRenderStrategy : IRenderStrategy
             TextDecorations = TextDecorations.Strikethrough
         };
         context.BeginInlineContainer(span);
-        foreach (var child in node.Children)
-        {
-            context.RenderNode(child);
-        }
+        foreach (var child in node.Children) context.RenderNode(child);
         context.EndInlineContainer();
     }
+
     private static string CollectText(UbbNode node)
     {
         var text = "";
         foreach (var child in node.Children)
-        {
             if (child is TextNode textNode)
-            {
                 text += textNode.Content;
-            }
             else
-            {
                 text += CollectText(child);
-            }
-        }
+
         return text;
     }
 }
@@ -139,52 +118,44 @@ public class SizeRenderStrategy : IRenderStrategy
     {
         if (node is TagNode tagNode)
         {
-            
             var sizeStr = tagNode.GetAttribute("size");
-            if(int.TryParse(sizeStr,out var sizeInt))
+            if (int.TryParse(sizeStr, out var sizeInt))
             {
                 var pixels = sizeStr.Contains("px") ? sizeInt : ConvertUbbSizeToPixels(sizeInt);
                 var span = new Span { FontSize = pixels };
                 context.BeginInlineContainer(span);
-                foreach (var child in node.Children)
-                {
-                    context.RenderNode(child);
-                }
+                foreach (var child in node.Children) context.RenderNode(child);
                 context.EndInlineContainer();
             }
             else
             {
                 // 默认处理子节点
-                foreach (var child in node.Children)
-                {
-                    context.RenderNode(child);
-                }
+                foreach (var child in node.Children) context.RenderNode(child);
             }
         }
     }
+
     private static double ConvertUbbSizeToPixels(int ubbSize)
     {
         // 简单的分段线性插值
-        if (ubbSize <= 1) return 8;   // 最小尺寸
-        if (ubbSize == 2) return 10;  // 较小
-        if (ubbSize == 3) return 13;  
-        if (ubbSize == 4) return 17;  // 插值
-        if (ubbSize == 5) return 22;  
-        if (ubbSize == 6) return 26;  // 插值
-        if (ubbSize == 7) return 30;  // 插值
-        if (ubbSize == 8) return 32;  // 插值
-        if (ubbSize == 9) return 34;  // 插值
+        if (ubbSize <= 1) return 8; // 最小尺寸
+        if (ubbSize == 2) return 10; // 较小
+        if (ubbSize == 3) return 13;
+        if (ubbSize == 4) return 17; // 插值
+        if (ubbSize == 5) return 22;
+        if (ubbSize == 6) return 26; // 插值
+        if (ubbSize == 7) return 30; // 插值
+        if (ubbSize == 8) return 32; // 插值
+        if (ubbSize == 9) return 34; // 插值
         if (ubbSize == 10) return 35; // 接近36
         if (ubbSize == 11) return 35.5;
         if (ubbSize == 12) return 35.8;
-        if (ubbSize == 13) return 36; 
+        if (ubbSize == 13) return 36;
 
         // 对于更大的值，使用渐进增长
         if (ubbSize > 13)
-        {
             // 超过13后缓慢增长
             return 36 + (ubbSize - 13) * 0.5;
-        }
 
         return 14; // 默认值
     }
@@ -200,23 +171,16 @@ public class UrlRenderStrategy : IRenderStrategy
             var hyperlink = new Hyperlink();
             var url = tagNode.GetAttribute("href");
             if (!url.IsValidUrl())
-            {
-                if (node.FirstChild is TextNode child) url = child.Content;
-            }
+                if (node.FirstChild is TextNode child)
+                    url = child.Content;
             // 设置样式
             hyperlink.Foreground = new SolidColorBrush(Colors.LightSeaGreen);
             hyperlink.TextDecorations = TextDecorations.Underline;
-            
+
             // 点击事件
-            hyperlink.Click += (sender, e) =>
-            {
-                context.Control.OnMediaClicked(url, MediaType.Link);
-            };
+            hyperlink.Click += (sender, e) => { context.Control.OnMediaClicked(url, MediaType.Link); };
             context.BeginInlineContainer(hyperlink);
-            foreach (var child in node.Children)
-            {
-                context.RenderNode(child);
-            }
+            foreach (var child in node.Children) context.RenderNode(child);
             context.EndInlineContainer();
         }
     }
@@ -234,28 +198,26 @@ public class ImageRenderStrategy : IRenderStrategy
             if (!value.IsValidUrl(false))
             {
                 // 尝试从子节点获取URL（对于 [img]url[/img] 格式）
-                var first=node.FirstChild;
-                if (first is TextNode textNode)
-                {
-                    src = textNode.Content;
-                }
+                var first = node.FirstChild;
+                if (first is TextNode textNode) src = textNode.Content;
             }
             else
             {
                 src = value;
             }
+
             if (src.IsValidUrl(false))
             {
-                var image = new Picture.Picture()
+                var image = new Picture.Picture
                 {
                     //自定义图片加载器必须在Src设置之前赋值
                     //否则OnSrcChanged事件会触发，但此时将使用默认加载器
                     LoadImageCallback = SmartImageLoader.Default,
                     //UBB隐藏图片语法
-                    Hide=context.Control.HideImage || value=="1",
-                    Src=src,
+                    Hide = context.Control.HideImage || value == "1",
+                    Src = src,
                     MaxWidth = (double)context.Properties["ImageMaxWidth"],
-                    Stretch = Stretch.Uniform,
+                    Stretch = Stretch.Uniform
                 };
                 var hyperlinkButton = new HyperlinkButton
                 {
@@ -263,12 +225,9 @@ public class ImageRenderStrategy : IRenderStrategy
                     Padding = new(1),
                     Background = new SolidColorBrush(Colors.Transparent),
                     HorizontalAlignment = HorizontalAlignment.Left,
-                    HorizontalContentAlignment=HorizontalAlignment.Stretch
+                    HorizontalContentAlignment = HorizontalAlignment.Stretch
                 };
-                hyperlinkButton.Click += (s, e) =>
-                { 
-                    context.Control.OnMediaClicked(src,MediaType.Image);
-                };
+                hyperlinkButton.Click += (s, e) => { context.Control.OnMediaClicked(src, MediaType.Image); };
 
                 context.AddToContainer(hyperlinkButton);
             }
@@ -287,14 +246,14 @@ public class CodeRenderStrategy : IRenderStrategy
         {
             LanguageName = languageName,
             Code = RenderHelper.CollectText(node),
-            Background= (Brush)context.Properties["CodeBackground"],
-            Padding =new(12),
-            Margin=new(4,2,4,2),
-            BorderThickness=new(1),
-            CornerRadius=new(4),
+            Background = (Brush)context.Properties["CodeBackground"],
+            Padding = new(12),
+            Margin = new(4, 2, 4, 2),
+            BorderThickness = new(1),
+            CornerRadius = new(4)
         };
         context.AddToContainer(viewer);
-    } 
+    }
 }
 
 // 引用渲染策略
@@ -304,9 +263,9 @@ public class QuoteRenderStrategy : IRenderStrategy
     {
         context.FinalizeCurrentTextBlock();
         context.QuoteNestingLevel++;
-        var isOutermostQuote = (context.QuoteNestingLevel == 1);
+        var isOutermostQuote = context.QuoteNestingLevel == 1;
 
-        var border = CreateQuoteBorder(context,isOutermostQuote);
+        var border = CreateQuoteBorder(context, isOutermostQuote);
         var contentPanel = new StackPanel
         {
             Spacing = 8,
@@ -316,8 +275,7 @@ public class QuoteRenderStrategy : IRenderStrategy
 
         // 保存当前容器状态以便恢复
         var previousContainer = context.Container;
-        var previousPanelStack = context.PanelStack != null ?
-            new Stack<Panel>(context.PanelStack) : new Stack<Panel>();
+        var previousPanelStack = context.PanelStack != null ? new Stack<Panel>(context.PanelStack) : new Stack<Panel>();
 
         // 切换到新的内容容器
         context.Container = contentPanel;
@@ -328,10 +286,7 @@ public class QuoteRenderStrategy : IRenderStrategy
         }
 
         // 渲染子节点
-        foreach (var child in node.Children)
-        {
-            context.RenderNode(child);
-        }
+        foreach (var child in node.Children) context.RenderNode(child);
 
         // 确保最后的文本块被结束
         context.FinalizeCurrentTextBlock();
@@ -341,10 +296,7 @@ public class QuoteRenderStrategy : IRenderStrategy
         if (context.PanelStack != null)
         {
             context.PanelStack.Clear();
-            foreach (var panel in previousPanelStack.Reverse())
-            {
-                context.PanelStack.Push(panel);
-            }
+            foreach (var panel in previousPanelStack.Reverse()) context.PanelStack.Push(panel);
         }
 
         // 将内容面板添加到边框
@@ -353,18 +305,20 @@ public class QuoteRenderStrategy : IRenderStrategy
         // 将整个引用块添加到容器
         context.AddToContainer(border);
     }
+
     private static Border CreateQuoteBorder(RenderContext context, bool isOutermostQuote)
     {
         var border = new Border
         {
             BorderBrush = new SolidColorBrush(Color.FromArgb(255, 255, 196, 174)),
             BorderThickness = new(2, 0, 0, 0),
-            Padding = new(6, 6, 6, 6),
+            Padding = new(6, 6, 6, 6)
         };
         // 只有最外层引用块有背景色
         if (isOutermostQuote)
         {
-            border.Background = (Brush)context.Properties["QuoteBackground"] ?? new SolidColorBrush(Color.FromArgb(255, 232, 244, 249));
+            border.Background = (Brush)context.Properties["QuoteBackground"] ??
+                                new SolidColorBrush(Color.FromArgb(255, 232, 244, 249));
             border.Margin = new(4, 6, 4, 6);
         }
         else
@@ -374,9 +328,9 @@ public class QuoteRenderStrategy : IRenderStrategy
             border.BorderBrush = new SolidColorBrush(Color.FromArgb(255, 220, 176, 154));
             border.Margin = new(2, 2, 0, 2); // 内层缩进
         }
+
         return border;
     }
-
 }
 
 // 段落渲染策略
@@ -388,8 +342,6 @@ public class ParagraphRenderStrategy : IRenderStrategy
     }
 }
 
-
-
 // 对齐渲染策略
 public class AlignRenderStrategy : IRenderStrategy
 {
@@ -399,7 +351,7 @@ public class AlignRenderStrategy : IRenderStrategy
         if (node is TagNode tagNode)
         {
             var align = tagNode.GetAttribute("value", "left").ToLower();
-            RenderHelper.ApplyAlignToContext(align,node,context);
+            RenderHelper.ApplyAlignToContext(align, node, context);
         }
     }
 }
@@ -461,20 +413,14 @@ public class ColorRenderStrategy : IRenderStrategy
 
                 context.BeginInlineContainer(span);
 
-                foreach (var child in node.Children)
-                {
-                    context.RenderNode(child);
-                }
+                foreach (var child in node.Children) context.RenderNode(child);
 
                 context.EndInlineContainer();
             }
             else
             {
                 // 没有颜色值，直接渲染子节点
-                foreach (var child in node.Children)
-                {
-                    context.RenderNode(child);
-                }
+                foreach (var child in node.Children) context.RenderNode(child);
             }
         }
     }
@@ -497,12 +443,12 @@ public class ColorRenderStrategy : IRenderStrategy
             "purple" => Colors.Purple,
             "orange" => Colors.Orange,
             "transparent" => Colors.Transparent,
-            "pink"=>Colors.Pink,
-            "gold"=>Colors.Gold,
-            _ => GetColorFromRgb(colorStr),
+            "pink" => Colors.Pink,
+            "gold" => Colors.Gold,
+            _ => GetColorFromRgb(colorStr)
         };
-
     }
+
     private static Color GetColorFromRgb(string colorStr)
     {
         if (colorStr.Length == 6)
@@ -512,6 +458,7 @@ public class ColorRenderStrategy : IRenderStrategy
             var b = Convert.ToByte(colorStr.Substring(4, 2), 16);
             return Color.FromArgb(255, r, g, b);
         }
+
         return Colors.Black;
     }
 }
@@ -539,24 +486,19 @@ public class FontRenderStrategy : IRenderStrategy
 
                 context.BeginInlineContainer(span);
 
-                foreach (var child in node.Children)
-                {
-                    context.RenderNode(child);
-                }
+                foreach (var child in node.Children) context.RenderNode(child);
 
                 context.EndInlineContainer();
             }
             else
             {
                 // 没有字体值，直接渲染子节点
-                foreach (var child in node.Children)
-                {
-                    context.RenderNode(child);
-                }
+                foreach (var child in node.Children) context.RenderNode(child);
             }
         }
     }
 }
+
 public class EmojiRenderStrategy : IRenderStrategy
 {
     public void Render(UbbNode node, RenderContext context)
@@ -579,7 +521,7 @@ public class EmojiRenderStrategy : IRenderStrategy
                             Margin = new(4, 0, 4, 0),
                             MaxWidth = 32,
                             MaxHeight = 32,
-                            Stretch = Stretch.UniformToFill,
+                            Stretch = Stretch.UniformToFill
                         };
                         var inlineContainer = new InlineUIContainer { Child = image };
                         context.AddInline(inlineContainer);
@@ -590,7 +532,7 @@ public class EmojiRenderStrategy : IRenderStrategy
                         context.AddInline(run);
                     }
                 }
-                catch(Exception ex)
+                catch (Exception ex)
                 {
                     var run = new Run { Text = $"[{ex.Message}]" };
                     context.AddInline(run);
@@ -598,6 +540,7 @@ public class EmojiRenderStrategy : IRenderStrategy
             }
         }
     }
+
     private static string GetEmoticonUrl(string code)
     {
         return EmoticonRules.GetEmoticonUrl(code);
@@ -608,7 +551,7 @@ public class LatexRenderStrategy : IRenderStrategy
 {
     public void Render(UbbNode node, RenderContext context)
     {
-        if(node is LatexNode latexNode)
+        if (node is LatexNode latexNode)
         {
             var codeText = latexNode.Latex;
             context.AddInline(InlineLatex(codeText));
@@ -620,9 +563,8 @@ public class LatexRenderStrategy : IRenderStrategy
             var block = BlockLatex(codeText);
             context.AddToContainer(block);
         }
-        
-        
     }
+
     private static InlineUIContainer InlineLatex(string latex)
     {
         var textBlock = new LatexBlock.LatexBlock
@@ -631,12 +573,12 @@ public class LatexRenderStrategy : IRenderStrategy
             LaTeX = latex
         };
 
-        var container=new InlineUIContainer { Child=textBlock };
+        var container = new InlineUIContainer { Child = textBlock };
         return container;
     }
+
     private static LatexBlock.LatexBlock BlockLatex(string latex)
     {
-
         var textBlock = new LatexBlock.LatexBlock
         {
             FontSize = 14,
@@ -645,23 +587,24 @@ public class LatexRenderStrategy : IRenderStrategy
         return textBlock;
     }
 }
+
 public class DividerRenderStrategy : IRenderStrategy
 {
     public void Render(UbbNode node, RenderContext context)
     {
         var border = new Border();
-        var line= new Line
+        var line = new Line
         {
             X1 = 0,
             Y1 = 0,
-            X2 = 1,  // 相对坐标，Stretch.Fill会处理
+            X2 = 1, // 相对坐标，Stretch.Fill会处理
             Y2 = 0,
             Stroke = new SolidColorBrush(Colors.Gray),
             StrokeThickness = 2,
             StrokeDashArray = { 2, 2 },
-            Stretch = Stretch.Fill,  // 自动拉伸
+            Stretch = Stretch.Fill, // 自动拉伸
             HorizontalAlignment = HorizontalAlignment.Stretch,
-            Margin = new(5,10,5,10)
+            Margin = new(5, 10, 5, 10)
         };
         border.Child = line;
         context.AddToContainer(border);
@@ -673,7 +616,7 @@ public class MarkdownRenderStrategy : IRenderStrategy
     public void Render(UbbNode node, RenderContext context)
     {
         context.FinalizeCurrentTextBlock();
-        
+
         var scrollViewer = new ScrollViewer
         {
             HorizontalScrollBarVisibility = ScrollBarVisibility.Auto,
@@ -683,19 +626,20 @@ public class MarkdownRenderStrategy : IRenderStrategy
         var textBlock = new MarkdownTextBlock
         {
             FontSize = 14,
-            Background= new SolidColorBrush(Colors.Transparent),
+            Background = new SolidColorBrush(Colors.Transparent)
         };
 
         var codeText = RenderHelper.CollectText(node);
         textBlock.Text = codeText;
-        
+
         scrollViewer.Content = textBlock;
         context.AddToContainer(scrollViewer);
     }
 }
+
 public class RenderHelper
 {
-    public static void ApplyAlignToContext(string align,UbbNode node, RenderContext context)
+    public static void ApplyAlignToContext(string align, UbbNode node, RenderContext context)
     {
         //使用Grid进行对齐控制
         var panel = new StackPanel
@@ -704,7 +648,7 @@ public class RenderHelper
             {
                 "center" => HorizontalAlignment.Center,
                 "right" => HorizontalAlignment.Right,
-                _ => HorizontalAlignment.Left,
+                _ => HorizontalAlignment.Left
             }
         };
 
@@ -717,10 +661,7 @@ public class RenderHelper
         context.PanelStack.Push(panel);
 
         // 渲染子节点
-        foreach (var child in node.Children)
-        {
-            context.RenderNode(child);
-        }
+        foreach (var child in node.Children) context.RenderNode(child);
 
         // 确保当前文本块结束
         context.FinalizeCurrentTextBlock();
@@ -754,16 +695,10 @@ public class RenderHelper
     private static void CollectTextRecursive(UbbNode node, StringBuilder sb)
     {
         foreach (var child in node.Children)
-        {
             if (child is TextNode textNode)
-            {
                 sb.Append(textNode.Content);
-            }
             else
-            {
                 CollectTextRecursive(child, sb);
-            }
-        }
     }
 }
 
@@ -803,12 +738,8 @@ public class FlatQuoteRenderStrategy : IRenderStrategy
 
             // 查找所有直接子引用
             foreach (var child in node.Children)
-            {
                 if (child.Type == UbbNodeType.Quote)
-                {
                     ExtractAllQuotes(child, chain);
-                }
-            }
         }
     }
 
@@ -847,16 +778,14 @@ public class FlatQuoteRenderStrategy : IRenderStrategy
             container.Children.Add(quoteContainer);
 
             // 在引用之间添加分割线（除了最后一个）
-            if (i > 0)
-            {
-                container.Children.Add(CreateSeparator());
-            }
+            if (i > 0) container.Children.Add(CreateSeparator());
         }
 
         // 添加外部边框
         return new()
         {
-            Background = (Brush)context.Properties["QuoteBackground"] ?? new SolidColorBrush(Color.FromArgb(255, 232, 244, 249)),
+            Background = (Brush)context.Properties["QuoteBackground"] ??
+                         new SolidColorBrush(Color.FromArgb(255, 232, 244, 249)),
             Padding = new(12, 8, 12, 8),
             Margin = new(0, 8, 0, 8),
             CornerRadius = new(4),
@@ -899,10 +828,7 @@ public class FlatQuoteRenderStrategy : IRenderStrategy
             collapsedContent.Children.Add(quoteContainer);
 
             // 在折叠的引用之间也添加分割线
-            if (i > 0)
-            {
-                collapsedContent.Children.Add(CreateSeparator());
-            }
+            if (i > 0) collapsedContent.Children.Add(CreateSeparator());
         }
 
         // 按钮点击事件
@@ -983,17 +909,14 @@ public class FlatQuoteRenderStrategy : IRenderStrategy
     private static void RenderQuoteContent(UbbNode node, RenderContext context)
     {
         foreach (var child in node.Children)
-        {
             // 跳过嵌套的引用节点（它们已经被提取出来单独渲染）
             if (child.Type != UbbNodeType.Quote)
-            {
                 context.RenderNode(child);
-            }
-        }
 
         context.FinalizeCurrentTextBlock();
     }
 }
+
 public class AudioRenderStrategy : IRenderStrategy
 {
     public void Render(UbbNode node, RenderContext context)
@@ -1011,12 +934,9 @@ public class AudioRenderStrategy : IRenderStrategy
                         Title = title == "" ? "音频" : title.Replace("title=", ""),
                         LoadMediaCallback = new SmartMediaLoader(),
                         Src = src,
-                        Margin = new(10),
+                        Margin = new(10)
                     };
-                    player.DownloadStarted += (s, e) =>
-                    {
-                        context.Control.OnMediaClicked(src, MediaType.Audio);
-                    };
+                    player.DownloadStarted += (s, e) => { context.Control.OnMediaClicked(src, MediaType.Audio); };
                     context.AddToContainer(player);
                 }
                 else
@@ -1025,8 +945,6 @@ public class AudioRenderStrategy : IRenderStrategy
                     context.AddInline(run);
                 }
             }
-            
-          
         }
     }
 }
@@ -1039,10 +957,9 @@ public class VideoRenderStrategy : IRenderStrategy
         {
             var src = tagNode.GetAttribute("value");
             if (string.IsNullOrEmpty(src))
-            {
                 // 尝试从子节点获取URL
-                if (node.FirstChild is TextNode child) src = child.Content;
-            }
+                if (node.FirstChild is TextNode child)
+                    src = child.Content;
 
             if (!string.IsNullOrEmpty(src))
             {
@@ -1052,7 +969,7 @@ public class VideoRenderStrategy : IRenderStrategy
                     Src = src,
                     MaxHeight = 400,
                     Margin = new(10),
-                    AutoPlay = false,
+                    AutoPlay = false
                 };
 
                 context.AddToContainer(player);
@@ -1097,12 +1014,10 @@ public class TableRenderStrategy : IRenderStrategy
 
         // 添加列定义
         for (var i = 0; i < columns; i++)
-        {
             grid.ColumnDefinitions.Add(new()
             {
                 Width = new(1, GridUnitType.Star) // 默认等宽
             });
-        }
 
         // 添加行定义并填充内容
         for (var i = 0; i < rows.Count; i++)
@@ -1129,20 +1044,15 @@ public class TableRenderStrategy : IRenderStrategy
         var rows = new List<List<UbbNode>>();
 
         foreach (var child in tableNode.Children)
-        {
             if (child.Type == UbbNodeType.TableRow)
             {
                 var cells = new List<UbbNode>();
                 foreach (var cell in child.Children)
-                {
                     if (cell.Type == UbbNodeType.TableCell)
-                    {
                         cells.Add(cell);
-                    }
-                }
+
                 rows.Add(cells);
             }
-        }
 
         return rows;
     }
@@ -1150,10 +1060,7 @@ public class TableRenderStrategy : IRenderStrategy
     private static int GetMaxColumns(List<List<UbbNode>> rows)
     {
         var max = 0;
-        foreach (var row in rows)
-        {
-            max = Math.Max(max, row.Count);
-        }
+        foreach (var row in rows) max = Math.Max(max, row.Count);
         return max;
     }
 
@@ -1178,10 +1085,7 @@ public class TableRenderStrategy : IRenderStrategy
             PanelStack = new()
         };
 
-        foreach (var child in cellNode.Children)
-        {
-            tempContext.RenderNode(child);
-        }
+        foreach (var child in cellNode.Children) tempContext.RenderNode(child);
         tempContext.FinalizeCurrentTextBlock();
 
         return container;
@@ -1191,19 +1095,15 @@ public class TableRenderStrategy : IRenderStrategy
     {
         // 设置表格宽度
         if (width != "auto" && width.EndsWith('%'))
-        {
             if (double.TryParse(width.TrimEnd('%'), out var percent))
-            {
                 grid.Width = context.Container?.ActualWidth * percent / 100 ?? 0;
-            }
-        }
 
         // 设置对齐方式
         grid.HorizontalAlignment = align.ToLower() switch
         {
             "center" => HorizontalAlignment.Center,
             "right" => HorizontalAlignment.Right,
-            _ => HorizontalAlignment.Left,
+            _ => HorizontalAlignment.Left
         };
 
         // 设置边框（Grid 本身不显示边框，边框在单元格上）
@@ -1224,10 +1124,7 @@ public class TableRowRenderStrategy : IRenderStrategy
         // TableRow 由 TableRenderStrategy 统一处理
         // 这里不需要做任何事情，因为表格行是在表格上下文中整体渲染的
         // 如果独立出现，则渲染子节点
-        foreach (var child in node.Children)
-        {
-            context.RenderNode(child);
-        }
+        foreach (var child in node.Children) context.RenderNode(child);
     }
 }
 
@@ -1237,10 +1134,7 @@ public class TableCellRenderStrategy : IRenderStrategy
     {
         // TableCell 由 TableRenderStrategy 统一处理
         // 如果独立出现，则渲染子节点
-        foreach (var child in node.Children)
-        {
-            context.RenderNode(child);
-        }
+        foreach (var child in node.Children) context.RenderNode(child);
     }
 }
 
@@ -1257,20 +1151,15 @@ public class TopicRenderStrategy : IRenderStrategy
             };
             var topicId = tagNode.GetAttribute("value");
             if (!topicId.All(char.IsDigit))
-            {
                 //必须是纯数字，否则不渲染
                 return;
-            }
             // 点击事件
             hyperlink.Click += (sender, e) =>
             {
                 context.Control.OnMediaClicked($"https://www.cc98.org/topic/{topicId}", MediaType.Link);
             };
             context.BeginInlineContainer(hyperlink);
-            foreach (var child in node.Children)
-            {
-                context.RenderNode(child);
-            }
+            foreach (var child in node.Children) context.RenderNode(child);
             context.EndInlineContainer();
         }
     }
@@ -1285,21 +1174,18 @@ public class AtRenderStrategy : IRenderStrategy
             var hyperlink = new Hyperlink
             {
                 Foreground = new SolidColorBrush(Colors.LightSeaGreen),
-                TextDecorations = TextDecorations.None,
+                TextDecorations = TextDecorations.None
             };
-            hyperlink.Inlines.Add(new Run {Text=$"@{atNode.Username}"});
+            hyperlink.Inlines.Add(new Run { Text = $"@{atNode.Username}" });
             // 点击事件
-            hyperlink.Click += (sender, e) =>
-            {
-                context.Control.OnMediaClicked(atNode.Username, MediaType.AtUser);
-            };
+            hyperlink.Click += (sender, e) => { context.Control.OnMediaClicked(atNode.Username, MediaType.AtUser); };
             context.BeginInlineContainer(hyperlink);
             //不存在子元素
             context.EndInlineContainer();
         }
-
     }
 }
+
 public class FileRenderStrategy : IRenderStrategy
 {
     public void Render(UbbNode node, RenderContext context)
@@ -1308,37 +1194,34 @@ public class FileRenderStrategy : IRenderStrategy
         {
             var src = tagNode.GetAttribute("value");
             if (!src.IsValidUrl())
-            {
                 // 尝试从子节点获取URL
-                if (node.FirstChild is TextNode child) src = child.Content;
-            }
+                if (node.FirstChild is TextNode child)
+                    src = child.Content;
 
             if (src.IsValidUrl())
             {
-                var card = new FileCard.FileCard()
+                var card = new FileCard.FileCard
                 {
                     Src = src,
                     HorizontalAlignment = HorizontalAlignment.Left,
-                    Margin=new(0,10,0,10)
+                    Margin = new(0, 10, 0, 10)
                 };
-                card.DownloadRequested += (s,e)=> {
-                    context.Control.OnMediaClicked(src, MediaType.File);
-                };
+                card.DownloadRequested += (s, e) => { context.Control.OnMediaClicked(src, MediaType.File); };
                 context.AddToContainer(card);
-            }   
-        }       
+            }
+        }
     }
-
 }
 
 public class ReplyViewRenderStrategy : IRenderStrategy
 {
     public void Render(UbbNode node, RenderContext context)
     {
-        var run = new Run { Text = "此消息回复可见",Foreground= new SolidColorBrush(Colors.LightSeaGreen)};
+        var run = new Run { Text = "此消息回复可见", Foreground = new SolidColorBrush(Colors.LightSeaGreen) };
         context.AddInline(run);
     }
 }
+
 public class PosterOnlyRenderStrategy : IRenderStrategy
 {
     public void Render(UbbNode node, RenderContext context)
@@ -1347,4 +1230,3 @@ public class PosterOnlyRenderStrategy : IRenderStrategy
         context.AddInline(run);
     }
 }
-

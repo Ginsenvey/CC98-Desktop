@@ -7,16 +7,17 @@ using CC98.Controls.UbbTextBlock.Common.Events;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Controls.Primitives;
+
 // MusicPlayer.xaml.cs
 
 namespace CC98.Controls.MusicPlayer;
 
 public sealed partial class MusicPlayer : UserControl, IDisposable
 {
+    private bool _disposed;
     private GlobalMediaPlayer _globalPlayer;
-    private bool _isInitialized = false;
-    private bool _isPlaying = false;
-    private bool _disposed = false;
+    private bool _isInitialized;
+    private bool _isPlaying;
     private DispatcherTimer _progressTimer;
 
     public MusicPlayer()
@@ -25,6 +26,18 @@ public sealed partial class MusicPlayer : UserControl, IDisposable
         InitializeMediaPlayer();
         SetupProgressTimer();
     }
+
+    #region 下载功能
+
+    private void DownloadButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (!string.IsNullOrEmpty(Src))
+            OnDownloadStarted();
+        else
+            ShowErrorMessage("没有可下载的音频源");
+    }
+
+    #endregion
 
     #region 依赖属性
 
@@ -66,7 +79,7 @@ public sealed partial class MusicPlayer : UserControl, IDisposable
 
     private void OnDownloadStarted()
     {
-        DownloadStarted?.Invoke(this, new(Src,MediaType.Audio));
+        DownloadStarted?.Invoke(this, new(Src, MediaType.Audio));
     }
 
     #endregion
@@ -112,17 +125,13 @@ public sealed partial class MusicPlayer : UserControl, IDisposable
         try
         {
             if (!_isInitialized)
-            {
                 await InitializeAndPlay();
-            }
             else
-            {
                 TogglePlayPause();
-            }
         }
         catch (Exception ex)
         {
-            await App.Logger.WriteAsync("MusicPlayer","初始化媒体出错",ex.Message);
+            await App.Logger.WriteAsync("MusicPlayer", "初始化媒体出错", ex.Message);
             ShowErrorMessage("播放失败");
         }
     }
@@ -134,6 +143,7 @@ public sealed partial class MusicPlayer : UserControl, IDisposable
             ShowErrorMessage("音频源为空");
             return;
         }
+
         LoadingIndicator.Visibility = Visibility.Visible;
         try
         {
@@ -151,7 +161,7 @@ public sealed partial class MusicPlayer : UserControl, IDisposable
             ProgressSlider.IsEnabled = true;
             // 开始播放
             _globalPlayer.Play();
-            
+
             _isPlaying = true;
             UpdatePlayPauseButton();
             _progressTimer.Start();
@@ -180,6 +190,7 @@ public sealed partial class MusicPlayer : UserControl, IDisposable
             _globalPlayer.Play();
             _progressTimer.Start();
         }
+
         _isPlaying = !_isPlaying;
         UpdatePlayPauseButton();
     }
@@ -197,12 +208,12 @@ public sealed partial class MusicPlayer : UserControl, IDisposable
     private void UpdateProgress(object sender, object e)
     {
         var session = _globalPlayer?.PlaybackSession;
-        if (session != null && session.NaturalDuration.TotalSeconds >0)
+        if (session != null && session.NaturalDuration.TotalSeconds > 0)
         {
             var current = session.Position.TotalSeconds;
             var total = session.NaturalDuration.TotalSeconds;
 
-            ProgressSlider.Value = (current / total) *100;
+            ProgressSlider.Value = current / total * 100;
 
             CurrentTimeText.Text = FormatTime(current);
             TotalTimeText.Text = FormatTime(total);
@@ -213,10 +224,10 @@ public sealed partial class MusicPlayer : UserControl, IDisposable
     private void ProgressSlider_ValueChanged(object sender, RangeBaseValueChangedEventArgs e)
     {
         var session = _globalPlayer?.PlaybackSession;
-        if (session != null && session.NaturalDuration.TotalSeconds >0)
+        if (session != null && session.NaturalDuration.TotalSeconds > 0)
         {
             var newPosition = TimeSpan.FromSeconds(
-                ProgressSlider.Value /100.0 * session.NaturalDuration.TotalSeconds);
+                ProgressSlider.Value / 100.0 * session.NaturalDuration.TotalSeconds);
             session.Position = newPosition;
         }
     }
@@ -226,24 +237,6 @@ public sealed partial class MusicPlayer : UserControl, IDisposable
         var timeSpan = TimeSpan.FromSeconds(seconds);
         return $"{(int)timeSpan.TotalMinutes}:{timeSpan.Seconds:D2}";
     }
-
-    #endregion
-
-    #region 下载功能
-
-    private void DownloadButton_Click(object sender, RoutedEventArgs e)
-    {
-        if (!string.IsNullOrEmpty(Src))
-        {
-            OnDownloadStarted();
-        }
-        else
-        {
-            ShowErrorMessage("没有可下载的音频源");
-        }
-    }
-
-    
 
     #endregion
 
@@ -350,5 +343,4 @@ public sealed partial class MusicPlayer : UserControl, IDisposable
     }
 
     #endregion
-
 }

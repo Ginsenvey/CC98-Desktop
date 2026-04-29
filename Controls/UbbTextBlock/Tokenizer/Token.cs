@@ -7,5 +7,3 @@ public class Token(TokenType type, string value, int position)
     public int Position { get; set; } = position;
     public int Length => Value?.Length ?? 0;
 }
-
-

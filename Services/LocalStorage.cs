@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.Text;
+using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading;
@@ -9,31 +10,33 @@ using System.Threading.Tasks;
 namespace CC98.Services;
 
 /// <summary>
-/// 用于缓存大型json数据，标记数据读取状态。
+///     用于缓存大型json数据，标记数据读取状态。
 /// </summary>
 /// <remark>
-/// 请谨慎使用同步方法。
+///     请谨慎使用同步方法。
 /// </remark>
 public class LocalCache
 {
     private readonly string _content;
-    private readonly string _path;
-    private readonly bool _isAvailable;
-    private readonly string _message;
-    //公开属性
-    public string Content => _isAvailable ? _content : throw new InvalidOperationException($"读取位于{_path}的文本出错：{_message}");
-    public string CachePath => _path;
-    public bool IsAvailable => _isAvailable;
-    public string Message => _message;
 
     // 私有构造函数，仅内部使用
     private LocalCache(string path, string content, bool isAvailable, string message)
     {
-        _path = path;
+        CachePath = path;
         _content = content;
-        _isAvailable = isAvailable;
-        _message = message;
+        IsAvailable = isAvailable;
+        Message = message;
     }
+
+    //公开属性
+    public string Content =>
+        IsAvailable ? _content : throw new InvalidOperationException($"读取位于{CachePath}的文本出错：{Message}");
+
+    public string CachePath { get; }
+
+    public bool IsAvailable { get; }
+
+    public string Message { get; }
 
     public static async Task<LocalCache> CreateAsync(string path, CancellationToken cancellationToken = default)
     {
@@ -83,12 +86,11 @@ public class LocalCache
 
     public T ReadAs<T>()
     {
-        if (!_isAvailable)
-            throw new InvalidOperationException($"缓存不可用: {_message}");
+        if (!IsAvailable)
+            throw new InvalidOperationException($"缓存不可用: {Message}");
 
         try
         {
-            
             return JsonSerialize.Deserialize<T>(_content)!;
         }
         catch (JsonException ex)
@@ -134,7 +136,7 @@ public class LocalCache
                 {
                     PropertyNameCaseInsensitive = true,
                     WriteIndented = true, // 美化输出，便于阅读
-                    Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping
+                    Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping
                 };
                 jsonContent = JsonSerializer.Serialize(data, options);
             }
@@ -175,7 +177,6 @@ public class LocalCache
             // 直接写入，使用重试机制
             const int maxRetries = 3;
             for (var i = 0; i < maxRetries; i++)
-            {
                 try
                 {
                     await File.WriteAllTextAsync(path, content, Encoding.UTF8);
@@ -186,7 +187,6 @@ public class LocalCache
                     // 如果是IO错误，等待后重试
                     await Task.Delay(100 * (i + 1));
                 }
-            }
         }
         catch (Exception ex)
         {
@@ -198,10 +198,10 @@ public class LocalCache
 
 
     public static (bool Success, string Message) Save<T>(
-    string path,
-    T data,
-    JsonSerializerContext? context = null,
-    bool createDirectory = true)
+        string path,
+        T data,
+        JsonSerializerContext? context = null,
+        bool createDirectory = true)
     {
         if (string.IsNullOrWhiteSpace(path))
             return (false, "路径不能为空或空白");
@@ -267,13 +267,13 @@ public class LocalCache
     }
 
     /// <summary>
-    /// 直接保存JSON字符串到文件（不进行序列化）
+    ///     直接保存JSON字符串到文件（不进行序列化）
     /// </summary>
     public static async Task<(bool Success, string Message)> SaveJsonAsync(
         string path,
         string jsonContent,
         bool createDirectory = true,
-        bool validateJson = false)  // 可选：验证JSON格式
+        bool validateJson = false) // 可选：验证JSON格式
     {
         if (string.IsNullOrWhiteSpace(path))
             return (false, "路径不能为空或空白");
@@ -285,7 +285,6 @@ public class LocalCache
         {
             // 可选：验证JSON格式
             if (validateJson)
-            {
                 try
                 {
                     using var doc = JsonDocument.Parse(jsonContent);
@@ -294,7 +293,6 @@ public class LocalCache
                 {
                     return (false, $"无效的JSON格式: {ex.Message}");
                 }
-            }
 
             // 确保目录存在
             if (createDirectory)
@@ -322,8 +320,9 @@ public class LocalCache
             return (false, $"保存过程中发生错误: {ex.Message}");
         }
     }
+
     /// <summary>
-    /// 同步版本
+    ///     同步版本
     /// </summary>
     public static (bool Success, string Message) SaveJson(
         string path,
@@ -341,7 +340,6 @@ public class LocalCache
         {
             // 可选：验证JSON格式
             if (validateJson)
-            {
                 try
                 {
                     using var doc = JsonDocument.Parse(jsonContent);
@@ -350,7 +348,6 @@ public class LocalCache
                 {
                     return (false, $"无效的JSON格式: {ex.Message}");
                 }
-            }
 
             // 确保目录存在
             if (createDirectory)
@@ -359,6 +356,7 @@ public class LocalCache
                 if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
                     Directory.CreateDirectory(directory);
             }
+
             // 原子性写入
             WriteFileAtomically(path, jsonContent);
             return (true, "保存成功");

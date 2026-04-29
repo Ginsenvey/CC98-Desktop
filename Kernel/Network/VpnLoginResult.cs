@@ -5,40 +5,37 @@ namespace CC98.Kernel.Network;
 
 public record VpnLoginResult
 {
-    [JsonIgnore]
-    public VpnLoginStatus Status { get; set; }
+    [JsonIgnore] public VpnLoginStatus Status { get; set; }
 
-    [JsonIgnore]
-    public string Description { get; set; } = string.Empty;
+    [JsonIgnore] public string Description { get; set; } = string.Empty;
 
-    [JsonIgnore]
-    public bool NeedConfirm => Error == "NEED_CONFIRM";
-    [JsonIgnore]
-    public bool CaptchaFail => Error == "CAPTCHA_FAILED";//验证码错误
+    [JsonIgnore] public bool NeedConfirm => Error == "NEED_CONFIRM";
 
-    [JsonPropertyName("success")]
-    public bool IsSuccess { get; set; }
+    [JsonIgnore] public bool CaptchaFail => Error == "CAPTCHA_FAILED"; //验证码错误
 
-    [JsonPropertyName("url")]
-    public string? Url { get; set; } = string.Empty;
+    [JsonPropertyName("success")] public bool IsSuccess { get; set; }
 
-    
-    [JsonPropertyName("message")]
-    public string? Message { get; set; } = string.Empty;
-    [JsonPropertyName("error")]
-    public string? Error { get; set; } = string.Empty;
+    [JsonPropertyName("url")] public string? Url { get; set; } = string.Empty;
 
-    [JsonIgnore]
-    public HttpStatusCode? HttpStatusCode { get; set; }
 
-    public static VpnLoginResult Success(string? url = null, string? message = null) =>
-        new() { Status=VpnLoginStatus.Success };
-    
-    public static VpnLoginResult Failure(string description) =>
-        new() { Status=VpnLoginStatus.Error, Description=description };
+    [JsonPropertyName("message")] public string? Message { get; set; } = string.Empty;
 
-    public static VpnLoginResult ConfirmRequired() =>
-        new() { Status = VpnLoginStatus.NeedConfirm, Description = "需要确认登录" };
-   
+    [JsonPropertyName("error")] public string? Error { get; set; } = string.Empty;
 
+    [JsonIgnore] public HttpStatusCode? HttpStatusCode { get; set; }
+
+    public static VpnLoginResult Success(string? url = null, string? message = null)
+    {
+        return new() { Status = VpnLoginStatus.Success };
+    }
+
+    public static VpnLoginResult Failure(string description)
+    {
+        return new() { Status = VpnLoginStatus.Error, Description = description };
+    }
+
+    public static VpnLoginResult ConfirmRequired()
+    {
+        return new() { Status = VpnLoginStatus.NeedConfirm, Description = "需要确认登录" };
+    }
 }

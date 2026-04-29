@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
+using Windows.Storage;
 using CC98.Kernel;
 using CC98.Objects;
 
@@ -11,8 +12,13 @@ namespace CC98.Services;
 
 public class IndexDataService
 {
+    private const string CacheFileName = "index_data.json";
     private static IndexDataService? _instance;
     private static readonly object Lock = new();
+
+    private IndexDataService()
+    {
+    }
 
     public static IndexDataService Instance
     {
@@ -24,9 +30,131 @@ public class IndexDataService
             }
         }
     }
-    private IndexDataService() { }
 
-    private const string CacheFileName = "index_data.json";
+    /// <summary>
+    ///     从API获取数据并更新缓存
+    /// </summary>
+    public async Task<bool> RefreshFromApiAsync(string apiUrl)
+    {
+        try
+        {
+            var res = await LoginService.Vpn.GetAsync(apiUrl);
+            var jsonResponse = await res.Content.ReadAsStringAsync();
+            var homeData = ParseAndExtractData(jsonResponse);
+            return await SaveToCacheAsync(homeData);
+        }
+        catch (Exception ex)
+        {
+            await App.Logger.WriteAsync("IndexDataService", "获取首页失败", ex.Message);
+            return false;
+        }
+    }
+
+    /// <summary>
+    ///     从缓存读取数据
+    /// </summary>
+    public async Task<CachedIndexData?> LoadFromCacheAsync()
+    {
+        try
+        {
+            var folder = ApplicationData.Current.LocalCacheFolder;
+            var filePath = Path.Combine(folder.Path, CacheFileName);
+
+            var cache = await LocalCache.CreateAsync(filePath);
+
+            if (cache.IsAvailable && !string.IsNullOrWhiteSpace(cache.Content))
+                return JsonSerialize.Deserialize<CachedIndexData>(cache.Content);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"读取缓存失败: {ex.Message}");
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    ///     获取指定分区的帖子列表
+    /// </summary>
+    public async Task<List<IndexTopic>> GetTopicPartitionAsync(string partitionName, int? maxCount = null)
+    {
+        var cachedData = await LoadFromCacheAsync();
+
+        if (cachedData != null &&
+            cachedData.TopicPartitions.TryGetValue(partitionName, out var topics))
+        {
+            if (maxCount.HasValue) return topics.Take(maxCount.Value).ToList();
+            return topics;
+        }
+
+        return [];
+    }
+
+    /// <summary>
+    ///     获取推荐阅读列表
+    /// </summary>
+    public async Task<List<FlipTopic>> GetRecommendationReadingAsync(int? maxCount = null)
+    {
+        var cachedData = await LoadFromCacheAsync();
+
+        if (cachedData != null)
+        {
+            var recommendations = cachedData.RecommendationReading;
+            if (maxCount.HasValue) return recommendations.Take(maxCount.Value).ToList();
+            return recommendations;
+        }
+
+        return [];
+    }
+
+    /// <summary>
+    ///     获取统计数据
+    /// </summary>
+    public async Task<ForumStatistics?> GetStatisticsAsync()
+    {
+        var cachedData = await LoadFromCacheAsync();
+        return cachedData?.Statistics;
+    }
+
+    /// <summary>
+    ///     获取所有分区的名称
+    /// </summary>
+    public static List<string> GetAllPartitionNames()
+    {
+        return Partitions.All.ToList();
+    }
+
+    /// <summary>
+    ///     检查缓存是否有效（例如在指定时间内）
+    /// </summary>
+    public async Task<bool> IsCacheValidAsync(TimeSpan maxAge)
+    {
+        var cachedData = await LoadFromCacheAsync();
+
+        if (cachedData == null)
+            return false;
+
+        var age = DateTime.Now - cachedData.LastUpdateTime;
+        return age <= maxAge;
+    }
+
+    /// <summary>
+    ///     清理缓存
+    /// </summary>
+    public async Task ClearCacheAsync()
+    {
+        try
+        {
+            var folder = ApplicationData.Current.LocalCacheFolder;
+            var filePath = Path.Combine(folder.Path, CacheFileName);
+
+            if (File.Exists(filePath)) File.Delete(filePath);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"清理缓存失败: {ex.Message}");
+        }
+    }
 
     // 缓存数据结构（只包含需要的字段）
     public class CachedIndexData
@@ -68,146 +196,10 @@ public class IndexDataService
         ];
     }
 
-    /// <summary>
-    /// 从API获取数据并更新缓存
-    /// </summary>
-    public async Task<bool> RefreshFromApiAsync(string apiUrl)
-    {
-        try
-        {
-            var res= await LoginService.Vpn.GetAsync(apiUrl);
-            var jsonResponse = await res.Content.ReadAsStringAsync();
-            var homeData = ParseAndExtractData(jsonResponse);
-            return await SaveToCacheAsync(homeData);
-        }
-        catch (Exception ex)
-        {
-            await App.Logger.WriteAsync("IndexDataService","获取首页失败",ex.Message);
-            return false;
-        }
-    }
-
-    /// <summary>
-    /// 从缓存读取数据
-    /// </summary>
-    public async Task<CachedIndexData?> LoadFromCacheAsync()
-    {
-        try
-        {
-            var folder = Windows.Storage.ApplicationData.Current.LocalCacheFolder;
-            var filePath = Path.Combine(folder.Path, CacheFileName);
-
-            var cache = await LocalCache.CreateAsync(filePath);
-
-            if (cache.IsAvailable && !string.IsNullOrWhiteSpace(cache.Content))
-            {
-                return JsonSerialize.Deserialize<CachedIndexData>(cache.Content);
-            }
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"读取缓存失败: {ex.Message}");
-        }
-
-        return null;
-    }
-
-    /// <summary>
-    /// 获取指定分区的帖子列表
-    /// </summary>
-    public async Task<List<IndexTopic>> GetTopicPartitionAsync(string partitionName, int? maxCount = null)
-    {
-        var cachedData = await LoadFromCacheAsync();
-
-        if (cachedData != null &&
-            cachedData.TopicPartitions.TryGetValue(partitionName, out var topics))
-        {
-            if (maxCount.HasValue)
-            {
-                return topics.Take(maxCount.Value).ToList();
-            }
-            return topics;
-        }
-
-        return [];
-    }
-
-    /// <summary>
-    /// 获取推荐阅读列表
-    /// </summary>
-    public async Task<List<FlipTopic>> GetRecommendationReadingAsync(int? maxCount = null)
-    {
-        var cachedData = await LoadFromCacheAsync();
-
-        if (cachedData != null)
-        {
-            var recommendations = cachedData.RecommendationReading;
-            if (maxCount.HasValue)
-            {
-                return recommendations.Take(maxCount.Value).ToList();
-            }
-            return recommendations;
-        }
-
-        return [];
-    }
-
-    /// <summary>
-    /// 获取统计数据
-    /// </summary>
-    public async Task<ForumStatistics?> GetStatisticsAsync()
-    {
-        var cachedData = await LoadFromCacheAsync();
-        return cachedData?.Statistics;
-    }
-
-    /// <summary>
-    /// 获取所有分区的名称
-    /// </summary>
-    public static List<string> GetAllPartitionNames()
-    {
-        return Partitions.All.ToList();
-    }
-
-    /// <summary>
-    /// 检查缓存是否有效（例如在指定时间内）
-    /// </summary>
-    public async Task<bool> IsCacheValidAsync(TimeSpan maxAge)
-    {
-        var cachedData = await LoadFromCacheAsync();
-
-        if (cachedData == null)
-            return false;
-
-        var age = DateTime.Now - cachedData.LastUpdateTime;
-        return age <= maxAge;
-    }
-
-    /// <summary>
-    /// 清理缓存
-    /// </summary>
-    public async Task ClearCacheAsync()
-    {
-        try
-        {
-            var folder = Windows.Storage.ApplicationData.Current.LocalCacheFolder;
-            var filePath = Path.Combine(folder.Path, CacheFileName);
-
-            if (File.Exists(filePath))
-            {
-                File.Delete(filePath);
-            }
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"清理缓存失败: {ex.Message}");
-        }
-    }
-
     #region 私有方法
 
     /// <summary>
-    /// 解析JSON并提取所需数据
+    ///     解析JSON并提取所需数据
     /// </summary>
     private CachedIndexData ParseAndExtractData(string jsonResponse)
     {
@@ -232,7 +224,7 @@ public class IndexDataService
     }
 
     /// <summary>
-    /// 提取统计数据
+    ///     提取统计数据
     /// </summary>
     private ForumStatistics ExtractStatistics(JsonElement root)
     {
@@ -263,7 +255,7 @@ public class IndexDataService
     }
 
     /// <summary>
-    /// 提取推荐阅读
+    ///     提取推荐阅读
     /// </summary>
     private List<FlipTopic> ExtractRecommendationReading(JsonElement root)
     {
@@ -271,7 +263,6 @@ public class IndexDataService
 
         if (root.TryGetProperty("recommendationReading", out var recommendations) &&
             recommendations.ValueKind == JsonValueKind.Array)
-        {
             foreach (var item in recommendations.EnumerateArray())
             {
                 var topic = new FlipTopic();
@@ -290,20 +281,18 @@ public class IndexDataService
 
                 result.Add(topic);
             }
-        }
 
         return result;
     }
 
     /// <summary>
-    /// 提取各分区帖子
+    ///     提取各分区帖子
     /// </summary>
     private Dictionary<string, List<IndexTopic>> ExtractTopicPartitions(JsonElement root)
     {
         var partitions = new Dictionary<string, List<IndexTopic>>();
 
         foreach (var partitionName in Partitions.All)
-        {
             if (root.TryGetProperty(partitionName, out var partition) &&
                 partition.ValueKind == JsonValueKind.Array)
             {
@@ -323,25 +312,22 @@ public class IndexDataService
                     // 只有hotTopic分区有BoardName字段
                     if (partitionName == Partitions.HotTopic &&
                         item.TryGetProperty("boardName", out var boardName))
-                    {
                         topic.BoardName = boardName.GetString() ?? string.Empty;
-                    }
 
                     // 标记是否为热门话题
-                    topic.IsHotTopic = (partitionName == Partitions.HotTopic);
+                    topic.IsHotTopic = partitionName == Partitions.HotTopic;
 
                     topics.Add(topic);
                 }
 
                 partitions[partitionName] = topics;
             }
-        }
 
         return partitions;
     }
 
     /// <summary>
-    /// 保存到缓存
+    ///     保存到缓存
     /// </summary>
     private async Task<bool> SaveToCacheAsync(CachedIndexData data)
     {
@@ -349,13 +335,13 @@ public class IndexDataService
         {
             var json = JsonSerialize.Serialize<CachedIndexData>(data);
 
-            var folder = Windows.Storage.ApplicationData.Current.LocalCacheFolder;
+            var folder = ApplicationData.Current.LocalCacheFolder;
             var filePath = Path.Combine(folder.Path, CacheFileName);
 
             var result = await LocalCache.SaveJsonAsync(
                 filePath,
                 json,
-                createDirectory: false);
+                false);
             return result.Success;
         }
         catch (Exception ex)

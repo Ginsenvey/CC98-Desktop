@@ -3,7 +3,9 @@ using FluentIcons.Common;
 
 namespace CC98.Objects;
 
-public partial class CategoryBase : ObservableObject { }
+public partial class CategoryBase : ObservableObject
+{
+}
 
 public partial class NavigationItem : CategoryBase
 {
@@ -13,8 +15,7 @@ public partial class NavigationItem : CategoryBase
         set => SetProperty(ref field, value);
     }
 
-    [ObservableProperty]
-    public partial Symbol IconSymbol { get; set; }
+    [ObservableProperty] public partial Symbol IconSymbol { get; set; }
 
     public string Tag
     {
@@ -22,8 +23,7 @@ public partial class NavigationItem : CategoryBase
         set => SetProperty(ref field, value);
     }
 
-    [ObservableProperty]
-    public partial bool IsEditable { get; set; }
+    [ObservableProperty] public partial bool IsEditable { get; set; }
 }
 
 public partial class NavigationGroup : CategoryBase
@@ -34,6 +34,5 @@ public partial class NavigationGroup : CategoryBase
         set => SetProperty(ref field, value);
     }
 
-    [ObservableProperty]
-    public partial bool IsEditable { get; set; }
+    [ObservableProperty] public partial bool IsEditable { get; set; }
 }

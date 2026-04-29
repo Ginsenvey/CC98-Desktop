@@ -1,13 +1,12 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
-using System;
+﻿using System;
 using System.Text.Json.Serialization;
+using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace CC98.Objects;
 
 public partial class ChatMessage : ObservableObject
 {
-    [ObservableProperty]
-    public partial DateTime Time { get; set; }
+    [ObservableProperty] public partial DateTime Time { get; set; }
 
     public string Content
     {
@@ -23,7 +22,5 @@ public partial class ChatMessage : ObservableObject
     [ObservableProperty]
     public partial int ReceiverId { get; set; }
 
-    [JsonIgnore]
-    [ObservableProperty]
-    public partial bool IsMe { get; set; }
+    [JsonIgnore] [ObservableProperty] public partial bool IsMe { get; set; }
 }

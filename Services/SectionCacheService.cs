@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
+using Windows.Storage;
 using CC98.Kernel;
 using CC98.Objects;
 
@@ -14,14 +15,9 @@ public class BoardSectionManager
 {
     private const string CacheFileName = "board_sections.json";
 
-    /// <summary>
-    /// 对象的唯一实例。
-    /// </summary>
-    public static BoardSectionManager Instance { get; } = new();
-
     // 数据模型
     /// <summary>
-    /// 私有构造方法。
+    ///     私有构造方法。
     /// </summary>
     private BoardSectionManager()
     {
@@ -29,13 +25,18 @@ public class BoardSectionManager
     }
 
     /// <summary>
-    /// 从API刷新分区数据并更新缓存。
+    ///     对象的唯一实例。
+    /// </summary>
+    public static BoardSectionManager Instance { get; } = new();
+
+    /// <summary>
+    ///     从API刷新分区数据并更新缓存。
     /// </summary>
     public async Task<bool> RefreshFromApiAsync(string apiUrl, CancellationToken cancellationToken = default)
     {
         try
         {
-            var res= await LoginService.Vpn.GetAsync(apiUrl);
+            var res = await LoginService.Vpn.GetAsync(apiUrl);
 
             var jsonResponse = await res.Content.ReadAsStringAsync(cancellationToken);
 
@@ -47,27 +48,25 @@ public class BoardSectionManager
         }
         catch (Exception ex)
         {
-            await App.Logger.WriteAsync("SectionInfoManager","刷新全部版面信息失败",ex.Message);
+            await App.Logger.WriteAsync("SectionInfoManager", "刷新全部版面信息失败", ex.Message);
             return false;
         }
     }
 
     /// <summary>
-    /// 从缓存读取分区数据
+    ///     从缓存读取分区数据
     /// </summary>
     public async Task<IEnumerable<SectionInfo>> LoadFromCacheAsync()
     {
         try
         {
-            var folder = Windows.Storage.ApplicationData.Current.LocalCacheFolder;
+            var folder = ApplicationData.Current.LocalCacheFolder;
             var filePath = Path.Combine(folder.Path, CacheFileName);
 
             var cache = await LocalCache.CreateAsync(filePath);
 
             if (cache.IsAvailable && !string.IsNullOrWhiteSpace(cache.Content))
-            {
                 return JsonSerialize.Deserialize<List<SectionInfo>>(cache.Content)!;
-            }
         }
         catch (Exception ex)
         {
@@ -78,13 +77,13 @@ public class BoardSectionManager
     }
 
     /// <summary>
-    /// 检查缓存是否存在且有效
+    ///     检查缓存是否存在且有效
     /// </summary>
     public bool HasValidCacheAsync()
     {
         try
         {
-            var folder = Windows.Storage.ApplicationData.Current.LocalCacheFolder;
+            var folder = ApplicationData.Current.LocalCacheFolder;
             var filePath = Path.Combine(folder.Path, CacheFileName);
 
             return File.Exists(filePath);
@@ -96,19 +95,16 @@ public class BoardSectionManager
     }
 
     /// <summary>
-    /// 清理缓存
+    ///     清理缓存
     /// </summary>
     public void ClearCacheAsync()
     {
         try
         {
-            var folder = Windows.Storage.ApplicationData.Current.LocalCacheFolder;
+            var folder = ApplicationData.Current.LocalCacheFolder;
             var filePath = Path.Combine(folder.Path, CacheFileName);
 
-            if (File.Exists(filePath))
-            {
-                File.Delete(filePath);
-            }
+            if (File.Exists(filePath)) File.Delete(filePath);
         }
         catch (Exception ex)
         {
@@ -117,7 +113,7 @@ public class BoardSectionManager
     }
 
     /// <summary>
-    /// 按名称搜索分区（可选功能）
+    ///     按名称搜索分区（可选功能）
     /// </summary>
     public async Task<SectionInfo?> FindSectionByNameAsync(string sectionName)
     {
@@ -127,7 +123,7 @@ public class BoardSectionManager
     }
 
     /// <summary>
-    /// 按ID搜索版面（可选功能）
+    ///     按ID搜索版面（可选功能）
     /// </summary>
     public async Task<BoardInfo?> FindBoardByIdAsync(int boardId)
     {
@@ -146,7 +142,7 @@ public class BoardSectionManager
     #region 私有方法
 
     /// <summary>
-    /// 解析JSON并提取所需的分区数据
+    ///     解析JSON并提取所需的分区数据
     /// </summary>
     private List<SectionInfo> ParseSections(string jsonResponse)
     {
@@ -157,7 +153,6 @@ public class BoardSectionManager
 
         // 假设API返回的是分区数组
         if (root.ValueKind == JsonValueKind.Array)
-        {
             foreach (var sectionElement in root.EnumerateArray())
             {
                 var section = new SectionInfo();
@@ -169,17 +164,12 @@ public class BoardSectionManager
                 // 提取版主列表
                 if (sectionElement.TryGetProperty("masters", out var mastersProp) &&
                     mastersProp.ValueKind == JsonValueKind.Array)
-                {
                     foreach (var master in mastersProp.EnumerateArray())
-                    {
                         section.Masters.Add(master.GetString() ?? string.Empty);
-                    }
-                }
 
                 // 提取版面列表
                 if (sectionElement.TryGetProperty("boards", out var boardsProp) &&
                     boardsProp.ValueKind == JsonValueKind.Array)
-                {
                     foreach (var boardElement in boardsProp.EnumerateArray())
                     {
                         var board = new BoardInfo();
@@ -192,17 +182,15 @@ public class BoardSectionManager
 
                         section.Boards.Add(board);
                     }
-                }
 
                 sections.Add(section);
             }
-        }
 
         return sections;
     }
 
     /// <summary>
-    /// 保存分区数据到缓存
+    ///     保存分区数据到缓存
     /// </summary>
     private async Task<bool> SaveToCacheAsync(List<SectionInfo> sections)
     {
@@ -210,13 +198,13 @@ public class BoardSectionManager
         {
             var json = JsonSerialize.Serialize(sections);
 
-            var folder = Windows.Storage.ApplicationData.Current.LocalCacheFolder;
+            var folder = ApplicationData.Current.LocalCacheFolder;
             var filePath = Path.Combine(folder.Path, CacheFileName);
 
             var result = await LocalCache.SaveJsonAsync(
                 filePath,
                 json,
-                createDirectory: false);
+                false);
 
             return result.Success;
         }

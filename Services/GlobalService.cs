@@ -5,8 +5,17 @@
 public class GlobalService
 {
     private static GlobalService? _instance;
-    private GlobalService(){}
-    public static readonly object Lock= new();
+    public static readonly object Lock = new();
+    public int AtCount = 0;
+    public int MessageCount = 0;
+    public int ReplyCount = 0;
+    public bool ShouldReplaceNavigationArgs = false;
+    public int SystemCount = 0;
+
+    private GlobalService()
+    {
+    }
+
     public static GlobalService Instance
     {
         get
@@ -17,10 +26,6 @@ public class GlobalService
             }
         }
     }
-    public int MessageCount = 0;
-    public int AtCount = 0;
-    public int ReplyCount = 0;
-    public int SystemCount = 0;
-    public bool ShouldReplaceNavigationArgs = false;
-    public object? NavigationAnchor {  get; set; }
+
+    public object? NavigationAnchor { get; set; }
 }

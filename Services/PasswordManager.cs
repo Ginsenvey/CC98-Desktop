@@ -1,16 +1,17 @@
 ﻿using System;
 using System.Collections.Generic;
-using Windows.Security.Credentials;
 using System.Linq;
+using Windows.Security.Credentials;
+
 namespace CC98.Services;
 
 /// <summary>
-/// 本地化密码管理
+///     本地化密码管理
 /// </summary>
 public static class PasswordManager
 {
     /// <summary>
-    /// 保存密码到保险库
+    ///     保存密码到保险库
     /// </summary>
     /// <param name="username">用户名/标识</param>
     /// <param name="password">密码</param>
@@ -35,10 +36,9 @@ public static class PasswordManager
     }
 
     /// <summary>
-    /// 从保险库检索密码
+    ///     从保险库检索密码
     /// </summary>
     /// <param name="username">用户名/标识</param>
-
     /// <returns>检索到的密码，未找到返回 null</returns>
     public static string RetrievePassword(string resource, string username = "CC98")
     {
@@ -59,10 +59,9 @@ public static class PasswordManager
     }
 
     /// <summary>
-    /// 从保险库删除密码
+    ///     从保险库删除密码
     /// </summary>
     /// <param name="username">用户名/标识</param>
-
     public static void RemovePassword(string resource, string username = "CC98")
     {
         if (string.IsNullOrWhiteSpace(username))
@@ -84,10 +83,9 @@ public static class PasswordManager
     }
 
     /// <summary>
-    /// 检查是否存在指定凭据
+    ///     检查是否存在指定凭据
     /// </summary>
     /// <param name="username">用户名/标识</param>
-
     /// <returns>凭据是否存在</returns>
     public static bool PasswordExists(string resource, string username = "CC98")
     {
@@ -108,9 +106,8 @@ public static class PasswordManager
     }
 
     /// <summary>
-    /// 获取所有保存的凭据（当前资源）
+    ///     获取所有保存的凭据（当前资源）
     /// </summary>
-
     /// <returns>凭据列表</returns>
     public static IReadOnlyList<PasswordCredential> GetAllCredentials(string resource)
     {
@@ -130,9 +127,8 @@ public static class PasswordManager
     }
 
     /// <summary>
-    /// 清除当前应用的所有凭据
+    ///     清除当前应用的所有凭据
     /// </summary>
-
     public static void ClearAllPasswords(string resource)
     {
         var vault = new PasswordVault();
@@ -143,16 +139,14 @@ public static class PasswordManager
                 .Where(c => c.Resource == resource)
                 .ToList();
 
-            foreach (var cred in credentials)
-            {
-                vault.Remove(cred);
-            }
+            foreach (var cred in credentials) vault.Remove(cred);
         }
         catch
         {
             // 忽略错误
         }
     }
+
     public static void Logout()
     {
         ClearAllPasswords("Access");

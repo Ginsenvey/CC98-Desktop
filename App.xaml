@@ -1,19 +1,18 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
+
 <Application
     x:Class="CC98.App"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:tool="using:CommunityToolkit.WinUI.Controls"
-    xmlns:pr="using:CC98.Share.Controls.Primitives"
-    xmlns:cv="using:CC98.Services.Converters"
     xmlns:primitives="using:CC98.Controls.Primitives"
     xmlns:services="using:CC98.Services">
     <Application.Resources>
-        <ResourceDictionary >
+        <ResourceDictionary>
 
             <ResourceDictionary.MergedDictionaries>
                 <XamlControlsResources xmlns="using:Microsoft.UI.Xaml.Controls" />
-                <ResourceDictionary Source="ms-appx:///DevWinUI.Controls/Themes/Generic.xaml"/>
+                <ResourceDictionary Source="ms-appx:///DevWinUI.Controls/Themes/Generic.xaml" />
             </ResourceDictionary.MergedDictionaries>
 
             <ResourceDictionary.ThemeDictionaries>
@@ -40,46 +39,47 @@
                     <Color x:Key="PortraitBackgroundColor">#004d9891</Color>
                 </ResourceDictionary>
             </ResourceDictionary.ThemeDictionaries>
-            <SolidColorBrush x:Key="UserNameForegroundBrush" Color="{ThemeResource UserNameForegroundColor}"></SolidColorBrush>
-            <SolidColorBrush x:Key="MarkdownBackgroundBrush" Color="{ThemeResource MarkdownBackgroundColor}"></SolidColorBrush>
-            <SolidColorBrush x:Key="QuoteBorderBrush" Color="{ThemeResource QuoteBorderColor}"></SolidColorBrush>
-            <SolidColorBrush x:Key="StandardBrush" Color="{ThemeResource Standard}"></SolidColorBrush>
-            <SolidColorBrush x:Key="QuoteBackgroundBrush" Color="{ThemeResource QuoteBackgroundColor}"></SolidColorBrush>
-            <SolidColorBrush x:Key="PortraitBackgroundBrush" Color="{ThemeResource PortraitBackgroundColor}"></SolidColorBrush>
-            <SolidColorBrush x:Key="SoftPink" Color="#ddfb7299"></SolidColorBrush>
-            <SolidColorBrush x:Key="SoftPurple" Color="#C4ABD4"></SolidColorBrush>
-            <SolidColorBrush x:Key="PrimaryPurple" Color="#7D6CAC"></SolidColorBrush>
-            <AcrylicBrush x:Key="AcrylicCardBrush" TintOpacity="0.4" TintColor="{ThemeResource AcrylicTintColor}" AlwaysUseFallback="False"/>
-            
+            <SolidColorBrush x:Key="UserNameForegroundBrush" Color="{ThemeResource UserNameForegroundColor}" />
+            <SolidColorBrush x:Key="MarkdownBackgroundBrush" Color="{ThemeResource MarkdownBackgroundColor}" />
+            <SolidColorBrush x:Key="QuoteBorderBrush" Color="{ThemeResource QuoteBorderColor}" />
+            <SolidColorBrush x:Key="StandardBrush" Color="{ThemeResource Standard}" />
+            <SolidColorBrush x:Key="QuoteBackgroundBrush" Color="{ThemeResource QuoteBackgroundColor}" />
+            <SolidColorBrush x:Key="PortraitBackgroundBrush" Color="{ThemeResource PortraitBackgroundColor}" />
+            <SolidColorBrush x:Key="SoftPink" Color="#ddfb7299" />
+            <SolidColorBrush x:Key="SoftPurple" Color="#C4ABD4" />
+            <SolidColorBrush x:Key="PrimaryPurple" Color="#7D6CAC" />
+            <AcrylicBrush x:Key="AcrylicCardBrush" TintOpacity="0.4" TintColor="{ThemeResource AcrylicTintColor}"
+                          AlwaysUseFallback="False" />
+
             <FontFamily x:Key="HarmonySans">/Assets/Fonts/HarmonyOS_Sans_SC_Regular.ttf#HarmonyOS Sans SC</FontFamily>
             <FontFamily x:Key="HarmonySansBold">/Assets/Fonts/HarmonyOS_Sans_SC_Bold.ttf#HarmonyOS Sans SC Bold</FontFamily>
-            
+
             <Style TargetType="TextBlock">
-                <Setter Property="FontFamily" Value="{StaticResource HarmonySans}"></Setter>
+                <Setter Property="FontFamily" Value="{StaticResource HarmonySans}" />
             </Style>
             <Style TargetType="RichTextBlock">
-                <Setter Property="FontFamily" Value="{StaticResource HarmonySans}"></Setter>
+                <Setter Property="FontFamily" Value="{StaticResource HarmonySans}" />
             </Style>
             <Style TargetType="tool:MarkdownTextBlock">
-                <Setter Property="FontFamily" Value="{StaticResource HarmonySans}"></Setter>
+                <Setter Property="FontFamily" Value="{StaticResource HarmonySans}" />
             </Style>
             <Style TargetType="tool:SettingsCard">
-                <Setter Property="FontFamily" Value="{StaticResource HarmonySans}"></Setter>
+                <Setter Property="FontFamily" Value="{StaticResource HarmonySans}" />
             </Style>
             <Style TargetType="tool:SettingsExpander">
-                <Setter Property="FontFamily" Value="{StaticResource HarmonySans}"></Setter>
+                <Setter Property="FontFamily" Value="{StaticResource HarmonySans}" />
             </Style>
-            
-            
-            <primitives:SmartImageLoader x:Key="PortraitLoader" LowRes="True"></primitives:SmartImageLoader>
-            <primitives:SmartImageLoader x:Key="CustomPortraitLoader" LowRes="False"></primitives:SmartImageLoader>
-            <services:HexToBrushConverter x:Key="HexToColorBrush"/>
-            <services:LikeToVariantConverter x:Key="LikeToVariantConverter"></services:LikeToVariantConverter>
-            <services:DisLikeToVariantConverter x:Key="DisLikeToVariantConverter"></services:DisLikeToVariantConverter>
-            <services:BoolToVariantConverter x:Key="BoolToVariantConverter"></services:BoolToVariantConverter>
-            <services:BooltoVisibilityConverter x:Key="BoolToVisibility"></services:BooltoVisibilityConverter>
-            <services:ReBooltoVisibilityConverter x:Key="ReBoolToVisibility"></services:ReBooltoVisibilityConverter>
-            <services:BoolToAlignmentConverter x:Key="AlignmentConverter"></services:BoolToAlignmentConverter>
+
+
+            <primitives:SmartImageLoader x:Key="PortraitLoader" LowRes="True" />
+            <primitives:SmartImageLoader x:Key="CustomPortraitLoader" LowRes="False" />
+            <services:HexToBrushConverter x:Key="HexToColorBrush" />
+            <services:LikeToVariantConverter x:Key="LikeToVariantConverter" />
+            <services:DisLikeToVariantConverter x:Key="DisLikeToVariantConverter" />
+            <services:BoolToVariantConverter x:Key="BoolToVariantConverter" />
+            <services:BooltoVisibilityConverter x:Key="BoolToVisibility" />
+            <services:ReBooltoVisibilityConverter x:Key="ReBoolToVisibility" />
+            <services:BoolToAlignmentConverter x:Key="AlignmentConverter" />
         </ResourceDictionary>
     </Application.Resources>
 </Application>

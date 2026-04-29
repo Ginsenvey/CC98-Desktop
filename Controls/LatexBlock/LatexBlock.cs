@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Diagnostics;
+using Windows.Foundation;
 using CSharpMath.SkiaSharp;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -7,18 +9,42 @@ using SkiaSharp.Views.Windows;
 
 namespace CC98.Controls.LatexBlock;
 
-public sealed partial class LatexBlock : UserControl 
+public sealed partial class LatexBlock : UserControl
 {
     private readonly SKXamlCanvas _canvas;
     private readonly MathPainter _painter = new();
-    private string _latex = "";
+    private float _contentHeight;
 
     // 内容尺寸（不包含Padding）
-    private float _contentWidth = 0;
-    private float _contentHeight = 0;
+    private float _contentWidth;
+    private string _latex = "";
+
+    // 行间距
+    private float _lineSpacing = 0.2f;
 
     // 内边距
     private Thickness _padding = new(5);
+
+    public LatexBlock()
+    {
+        _canvas = new();
+        //必须设置 IgnorePixelScaling 为 true，以避免 DPI 缩放问题
+        //关闭将导致实际高度和宽度与测量值不一致
+        _canvas.IgnorePixelScaling = true;
+
+        var grid = new Grid();
+        grid.Children.Add(_canvas);
+
+
+        Content = grid;
+
+
+        HorizontalAlignment = HorizontalAlignment.Center;
+        VerticalAlignment = VerticalAlignment.Bottom;
+
+        _canvas.PaintSurface += OnPaintSurface;
+    }
+
     public Thickness Padding
     {
         get => _padding;
@@ -29,8 +55,6 @@ public sealed partial class LatexBlock : UserControl
         }
     }
 
-    // 行间距
-    private float _lineSpacing = 0.2f;
     public double LineSpacing
     {
         get => _lineSpacing;
@@ -69,42 +93,31 @@ public sealed partial class LatexBlock : UserControl
     // 是否显示调试边框
     public bool ShowDebugBounds { get; set; } = false;
 
-    public LatexBlock()
+    public string DebugInfo
     {
-        _canvas = new();
-        //必须设置 IgnorePixelScaling 为 true，以避免 DPI 缩放问题
-        //关闭将导致实际高度和宽度与测量值不一致
-        _canvas.IgnorePixelScaling = true;
-            
-        var grid = new Grid();
-        grid.Children.Add(_canvas);
-
-            
-        Content = grid;
-
-            
-        HorizontalAlignment = HorizontalAlignment.Center;
-        VerticalAlignment = VerticalAlignment.Bottom;
-
-        _canvas.PaintSurface += OnPaintSurface;
+        get
+        {
+            var lineCount = _latex?.Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries).Length ?? 0;
+            return $"内容: {_contentWidth:F1}x{_contentHeight:F1}, " +
+                   $"控件: {ActualWidth:F1}x{ActualHeight:F1}, " +
+                   $"画布: {_canvas.ActualWidth:F1}x{_canvas.ActualHeight:F1}, " +
+                   $"行数: {lineCount}";
+        }
     }
 
-    protected override Windows.Foundation.Size MeasureOverride(Windows.Foundation.Size availableSize)
+    protected override Size MeasureOverride(Size availableSize)
     {
         if (string.IsNullOrEmpty(_latex))
         {
             _contentWidth = 0;
             _contentHeight = 0;
-            var emptySize = new Windows.Foundation.Size(
+            var emptySize = new Size(
                 Padding.Left + Padding.Right,
                 Padding.Top + Padding.Bottom
             );
 
             // 测量Content
-            if (Content is FrameworkElement c)
-            {
-                c.Measure(emptySize);
-            }
+            if (Content is FrameworkElement c) c.Measure(emptySize);
 
             return emptySize;
         }
@@ -133,10 +146,7 @@ public sealed partial class LatexBlock : UserControl
                 var extraBottomSpace = lineHeight * 0.2f; // 增加20%的底部空间
                 _contentHeight += lineHeight + extraBottomSpace;
 
-                if (i < lines.Length - 1)
-                {
-                    _contentHeight += rect.Height * _lineSpacing;
-                }
+                if (i < lines.Length - 1) _contentHeight += rect.Height * _lineSpacing;
             }
 
             if (_contentWidth <= 0) _contentWidth = 20;
@@ -144,7 +154,7 @@ public sealed partial class LatexBlock : UserControl
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"测量失败: {ex.Message}");
+            Debug.WriteLine($"测量失败: {ex.Message}");
             _contentWidth = 100;
             _contentHeight = 30;
         }
@@ -153,28 +163,22 @@ public sealed partial class LatexBlock : UserControl
         var totalWidth = _contentWidth + Padding.Left + Padding.Right;
         var totalHeight = _contentHeight + Padding.Top + Padding.Bottom;
 
-        var desiredSize = new Windows.Foundation.Size(totalWidth, totalHeight);
+        var desiredSize = new Size(totalWidth, totalHeight);
 
         // 测量Content
-        if (Content is FrameworkElement content)
-        {
-            content.Measure(desiredSize);
-        }
+        if (Content is FrameworkElement content) content.Measure(desiredSize);
 
-        System.Diagnostics.Debug.WriteLine($"MeasureOverride 返回: {totalWidth:F1}x{totalHeight:F1}");
+        Debug.WriteLine($"MeasureOverride 返回: {totalWidth:F1}x{totalHeight:F1}");
 
         return desiredSize;
     }
 
-    protected override Windows.Foundation.Size ArrangeOverride(Windows.Foundation.Size finalSize)
+    protected override Size ArrangeOverride(Size finalSize)
     {
-        System.Diagnostics.Debug.WriteLine($"ArrangeOverride 收到: {finalSize.Width:F1}x{finalSize.Height:F1}");
+        Debug.WriteLine($"ArrangeOverride 收到: {finalSize.Width:F1}x{finalSize.Height:F1}");
 
         // 排列Content
-        if (Content is FrameworkElement content)
-        {
-            content.Arrange(new(0, 0, finalSize.Width, finalSize.Height));
-        }
+        if (Content is FrameworkElement content) content.Arrange(new(0, 0, finalSize.Width, finalSize.Height));
 
         return finalSize;
     }
@@ -189,7 +193,8 @@ public sealed partial class LatexBlock : UserControl
         var canvasHeight = (float)_canvas.ActualHeight;
 
         // 如果没有内容或尺寸无效，直接返回
-        if (string.IsNullOrEmpty(_latex) || _contentWidth <= 0 || _contentHeight <= 0 || canvasWidth <= 0 || canvasHeight <= 0)
+        if (string.IsNullOrEmpty(_latex) || _contentWidth <= 0 || _contentHeight <= 0 || canvasWidth <= 0 ||
+            canvasHeight <= 0)
         {
             // 绘制空状态提示
             if (ShowDebugBounds && string.IsNullOrEmpty(_latex))
@@ -203,6 +208,7 @@ public sealed partial class LatexBlock : UserControl
                 };
                 canvas.DrawText("无公式", 10, 30, textPaint);
             }
+
             return;
         }
 
@@ -258,7 +264,7 @@ public sealed partial class LatexBlock : UserControl
                     IsAntialias = true,
                     Typeface = SKTypeface.FromFamilyName("Consolas")
                 };
-                canvas.DrawText($"Padding",
+                canvas.DrawText("Padding",
                     (float)Padding.Left, (float)Padding.Top - 5, textPaint);
             }
 
@@ -349,7 +355,7 @@ public sealed partial class LatexBlock : UserControl
                         lineNumberPaint);
                 }
 
-                    
+
                 // 绘制公式 - 给底部增加额外空间
                 var baselineOffset = Math.Abs(rect.Y); // rect.Y 是负值，表示基线以上的高度
                 var extraBottomSpace = rect.Height * 0.2f; // 增加20%的底部空间
@@ -357,15 +363,12 @@ public sealed partial class LatexBlock : UserControl
 
                 currentY += rect.Height;
 
-                if (i < lines.Length - 1)
-                {
-                    currentY += rect.Height * _lineSpacing;
-                }
+                if (i < lines.Length - 1) currentY += rect.Height * _lineSpacing;
             }
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine($"绘制失败: {ex.Message}");
+            Debug.WriteLine($"绘制失败: {ex.Message}");
 
             if (ShowDebugBounds)
             {
@@ -378,18 +381,6 @@ public sealed partial class LatexBlock : UserControl
                 };
                 canvas.DrawText($"错误: {ex.Message}", 10, 50, errorPaint);
             }
-        }
-    }
-
-    public string DebugInfo
-    {
-        get
-        {
-            var lineCount = _latex?.Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries).Length ?? 0;
-            return $"内容: {_contentWidth:F1}x{_contentHeight:F1}, " +
-                   $"控件: {ActualWidth:F1}x{ActualHeight:F1}, " +
-                   $"画布: {_canvas.ActualWidth:F1}x{_canvas.ActualHeight:F1}, " +
-                   $"行数: {lineCount}";
         }
     }
 }

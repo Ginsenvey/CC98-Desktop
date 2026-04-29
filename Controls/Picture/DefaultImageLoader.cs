@@ -10,10 +10,7 @@ public class DefaultImageLoader : IImageLoader
     {
         try
         {
-            if (Uri.TryCreate(src, UriKind.Absolute, out var uri))
-            {
-                return await Task.FromResult(new BitmapImage(uri));
-            }
+            if (Uri.TryCreate(src, UriKind.Absolute, out var uri)) return await Task.FromResult(new BitmapImage(uri));
             return null;
         }
         catch

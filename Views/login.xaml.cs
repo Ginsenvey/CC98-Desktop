@@ -9,6 +9,7 @@ using CC98.Objects;
 using CC98.Services;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media.Imaging;
 using Microsoft.Windows.AppNotifications;
 using Microsoft.Windows.AppNotifications.Builder;
@@ -19,15 +20,17 @@ using Microsoft.Windows.AppNotifications.Builder;
 namespace CC98.Views;
 
 /// <summary>
-/// An empty window that can be used on its own or navigated to within a Frame.
+///     An empty window that can be used on its own or navigated to within a Frame.
 /// </summary>
 public sealed partial class Login : Window
 {
+    public int Mode;
     public ApplicationDataContainer Set;
+
     public Login(int mode)
     {
         InitializeComponent();
-        ExtendsContentIntoTitleBar= true;
+        ExtendsContentIntoTitleBar = true;
         SetTitleBar(GridTitleBar);
         RootGrid.RequestedTheme = ElementTheme.Light;
         AppWindow.TitleBar.PreferredHeightOption = TitleBarHeightOption.Standard;
@@ -38,21 +41,24 @@ public sealed partial class Login : Window
         presenter.SetBorderAndTitleBar(true, true);
         AppWindow.SetPresenter(presenter);
         CenterWindow();
-        tip.Text = "如果尚未连接浙江大学内网，请在此处登录WebVPN,或者使用[ZJU Connect](https://github.com/Mythologyli/ZJU-Connect-for-Windows/releases).";
+        tip.Text =
+            "如果尚未连接浙江大学内网，请在此处登录WebVPN,或者使用[ZJU Connect](https://github.com/Mythologyli/ZJU-Connect-for-Windows/releases).";
         Set = ApplicationData.Current.LocalSettings;
         LoadParams(mode);
     }
-    public int Mode = 0;
+
     private void LoadParams(int mode)
     {
         Mode = mode;
-        if (mode == 0) { }//普通登录
-        else if(mode==1)//用户已经登录过，只需要添加VPN凭据
+        if (mode == 0)
+        {
+        } //普通登录
+        else if (mode == 1) //用户已经登录过，只需要添加VPN凭据
         {
             LoginPane.Visibility = Visibility.Collapsed;
             VpnPane.Visibility = Visibility.Visible;
         }
-        else//由于密码更改或者套餐到期，尝试使用原凭据VPN登录失败，需要验证码
+        else //由于密码更改或者套餐到期，尝试使用原凭据VPN登录失败，需要验证码
         {
             LoginPane.Visibility = Visibility.Collapsed;
             VpnPane.Visibility = Visibility.Visible;
@@ -63,24 +69,27 @@ public sealed partial class Login : Window
             captchabox.Visibility = Visibility.Visible;
         }
     }
+
     private void CenterWindow()
     {
         var area = DisplayArea.GetFromWindowId(AppWindow.Id, DisplayAreaFallback.Nearest)?.WorkArea;
         if (area == null) return;
-        AppWindow.Move(new((area.Value.Width - AppWindow.Size.Width) / 2, (area.Value.Height - AppWindow.Size.Height) / 2));
+        AppWindow.Move(new((area.Value.Width - AppWindow.Size.Width) / 2,
+            (area.Value.Height - AppWindow.Size.Height) / 2));
     }
 
 
     private async Task InitializeNetwork()
     {
-        var networkStatus = await LoginService.Vpn.CheckNetwork(false);
+        var networkStatus = await LoginService.Vpn.CheckNetworkAsync(false);
         if (networkStatus == NetworkStatus.InCampus)
         {
             //启动
             OpenPasswordLoginPane();
             return;
         }
-        if (networkStatus == NetworkStatus.NotInCampus)//在校外
+
+        if (networkStatus == NetworkStatus.NotInCampus) //在校外
         {
             if (ValidationHelper.GetValue(Set, "IsVpnUsable") != "1")
             {
@@ -89,6 +98,7 @@ public sealed partial class Login : Window
                 VpnPane.Visibility = Visibility.Visible;
                 return;
             }
+
             //检测是否已初始化Ticket。若已初始化，使用并检查有效性。无效则重连。未初始化是出错的情况。
             if (!PasswordManager.PasswordExists("Ticket") || !PasswordManager.PasswordExists("Route"))
             {
@@ -96,13 +106,15 @@ public sealed partial class Login : Window
                 Flower.Play(FlowStatus.Fail, "VPN凭据不完整");
                 return;
             }
+
             if (!InjectTokenFromVault())
             {
                 //报错
                 Flower.Play(FlowStatus.Fail, "VPN凭据不完整");
                 return;
             }
-            var newStatus = await LoginService.Vpn.CheckNetwork(true);
+
+            var newStatus = await LoginService.Vpn.CheckNetworkAsync(true);
             if (newStatus == NetworkStatus.ByVpn)
             {
                 LoginService.Vpn.IsLoggedIn = true;
@@ -111,6 +123,7 @@ public sealed partial class Login : Window
                 //启动
                 return;
             }
+
             var success = await ReloginVpn();
             if (success)
             {
@@ -120,26 +133,19 @@ public sealed partial class Login : Window
                 OpenPasswordLoginPane();
             }
         }
-        if (networkStatus == NetworkStatus.MirrorError)
-        {
-            Flower.Play(FlowStatus.Fail, "连接镜像站失败");
-        }
-        if (networkStatus == NetworkStatus.UnknownError)
-        {
-            Flower.Play(FlowStatus.Fail, "IP被镜像站拦截");
-        }
-        if (networkStatus == NetworkStatus.NoConnection)
-        {
-            Flower.Play(FlowStatus.Fail, "无互联网连接");
-        }
+
+        if (networkStatus == NetworkStatus.MirrorError) Flower.Play(FlowStatus.Fail, "连接镜像站失败");
+        if (networkStatus == NetworkStatus.UnknownError) Flower.Play(FlowStatus.Fail, "IP被镜像站拦截");
+        if (networkStatus == NetworkStatus.NoConnection) Flower.Play(FlowStatus.Fail, "无互联网连接");
     }
+
     private bool SaveVpnToken()
     {
         var newTicket = LoginService.Vpn.Ticket;
         var newRoute = LoginService.Vpn.Route;
         var ticket = newTicket.Value;
         var route = newRoute.Value;
-        if (string.IsNullOrEmpty(ticket) || (string.IsNullOrEmpty(route)))
+        if (string.IsNullOrEmpty(ticket) || string.IsNullOrEmpty(route))
         {
             //报错
             Flower.Play(FlowStatus.Fail, "未获取到完整VPN凭据");
@@ -150,8 +156,8 @@ public sealed partial class Login : Window
         PasswordManager.SavePassword(ticket, "Ticket");
         PasswordManager.SavePassword(route, "Route");
         return true;
-
     }
+
     private bool InjectTokenFromVault()
     {
         //提取环节
@@ -161,10 +167,7 @@ public sealed partial class Login : Window
         var route = new Cookie("route", routeValue, "/", "webvpn.zju.edu.cn");
         ticket.HttpOnly = true;
         //注入环节
-        if (string.IsNullOrEmpty(ticketValue) || string.IsNullOrEmpty(routeValue))
-        {
-            return false;
-        }
+        if (string.IsNullOrEmpty(ticketValue) || string.IsNullOrEmpty(routeValue)) return false;
         LoginService.Vpn.CookieContainer.Add(ticket);
         LoginService.Vpn.CookieContainer.Add(route);
         return true;
@@ -174,9 +177,7 @@ public sealed partial class Login : Window
     private async Task<bool> ReloginVpn()
     {
         if (!PasswordManager.PasswordExists("VpnUserName") || !PasswordManager.PasswordExists("VpnPassWord"))
-        {
             return false;
-        }
         var id = PasswordManager.RetrievePassword("VpnUserName");
         var pass = PasswordManager.RetrievePassword("VpnPassWord");
         var res = await LoginService.Vpn.LoginAsync(id, pass);
@@ -184,23 +185,16 @@ public sealed partial class Login : Window
         if (res.Status == VpnLoginStatus.NeedConfirm)
         {
             var confirmRes = await LoginService.Vpn.ConfirmAsync();
-            if (confirmRes.Status == VpnLoginStatus.Success)
-            {
-                return true;
-            }
-            else
-            {
-                //报错
-                Flower.Play(FlowStatus.Fail, "VPN登录失败，报告开发者");
-                return false;
-            }
-        }
-        if (res.Status == VpnLoginStatus.NeedCaptcha || res.Status == VpnLoginStatus.Error)
-        {
-            //报错,VPN需要重新登录
-                
+            if (confirmRes.Status == VpnLoginStatus.Success) return true;
+
+            //报错
+            Flower.Play(FlowStatus.Fail, "VPN登录失败，报告开发者");
             return false;
         }
+
+        if (res.Status == VpnLoginStatus.NeedCaptcha || res.Status == VpnLoginStatus.Error)
+            //报错,VPN需要重新登录
+            return false;
         return false;
     }
 
@@ -209,13 +203,14 @@ public sealed partial class Login : Window
         LoginPane.Visibility = Visibility.Collapsed;
         GuidePane.Visibility = Visibility.Visible;
         VpnPane.Visibility = Visibility.Collapsed;
-        var guidance = "> 在校外连接需要配置应用的内建WebVPN,或者使用[ZJU Connect](https://github.com/Mythologyli/ZJU-Connect-for-Windows/releases)，打开RVPN，并设置系统代理。\r\n\r\n  **忘记密码/无账号？**\r\n\r\n进入[CC98](https://www.cc98.org/logon)官网操作。\r\n\r\n**遇到问题/想要新功能?**\r\n\r\n你可以在微软商店或[开发进度记录楼](https://www.cc98.org/topic/6173309)反馈此问题。\r\n\r\n你也可以克隆本应用仓库，自由修改和编译新的分支。不过，在分发时，应当告知所有的改动。\r\n\r\n**成为开发者**\r\n\r\n本应用使用`Windows App SDK`,`C#`,`XAML`构建。欢迎所有对.NET生态感兴趣的uu加入本应用的开发，欢迎所有使用者对本应用UI、功能和代码提供建议。";
-        GuidePresenter.Text= guidance;
+        var guidance =
+            "> 在校外连接需要配置应用的内建WebVPN,或者使用[ZJU Connect](https://github.com/Mythologyli/ZJU-Connect-for-Windows/releases)，打开RVPN，并设置系统代理。\r\n\r\n  **忘记密码/无账号？**\r\n\r\n进入[CC98](https://www.cc98.org/logon)官网操作。\r\n\r\n**遇到问题/想要新功能?**\r\n\r\n你可以在微软商店或[开发进度记录楼](https://www.cc98.org/topic/6173309)反馈此问题。\r\n\r\n你也可以克隆本应用仓库，自由修改和编译新的分支。不过，在分发时，应当告知所有的改动。\r\n\r\n**成为开发者**\r\n\r\n本应用使用`Windows App SDK`,`C#`,`XAML`构建。欢迎所有对.NET生态感兴趣的uu加入本应用的开发，欢迎所有使用者对本应用UI、功能和代码提供建议。";
+        GuidePresenter.Text = guidance;
     }
 
     private async void OIDC_Click(object sender, RoutedEventArgs e)
     {
-        var status = await LoginService.Vpn.CheckNetwork(false);
+        var status = await LoginService.Vpn.CheckNetworkAsync(false);
         if (status == NetworkStatus.InCampus)
         {
             var oidcService = new OpenId();
@@ -232,7 +227,6 @@ public sealed partial class Login : Window
         }
     }
 
-        
 
     private void GuideBack_Click(object sender, RoutedEventArgs e)
     {
@@ -249,7 +243,8 @@ public sealed partial class Login : Window
             Flower.Play(FlowStatus.Info, "已配置VPN，无需其他操作");
             return;
         }
-        GuidePane.Visibility= Visibility.Collapsed;
+
+        GuidePane.Visibility = Visibility.Collapsed;
         VpnPane.Visibility = Visibility.Visible;
         LoginPane.Visibility = Visibility.Collapsed;
     }
@@ -260,8 +255,8 @@ public sealed partial class Login : Window
         VpnPane.Visibility = Visibility.Collapsed;
         LoginPane.Visibility = Visibility.Visible;
     }
-      
-    private  async void Link_Click(object sender, RoutedEventArgs e)
+
+    private async void Link_Click(object sender, RoutedEventArgs e)
     {
         if (string.IsNullOrEmpty(idbox.Text) || string.IsNullOrEmpty(passbox.Password))
         {
@@ -269,6 +264,7 @@ public sealed partial class Login : Window
             Flower.Play(FlowStatus.Info, "请输入完整凭据");
             return;
         }
+
         Link.IsChecked = true;
         try
         {
@@ -280,9 +276,9 @@ public sealed partial class Login : Window
             Link.ShowError = true;
             Flower.Play(FlowStatus.Fail, ex.Message);
         }
-            
     }
-    private async Task SetupVpn(string id,string pass)
+
+    private async Task SetupVpn(string id, string pass)
     {
         var res = await LoginService.Vpn.LoginAsync(id, pass);
         switch (res.Status)
@@ -313,6 +309,7 @@ public sealed partial class Login : Window
                     Link.ShowError = true;
                     Flower.Play(FlowStatus.Fail, res.Description);
                 }
+
                 break;
             case VpnLoginStatus.NeedCaptcha:
                 Link.IsChecked = false;
@@ -323,7 +320,7 @@ public sealed partial class Login : Window
                 var captchaUrl = $"{VpnService.BaseUrl}/captcha/{captchaId}.png?reload={timeStamp}";
                 captcha.Source = new BitmapImage(new(captchaUrl));
                 captchabox.Visibility = Visibility.Visible;
-                Flower.Play(FlowStatus.Fail, res.Message??"需要验证码");
+                Flower.Play(FlowStatus.Fail, res.Message ?? "需要验证码");
                 break;
             default:
                 Link.IsChecked = false;
@@ -332,27 +329,29 @@ public sealed partial class Login : Window
                 break;
         }
     }
-    private void SaveToken(string id,string pass)
+
+    private void SaveToken(string id, string pass)
     {
         Set.Values["IsVpnUsable"] = "1";
         var ticket = LoginService.Vpn.Ticket;
         var route = LoginService.Vpn.Route;
         var ticketValue = ticket.Value;
         var routeValue = route.Value;
-            
+
         PasswordManager.SavePassword(id, "VpnUserName");
         PasswordManager.SavePassword(pass, "VpnPassWord");
-        if (!string.IsNullOrEmpty(ticketValue) && (!string.IsNullOrEmpty(routeValue)))
+        if (!string.IsNullOrEmpty(ticketValue) && !string.IsNullOrEmpty(routeValue))
         {
             PasswordManager.SavePassword(ticketValue, "Ticket");
             PasswordManager.SavePassword(routeValue, "Route");
             Flower.Play(FlowStatus.Success, "已保存VPN凭据");
-        }//保存失败或者token为空时，会出现VPN启用但找不到令牌的情况。
+        } //保存失败或者token为空时，会出现VPN启用但找不到令牌的情况。
         else
         {
             Flower.Play(FlowStatus.Fail, "未保存VPN凭据");
         }
     }
+
     private void GoBackOrLaunchApp()
     {
         if (Mode == 0)
@@ -363,12 +362,9 @@ public sealed partial class Login : Window
         }
         else
         {
-            App.Current.AppMainWindow= new MainWindow();
-            App.Current.AppMainWindow .Activate();
-            DispatcherQueue.TryEnqueue(() =>
-            {
-                Close();
-            });//尝试修复竞争条件
+            App.Current.AppMainWindow = new MainWindow();
+            App.Current.AppMainWindow.Activate();
+            DispatcherQueue.TryEnqueue(() => { Close(); }); //尝试修复竞争条件
         }
     }
 
@@ -378,13 +374,13 @@ public sealed partial class Login : Window
         {
             await InitializeNetwork();
         }
-        catch(Exception ex)
+        catch (Exception ex)
         {
             await App.Logger.WriteAsync("Login", "网络初始化出错", ex.Message);
             Debug("日志已记录。");
         }
-            
     }
+
     private void OpenPasswordLoginPane()
     {
         GuidePane.Visibility = Visibility.Collapsed;
@@ -392,6 +388,7 @@ public sealed partial class Login : Window
         LoginPane.Visibility = Visibility.Collapsed;
         PasswordLoginPane.Visibility = Visibility.Visible;
     }
+
     private void Debug(string text)
     {
         var notification = new AppNotificationBuilder()
@@ -400,6 +397,7 @@ public sealed partial class Login : Window
             .BuildNotification();
         AppNotificationManager.Default.Show(notification);
     }
+
     private async void LoginWithPassword_Click(object sender, RoutedEventArgs e)
     {
         if (!string.IsNullOrEmpty(ccidbox.Text) && !string.IsNullOrEmpty(ccpassbox.Password))
@@ -412,9 +410,10 @@ public sealed partial class Login : Window
                 //
                 await App.Logger.WriteAsync("Login", "登录失败", result.Message);
                 LoginWithPassword.ShowError = true;
-                Flower.Play(FlowStatus.Fail,result.Message);
+                Flower.Play(FlowStatus.Fail, result.Message);
                 return;
             }
+
             var token = result.Data;
             if (token == null)
             {
@@ -424,6 +423,7 @@ public sealed partial class Login : Window
                 Flower.Play(FlowStatus.Fail, "发生错误。请报告开发者");
                 return;
             }
+
             if (token.IsSucceeded)
             {
                 InjectToken(token);
@@ -441,7 +441,7 @@ public sealed partial class Login : Window
             Flower.Play(FlowStatus.Info, "凭据不完整");
         }
     }
-        
+
     private void InjectToken(AuthorizeResult result)
     {
         //在注入之前，必须确认IsValid==true
@@ -451,10 +451,7 @@ public sealed partial class Login : Window
         Set.Values["IsActive"] = "2";
         App.Current.AppMainWindow = new MainWindow();
         App.Current.AppMainWindow.Activate();
-        DispatcherQueue.TryEnqueue(() =>
-        {
-            Close();
-        });
+        DispatcherQueue.TryEnqueue(() => { Close(); });
     }
 
     private void PasswordLoginBack_Click(object sender, RoutedEventArgs e)
@@ -465,8 +462,8 @@ public sealed partial class Login : Window
         LoginPane.Visibility = Visibility.Visible;
     }
 
-    private void captchabox_TextChanged(object sender, Microsoft.UI.Xaml.Controls.TextChangedEventArgs e)
+    private void captchabox_TextChanged(object sender, TextChangedEventArgs e)
     {
-        LoginService.Vpn.CaptchaValue= captchabox.Text;
+        LoginService.Vpn.CaptchaValue = captchabox.Text;
     }
 }

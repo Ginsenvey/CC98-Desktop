@@ -1,4 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
+
 <UserControl
     x:Class="CC98.Controls.MusicPlayer.MusicPlayer"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
@@ -7,38 +8,47 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d">
 
-    <Grid Width="300" Height="Auto" Padding="12"  BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" Background="{ThemeResource CardGradient1Brush}" BorderThickness="1" CornerRadius="4" ToolTipService.ToolTip="{x:Bind Title, Mode=OneWay}">
+    <Grid Width="300" Height="Auto" Padding="12" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+          Background="{ThemeResource CardGradient1Brush}" BorderThickness="1" CornerRadius="4"
+          ToolTipService.ToolTip="{x:Bind Title, Mode=OneWay}">
         <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
         <!-- 标题 -->
-        <TextBlock x:Name="TitleTextBlock"  Grid.Row="0" Text="{x:Bind Title, Mode=OneWay}" FontSize="14"  FontWeight="SemiBold" Margin="0,0,0,8" TextTrimming="CharacterEllipsis"/>
-        <HyperlinkButton x:Name="DownloadButton" HorizontalAlignment="Right" Click="DownloadButton_Click" Width="28"  Padding="0" Height="28" ToolTipService.ToolTip="下载">
-            <FontIcon Glyph="&#xE118;" FontSize="12"  Foreground="{ThemeResource AccentAAFillColorDefaultBrush}"/>
+        <TextBlock x:Name="TitleTextBlock" Grid.Row="0" Text="{x:Bind Title, Mode=OneWay}" FontSize="14"
+                   FontWeight="SemiBold" Margin="0,0,0,8" TextTrimming="CharacterEllipsis" />
+        <HyperlinkButton x:Name="DownloadButton" HorizontalAlignment="Right" Click="DownloadButton_Click" Width="28"
+                         Padding="0" Height="28" ToolTipService.ToolTip="下载">
+            <FontIcon Glyph="&#xE118;" FontSize="12" Foreground="{ThemeResource AccentAAFillColorDefaultBrush}" />
         </HyperlinkButton>
         <!-- 进度条 -->
-        <Slider x:Name="ProgressSlider" Grid.Row="1" Minimum="0" Maximum="100"  Value="0" Margin="0,0,0,8" IsEnabled="False" ValueChanged="ProgressSlider_ValueChanged"/>
+        <Slider x:Name="ProgressSlider" Grid.Row="1" Minimum="0" Maximum="100" Value="0" Margin="0,0,0,8"
+                IsEnabled="False" ValueChanged="ProgressSlider_ValueChanged" />
 
         <!-- 时间显示和按钮 -->
         <Grid Grid.Row="2" Margin="0,0,0,8">
-             
-            <TextBlock x:Name="CurrentTimeText" Grid.Column="0" Text="0:00" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="0,0,8,0"/>
-            <HyperlinkButton x:Name="PlayPauseButton" HorizontalAlignment="Center" VerticalAlignment="Center" Click="PlayPauseButton_Click" Width="28"  Height="28" Padding="0" Margin="0,0,8,0">
-                <FontIcon x:Name="PlayPauseIcon" Glyph="&#xE102;" FontSize="12" Foreground="{ThemeResource AccentAAFillColorDefaultBrush}"/>
+
+            <TextBlock x:Name="CurrentTimeText" Grid.Column="0" Text="0:00" HorizontalAlignment="Left"
+                       VerticalAlignment="Center" Margin="0,0,8,0" />
+            <HyperlinkButton x:Name="PlayPauseButton" HorizontalAlignment="Center" VerticalAlignment="Center"
+                             Click="PlayPauseButton_Click" Width="28" Height="28" Padding="0" Margin="0,0,8,0">
+                <FontIcon x:Name="PlayPauseIcon" Glyph="&#xE102;" FontSize="12"
+                          Foreground="{ThemeResource AccentAAFillColorDefaultBrush}" />
             </HyperlinkButton>
-            <TextBlock x:Name="TotalTimeText"   Text="0:00" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,8,0"/>
+            <TextBlock x:Name="TotalTimeText" Text="0:00" HorizontalAlignment="Right" VerticalAlignment="Center"
+                       Margin="0,0,8,0" />
         </Grid>
-        <ProgressBar x:Name="LoadingIndicator" Grid.Row="3" IsIndeterminate="True" Visibility="Collapsed"></ProgressBar>
+        <ProgressBar x:Name="LoadingIndicator" Grid.Row="3" IsIndeterminate="True" Visibility="Collapsed" />
         <!-- 错误信息 -->
         <TextBlock x:Name="ErrorTextBlock"
-               Grid.Row="3"
-               Foreground="Red"
-               FontSize="12"
-               Visibility="Collapsed"
-               TextWrapping="Wrap"/>
+                   Grid.Row="3"
+                   Foreground="Red"
+                   FontSize="12"
+                   Visibility="Collapsed"
+                   TextWrapping="Wrap" />
     </Grid>
 </UserControl>

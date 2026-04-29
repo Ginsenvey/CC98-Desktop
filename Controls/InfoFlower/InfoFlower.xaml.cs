@@ -10,20 +10,50 @@ namespace CC98.Controls.InfoFlower;
 
 public sealed partial class InfoFlower : UserControl
 {
+    public static readonly DependencyProperty TextProperty =
+        DependencyProperty.Register(
+            "Text",
+            typeof(string),
+            typeof(InfoFlower),
+            new(string.Empty, OnTextChanged));
+
+    public static readonly DependencyProperty GlyphProperty =
+        DependencyProperty.Register(
+            "Glyph",
+            typeof(string),
+            typeof(InfoFlower),
+            new(string.Empty, OnGlyphChanged));
+
     public InfoFlower()
     {
         InitializeComponent();
     }
-    public string GetGlyphFromStatus(FlowStatus status)=>status switch
-    {
-        FlowStatus.Warning => "\uE7BA",
-        FlowStatus.Success => "\uE930",
-        FlowStatus.Fail => "\uEA39",
-        FlowStatus.Info => "\uE946",
-        _ => "\uE779",
-    };
 
-    public void Play(string glyph,string message)
+    public string Text
+    {
+        get => (string)GetValue(TextProperty);
+        set => SetValue(TextProperty, value);
+    }
+
+    public string Glygh
+    {
+        get => (string)GetValue(GlyphProperty);
+        set => SetValue(GlyphProperty, value);
+    }
+
+    public string GetGlyphFromStatus(FlowStatus status)
+    {
+        return status switch
+        {
+            FlowStatus.Warning => "\uE7BA",
+            FlowStatus.Success => "\uE930",
+            FlowStatus.Fail => "\uEA39",
+            FlowStatus.Info => "\uE946",
+            _ => "\uE779"
+        };
+    }
+
+    public void Play(string glyph, string message)
     {
         FlowIcon.Glyph = glyph;
         FlowInfo.Text = message;
@@ -33,6 +63,7 @@ public sealed partial class InfoFlower : UserControl
         FlowerAnimation.Begin();
         FlowerAnimation.Completed += OnAnimationCompleted;
     }
+
     public void Play(FlowStatus status, string message)
     {
         FlowIcon.Glyph = GetGlyphFromStatus(status);
@@ -43,6 +74,7 @@ public sealed partial class InfoFlower : UserControl
         FlowerAnimation.Begin();
         FlowerAnimation.Completed += OnAnimationCompleted;
     }
+
     private void OnAnimationCompleted(object sender, object e)
     {
         Flower.Visibility = Visibility.Collapsed;
@@ -53,34 +85,6 @@ public sealed partial class InfoFlower : UserControl
         AnimationCompleted?.Invoke(this, EventArgs.Empty);
     }
 
-   
-    
-
-    
-    public static readonly DependencyProperty TextProperty =
-        DependencyProperty.Register(
-            "Text",
-            typeof(string),
-            typeof(InfoFlower),
-            new(string.Empty, OnTextChanged));
-
-    public string Text
-    {
-        get => (string)GetValue(TextProperty);
-        set => SetValue(TextProperty, value);
-    }
-    public static readonly DependencyProperty GlyphProperty =
-        DependencyProperty.Register(
-            "Glyph",
-            typeof(string),
-            typeof(InfoFlower),
-            new(string.Empty, OnGlyphChanged));
-
-    public string Glygh
-    {
-        get => (string)GetValue(GlyphProperty);
-        set => SetValue(GlyphProperty, value);
-    }
     private static void OnTextChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
     {
         var control = (InfoFlower)d;
@@ -90,19 +94,16 @@ public sealed partial class InfoFlower : UserControl
 
             // 根据文本内容调整可见性
             control.FlowInfo.Visibility =
-                string.IsNullOrEmpty((string)e.NewValue) ?
-                Visibility.Collapsed :
-                Visibility.Visible;
+                string.IsNullOrEmpty((string)e.NewValue) ? Visibility.Collapsed : Visibility.Visible;
         }
     }
+
     private static void OnGlyphChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
     {
         var control = (InfoFlower)d;
-        if (control.FlowIcon!= null)
-        {
-            control.FlowIcon.Glyph = (string)e.NewValue;
-        }
+        if (control.FlowIcon != null) control.FlowIcon.Glyph = (string)e.NewValue;
     }
+
     // 动画完成事件
     public event EventHandler AnimationCompleted;
 }

@@ -1,30 +1,27 @@
-﻿using Microsoft.UI.Xaml;
-using Microsoft.Windows.AppNotifications;
-using Microsoft.Windows.AppNotifications.Builder;
-
-using System;
+﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
-
 using Windows.Storage;
+using Microsoft.UI.Xaml;
+using Microsoft.Windows.AppNotifications;
+using Microsoft.Windows.AppNotifications.Builder;
 
 namespace CC98.Kernel.Network;
 
 /// <summary>
-/// 协调器类，确保令牌刷新操作的线程安全和单次执行。
+///     协调器类，确保令牌刷新操作的线程安全和单次执行。
 /// </summary>
 public sealed class Coordinator
 {
     /// <summary>
-    /// 受保护的构造方法。
+    ///     受保护的构造方法。
     /// </summary>
     private Coordinator()
     {
-
     }
 
     /// <summary>
-    /// 对象的唯一实例。
+    ///     对象的唯一实例。
     /// </summary>
     public static Coordinator Instance { get; } = new();
 
@@ -32,19 +29,19 @@ public sealed class Coordinator
     private Lazy<Task<bool>>? RefreshTask { get; set; }
 
     /// <summary>
-    /// 用于协调刷新的锁对象。
+    ///     用于协调刷新的锁对象。
     /// </summary>
     private Lock Lock { get; } = new();
 
     /// <summary>
-    /// 执行刷新的核心方法。
+    ///     执行刷新的核心方法。
     /// </summary>
     /// <returns>表示异步操作的任务。操作结果表示刷新是否成功。</returns>
-    public async Task<bool> SilentAuth()
+    private async Task<bool> SilentAuthAsync(CancellationToken cancellationToken = default)
     {
         try
         {
-            var r = await LoginService.GetRefreshTokenAsync();
+            var r = await LoginService.GetRefreshTokenAsync(cancellationToken);
             if (r == "1")
             {
                 return true;
@@ -55,9 +52,9 @@ public sealed class Coordinator
                 //触发此处未必是令牌过期，也可能是其他登录失败的情况。
                 ApplicationData.Current.LocalSettings.Values["IsActive"] = 0;
                 var notification = new AppNotificationBuilder()
-                .AddText("登录过期")
-                .AddText("请重新登录。")
-                .BuildNotification();
+                    .AddText("登录过期")
+                    .AddText("请重新登录。")
+                    .BuildNotification();
                 AppNotificationManager.Default.Show(notification);
                 Application.Current.Exit();
                 return false;
@@ -83,10 +80,7 @@ public sealed class Coordinator
         lock (Lock)
         {
             // 如果当前没有进行中的刷新任务，创建新任务
-            if (RefreshTask == null || RefreshTask.Value.IsCompleted)
-            {
-                RefreshTask = new(() => SilentAuth());
-            }
+            if (RefreshTask == null || RefreshTask.Value.IsCompleted) RefreshTask = new(() => SilentAuthAsync());
 
             return RefreshTask.Value;
         }

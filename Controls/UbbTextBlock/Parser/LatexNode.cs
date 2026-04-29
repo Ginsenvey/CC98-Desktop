@@ -1,6 +1,7 @@
 ﻿namespace CC98.Controls.UbbTextBlock.Parser;
+
 /// <summary>
-/// 为行内数学公式提供特别的类型
+///     为行内数学公式提供特别的类型
 /// </summary>
 /// <param name="latex"></param>
 /// <param name="isBlock"></param>

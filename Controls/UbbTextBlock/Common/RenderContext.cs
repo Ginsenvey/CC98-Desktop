@@ -10,74 +10,57 @@ using Microsoft.UI.Xaml.Documents;
 using Microsoft.UI.Xaml.Media;
 
 namespace CC98.Controls.UbbTextBlock.Common;
+
 public class RenderContext
 {
+    // 临时存储当前正在构建的内联容器
+    private Inline CurrentInline;
+    public Stack<Inline> InlineStack = new();
     public UbbTextBlock Control { get; set; }
+
     public Panel Container { get; set; }
+
     // Use RichTextBlock to support InlineUIContainer children
     public RichTextBlock CurrentRichTextBlock { get; set; }
     private Paragraph CurrentParagraph { get; set; }
 
     public Stack<Panel> PanelStack { get; set; } = new();
-    public Stack<Inline> InlineStack = new();
-    // 临时存储当前正在构建的内联容器
-    private Inline CurrentInline;
     public int QuoteNestingLevel { get; set; }
     public Dictionary<string, object> Properties { get; set; } = [];
 
     public void RenderNode(UbbNode node)
     {
         if (UbbTextBlock.RenderStrategies.TryGetValue(node.Type, out var strategy))
-        {
             strategy.Render(node, this);
-        }
         else
-        {
             //当未匹配到渲染策略时，忽略此层级并渲染子节点
             foreach (var child in node.Children)
-            {
                 RenderNode(child);
-            }
-        }
     }
+
     /// <summary>
-    /// 向当前文本块或内联容器添加内联元素。
+    ///     向当前文本块或内联容器添加内联元素。
     /// </summary>
     /// <remarks>
-    /// 此方法会续上接当前正在构建的内联容器（如 Bold、Italic 等）。
+    ///     此方法会续上接当前正在构建的内联容器（如 Bold、Italic 等）。
     /// </remarks>
     /// <param name="inline"></param>
     public void AddInline(Inline inline)
     {
         //如果还没有文本块，就新建一个
-        if (CurrentParagraph == null || CurrentRichTextBlock == null)
-        {
-            StartNewTextBlock();
-        }
+        if (CurrentParagraph == null || CurrentRichTextBlock == null) StartNewTextBlock();
         //如果有当前正在构建的内联容器，根据容器类型添加到其中
         if (CurrentInline != null)
         {
             if (CurrentInline is Span span)
-            {
                 span.Inlines.Add(inline);
-            }
             else if (CurrentInline is Bold bold)
-            {
                 bold.Inlines.Add(inline);
-            }
             else if (CurrentInline is Italic italic)
-            {
                 italic.Inlines.Add(inline);
-            }
             else if (CurrentInline is Underline underline)
-            {
                 underline.Inlines.Add(inline);
-            }
-            else if (CurrentInline is Hyperlink hyperlink)
-            {
-                hyperlink.Inlines.Add(inline);
-            }
-
+            else if (CurrentInline is Hyperlink hyperlink) hyperlink.Inlines.Add(inline);
         }
         else
         {
@@ -85,34 +68,26 @@ public class RenderContext
             CurrentParagraph?.Inlines.Add(inline);
         }
     }
+
     /// <summary>
-    /// 开始构建新的内联容器（如 Bold、Italic 等）
+    ///     开始构建新的内联容器（如 Bold、Italic 等）
     /// </summary>
     /// <param name="container"></param>
     public void BeginInlineContainer(Inline container)
     {
-        if (CurrentParagraph == null || CurrentRichTextBlock == null)
-        {
-            StartNewTextBlock();
-        }
-        if (CurrentInline != null)
-        {
-            InlineStack.Push(CurrentInline);
-        }
+        if (CurrentParagraph == null || CurrentRichTextBlock == null) StartNewTextBlock();
+        if (CurrentInline != null) InlineStack.Push(CurrentInline);
         CurrentInline = container;
     }
 
     /// <summary>
-    ///结束当前内联容器的构建
+    ///     结束当前内联容器的构建
     /// </summary>
     public void EndInlineContainer()
     {
-        if (CurrentInline == null)
-        {
-            return;
-        }
+        if (CurrentInline == null) return;
         var completedInline = CurrentInline;
-        if (InlineStack.Count >0)
+        if (InlineStack.Count > 0)
         {
             // 从栈中取出父容器
             var parentContainer = InlineStack.Pop();
@@ -159,6 +134,7 @@ public class RenderContext
                 CurrentParagraph = new();
                 CurrentRichTextBlock.Blocks.Add(CurrentParagraph);
             }
+
             CurrentParagraph?.Inlines.Add(completedInline);
             CurrentInline = null;
         }
@@ -167,31 +143,27 @@ public class RenderContext
 
     public void AddToContainer(UIElement element)
     {
-        while (CurrentInline != null)
-        {
-            EndInlineContainer();
-        }
+        while (CurrentInline != null) EndInlineContainer();
         FinalizeCurrentTextBlock();
         Container.Children.Add(element);
     }
+
     //结束当前文本块的构建
     public void FinalizeCurrentTextBlock()
     {
-        while (CurrentInline != null)
-        {
-            EndInlineContainer();
-        }
+        while (CurrentInline != null) EndInlineContainer();
         if (CurrentRichTextBlock != null && CurrentParagraph != null && CurrentParagraph.Inlines.Count != 0)
         {
             Container.Children.Add(CurrentRichTextBlock);
             CurrentRichTextBlock = null;
             CurrentParagraph = null;
         }
+
         //清理栈
         InlineStack.Clear();
         CurrentInline = null;
     }
-    
+
     public void StartNewTextBlock()
     {
         FinalizeCurrentTextBlock();
@@ -201,13 +173,15 @@ public class RenderContext
             FontSize = Control.FontSize,
             Foreground = Control.Foreground ?? new SolidColorBrush(Colors.Black),
             TextWrapping = TextWrapping.Wrap,
-            ContextFlyout= CreateCustomContextMenu()
+            ContextFlyout = CreateCustomContextMenu()
         };
 
         CurrentParagraph = new();
         CurrentRichTextBlock.Blocks.Add(CurrentParagraph);
     }
+
     #region 自定义右键菜单
+
     private MenuFlyout CreateCustomContextMenu()
     {
         var menuFlyout = new MenuFlyout();
@@ -219,24 +193,24 @@ public class RenderContext
             Icon = new SymbolIcon(Symbol.Copy)
         };
         var separator1 = new AppBarSeparator();
-        var selectAllItem = new AppBarButton 
+        var selectAllItem = new AppBarButton
         {
-            Label="全选",
+            Label = "全选",
             Icon = new SymbolIcon(Symbol.SelectAll)
         };
         var separator2 = new AppBarSeparator();
         var searchItem = new AppBarButton
         {
             Label = "搜索",
-            Icon = new FluentIcons.WinUI.SymbolIcon() { Symbol= FluentIcons.Common.Symbol.GlobeSearch }
+            Icon = new FluentIcons.WinUI.SymbolIcon { Symbol = FluentIcons.Common.Symbol.GlobeSearch }
         };
         var browseItem = new MenuFlyoutItem
         {
-            Text="在站内打开链接",
-            Icon= new FluentIcons.WinUI.SymbolIcon() { Symbol = FluentIcons.Common.Symbol.WindowNew }
+            Text = "在站内打开链接",
+            Icon = new FluentIcons.WinUI.SymbolIcon { Symbol = FluentIcons.Common.Symbol.WindowNew }
         };
-        
-        
+
+
         MenuFlyoutAttach.SetAutoCloseByClickOnSecondaryMenuItems(menuFlyout, true);
 
         // 设置附加属性 SecondaryMenuPlacement
@@ -268,55 +242,41 @@ public class RenderContext
             dataPackage.SetText(selectedText);
             Clipboard.SetContent(dataPackage);
         }
-        
     }
+
     private string GetSelectedText()
     {
         var selectedText = new StringBuilder();
 
         // 检查当前正在编辑的 RichTextBlock
         if (CurrentRichTextBlock != null && !string.IsNullOrEmpty(CurrentRichTextBlock.SelectedText))
-        {
             selectedText.Append(CurrentRichTextBlock.SelectedText);
-        }
 
         // 检查容器中已完成的 RichTextBlock
         if (Container != null)
-        {
             foreach (var child in Container.Children)
-            {
                 if (child is RichTextBlock richTextBlock && richTextBlock != CurrentRichTextBlock)
-                {
                     if (!string.IsNullOrEmpty(richTextBlock.SelectedText))
                     {
-                        if (selectedText.Length > 0)
-                        {
-                            selectedText.AppendLine(); // 不同块之间添加换行
-                        }
+                        if (selectedText.Length > 0) selectedText.AppendLine(); // 不同块之间添加换行
                         selectedText.Append(richTextBlock.SelectedText);
                     }
-                }
-            }
-        }
 
         return selectedText.ToString();
     }
+
     private void SelectAll()
     {
         if (Container == null) return;
 
         // 对每个 RichTextBlock 执行全选
         foreach (var child in Container.Children)
-        {
             if (child is RichTextBlock richTextBlock)
-            {
                 richTextBlock.SelectAll();
-            }
-        }
     }
 
     /// <summary>
-    /// 获取当前选中的文本（对外暴露的方法）
+    ///     获取当前选中的文本（对外暴露的方法）
     /// </summary>
     public string GetSelectedTextExternal()
     {
@@ -324,11 +284,12 @@ public class RenderContext
     }
 
     /// <summary>
-    /// 全选所有文本（对外暴露的方法）
+    ///     全选所有文本（对外暴露的方法）
     /// </summary>
     public void SelectAllExternal()
     {
         SelectAll();
     }
+
     #endregion
 }

@@ -1,4 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
+
 <UserControl
     x:Class="CC98.Controls.FileCard.FileCard"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
@@ -8,19 +9,23 @@
     xmlns:ic="using:FluentIcons.WinUI"
     mc:Ignorable="d">
 
-    <HyperlinkButton x:Name="Root"  MaxWidth="270" Height="84" Padding="15,6,15,6" Background="{ThemeResource CardGradient1Brush}" Click="Root_Click" ToolTipService.ToolTip="点击下载附件">
+    <HyperlinkButton x:Name="Root" MaxWidth="270" Height="84" Padding="15,6,15,6"
+                     Background="{ThemeResource CardGradient1Brush}" Click="Root_Click" ToolTipService.ToolTip="点击下载附件">
         <Grid RowSpacing="16" ColumnSpacing="16" HorizontalAlignment="Stretch">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="42"/>
-                <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="42" />
+                <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
             <Grid.RowDefinitions>
-                <RowDefinition Height="*"/>
-                <RowDefinition Height="*"/>
+                <RowDefinition Height="*" />
+                <RowDefinition Height="*" />
             </Grid.RowDefinitions>
-            <ic:SymbolIcon Grid.Row="0" Grid.RowSpan="2" Grid.Column="0" x:Name="TypeIcon" Symbol="Document" IconVariant="Regular" FontSize="28"></ic:SymbolIcon>
-            <TextBlock x:Name="FileNameBox" Grid.Column="1" Grid.Row="0" Text="CC98文件"  TextWrapping="Wrap" FontFamily="{ThemeResource HarmonySansBold}"/>
-            <TextBlock x:Name="ExtensionNameBox" Grid.Column="1" Grid.Row="1" FontSize="13" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="未知类型" HorizontalAlignment="Right"/>
+            <ic:SymbolIcon Grid.Row="0" Grid.RowSpan="2" Grid.Column="0" x:Name="TypeIcon" Symbol="Document"
+                           IconVariant="Regular" FontSize="28" />
+            <TextBlock x:Name="FileNameBox" Grid.Column="1" Grid.Row="0" Text="CC98文件" TextWrapping="Wrap"
+                       FontFamily="{ThemeResource HarmonySansBold}" />
+            <TextBlock x:Name="ExtensionNameBox" Grid.Column="1" Grid.Row="1" FontSize="13"
+                       Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="未知类型" HorizontalAlignment="Right" />
         </Grid>
     </HyperlinkButton>
 </UserControl>

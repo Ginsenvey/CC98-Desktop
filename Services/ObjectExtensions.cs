@@ -15,7 +15,6 @@ public static class ObjectExtensions
 
         // 如果可以直接转换
         if (obj is IConvertible convertible)
-        {
             try
             {
                 return convertible.ToInt32(null);
@@ -24,7 +23,6 @@ public static class ObjectExtensions
             {
                 // 继续尝试其他方法
             }
-        }
 
         // 尝试解析字符串
         return int.TryParse(obj.ToString(), out var result) ? result : null;
@@ -32,6 +30,6 @@ public static class ObjectExtensions
 
     public static int ToInt(this object obj, int defaultValue = 0)
     {
-        return ToNullableInt(obj) ?? defaultValue;
+        return obj.ToNullableInt() ?? defaultValue;
     }
 }

@@ -14,9 +14,11 @@ public sealed partial class SmartImage : UserControl
     public static readonly DependencyProperty SourceProperty =
         DependencyProperty.Register(nameof(Source), typeof(object), typeof(SmartImage),
             new(null, OnSourceChanged));
+
     public static readonly DependencyProperty ImageSourceProperty =
         DependencyProperty.Register(nameof(ImageSource), typeof(ImageSource), typeof(SmartImage),
             new(null));
+
     public static readonly DependencyProperty StretchProperty =
         DependencyProperty.Register(
             nameof(Stretch),
@@ -31,16 +33,24 @@ public sealed partial class SmartImage : UserControl
             typeof(SmartImage),
             new(true));
 
+
+    public SmartImage()
+    {
+        InitializeComponent();
+    }
+
     public object Source
     {
         get => GetValue(SourceProperty);
         set => SetValue(SourceProperty, value);
     }
+
     public ImageSource ImageSource
     {
         get => (ImageSource)GetValue(ImageSourceProperty);
         set => SetValue(ImageSourceProperty, value);
     }
+
     public Stretch Stretch
     {
         get => (Stretch)GetValue(StretchProperty);
@@ -53,28 +63,18 @@ public sealed partial class SmartImage : UserControl
         set => SetValue(UseWebVpnProperty, value);
     }
 
-        
-
-    public SmartImage()
-    {
-        InitializeComponent();
-    }
-
     private static void OnSourceChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
     {
-        if (d is SmartImage control)
-        {
-            control.LoadImage();  
-        }
+        if (d is SmartImage control) control.LoadImage();
     }
 
     private async void LoadImage()
     {
-        if (Source == null) 
+        if (Source == null)
         {
             InnerImage.Source = null;
             return;
-        } 
+        }
 
         try
         {
@@ -84,7 +84,7 @@ public sealed partial class SmartImage : UserControl
             switch (Source)
             {
                 case string url when UrlEx.IsWebUrl(url):
-                    InnerImage.Source= await UrlEx.LoadWebImageAsync(url);
+                    InnerImage.Source = await UrlEx.LoadWebImageAsync(url);
                     ImageSource = InnerImage.Source;
                     break;
 
@@ -107,12 +107,11 @@ public sealed partial class SmartImage : UserControl
                     InnerImage.Source = imageSource;
                     ImageSource = imageSource;
                     break;
-
             }
         }
-        catch 
+        catch
         {
-            InnerImage.Source =null;
+            InnerImage.Source = null;
         }
         finally
         {

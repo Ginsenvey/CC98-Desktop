@@ -24,9 +24,7 @@ public static class DispatcherQueueExtensions
                     tcs.TrySetException(ex);
                 }
             }))
-        {
             tcs.TrySetException(new InvalidOperationException("Failed to enqueue the action"));
-        }
 
         await tcs.Task;
     }

@@ -5,31 +5,33 @@ using System.Text;
 using Duende.IdentityModel.Client;
 
 namespace CC98.Kernel;
+
 /// <summary>
-/// 用于PKCE的OpenID认证流程生成
+///     用于PKCE的OpenID认证流程生成
 /// </summary>
-public class OpenId()
+public class OpenId
 {
-    public (string url,string veri,string state) GenerateAuthLoop()
+    public (string url, string veri, string state) GenerateAuthLoop()
     {
         var (verifier, challenge) = GeneratePkce();
         var state = GenerateState();
         var endpoint = ApiEndpoints.OpenId.GetAuthorizeUrl();
-        var request = new RequestUrl(endpoint);//终结点
+        var request = new RequestUrl(endpoint); //终结点
         var url = request.CreateAuthorizeUrl(
-            responseType: "code",//授权码模式
+            responseType: "code", //授权码模式
             scope: "openid profile cc98-api cc98-card.all offline_access",
-            redirectUri: "cc98://callback",//本地应用回环
+            redirectUri: "cc98://callback", //本地应用回环
             nonce: GenerateNonce(),
             state: state,
-            responseMode: "query",//回环信息位于查询参数
+            responseMode: "query", //回环信息位于查询参数
             clientId: "d47a2448-779f-42f3-164f-08dd8896bbe5",
-            codeChallenge:challenge,
-            codeChallengeMethod:"S256"     
+            codeChallenge: challenge,
+            codeChallengeMethod: "S256"
         );
-        return (url,verifier,state);
+        return (url, verifier, state);
     }
-    static string GenerateNonce()
+
+    private static string GenerateNonce()
     {
         // 第一部分：高精度时间戳 (UTC 100ns 精度)
         var timestamp = DateTime.UtcNow.Ticks;
@@ -40,6 +42,7 @@ public class OpenId()
         {
             rng.GetBytes(randomBytes);
         }
+
         var randomPart = UrlSafeBase64(randomBytes);
 
         // 第三部分：数字签名 (HMAC-SHA256)
@@ -51,7 +54,7 @@ public class OpenId()
         return $"{timestamp}.{randomPart}.{UrlSafeBase64(signature)}";
     }
 
-    static string GenerateState()
+    private static string GenerateState()
     {
         // 第一部分：随机数 (24字节)
         var randomBytes = new byte[24];
@@ -74,8 +77,8 @@ public class OpenId()
         );
     }
 
-    
-    static string UrlSafeBase64(byte[] data)
+
+    private static string UrlSafeBase64(byte[] data)
     {
         return Convert.ToBase64String(data)
             .Replace('+', '-')
@@ -83,7 +86,7 @@ public class OpenId()
             .TrimEnd('=');
     }
 
-    static byte[] CombineArrays(params byte[][] arrays)
+    private static byte[] CombineArrays(params byte[][] arrays)
     {
         var length = 0;
         foreach (var array in arrays) length += array.Length;
@@ -96,8 +99,10 @@ public class OpenId()
             Buffer.BlockCopy(array, 0, result, offset, array.Length);
             offset += array.Length;
         }
+
         return result;
     }
+
     private (string Verifier, string Challenge) GeneratePkce()
     {
         const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~";
@@ -107,10 +112,8 @@ public class OpenId()
 
         using var sha256 = SHA256.Create();
         var challengeBytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(verifier));
-        var challenge =UrlSafeBase64(challengeBytes);
+        var challenge = UrlSafeBase64(challengeBytes);
 
         return (verifier, challenge);
     }
-    
 }
-

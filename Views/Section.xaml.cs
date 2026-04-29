@@ -14,19 +14,21 @@ using Microsoft.UI.Xaml.Controls;
 namespace CC98.Views;
 
 /// <summary>
-/// An empty page that can be used on its own or navigated to within a Frame.
+///     An empty page that can be used on its own or navigated to within a Frame.
 /// </summary>
 public sealed partial class Section : Page
 {
-    public ApplicationDataContainer Set=ApplicationData.Current.LocalSettings;
-    public ObservableCollection<SectionInfo> AllSections=[];
+    public ObservableCollection<SectionInfo> AllSections = [];
     public BoardSectionManager Manager = BoardSectionManager.Instance;
+    public ApplicationDataContainer Set = ApplicationData.Current.LocalSettings;
+
     public Section()
     {
         InitializeComponent();
         InitializeBoardSectionsAsync();
         LoadSet();
     }
+
     private void LoadSet()
     {
         var theme = ValidationHelper.GetValue(Set, "ThemePic");
@@ -35,33 +37,30 @@ public sealed partial class Section : Page
             //ThemePresenter.Source = new BitmapImage(new Uri(_Theme));
         }
     }
+
     private async void InitializeBoardSectionsAsync()
     {
         // 检查缓存是否存在
-        var hasCache =  Manager.HasValidCacheAsync();
+        var hasCache = Manager.HasValidCacheAsync();
 
         if (!hasCache)
-        {
             // 没有缓存，立即刷新
             await Manager.RefreshFromApiAsync(ApiEndpoints.Forum.AllBoards());
-        }
         await LoadSection();
     }
 
     private void BoardButton_Click(object sender, RoutedEventArgs e)
     {
         var h = sender as HyperlinkButton;
-        var tag = h?.Tag;//当前绑定状态下，h没有DataContext.只能使用tag.
+        var tag = h?.Tag; //当前绑定状态下，h没有DataContext.只能使用tag.
         if (tag == null) return;
-        Frame.Navigate(typeof(Board),tag.ToInt()); 
+        Frame.Navigate(typeof(Board), tag.ToInt());
     }
+
     private async Task LoadSection()
     {
         var data = await Manager.LoadFromCacheAsync();
-        if (data != null)
-        {
-            AllSections.AddRange(data);
-        }
+        if (data != null) AllSections.AddRange(data);
     }
 
     private async void RefreshSection_Click(object sender, RoutedEventArgs e)
@@ -69,9 +68,7 @@ public sealed partial class Section : Page
         var success = await Manager.RefreshFromApiAsync(ApiEndpoints.Forum.AllBoards());
 
         if (success)
-        {
             // 刷新成功后重新加载数据
             await LoadSection();
-        }
     }
 }

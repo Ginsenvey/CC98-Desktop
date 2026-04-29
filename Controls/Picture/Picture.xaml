@@ -1,4 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
+
 <UserControl
     x:Class="CC98.Controls.Picture.Picture"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
@@ -10,8 +11,9 @@
     mc:Ignorable="d">
 
     <Grid>
-        <Image x:Name="Viewer" Stretch="{x:Bind Stretch, Mode=OneWay}" ToolTipService.ToolTip="{x:Bind Src,Mode=OneWay}"/>
-        <lab:Shimmer x:Name="shimmer" Width="400" Height="240" IsActive="True"></lab:Shimmer>
-        <Button x:Name="DisplayButton" Content="点击显示图片" Visibility="Collapsed" Click="DisplayButton_Click"></Button>
+        <Image x:Name="Viewer" Stretch="{x:Bind Stretch, Mode=OneWay}"
+               ToolTipService.ToolTip="{x:Bind Src,Mode=OneWay}" />
+        <lab:Shimmer x:Name="shimmer" Width="400" Height="240" IsActive="True" />
+        <Button x:Name="DisplayButton" Content="点击显示图片" Visibility="Collapsed" Click="DisplayButton_Click" />
     </Grid>
 </UserControl>

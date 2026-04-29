@@ -6,18 +6,15 @@ namespace CC98.Controls.UbbTextBlock.Parser;
 [DebuggerDisplay("{DebuggerDisplay,nq}")]
 public abstract class UbbNode
 {
-    public virtual UbbNodeType Type { get; protected init; }
     private readonly List<UbbNode> _children = [];
+    public virtual UbbNodeType Type { get; protected init; }
     public IReadOnlyList<UbbNode> Children => _children;
+
     public UbbNode Parent { get; set; } // 移除 init 以便在 AddChild 中赋值
+
     // 供调试器使用的属性
     protected virtual string DebuggerDisplay =>
         Children.Count > 0 ? $"[{Type}] (Children: {Children.Count})" : $"[{Type}]";
-    public void AddChild(UbbNode child)
-    {
-        child.Parent = this;
-        _children.Add(child);
-    }
 
     public UbbNode? PreviousSibling
     {
@@ -53,8 +50,16 @@ public abstract class UbbNode
         }
     }
 
+    public UbbNode? FirstChild => _children.Count > 0 ? _children[0] : null;
+
+    public void AddChild(UbbNode child)
+    {
+        child.Parent = this;
+        _children.Add(child);
+    }
+
     /// <summary>
-    /// 取得所有后代节点中指定类型的节点列表。可以选择是否包含当前节点本身。
+    ///     取得所有后代节点中指定类型的节点列表。可以选择是否包含当前节点本身。
     /// </summary>
     /// <param name="nodeType"></param>
     /// <param name="includeSelf"></param>
@@ -63,10 +68,7 @@ public abstract class UbbNode
     {
         var result = new List<UbbNode>();
 
-        if (includeSelf && Type == nodeType)
-        {
-            result.Add(this);
-        }
+        if (includeSelf && Type == nodeType) result.Add(this);
 
         CollectDescendantsByType(this, nodeType, result);
 
@@ -77,19 +79,9 @@ public abstract class UbbNode
     {
         foreach (var child in node._children)
         {
-            if (child.Type == targetType)
-            {
-                result.Add(child);
-            }
+            if (child.Type == targetType) result.Add(child);
 
             CollectDescendantsByType(child, targetType, result);
-        }
-    }
-    public UbbNode? FirstChild
-    {
-        get
-        {
-            return _children.Count > 0 ? _children[0] : null;
         }
     }
 }

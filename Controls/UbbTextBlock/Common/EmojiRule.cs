@@ -4,15 +4,12 @@ using System.Linq;
 using System.Text.RegularExpressions;
 
 namespace CC98.Controls.UbbTextBlock.Common;
+
 /// <summary>
-/// 对于其他使用UBB的论坛，修改或添加表情规则请在此处进行。
+///     对于其他使用UBB的论坛，修改或添加表情规则请在此处进行。
 /// </summary>
 public class EmoticonRule
 {
-    public Regex Pattern { get; set; }
-    public string UrlTemplate { get; set; }
-    public string Name { get; set; } // 可选：表情组名称
-
     public EmoticonRule(string pattern, string urlTemplate, string name = null)
     {
         Pattern = new($"^{pattern}$", RegexOptions.Compiled | RegexOptions.IgnoreCase);
@@ -20,8 +17,19 @@ public class EmoticonRule
         Name = name;
     }
 
-    public bool IsMatch(string tagName) => Pattern.IsMatch(tagName);
-    public string GetUrl(string tagName) => Pattern.Replace(tagName, UrlTemplate);
+    public Regex Pattern { get; set; }
+    public string UrlTemplate { get; set; }
+    public string Name { get; set; } // 可选：表情组名称
+
+    public bool IsMatch(string tagName)
+    {
+        return Pattern.IsMatch(tagName);
+    }
+
+    public string GetUrl(string tagName)
+    {
+        return Pattern.Replace(tagName, UrlTemplate);
+    }
 }
 
 // 表情规则管理器
@@ -57,12 +65,8 @@ public static class EmoticonRules
 
         // 按照规则顺序匹配，返回第一个匹配的URL
         foreach (var rule in Rules)
-        {
             if (rule.IsMatch(tagName))
-            {
                 return rule.GetUrl(tagName);
-            }
-        }
 
         return null;
     }
@@ -73,12 +77,8 @@ public static class EmoticonRules
             return null;
 
         foreach (var rule in Rules)
-        {
             if (rule.IsMatch(tagName))
-            {
                 return (rule.GetUrl(tagName), rule.Name);
-            }
-        }
 
         return null;
     }
@@ -95,11 +95,17 @@ public static class EmoticonRules
 
             // 简单提取字母前缀（对于前三个字符）
             if (pattern.StartsWith(@"ac"))
+            {
                 prefixes.Add("ac");
+            }
             else if (pattern.StartsWith(@"em"))
+            {
                 prefixes.Add("em");
+            }
             else if (pattern.StartsWith(@"cc98"))
+            {
                 prefixes.Add("cc98");
+            }
             else if (pattern.StartsWith(@"([a-zA-Z]{2})"))
             {
                 prefixes.Add("tb"); // 贴吧

@@ -1,6 +1,6 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
-using System;
+﻿using System;
 using System.Text.Json.Serialization;
+using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace CC98.Objects;
 
@@ -19,8 +19,7 @@ public partial class Reply : ObservableObject
         set => SetProperty(ref field, value);
     }
 
-    [ObservableProperty]
-    public partial int? UserId { get; set; }
+    [ObservableProperty] public partial int? UserId { get; set; }
 
     public string Content
     {
@@ -28,33 +27,23 @@ public partial class Reply : ObservableObject
         set => SetProperty(ref field, value);
     }
 
-    [ObservableProperty]
-    public partial int LikeCount { get; set; }
+    [ObservableProperty] public partial int LikeCount { get; set; }
 
-    [ObservableProperty]
-    public partial int DislikeCount { get; set; }
+    [ObservableProperty] public partial int DislikeCount { get; set; }
 
-    [ObservableProperty]
-    public partial int Id { get; set; }
+    [ObservableProperty] public partial int Id { get; set; }
 
-    [ObservableProperty]
-    public partial int LikeState { get; set; }
+    [ObservableProperty] public partial int LikeState { get; set; }
 
-    [ObservableProperty]
-    public partial int Floor { get; set; }
+    [ObservableProperty] public partial int Floor { get; set; }
 
-    [ObservableProperty]
-    public partial bool IsMe { get; set; }
+    [ObservableProperty] public partial bool IsMe { get; set; }
 
-    [ObservableProperty]
-    public partial int ContentType { get; set; }
+    [ObservableProperty] public partial int ContentType { get; set; }
 
-    [ObservableProperty]
-    public partial bool IsDeleted { get; set; }
+    [ObservableProperty] public partial bool IsDeleted { get; set; }
 
-    [ObservableProperty]
-    public partial bool IsAnonymous { get; set; }
+    [ObservableProperty] public partial bool IsAnonymous { get; set; }
 
-    [ObservableProperty]
-    public partial DateTime Time { get; set; }
+    [ObservableProperty] public partial DateTime Time { get; set; }
 }

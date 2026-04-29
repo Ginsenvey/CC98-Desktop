@@ -1,32 +1,25 @@
-﻿using CC98.Objects;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text;
 using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using Windows.Storage;
+using CC98.Objects;
+
 namespace CC98.Services;
+
 public class AppLog
 {
-    private readonly List<LogEntry> _logs = [];
-    private string _logDirectory;
     private readonly string _appName;
     private readonly object _lock = new();
-    private bool _isInitialized = false;
-
-    // 日志条目结构
-    public record LogEntry(
-        string Domain,
-        string Info,
-        string Message,
-        DateTime Time
-    );
+    private readonly List<LogEntry> _logs = [];
 
     /// <summary>
-    /// 创建AppLog实例
+    ///     创建AppLog实例
     /// </summary>
     /// <param name="appName">应用名称</param>
     /// <param name="logDirectory">日志目录（为空则使用默认目录）</param>
@@ -38,15 +31,40 @@ public class AppLog
         _appName = SanitizeFileName(appName);
 
         // 设置日志目录
-        _logDirectory = string.IsNullOrWhiteSpace(logDirectory)
+        LogDirectory = string.IsNullOrWhiteSpace(logDirectory)
             ? GetDefaultLogDirectory()
             : logDirectory;
     }
 
+    // 日志条目结构
+    public record LogEntry(
+        string Domain,
+        string Info,
+        string Message,
+        DateTime Time
+    );
+
+    #region JSON 转换器（确保时间正确序列化）
+
+    public class BeijingTimeConverter : JsonConverter<DateTime>
+    {
+        public override DateTime Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+        {
+            return reader.GetDateTime();
+        }
+
+        public override void Write(Utf8JsonWriter writer, DateTime value, JsonSerializerOptions options)
+        {
+            writer.WriteStringValue(value.ToString("yyyy-MM-dd HH:mm:ss"));
+        }
+    }
+
+    #endregion
+
     #region 核心日志记录方法
 
     /// <summary>
-    /// 写入日志（异步）。禁止使用同步方法读写文件。
+    ///     写入日志（异步）。禁止使用同步方法读写文件。
     /// </summary>
     /// <param name="domain">事件发生域</param>
     /// <param name="info">事件简述</param>
@@ -54,15 +72,15 @@ public class AppLog
     public async Task WriteAsync(
         string domain,
         string info,
-        string message="")
+        string message = "")
     {
         await InitializeAsyncIfNeeded();
 
         var entry = new LogEntry(
-            Domain: domain?.Trim() ?? "Unknown",
-            Info: info?.Trim() ?? string.Empty,
-            Message: message?.Trim() ?? string.Empty,
-            Time: GetBeijingTime()
+            domain?.Trim() ?? "Unknown",
+            info?.Trim() ?? string.Empty,
+            message?.Trim() ?? string.Empty,
+            GetBeijingTime()
         );
 
         lock (_lock)
@@ -79,7 +97,7 @@ public class AppLog
 
 
     /// <summary>
-    /// 批量写入日志
+    ///     批量写入日志
     /// </summary>
     public async Task WriteBatchAsync(IEnumerable<(string Domain, string Info, string Message)> entries)
     {
@@ -91,10 +109,10 @@ public class AppLog
         foreach (var entry in entries)
         {
             var logEntry = new LogEntry(
-                Domain: entry.Domain?.Trim() ?? "Unknown",
-                Info: entry.Info?.Trim() ?? string.Empty,
-                Message: entry.Message?.Trim() ?? string.Empty,
-                Time: beijingTime
+                entry.Domain?.Trim() ?? "Unknown",
+                entry.Info?.Trim() ?? string.Empty,
+                entry.Message?.Trim() ?? string.Empty,
+                beijingTime
             );
 
             newEntries.Add(logEntry);
@@ -114,7 +132,7 @@ public class AppLog
     #region 文件存储功能
 
     /// <summary>
-    /// 保存日志到默认位置
+    ///     保存日志到默认位置
     /// </summary>
     public async Task SaveToFileAsync(string? customName = null)
     {
@@ -123,14 +141,13 @@ public class AppLog
         try
         {
             var fileName = customName ?? GetDefaultLogFileName();
-            var filePath = Path.Combine(_logDirectory, fileName);
+            var filePath = Path.Combine(LogDirectory, fileName);
 
-            var logsToSave = GetRecentLogs(maxCount: null); // 保存所有日志
+            var logsToSave = GetRecentLogs(null); // 保存所有日志
 
             var json = JsonSerialize.Serialize(logsToSave);
 
             await LocalCache.SaveJsonAsync(filePath, json, validateJson: false);
-
         }
         catch (Exception ex)
         {
@@ -140,7 +157,7 @@ public class AppLog
     }
 
     /// <summary>
-    /// 另存日志到用户桌面
+    ///     另存日志到用户桌面
     /// </summary>
     public async Task<(bool Success, string Path)> SaveToDesktopAsync(
         string? fileName = null,
@@ -196,7 +213,7 @@ public class AppLog
     }
 
     /// <summary>
-    /// 保存为纯文本格式（便于阅读）
+    ///     保存为纯文本格式（便于阅读）
     /// </summary>
     public async Task<string> SaveAsTextAsync(string? filePath = null)
     {
@@ -212,9 +229,9 @@ public class AppLog
                     $"{_appName}_日志_{DateTime.Now:yyyyMMdd_HHmmss}.txt");
             }
 
-            var recentLogs = GetRecentLogs(maxCount: null);
+            var recentLogs = GetRecentLogs(null);
 
-            using var writer = new StreamWriter(filePath, false, System.Text.Encoding.UTF8);
+            await using var writer = new StreamWriter(filePath, false, Encoding.UTF8);
 
             writer.WriteLine($"=== {_appName} 日志 ===");
             writer.WriteLine($"导出时间: {GetBeijingTime():yyyy-MM-dd HH:mm:ss}");
@@ -235,10 +252,7 @@ public class AppLog
                 foreach (var log in group.OrderBy(l => l.Time))
                 {
                     writer.WriteLine($"{log.Time:HH:mm:ss} - {log.Info}");
-                    if (!string.IsNullOrWhiteSpace(log.Message))
-                    {
-                        writer.WriteLine($"    详情: {log.Message}");
-                    }
+                    if (!string.IsNullOrWhiteSpace(log.Message)) writer.WriteLine($"    详情: {log.Message}");
                 }
 
                 writer.WriteLine();
@@ -258,7 +272,7 @@ public class AppLog
     }
 
     /// <summary>
-    /// 清理旧日志文件
+    ///     清理旧日志文件
     /// </summary>
     public async Task CleanOldFilesAsync(int daysToKeep = 30)
     {
@@ -266,7 +280,7 @@ public class AppLog
 
         try
         {
-            var logFiles = Directory.GetFiles(_logDirectory, "*.json")
+            var logFiles = Directory.GetFiles(LogDirectory, "*.json")
                 .Select(f => new FileInfo(f))
                 .Where(f => f.Name.StartsWith($"{_appName}_log_"))
                 .ToList();
@@ -275,19 +289,15 @@ public class AppLog
             var cutoffDate = DateTime.Now.AddDays(-daysToKeep);
 
             foreach (var file in logFiles)
-            {
                 if (file.LastWriteTime < cutoffDate)
                 {
                     file.Delete();
                     deletedCount++;
                 }
-            }
 
             if (deletedCount > 0)
-            {
                 await WriteAsync("AppLog", "清理旧文件",
                     $"清理了 {deletedCount} 个 {daysToKeep} 天前的日志文件");
-            }
         }
         catch (Exception ex)
         {
@@ -300,7 +310,7 @@ public class AppLog
     #region 查询与读取功能
 
     /// <summary>
-    /// 获取日志（可指定数量）
+    ///     获取日志（可指定数量）
     /// </summary>
     public List<LogEntry> GetRecentLogs(int? maxCount = null)
     {
@@ -316,7 +326,7 @@ public class AppLog
     }
 
     /// <summary>
-    /// 按域名筛选日志
+    ///     按域名筛选日志
     /// </summary>
     public List<LogEntry> GetLogsByDomain(string domain, int? maxCount = null)
     {
@@ -334,34 +344,40 @@ public class AppLog
     }
 
     /// <summary>
-    /// 按时间范围查询日志
+    ///     按时间范围查询日志
     /// </summary>
     public List<LogEntry> GetLogsByTimeRange(DateTime from, DateTime to)
     {
         lock (_lock)
         {
-            return [.. _logs
-                .Where(l => l.Time >= from && l.Time <= to)
-                .OrderBy(l => l.Time)];
+            return
+            [
+                .. _logs
+                    .Where(l => l.Time >= from && l.Time <= to)
+                    .OrderBy(l => l.Time)
+            ];
         }
     }
 
     /// <summary>
-    /// 搜索包含关键词的日志
+    ///     搜索包含关键词的日志
     /// </summary>
     public List<LogEntry> SearchLogs(string keyword, bool searchInMessageOnly = false)
     {
         lock (_lock)
         {
-            return [.. _logs
-                .Where(l =>
-                    (!searchInMessageOnly &&
-                     (l.Domain.Contains(keyword, StringComparison.OrdinalIgnoreCase) ||
-                      l.Info.Contains(keyword, StringComparison.OrdinalIgnoreCase) ||
-                      l.Message.Contains(keyword, StringComparison.OrdinalIgnoreCase))) ||
-                    (searchInMessageOnly &&
-                     l.Message.Contains(keyword, StringComparison.OrdinalIgnoreCase)))
-                .OrderBy(l => l.Time)];
+            return
+            [
+                .. _logs
+                    .Where(l =>
+                        (!searchInMessageOnly &&
+                         (l.Domain.Contains(keyword, StringComparison.OrdinalIgnoreCase) ||
+                          l.Info.Contains(keyword, StringComparison.OrdinalIgnoreCase) ||
+                          l.Message.Contains(keyword, StringComparison.OrdinalIgnoreCase))) ||
+                        (searchInMessageOnly &&
+                         l.Message.Contains(keyword, StringComparison.OrdinalIgnoreCase)))
+                    .OrderBy(l => l.Time)
+            ];
         }
     }
 
@@ -370,32 +386,32 @@ public class AppLog
     #region 辅助方法
 
     /// <summary>
-    /// 初始化日志系统
+    ///     初始化日志系统
     /// </summary>
     public async Task InitializeAsync()
     {
-        if (_isInitialized) return;
+        if (IsInitialized) return;
 
         try
         {
             // 创建日志目录
-            if (!Directory.Exists(_logDirectory))
-                Directory.CreateDirectory(_logDirectory);
+            if (!Directory.Exists(LogDirectory))
+                Directory.CreateDirectory(LogDirectory);
 
             // 尝试加载最近的日志文件
             await LoadRecentLogsAsync();
 
-            _isInitialized = true;
+            IsInitialized = true;
         }
         catch (Exception ex)
         {
             // 使用备用目录
-            _logDirectory = Path.Combine(
+            LogDirectory = Path.Combine(
                 Environment.GetFolderPath(Environment.SpecialFolder.Desktop),
                 $"{_appName}_日志");
 
-            Directory.CreateDirectory(_logDirectory);
-            _isInitialized = true;
+            Directory.CreateDirectory(LogDirectory);
+            IsInitialized = true;
 
             await WriteAsync("AppLog", "初始化备用方案",
                 $"日志系统使用备用目录: {ex.Message}");
@@ -404,7 +420,7 @@ public class AppLog
 
     private async Task InitializeAsyncIfNeeded()
     {
-        if (!_isInitialized)
+        if (!IsInitialized)
             await InitializeAsync();
     }
 
@@ -425,7 +441,7 @@ public class AppLog
     }
 
     /// <summary>
-    /// 获取北京时间
+    ///     获取北京时间
     /// </summary>
     private static DateTime GetBeijingTime()
     {
@@ -443,26 +459,23 @@ public class AppLog
     }
 
     /// <summary>
-    /// 控制台输出
+    ///     控制台输出
     /// </summary>
     private static void WriteToConsole(LogEntry entry)
     {
         Console.WriteLine($"[{entry.Time:HH:mm:ss}] [{entry.Domain}] {entry.Info}");
-        if (!string.IsNullOrWhiteSpace(entry.Message))
-        {
-            Console.WriteLine($"      {entry.Message}");
-        }
+        if (!string.IsNullOrWhiteSpace(entry.Message)) Console.WriteLine($"      {entry.Message}");
     }
 
     /// <summary>
-    /// 从文件加载最近日志
+    ///     从文件加载最近日志
     /// </summary>
     private async Task LoadRecentLogsAsync()
     {
         try
         {
             // 查找最新的日志文件
-            var logFiles = Directory.GetFiles(_logDirectory, "*.json")
+            var logFiles = Directory.GetFiles(LogDirectory, "*.json")
                 .Where(f => Path.GetFileName(f).StartsWith($"{_appName}_log_"))
                 .OrderByDescending(f => f)
                 .FirstOrDefault();
@@ -488,36 +501,22 @@ public class AppLog
 
     #endregion
 
-    #region JSON 转换器（确保时间正确序列化）
-
-    public class BeijingTimeConverter : JsonConverter<DateTime>
-    {
-        public override DateTime Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
-        {
-            return reader.GetDateTime();
-        }
-
-        public override void Write(Utf8JsonWriter writer, DateTime value, JsonSerializerOptions options)
-        {
-            writer.WriteStringValue(value.ToString("yyyy-MM-dd HH:mm:ss"));
-        }
-    }
-
-    #endregion
-
     #region 属性访问器
 
     public int LogCount
     {
         get
         {
-            lock (_lock) return _logs.Count;
+            lock (_lock)
+            {
+                return _logs.Count;
+            }
         }
     }
 
-    public string LogDirectory => _logDirectory;
+    public string LogDirectory { get; private set; }
 
-    public bool IsInitialized => _isInitialized;
+    public bool IsInitialized { get; private set; }
 
     public List<string> Domains
     {
@@ -525,10 +524,13 @@ public class AppLog
         {
             lock (_lock)
             {
-                return [.. _logs
-                    .Select(l => l.Domain)
-                    .Distinct()
-                    .OrderBy(d => d)];
+                return
+                [
+                    .. _logs
+                        .Select(l => l.Domain)
+                        .Distinct()
+                        .OrderBy(d => d)
+                ];
             }
         }
     }

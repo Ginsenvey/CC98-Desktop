@@ -12,56 +12,57 @@
 
         <!-- 主视频播放器区域 -->
         <Grid x:Name="VideoPlayerGrid" Visibility="Collapsed">
-            <media:MediaPlayerElement 
+            <media:MediaPlayerElement
                 x:Name="MediaPlayer"
                 AreTransportControlsEnabled="True"
                 Stretch="Uniform"
                 AutoPlay="True">
                 <media:MediaPlayerElement.TransportControls>
-                    <media:MediaTransportControls 
+                    <media:MediaTransportControls
                         IsCompact="False"
                         IsZoomEnabled="True"
                         IsZoomButtonVisible="True"
                         IsVolumeEnabled="True"
-                        IsVolumeButtonVisible="True"/>
+                        IsVolumeButtonVisible="True" />
                 </media:MediaPlayerElement.TransportControls>
             </media:MediaPlayerElement>
         </Grid>
 
         <!-- 占位区域 - 未加载时显示 -->
-        <Grid x:Name="PlaceholderGrid" 
+        <Grid x:Name="PlaceholderGrid"
               MaxWidth="480"
               BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
               BorderThickness="1"
               CornerRadius="4"
               Visibility="Visible">
             <Grid.Background>
-                <LinearGradientBrush  Opacity="0.15" StartPoint="-0.2,0" EndPoint="1, 1">
+                <LinearGradientBrush Opacity="0.15" StartPoint="-0.2,0" EndPoint="1, 1">
                     <GradientStop Offset="0" Color="#3286EE" />
                     <GradientStop Offset="0.5" Color="#C8AEC4" />
                     <GradientStop Offset="1" Color="Transparent" />
                 </LinearGradientBrush>
             </Grid.Background>
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="60"></ColumnDefinition>
-                <ColumnDefinition Width="*"></ColumnDefinition>
-                <ColumnDefinition Width="Auto"></ColumnDefinition>
+                <ColumnDefinition Width="60" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
-            <ic:SymbolIcon Grid.Column="0" Symbol="MoviesAndTv"></ic:SymbolIcon>
-            
-            <TextBlock Grid.Column="1" Text="{x:Bind Src, Mode=OneWay}" 
-           FontSize="14"       
-           Foreground="{ThemeResource SystemControlDisabledBaseLowBrush}"
-           MaxLines="1"
-           VerticalAlignment="Center"
-           TextWrapping="Wrap" />
-            <HyperlinkButton x:Name="LoadingButton" Grid.Column="2" Margin="10" Content="点击加载视频" Click="LoadingButton_Click"></HyperlinkButton>
-            <ProgressRing x:Name="LoadingRing" 
-            Grid.Column="2"
-            IsActive="False"
-            Width="32" 
-            Height="32"
-            Foreground="{ThemeResource SystemControlAccentAcrylicElementAccentMediumHighBrush}"/>
+            <ic:SymbolIcon Grid.Column="0" Symbol="MoviesAndTv" />
+
+            <TextBlock Grid.Column="1" Text="{x:Bind Src, Mode=OneWay}"
+                       FontSize="14"
+                       Foreground="{ThemeResource SystemControlDisabledBaseLowBrush}"
+                       MaxLines="1"
+                       VerticalAlignment="Center"
+                       TextWrapping="Wrap" />
+            <HyperlinkButton x:Name="LoadingButton" Grid.Column="2" Margin="10" Content="点击加载视频"
+                             Click="LoadingButton_Click" />
+            <ProgressRing x:Name="LoadingRing"
+                          Grid.Column="2"
+                          IsActive="False"
+                          Width="32"
+                          Height="32"
+                          Foreground="{ThemeResource SystemControlAccentAcrylicElementAccentMediumHighBrush}" />
         </Grid>
 
     </Grid>

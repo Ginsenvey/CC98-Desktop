@@ -1,5 +1,5 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
-using System.Text.Json.Serialization;
+﻿using System.Text.Json.Serialization;
+using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace CC98.Objects;
 
@@ -11,8 +11,7 @@ public partial class ChatInfo : ObservableObject
         set => SetProperty(ref field, value);
     }
 
-    [ObservableProperty]
-    public partial int UserId { get; set; }
+    [ObservableProperty] public partial int UserId { get; set; }
 
     public string Time
     {

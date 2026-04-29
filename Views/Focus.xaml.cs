@@ -11,6 +11,7 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
+using Microsoft.UI.Xaml.Navigation;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -18,47 +19,43 @@ using Microsoft.UI.Xaml.Media;
 namespace CC98.Views;
 
 /// <summary>
-/// An empty page that can be used on its own or navigated to within a Frame.
+///     An empty page that can be used on its own or navigated to within a Frame.
 /// </summary>
 public sealed partial class Focus : Page
 {
-    public ApplicationDataContainer Set = ApplicationData.Current.LocalSettings;
-    public ObservableCollection<TopicInfo> Topics=[];
+    public GlobalService GlobalService = GlobalService.Instance;
+    public Increment Increment = new(20, 0, true);
     public FocusContentType Mode = FocusContentType.Followee;
-    public Increment Increment = new(20,0,true);
+    public ApplicationDataContainer Set = ApplicationData.Current.LocalSettings;
     public HashSet<int> TopicIds = [];
-    public GlobalService GlobalService=GlobalService.Instance;
+    public ObservableCollection<TopicInfo> Topics = [];
+
     public Focus()
     {
         InitializeComponent();
-            
     }
 
-    protected override async void OnNavigatedTo(Microsoft.UI.Xaml.Navigation.NavigationEventArgs e)
+    protected override async void OnNavigatedTo(NavigationEventArgs e)
     {
-
         base.OnNavigatedTo(e);
         if (GlobalService.ShouldReplaceNavigationArgs)
         {
             if (GlobalService.NavigationAnchor is int targetIndex)
-            {
-                Navibar.SelectedItem =Navibar.Items[targetIndex];
-            }
+                Navibar.SelectedItem = Navibar.Items[targetIndex];
             else
-            {
                 Navibar.SelectedItem = Navibar.Items[0];
-            }
             return;
         }
+
         await GetMoments();
     }
 
 
     private async Task<bool> GetMoments()
     {
-        var url = (Mode == FocusContentType.Followee) ? 
-            ApiEndpoints.User.Moment(Increment.StartIndex) : 
-            ApiEndpoints.User.FavoriteTopicUpdate(Increment.StartIndex);
+        var url = Mode == FocusContentType.Followee
+            ? ApiEndpoints.User.Moment(Increment.StartIndex)
+            : ApiEndpoints.User.FavoriteTopicUpdate(Increment.StartIndex);
         var result = await RequestSender.Fetch<List<TopicInfo>>(url);
         if (!result.IsSuccess || result.Data == null)
         {
@@ -67,17 +64,17 @@ public sealed partial class Focus : Page
             await App.Logger.WriteAsync("Focus", "加载动态失败", result.Message);
             return false;
         }
-        var data=result.Data;
-        Increment.HasMore = data.Count==Increment.PageSize;
 
-        var param = string.Join("&", data.Where(x => !x.IsAnonymous && x.UserId.HasValue).Select(x => $"id={x.UserId}").ToHashSet());
+        var data = result.Data;
+        Increment.HasMore = data.Count == Increment.PageSize;
+
+        var param = string.Join("&",
+            data.Where(x => !x.IsAnonymous && x.UserId.HasValue).Select(x => $"id={x.UserId}").ToHashSet());
         var userInfoUrl = ApiEndpoints.User.BasicUserInfoList(param);
         var userInfoResult = await RequestSender.Fetch<List<BasicUserInfo>>(userInfoUrl);
         if (!userInfoResult.IsSuccess || userInfoResult.Data == null)
-        {
             //报错
             Flower.Play(FlowStatus.Fail, "获取用户头像出错");
-        }
         var userInfoList = userInfoResult.Data;
         foreach (var topic in data)
         {
@@ -87,24 +84,21 @@ public sealed partial class Focus : Page
                 //跳过
                 continue;
             }
+
             var user = userInfoList?.First(x => x.Id == topic.UserId);
-            if (user != null)
-            {
-                topic.PortraitUrl = user.PortraitUrl;
-            }
+            if (user != null) topic.PortraitUrl = user.PortraitUrl;
         }
+
         data = [.. data.Where(x => !TopicIds.Contains(x.Id))];
         Topics.AddRange(data);
         TopicIds.AddRange(data.Select(x => x.Id));
         return true;
     }
 
-        
-        
 
     private async void TypeChoice_SelectionChanged(SelectorBar sender, SelectorBarSelectionChangedEventArgs args)
     {
-        var s=Navibar.SelectedItem as SelectorBarItem;
+        var s = Navibar.SelectedItem;
         if (s?.Tag is not string tag) return;
         Mode = tag == "0" ? FocusContentType.Followee : FocusContentType.FavoriteUpdate;
         GlobalService.NavigationAnchor = Navibar.Items.IndexOf(s);
@@ -140,6 +134,7 @@ public sealed partial class Focus : Page
         var translate = h?.RenderTransform as TranslateTransform;
         UiEx.AnimateCard(translate!, 0, 0); // 恢复原位
     }
+
     private void ContentCard_Tapped(object sender, TappedRoutedEventArgs e)
     {
         var h = sender as Grid;

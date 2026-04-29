@@ -22,33 +22,35 @@ using Microsoft.Windows.Storage.Pickers;
 namespace CC98.Views;
 
 /// <summary>
-/// An empty page that can be used on its own or navigated to within a Frame.
+///     An empty page that can be used on its own or navigated to within a Frame.
 /// </summary>
 public sealed partial class Sketch : Page
 {
-    public ApplicationDataContainer Set=ApplicationData.Current.LocalSettings;
+    public const string Tail =
+        "[align=right][size=3][color=gray]——来自「[b][color=purple]CC98 For Windows[/color][/b]」[/color][/size][/align]";
+
+    public string Content = "";
+
+    //约定:可以在本页更改的环境量由以下字段表示，
+    //而不可变参数由NavigationInfo传入。
+    public int ContentType; //UBB
+    public string CurrentLabel = ""; //记录实时指令
+    public List<Emoji> Emojis = [];
+    public bool IsAnonymous = false;
+    public bool IsTailVisible;
+    public bool NotifyAllReplier = false;
+    public bool NotifyPoster = true;
+    public int PostTypeValue; //普通帖子
+    public ApplicationDataContainer Set = ApplicationData.Current.LocalSettings;
+
     public Sketch()
     {
         InitializeComponent();
-        if (App.Current.AppMainWindow is MainWindow mainwindow)
-        {
-            mainwindow.NavigationView.IsPaneOpen = false;
-        }
+        if (App.Current.AppMainWindow is MainWindow mainwindow) mainwindow.NavigationView.IsPaneOpen = false;
         LoadEmojiSet("CC98");
     }
-    //约定:可以在本页更改的环境量由以下字段表示，
-    //而不可变参数由NavigationInfo传入。
-    public int ContentType = 0;//UBB
-    public int PostTypeValue = 0;//普通帖子
-    public bool IsAnonymous = false;
-    public bool NotifyPoster = true;
-    public bool NotifyAllReplier = false;
-    public List<Emoji> Emojis = [];
-    public string Content = "";
-    public bool IsTailVisible = false;
-    public string CurrentLabel = "";//记录实时指令
-    public const string Tail = "[align=right][size=3][color=gray]——来自「[b][color=purple]CC98 For Windows[/color][/b]」[/color][/size][/align]";
-    public SketchNavigationInfo NavigationInfo { get; set;}
+
+    public SketchNavigationInfo NavigationInfo { get; set; }
 
     protected override void OnNavigatedTo(NavigationEventArgs e)
     {
@@ -60,6 +62,7 @@ public sealed partial class Sketch : Page
     }
 
     #region 初始化环境
+
     private void LoadEmojiSet(string type)
     {
         //存在问题，如果使用xaml绑定,向下滚动时会崩溃。因此使用代码。
@@ -72,22 +75,21 @@ public sealed partial class Sketch : Page
             var filename = Path.GetFileName(file);
             Emojis.Add(new() { EmojiName = filename.Split(".")[0].ToLower(), EmojiPath = file });
         }
+
         EmojiContainer.ItemsSource = Emojis;
     }
 
     //将编辑器模式应用到UI
     private void ApplyEditorEnv()
     {
-        if (ValidationHelper.GetValue(Set, "IsTailVisible") == "1")
-        {
-            IsTailVisible = true;
-        }
-        ContentType=NavigationInfo.ContentType;
+        if (ValidationHelper.GetValue(Set, "IsTailVisible") == "1") IsTailVisible = true;
+        ContentType = NavigationInfo.ContentType;
         if (ContentType == (int)Objects.ContentType.Markdown)
         {
             MdViewer.Visibility = Visibility.Visible;
             UbbViewer.Visibility = Visibility.Collapsed;
         }
+
         switch (NavigationInfo.EditorMode)
         {
             case EditorMode.ReplyToTopic:
@@ -100,17 +102,14 @@ public sealed partial class Sketch : Page
             case EditorMode.ReplyToPost:
                 status.Text = NavigationInfo.HintText;
                 Editor.Text = NavigationInfo.QuoteHeader;
-                if (!Editor.Text.EndsWith(Environment.NewLine))
-                {
-                    Editor.Text += Environment.NewLine;
-                }
+                if (!Editor.Text.EndsWith(Environment.NewLine)) Editor.Text += Environment.NewLine;
                 Editor.SelectionStart = Editor.Text.Length;
                 replyselector.IsSelected = true;
                 SetTitle.IsEnabled = false;
                 SetPostType.IsEnabled = false;
                 break;
             case EditorMode.DraftNewTopic:
-                status.Text = $"发表新主题";
+                status.Text = "发表新主题";
                 SetTitle.IsEnabled = true;
                 topicselector.IsSelected = true;
                 break;
@@ -118,10 +117,7 @@ public sealed partial class Sketch : Page
                 status.Text = $"编辑帖子:{NavigationInfo.HintText}";
                 Editor.Text = NavigationInfo.BaseText;
                 SetTitle.Text = NavigationInfo.HintText;
-                if (!Editor.Text.EndsWith(Environment.NewLine))
-                {
-                    Editor.Text += Environment.NewLine;
-                }
+                if (!Editor.Text.EndsWith(Environment.NewLine)) Editor.Text += Environment.NewLine;
                 Editor.SelectionStart = Editor.Text.Length;
                 replyselector.IsSelected = true;
                 //编辑非主题帖不允许修改标题和帖子类型
@@ -132,37 +128,33 @@ public sealed partial class Sketch : Page
                 status.Text = $"编辑主题:{NavigationInfo.HintText}";
                 Editor.Text = NavigationInfo.BaseText;
                 SetTitle.Text = NavigationInfo.HintText;
-                if (!Editor.Text.EndsWith(Environment.NewLine))
-                {
-                    Editor.Text += Environment.NewLine;
-                }
+                if (!Editor.Text.EndsWith(Environment.NewLine)) Editor.Text += Environment.NewLine;
                 Editor.SelectionStart = Editor.Text.Length;
                 topicselector.IsSelected = true;
                 SetTitle.IsEnabled = true;
                 SetPostType.IsEnabled = false;
                 break;
         }
+
         //初始化内容,以免由于xaml加载顺序content为空。有时候textchanged事件不会立即触发。
         Content = Editor.Text.Replace("\r\n", "\n").Replace("\r", "\n");
         ApplyContentToViewer();
     }
+
     //渲染实时预览
     private void ApplyContentToViewer()
     {
         //关闭预览窗格可以避免卡顿，尤其是在内容较长时
         if (!EditArea.IsPaneOpen) return;
         if (ContentType == (int)Objects.ContentType.Ubb)
-        {
             UbbViewer.UbbText = Content;
-        }
         else
-        {
             MdViewer.Text = Content;
-        }
     }
+
     #endregion
 
-        
+
     #region 编辑器
 
     private async void AppBarButton_Click(object sender, RoutedEventArgs e)
@@ -172,6 +164,7 @@ public sealed partial class Sketch : Page
             Flower.Play(FlowStatus.Info, "当前处于Markdown模式下");
             return;
         }
+
         var b = sender as AppBarButton;
         if (b == null) return;
         switch (b.Label)
@@ -217,6 +210,7 @@ public sealed partial class Sketch : Page
                     var color = string.Concat(colorwithalpha.AsSpan(0, 1), colorwithalpha.AsSpan(3, 6));
                     InsertTag("color=" + color, "color", "");
                 }
+
                 break;
             case "图片":
                 CurrentLabel = "img";
@@ -248,13 +242,11 @@ public sealed partial class Sketch : Page
                 Editor.Focus(FocusState.Programmatic);
                 break;
             case "贴图":
-                   
-                break;
-            default:
+
                 break;
         }
-
     }
+
     private void InsertTag(string ltag, string rtag, string input, int offset = 0, bool select = true)
     {
         var openTag = $"[{ltag}]";
@@ -264,21 +256,18 @@ public sealed partial class Sketch : Page
         Editor.Text = Editor.Text.Insert(selectionStart, fullTag);
         Editor.SelectionStart = selectionStart + openTag.Length + input.Length + offset;
         if (select)
-        {
             Editor.SelectionLength = input.Length;
-        }
         else
-        {
             Editor.SelectionLength = 0;
-        }
         Editor.Focus(FocusState.Programmatic);
-
     }
+
     private void Editor_TextChanged(object sender, TextChangedEventArgs e)
     {
         Content = Editor.Text.Replace("\r\n", "\n").Replace("\r", "\n");
         ApplyContentToViewer();
     }
+
     //以下方法用于创建Md的代码块,但是UBB编辑器不需要支持这个操作。
     private void InsertCodeBlock()
     {
@@ -335,15 +324,12 @@ public sealed partial class Sketch : Page
                         url = await PickAndUploadFile(filter, PickerLocationId.MusicLibrary);
                         break;
                 }
+
                 FileHelper.Hide();
                 if (url != "0")
-                {
                     InsertTag(CurrentLabel, CurrentLabel, url);
-                }
                 else
-                {
                     Flower.Play(FlowStatus.Info, "未上传文件");
-                }
             }
             else if (operation == 2)
             {
@@ -353,11 +339,11 @@ public sealed partial class Sketch : Page
             else
             {
                 CustomLink.Visibility = Visibility.Visible;
-                CustomLink.Focus(FocusState.Keyboard);//自动聚焦，减少鼠标操作
+                CustomLink.Focus(FocusState.Keyboard); //自动聚焦，减少鼠标操作
             }
         }
-
     }
+
     private async void SendButton_Click(object sender, RoutedEventArgs e)
     {
         var r = await SendDialog.ShowAsync();
@@ -381,19 +367,21 @@ public sealed partial class Sketch : Page
                 break;
         }
     }
+
     #endregion
 
     #region 实现请求
+
     private async Task EditPost()
     {
         var url = ApiEndpoints.Post.Edit(NavigationInfo.PostId);
-        var reply = new Dictionary<string, object>()
+        var reply = new Dictionary<string, object>
         {
-            {"type",0 },
-            {"content",Content },
-            {"contentType",ContentType },
-            {"notifyPoster",NotifyPoster },//常为true
-            {"title",SetTitle.Text}
+            { "type", 0 },
+            { "content", Content },
+            { "contentType", ContentType },
+            { "notifyPoster", NotifyPoster }, //常为true
+            { "title", SetTitle.Text }
         };
         var replyText = JsonSerialize.Serialize(reply);
         var requestBody = new StringContent(replyText, Encoding.UTF8, "application/json");
@@ -415,6 +403,7 @@ public sealed partial class Sketch : Page
             GoBack();
         }
     }
+
     private async Task<string> UploadFileAsync(string filePath)
     {
         var url = ApiEndpoints.Forum.UploadFile();
@@ -430,17 +419,14 @@ public sealed partial class Sketch : Page
             await App.Logger.WriteAsync("UBBEditor", "上传文件失败", res.Message);
             return "";
         }
+
         var data = res.Data;
-        if (data.Count > 0)
-        {
-            return data[0];
-        }
-        else
-        {
-            await App.Logger.WriteAsync("UBBEditor", "上传文件出错", "服务器未返回文件地址");
-            return "";
-        }
+        if (data.Count > 0) return data[0];
+
+        await App.Logger.WriteAsync("UBBEditor", "上传文件出错", "服务器未返回文件地址");
+        return "";
     }
+
     private static List<string> GetSuffixs(string type)
     {
         return type switch
@@ -451,6 +437,7 @@ public sealed partial class Sketch : Page
             _ => []
         };
     }
+
     private async Task<string> PickAndUploadFile(IList<string> filter, PickerLocationId location)
     {
         try
@@ -478,41 +465,36 @@ public sealed partial class Sketch : Page
             await App.Logger.WriteAsync("UBBEditor", "文件上传出错", ex.Message);
             status.Text = "上传失败:" + ex.Message;
         }
+
         return "0";
     }
+
     private async Task SendReply()
     {
         var url = ApiEndpoints.Topic.SendReply(NavigationInfo.TopicId);
         Dictionary<string, object> reply;
-        if (IsTailVisible)
-        {
-            Content = Content + "\n" + Tail;
-        }
+        if (IsTailVisible) Content = Content + "\n" + Tail;
         if (NavigationInfo.EditorMode == EditorMode.ReplyToPost)
-        {
             reply = new()
             {
-                {"clientType",1 },
-                {"content",Content},
-                {"contentType",ContentType },
-                {"isAnonymous",IsAnonymous },
-                {"notifyAllReplier",NotifyAllReplier },
-                {"title","" },
-                {"parentId",NavigationInfo.ParentId }
+                { "clientType", 1 },
+                { "content", Content },
+                { "contentType", ContentType },
+                { "isAnonymous", IsAnonymous },
+                { "notifyAllReplier", NotifyAllReplier },
+                { "title", "" },
+                { "parentId", NavigationInfo.ParentId }
             };
-        }
         else
-        {
             reply = new()
             {
-                {"clientType",1 },
-                {"content",Content },
-                {"contentType",ContentType },
-                {"isAnonymous",IsAnonymous },
-                {"notifyAllReplier",NotifyAllReplier },
-                {"title","" }
+                { "clientType", 1 },
+                { "content", Content },
+                { "contentType", ContentType },
+                { "isAnonymous", IsAnonymous },
+                { "notifyAllReplier", NotifyAllReplier },
+                { "title", "" }
             };
-        }
         var replyText = JsonSerialize.Serialize(reply);
         var requestBody = new StringContent(replyText, Encoding.UTF8, "application/json");
         var res = await RequestSender.Submit<int>(url, requestBody);
@@ -524,29 +506,30 @@ public sealed partial class Sketch : Page
         }
         else
         {
-            var param = new TopicNavigationInfo 
-            { 
-                IsJumpingMode = NavigationInfo.EditorMode == EditorMode.ReplyToPost, 
-                TopicId = NavigationInfo.TopicId, 
+            var param = new TopicNavigationInfo
+            {
+                IsJumpingMode = NavigationInfo.EditorMode == EditorMode.ReplyToPost,
+                TopicId = NavigationInfo.TopicId,
                 TargetFloor = NavigationInfo.Floor,
-                GoToLatest= NavigationInfo.EditorMode == EditorMode.ReplyToTopic,
+                GoToLatest = NavigationInfo.EditorMode == EditorMode.ReplyToTopic
             };
             GlobalService.Instance.NavigationAnchor = param;
             GoBack();
         }
     }
+
     private async Task DraftNewTopic()
     {
         var url = ApiEndpoints.Board.SendNewTopic(NavigationInfo.BoardId);
-        var post = new Dictionary<string, object>()
+        var post = new Dictionary<string, object>
         {
-            {"clientType",1},
-            {"content",Content},
-            {"contentType",ContentType},
-            {"isAnonymous",IsAnonymous},
-            {"notifyPoster",NotifyPoster},
-            {"title",SetTitle.Text},
-            {"type",PostTypeValue}
+            { "clientType", 1 },
+            { "content", Content },
+            { "contentType", ContentType },
+            { "isAnonymous", IsAnonymous },
+            { "notifyPoster", NotifyPoster },
+            { "title", SetTitle.Text },
+            { "type", PostTypeValue }
         };
         var text = JsonSerialize.Serialize(post);
         var requestBody = new StringContent(text, Encoding.UTF8, "application/json");
@@ -563,7 +546,7 @@ public sealed partial class Sketch : Page
             var param = new TopicNavigationInfo
             {
                 IsJumpingMode = false,
-                TopicId = newTopicId,
+                TopicId = newTopicId
             };
             GlobalService.Instance.NavigationAnchor = param;
             GoBack();
@@ -571,18 +554,16 @@ public sealed partial class Sketch : Page
     }
 
     #endregion
-        
+
 
     #region UI事件处理
+
     private void PriviewMode_Click(object sender, RoutedEventArgs e)
     {
         EditArea.IsPaneOpen = !EditArea.IsPaneOpen;
-        if (EditArea.IsPaneOpen)
-        {
-            ApplyContentToViewer();
-        }
+        if (EditArea.IsPaneOpen) ApplyContentToViewer();
     }
-       
+
     private void EmojiType_PointerEntered(object sender, PointerRoutedEventArgs e)
     {
         var type = sender as SegmentedItem;
@@ -591,6 +572,7 @@ public sealed partial class Sketch : Page
         if (type.Tag is not string tag) return;
         LoadEmojiSet(tag);
     }
+
     private void SwitchContentType_Click(object sender, RoutedEventArgs e)
     {
         if (ContentType == 0)
@@ -611,6 +593,7 @@ public sealed partial class Sketch : Page
             UbbViewer.Visibility = Visibility.Visible;
             Flower.Play("\uE946", "切换到UBB");
         }
+
         ApplyContentToViewer();
     }
 
@@ -628,7 +611,7 @@ public sealed partial class Sketch : Page
     {
         var r = sender as RadioButton;
         if (r?.Tag is not int type) return;
-        PostTypeValue= type;
+        PostTypeValue = type;
     }
 
     private void ConfirmCustomLink_Click(object sender, RoutedEventArgs e)
@@ -647,5 +630,6 @@ public sealed partial class Sketch : Page
     {
         if (Frame.CanGoBack) Frame.GoBack();
     }
+
     #endregion
 }

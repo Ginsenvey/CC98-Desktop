@@ -2,9 +2,8 @@
 
 namespace CC98.Controls.UbbTextBlock.Parser;
 
-
 /// <summary>
-/// 解析入口点
+///     解析入口点
 /// </summary>
 public class Parser
 {
@@ -20,4 +19,3 @@ public class Parser
         return document;
     }
 }
-

@@ -3,6 +3,7 @@
 using System;
 using System.Diagnostics;
 using System.Threading.Tasks;
+using Windows.Media.Playback;
 using CC98.Controls.Primitives;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -12,9 +13,9 @@ namespace CC98.Controls.VideoPlayer;
 
 public sealed partial class VideoPlayer : UserControl, IDisposable
 {
-    private bool _isInitialized = false;
-    private bool _isDisposed = false;
-        
+    private bool _isDisposed;
+    private bool _isInitialized;
+
 
     public VideoPlayer()
     {
@@ -23,113 +24,7 @@ public sealed partial class VideoPlayer : UserControl, IDisposable
         Unloaded += OnUnloaded;
     }
 
-    #region 依赖属性
-
-    public static readonly DependencyProperty SrcProperty =
-        DependencyProperty.Register("Src", typeof(string), typeof(VideoPlayer),
-            new(null, OnSrcChanged));
-
-    public static readonly DependencyProperty LoadVideoCallbackProperty =
-        DependencyProperty.Register("LoadVideoCallback", typeof(IMediaLoader),
-            typeof(VideoPlayer), new(new DefaultMediaLoader()));
-
-    public string Src
-    {
-        get => (string)GetValue(SrcProperty);
-        set => SetValue(SrcProperty, value);
-    }
-
-    public IMediaLoader LoadVideoCallback
-    {
-        get => (IMediaLoader)GetValue(LoadVideoCallbackProperty);
-        set => SetValue(LoadVideoCallbackProperty, value);
-    }
-
-    // 暴露 MediaPlayerElement 的原始属性
-    public MediaPlayerElement MediaPlayerElement => MediaPlayer;
-
-    public bool AreTransportControlsEnabled
-    {
-        get => MediaPlayer.AreTransportControlsEnabled;
-        set => MediaPlayer.AreTransportControlsEnabled = value;
-    }
-
-    public MediaTransportControls TransportControls
-    {
-        get => (MediaTransportControls)MediaPlayer.TransportControls;
-    }
-
-    public Stretch Stretch
-    {
-        get => MediaPlayer.Stretch;
-        set => MediaPlayer.Stretch = value;
-    }
-
-    public bool AutoPlay
-    {
-        get => MediaPlayer.AutoPlay;
-        set => MediaPlayer.AutoPlay = value;
-    }
-
-
-
-    #endregion
-
-    #region 事件
-
-    public event EventHandler<VideoPlayerEventArgs> VideoLoaded;
-    public event EventHandler<VideoPlayerFailedEventArgs> VideoFailed;
-    public event EventHandler<VideoPlayerEventArgs> VideoInitialized;
-
-    #endregion
-
-    #region 初始化与生命周期
-
-    private void OnLoaded(object sender, RoutedEventArgs e)
-    {
-        // 注册焦点事件
-            
-
-        // 注册 MediaPlayer 事件
-        if (MediaPlayer.MediaPlayer != null)
-        {
-            MediaPlayer.MediaPlayer.MediaOpened += OnMediaOpened;
-            MediaPlayer.MediaPlayer.MediaFailed += OnMediaFailed;
-            MediaPlayer.MediaPlayer.MediaEnded += OnMediaEnded;
-        }
-    }
-
-    private void OnUnloaded(object sender, RoutedEventArgs e)
-    {
-            
-
-        if (MediaPlayer.MediaPlayer != null)
-        {
-            MediaPlayer.MediaPlayer.MediaOpened -= OnMediaOpened;
-            MediaPlayer.MediaPlayer.MediaFailed -= OnMediaFailed;
-            MediaPlayer.MediaPlayer.MediaEnded -= OnMediaEnded;
-        }
-    }
-
-    private static void OnSrcChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
-    {
-        if (d is VideoPlayer player)
-        {
-            player._isInitialized = false;
-            player.ShowPlaceholder();        
-        }
-    }
-
-        
-        
-
-    #endregion
-
     #region 加载
-
-
-
-
 
     // 手动请求加载视频
     public async Task<bool> LoadVideoAsync()
@@ -143,17 +38,14 @@ public sealed partial class VideoPlayer : UserControl, IDisposable
 
     private async Task<bool> InitializeVideoAsync()
     {
-        if (_isInitialized || _isDisposed || string.IsNullOrEmpty(Src))
-        {
-            return false;
-        }
+        if (_isInitialized || _isDisposed || string.IsNullOrEmpty(Src)) return false;
 
         try
         {
             ShowLoadingIndicator();
 
-            var src = Src;  // 在 UI 线程读取依赖属性
-            var callback = LoadVideoCallback;  // 在 UI 线程读取依赖属性
+            var src = Src; // 在 UI 线程读取依赖属性
+            var callback = LoadVideoCallback; // 在 UI 线程读取依赖属性
 
             // 在后台线程执行加载操作
             var mediaSource = await Task.Run(() =>
@@ -169,10 +61,7 @@ public sealed partial class VideoPlayer : UserControl, IDisposable
                 }
             });
 
-            if (mediaSource == null)
-            {
-                throw new("无法加载视频源");
-            }
+            if (mediaSource == null) throw new("无法加载视频源");
 
 
             // 切换到 UI 线程设置源
@@ -209,9 +98,101 @@ public sealed partial class VideoPlayer : UserControl, IDisposable
 
     #endregion
 
+    #region 依赖属性
+
+    public static readonly DependencyProperty SrcProperty =
+        DependencyProperty.Register("Src", typeof(string), typeof(VideoPlayer),
+            new(null, OnSrcChanged));
+
+    public static readonly DependencyProperty LoadVideoCallbackProperty =
+        DependencyProperty.Register("LoadVideoCallback", typeof(IMediaLoader),
+            typeof(VideoPlayer), new(new DefaultMediaLoader()));
+
+    public string Src
+    {
+        get => (string)GetValue(SrcProperty);
+        set => SetValue(SrcProperty, value);
+    }
+
+    public IMediaLoader LoadVideoCallback
+    {
+        get => (IMediaLoader)GetValue(LoadVideoCallbackProperty);
+        set => SetValue(LoadVideoCallbackProperty, value);
+    }
+
+    // 暴露 MediaPlayerElement 的原始属性
+    public MediaPlayerElement MediaPlayerElement => MediaPlayer;
+
+    public bool AreTransportControlsEnabled
+    {
+        get => MediaPlayer.AreTransportControlsEnabled;
+        set => MediaPlayer.AreTransportControlsEnabled = value;
+    }
+
+    public MediaTransportControls TransportControls => (MediaTransportControls)MediaPlayer.TransportControls;
+
+    public Stretch Stretch
+    {
+        get => MediaPlayer.Stretch;
+        set => MediaPlayer.Stretch = value;
+    }
+
+    public bool AutoPlay
+    {
+        get => MediaPlayer.AutoPlay;
+        set => MediaPlayer.AutoPlay = value;
+    }
+
+    #endregion
+
+    #region 事件
+
+    public event EventHandler<VideoPlayerEventArgs> VideoLoaded;
+    public event EventHandler<VideoPlayerFailedEventArgs> VideoFailed;
+    public event EventHandler<VideoPlayerEventArgs> VideoInitialized;
+
+    #endregion
+
+    #region 初始化与生命周期
+
+    private void OnLoaded(object sender, RoutedEventArgs e)
+    {
+        // 注册焦点事件
+
+
+        // 注册 MediaPlayer 事件
+        if (MediaPlayer.MediaPlayer != null)
+        {
+            MediaPlayer.MediaPlayer.MediaOpened += OnMediaOpened;
+            MediaPlayer.MediaPlayer.MediaFailed += OnMediaFailed;
+            MediaPlayer.MediaPlayer.MediaEnded += OnMediaEnded;
+        }
+    }
+
+    private void OnUnloaded(object sender, RoutedEventArgs e)
+    {
+        if (MediaPlayer.MediaPlayer != null)
+        {
+            MediaPlayer.MediaPlayer.MediaOpened -= OnMediaOpened;
+            MediaPlayer.MediaPlayer.MediaFailed -= OnMediaFailed;
+            MediaPlayer.MediaPlayer.MediaEnded -= OnMediaEnded;
+        }
+    }
+
+    private static void OnSrcChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+    {
+        if (d is VideoPlayer player)
+        {
+            player._isInitialized = false;
+            player.ShowPlaceholder();
+        }
+    }
+
+    #endregion
+
     #region MediaPlayer 事件处理
 
-    private void OnMediaOpened(Windows.Media.Playback.MediaPlayer sender, object args)
+    private void OnMediaOpened(MediaPlayer sender, object args)
     {
         _ = DispatcherQueue.TryEnqueue(() =>
         {
@@ -224,8 +205,8 @@ public sealed partial class VideoPlayer : UserControl, IDisposable
         });
     }
 
-    private void OnMediaFailed(Windows.Media.Playback.MediaPlayer sender,
-        Windows.Media.Playback.MediaPlayerFailedEventArgs args)
+    private void OnMediaFailed(MediaPlayer sender,
+        MediaPlayerFailedEventArgs args)
     {
         _ = DispatcherQueue.TryEnqueue(() =>
         {
@@ -238,7 +219,7 @@ public sealed partial class VideoPlayer : UserControl, IDisposable
         });
     }
 
-    private void OnMediaEnded(Windows.Media.Playback.MediaPlayer sender, object args)
+    private void OnMediaEnded(MediaPlayer sender, object args)
     {
         _ = DispatcherQueue.TryEnqueue(() =>
         {
@@ -255,6 +236,7 @@ public sealed partial class VideoPlayer : UserControl, IDisposable
     {
         _ = LoadVideoAsync();
     }
+
     private void ShowPlaceholder()
     {
         PlaceholderGrid.Visibility = Visibility.Visible;
@@ -271,14 +253,12 @@ public sealed partial class VideoPlayer : UserControl, IDisposable
     {
         LoadingRing.IsActive = true;
         LoadingRing.Visibility = Visibility.Visible;
-            
     }
 
     private void HideLoadingIndicator()
     {
         LoadingRing.IsActive = false;
         LoadingRing.Visibility = Visibility.Collapsed;
-            
     }
 
     private void ShowErrorMessage(string message)
@@ -294,10 +274,8 @@ public sealed partial class VideoPlayer : UserControl, IDisposable
         _isInitialized = false;
         ShowPlaceholder();
 
-            
-            
+
         _ = InitializeVideoAsync();
-           
     }
 
     #endregion
@@ -323,7 +301,9 @@ public sealed partial class VideoPlayer : UserControl, IDisposable
 
                 MediaPlayer.Source = null;
             }
-            catch { }
+            catch
+            {
+            }
 
             GC.SuppressFinalize(this);
         }
@@ -334,33 +314,30 @@ public sealed partial class VideoPlayer : UserControl, IDisposable
         Dispose();
     }
 
-
     #endregion
-
-        
 }
 
 #region 事件参数类
 
 public class VideoPlayerEventArgs : EventArgs
 {
-    public string Source { get; }
-
     public VideoPlayerEventArgs(string source)
     {
         Source = source;
     }
+
+    public string Source { get; }
 }
 
 public class VideoPlayerFailedEventArgs : VideoPlayerEventArgs
 {
-    public string ErrorMessage { get; }
-
     public VideoPlayerFailedEventArgs(string source, string errorMessage)
         : base(source)
     {
         ErrorMessage = errorMessage;
     }
+
+    public string ErrorMessage { get; }
 }
 
 #endregion

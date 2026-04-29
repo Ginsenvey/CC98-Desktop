@@ -1,4 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
+
 <UserControl
     x:Class="CC98.Controls.CodeBlock.CodeBlock"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
@@ -15,18 +16,20 @@
           CornerRadius="{x:Bind Control.CornerRadius,Mode=OneWay}"
           Margin="{x:Bind Control.Margin,Mode=OneWay}">
         <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"></RowDefinition>
-            <RowDefinition Height="*"></RowDefinition>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
         </Grid.RowDefinitions>
         <StackPanel Grid.Row="0" HorizontalAlignment="Left" Orientation="Vertical" Spacing="2">
-            <TextBlock x:Name="LanguageTag" Text="C#" FontSize="12" Margin="3,0,3,0" CharacterSpacing="25"></TextBlock>
-            <Border Background="{ThemeResource AccentAAFillColorDefaultBrush}" Height="3" CornerRadius="1.5"></Border>
+            <TextBlock x:Name="LanguageTag" Text="C#" FontSize="12" Margin="3,0,3,0" CharacterSpacing="25" />
+            <Border Background="{ThemeResource AccentAAFillColorDefaultBrush}" Height="3" CornerRadius="1.5" />
         </StackPanel>
-        <Button x:Name="CopyButton" Grid.Row="0" HorizontalAlignment="Right" Width="32" Height="32" Padding="0" Margin="0,0,8,0">
-            <FontIcon Glyph="&#xE8C8;" FontSize="16"></FontIcon>
+        <Button x:Name="CopyButton" Grid.Row="0" HorizontalAlignment="Right" Width="32" Height="32" Padding="0"
+                Margin="0,0,8,0">
+            <FontIcon Glyph="&#xE8C8;" FontSize="16" />
         </Button>
         <ScrollViewer Grid.Row="1" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
-            <RichTextBlock x:Name="Viewer" FontFamily="Consolas" IsTextSelectionEnabled="True" FontSize="{Binding FontSize,ElementName=Control}"></RichTextBlock>
+            <RichTextBlock x:Name="Viewer" FontFamily="Consolas" IsTextSelectionEnabled="True"
+                           FontSize="{Binding FontSize,ElementName=Control}" />
         </ScrollViewer>
     </Grid>
 </UserControl>

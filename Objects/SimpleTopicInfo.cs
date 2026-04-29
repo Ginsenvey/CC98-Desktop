@@ -1,11 +1,12 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
-using System;
+﻿using System;
 using System.Text.Json.Serialization;
+using CommunityToolkit.Mvvm.ComponentModel;
+using FluentIcons.Common;
 
 namespace CC98.Objects;
 
 /// <summary>
-/// 用于单个版面页和个人主页的简单展示帖
+///     用于单个版面页和个人主页的简单展示帖
 /// </summary>
 public partial class SimpleTopicInfo : ObservableObject
 {
@@ -21,15 +22,11 @@ public partial class SimpleTopicInfo : ObservableObject
         set => SetProperty(ref field, value);
     }
 
-    [ObservableProperty]
-    public partial int Id { get; set; }
+    [ObservableProperty] public partial int Id { get; set; }
 
-    [ObservableProperty]
-    public partial int BoardId { get; set; }
+    [ObservableProperty] public partial int BoardId { get; set; }
 
-    [JsonIgnore]
-    [ObservableProperty]
-    public partial int SortId { get; set; }
+    [JsonIgnore] [ObservableProperty] public partial int SortId { get; set; }
 
     public string BoardName
     {
@@ -37,15 +34,11 @@ public partial class SimpleTopicInfo : ObservableObject
         set => SetProperty(ref field, value);
     }
 
-    [ObservableProperty]
-    public partial int HitCount { get; set; }
+    [ObservableProperty] public partial int HitCount { get; set; }
 
-    [ObservableProperty]
-    public partial int ReplyCount { get; set; }
+    [ObservableProperty] public partial int ReplyCount { get; set; }
 
-    [ObservableProperty]
-    public partial DateTime Time { get; set; }
+    [ObservableProperty] public partial DateTime Time { get; set; }
 
-    [ObservableProperty]
-    public partial FluentIcons.Common.Symbol Symbol { get; set; }
+    [ObservableProperty] public partial Symbol Symbol { get; set; }
 }

@@ -4,36 +4,36 @@ using System.Text.Json.Serialization;
 namespace CC98.Kernel;
 
 /// <summary>
-/// 表示登录授权的结果。
+///     表示登录授权的结果。
 /// </summary>
 public record AuthorizeResult
 {
     /// <summary>
-    /// 刷新令牌。
+    ///     刷新令牌。
     /// </summary>
     [JsonPropertyName("refresh_token")]
     public string? RefreshToken { get; set; }
 
     /// <summary>
-    /// 授权令牌。
+    ///     授权令牌。
     /// </summary>
     [JsonPropertyName("access_token")]
     public string? AccessToken { get; set; }
 
     /// <summary>
-    /// 登录的错误信息。
+    ///     登录的错误信息。
     /// </summary>
     [JsonPropertyName("error")]
     public string? Error { get; set; }
 
     /// <summary>
-    /// 登录的错误信息的描述。
+    ///     登录的错误信息的描述。
     /// </summary>
     [JsonPropertyName("error_description")]
     public string? ErrorDescription { get; set; }
 
     /// <summary>
-    /// 表示当前登录结果是否为成功状态。
+    ///     表示当前登录结果是否为成功状态。
     /// </summary>
     [MemberNotNullWhen(true, nameof(AccessToken))]
     [MemberNotNullWhen(true, nameof(RefreshToken))]
@@ -44,6 +44,5 @@ public record AuthorizeResult
 
     [JsonIgnore]
     public string Message =>
-        IsSucceeded ? "授权成功" :
-            $"{Error}: {ErrorDescription}";
+        IsSucceeded ? "授权成功" : $"{Error}: {ErrorDescription}";
 }

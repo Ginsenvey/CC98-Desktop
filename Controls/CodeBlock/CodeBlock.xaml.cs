@@ -17,73 +17,6 @@ public sealed partial class CodeBlock : UserControl
         RenderCode();
     }
 
-    #region 依赖属性
-    public static readonly DependencyProperty CodeProperty =
-        DependencyProperty.Register("Code", typeof(string), typeof(CodeBlock),
-            new(null, OnCodeChanged));
-
-        
-
-    public static new readonly DependencyProperty LanguageProperty =
-        DependencyProperty.Register("Language", typeof(string), typeof(CodeBlock),
-            new("PlainText"));
-    public string Code
-    {
-        get => (string)GetValue(CodeProperty);
-        set => SetValue(CodeProperty, value);
-    }
-
-    public string LanguageName
-    {
-        get => (string)GetValue(LanguageProperty);
-        set => SetValue(LanguageProperty, value);
-    }
-    #endregion
-
-
-    #region 初始化
-    private void RenderCode()
-    {
-        var languageName = LanguageName;
-        if (string.IsNullOrEmpty(languageName))
-        {
-            languageName = "PlainText";
-        }
-        var displayName = string.Empty;
-        var language = Languages.Cpp;
-        if (languageName == "PlainText")
-        {
-            displayName = languageName;
-        }
-        else
-        {
-            language = Languages.FindById(languageName) ?? Languages.Cpp;
-            displayName = GetLanguageDisplayName(language, languageName);
-        }
-        LanguageTag.Text = displayName;
-        if (languageName != "PlainText")
-        {
-            var formatter = new RichTextBlockFormatter();
-            formatter.FormatRichTextBlock(Code, language, Viewer);
-        }
-        else
-        {
-            Viewer.Blocks.Clear();
-            var paragraph = new Paragraph();
-            var run = new Run { Text = Code };
-            paragraph.Inlines.Add(run);
-            Viewer.Blocks.Add(paragraph);
-        }
-    }
-    private static void OnCodeChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
-    {
-        if(d is CodeBlock codeBlock)
-        {
-            codeBlock.RenderCode();
-        }
-    }
-    #endregion
-
     #region 辅助函数
 
     private string GetLanguageDisplayName(ILanguage language, string languageName)
@@ -120,6 +53,73 @@ public sealed partial class CodeBlock : UserControl
             "plaintext" or "text" => "Plain Text",
             _ => CultureInfo.CurrentCulture.TextInfo.ToTitleCase(languageName)
         };
+    }
+
+    #endregion
+
+    #region 依赖属性
+
+    public static readonly DependencyProperty CodeProperty =
+        DependencyProperty.Register("Code", typeof(string), typeof(CodeBlock),
+            new(null, OnCodeChanged));
+
+
+    public new static readonly DependencyProperty LanguageProperty =
+        DependencyProperty.Register("Language", typeof(string), typeof(CodeBlock),
+            new("PlainText"));
+
+    public string Code
+    {
+        get => (string)GetValue(CodeProperty);
+        set => SetValue(CodeProperty, value);
+    }
+
+    public string LanguageName
+    {
+        get => (string)GetValue(LanguageProperty);
+        set => SetValue(LanguageProperty, value);
+    }
+
+    #endregion
+
+
+    #region 初始化
+
+    private void RenderCode()
+    {
+        var languageName = LanguageName;
+        if (string.IsNullOrEmpty(languageName)) languageName = "PlainText";
+        var displayName = string.Empty;
+        var language = Languages.Cpp;
+        if (languageName == "PlainText")
+        {
+            displayName = languageName;
+        }
+        else
+        {
+            language = Languages.FindById(languageName) ?? Languages.Cpp;
+            displayName = GetLanguageDisplayName(language, languageName);
+        }
+
+        LanguageTag.Text = displayName;
+        if (languageName != "PlainText")
+        {
+            var formatter = new RichTextBlockFormatter();
+            formatter.FormatRichTextBlock(Code, language, Viewer);
+        }
+        else
+        {
+            Viewer.Blocks.Clear();
+            var paragraph = new Paragraph();
+            var run = new Run { Text = Code };
+            paragraph.Inlines.Add(run);
+            Viewer.Blocks.Add(paragraph);
+        }
+    }
+
+    private static void OnCodeChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
+    {
+        if (d is CodeBlock codeBlock) codeBlock.RenderCode();
     }
 
     #endregion

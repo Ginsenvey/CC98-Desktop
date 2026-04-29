@@ -1,11 +1,9 @@
 ﻿using System;
-using ABI.Windows.UI;
 
 namespace CC98.Kernel;
 
 public static class ColorEx
 {
-
     public static string GenerateMorandiColorHex()
     {
         var random = Random.Shared;
@@ -28,7 +26,7 @@ public static class ColorEx
     private static (byte r, byte g, byte b) HslToRgb(double h, double s, double l)
     {
         var c = (1 - Math.Abs(2 * l - 1)) * s;
-        var x = c * (1 - Math.Abs((h / 60) % 2 - 1));
+        var x = c * (1 - Math.Abs(h / 60 % 2 - 1));
         var m = l - c / 2;
 
         (double r, double g, double b) rgb = h switch

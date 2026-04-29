@@ -3,7 +3,7 @@
 namespace CC98.Objects;
 
 /// <summary>
-/// 精华帖
+///     精华帖
 /// </summary>
 public class BoardBest
 {

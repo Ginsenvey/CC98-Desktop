@@ -16,20 +16,12 @@ public partial class UbbTextConverter : IValueConverter
         if (value != null)
         {
             var input = value as string ?? string.Empty;
-            if (!string.IsNullOrEmpty(input))
-            {
-                return UbbToMd.Convert(input, !AppSettings.Current.HideImage);
-            }
-            else
-            {
-                return string.Empty;
-            }
+            if (!string.IsNullOrEmpty(input)) return UbbToMd.Convert(input, !AppSettings.Current.HideImage);
 
-        }
-        else
-        {
             return string.Empty;
         }
+
+        return string.Empty;
     }
 
     object IValueConverter.ConvertBack(object value, Type targetType, object parameter, string language)
@@ -37,13 +29,12 @@ public partial class UbbTextConverter : IValueConverter
         throw new NotImplementedException();
     }
 }
+
 public partial class BoolToAlignmentConverter : IValueConverter
 {
     public object Convert(object value, Type targetType, object parameter, string language)
     {
-        return (bool)value ?
-            HorizontalAlignment.Right :
-            HorizontalAlignment.Left;
+        return (bool)value ? HorizontalAlignment.Right : HorizontalAlignment.Left;
     }
 
     public object ConvertBack(object value, Type targetType, object parameter, string language)
@@ -57,7 +48,6 @@ public partial class HexToBrushConverter : IValueConverter
     public object Convert(object value, Type targetType, object parameter, string language)
     {
         if (value is string hexColor)
-        {
             try
             {
                 // 移除可能的 "#" 前缀
@@ -91,7 +81,7 @@ public partial class HexToBrushConverter : IValueConverter
             {
                 return new SolidColorBrush(Colors.Transparent); // 解析失败返回透明
             }
-        }
+
         return new SolidColorBrush(Colors.Transparent); // 非字符串输入返回透明
     }
 
@@ -105,14 +95,9 @@ public partial class BooltoVisibilityConverter : IValueConverter
 {
     object IValueConverter.Convert(object value, Type targetType, object parameter, string language)
     {
-        if (value is bool flag)
-        {
-            return flag ? Visibility.Visible : Visibility.Collapsed;
-        }
-        else
-        {
-            return Visibility.Collapsed;
-        }
+        if (value is bool flag) return flag ? Visibility.Visible : Visibility.Collapsed;
+
+        return Visibility.Collapsed;
     }
 
     object IValueConverter.ConvertBack(object value, Type targetType, object parameter, string language)
@@ -120,22 +105,19 @@ public partial class BooltoVisibilityConverter : IValueConverter
         throw new NotImplementedException();
     }
 }
+
 public partial class LikeToVariantConverter : IValueConverter
 {
     object IValueConverter.Convert(object value, Type targetType, object parameter, string language)
     {
         if (value is int state)
-        {
             return state switch
             {
                 1 => IconVariant.Filled,
                 _ => IconVariant.Regular
             };
-        }
-        else
-        {
-            return IconVariant.Regular;
-        }
+
+        return IconVariant.Regular;
     }
 
     object IValueConverter.ConvertBack(object value, Type targetType, object parameter, string language)
@@ -143,22 +125,19 @@ public partial class LikeToVariantConverter : IValueConverter
         throw new NotImplementedException();
     }
 }
+
 public partial class DisLikeToVariantConverter : IValueConverter
 {
     object IValueConverter.Convert(object value, Type targetType, object parameter, string language)
     {
         if (value is int state)
-        {
             return state switch
             {
                 2 => IconVariant.Filled,
                 _ => IconVariant.Regular
             };
-        }
-        else
-        {
-            return IconVariant.Regular;
-        }
+
+        return IconVariant.Regular;
     }
 
     object IValueConverter.ConvertBack(object value, Type targetType, object parameter, string language)
@@ -166,18 +145,14 @@ public partial class DisLikeToVariantConverter : IValueConverter
         throw new NotImplementedException();
     }
 }
+
 public partial class ReBooltoVisibilityConverter : IValueConverter
 {
     object IValueConverter.Convert(object value, Type targetType, object parameter, string language)
     {
-        if (value is bool flag)
-        {
-            return flag ? Visibility.Collapsed : Visibility.Visible;
-        }
-        else
-        {
-            return Visibility.Collapsed;
-        }
+        if (value is bool flag) return flag ? Visibility.Collapsed : Visibility.Visible;
+
+        return Visibility.Collapsed;
     }
 
     object IValueConverter.ConvertBack(object value, Type targetType, object parameter, string language)
@@ -185,14 +160,12 @@ public partial class ReBooltoVisibilityConverter : IValueConverter
         throw new NotImplementedException();
     }
 }
+
 public partial class BoolToFollowTextConverter : IValueConverter
 {
     public object Convert(object value, Type targetType, object parameter, string language)
     {
-        if (value is bool isFollowing)
-        {
-            return isFollowing ? "取消关注" : "关注";
-        }
+        if (value is bool isFollowing) return isFollowing ? "取消关注" : "关注";
         return "关注";
     }
 
@@ -206,14 +179,9 @@ public partial class BoolToVariantConverter : IValueConverter
 {
     object IValueConverter.Convert(object value, Type targetType, object parameter, string language)
     {
-        if (value is bool state)
-        {
-            return state ? IconVariant.Color : IconVariant.Regular;
-        }
-        else
-        {
-            return IconVariant.Regular;
-        }
+        if (value is bool state) return state ? IconVariant.Color : IconVariant.Regular;
+
+        return IconVariant.Regular;
     }
 
     object IValueConverter.ConvertBack(object value, Type targetType, object parameter, string language)

@@ -14,6 +14,7 @@ using Microsoft.UI.Xaml.Documents;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Media.Imaging;
+using Microsoft.UI.Xaml.Navigation;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -21,24 +22,30 @@ using Microsoft.UI.Xaml.Media.Imaging;
 namespace CC98.Views;
 
 /// <summary>
-/// An empty page that can be used on its own or navigated to within a Frame.
+///     An empty page that can be used on its own or navigated to within a Frame.
 /// </summary>
 public sealed partial class Index : Page
 {
-    public ObservableCollection<SectionCard> Sections=[];
-    public ObservableCollection<FlipTopic> FlipTopics=[];
-    public IndexDataService.ForumStatistics? Statistics { get; private set; }
-    public ApplicationDataContainer Set=ApplicationData.Current.LocalSettings;
     private readonly IndexDataService _indexService;
+    public ObservableCollection<FlipTopic> FlipTopics = [];
+
+
+    public bool IsOnlineMode = false;
+    public string NaviCode = "";
+    public ObservableCollection<SectionCard> Sections = [];
+    public ApplicationDataContainer Set = ApplicationData.Current.LocalSettings;
     public ImageSource? ThemePic;
+
     public Index()
     {
         InitializeComponent();
-        _indexService=IndexDataService.Instance;
+        _indexService = IndexDataService.Instance;
         LoadSet();
     }
 
-    protected override async void OnNavigatedTo(Microsoft.UI.Xaml.Navigation.NavigationEventArgs e)
+    public IndexDataService.ForumStatistics? Statistics { get; private set; }
+
+    protected override async void OnNavigatedTo(NavigationEventArgs e)
     {
         base.OnNavigatedTo(e);
         await LoadFromCacheAsync();
@@ -47,41 +54,40 @@ public sealed partial class Index : Page
     private void LoadSet()
     {
         var theme = ValidationHelper.GetValue(Set, "ThemePic");
-        if (theme != "0")
-        {
-            ThemePresenter.ImageSource = new BitmapImage(new(theme));
-        }
+        if (theme != "0") ThemePresenter.ImageSource = new BitmapImage(new(theme));
     }
+
     private async Task LoadFromCacheAsync()
     {
         //只从缓存中读取。
-        List<string> sectionNames = ["hotTopic", "schoolEvent", "academics", "study", "emotion", "fleaMarket", "fullTimeJob", "partTimeJob"];
+        List<string> sectionNames =
+            ["hotTopic", "schoolEvent", "academics", "study", "emotion", "fleaMarket", "fullTimeJob", "partTimeJob"];
         List<string> sectionDisplayNames = ["十大话题", "校园活动", "学术通知", "学习天地", "感性·情感", "跳蚤市场", "求职广场", "实习兼职"];
         Sections.Clear();
         FlipTopics.Clear();
-        for(var i=0; i<sectionNames.Count; i++)
+        for (var i = 0; i < sectionNames.Count; i++)
         {
             var propertyName = sectionNames[i];
-            var name= sectionDisplayNames[i];
+            var name = sectionDisplayNames[i];
             var hotTopics = await _indexService.GetTopicPartitionAsync(propertyName);
-            var section=new SectionCard { SectionName=name,IndexTopics=hotTopics,HexColor=ColorEx.GenerateMorandiColorHex()};
+            var section = new SectionCard
+                { SectionName = name, IndexTopics = hotTopics, HexColor = ColorEx.GenerateMorandiColorHex() };
             Sections.Add(section);
         }
+
         var recommendations = await _indexService.GetRecommendationReadingAsync();
         if (recommendations == null)
         {
             await App.Logger.WriteAsync("Index", "获取推荐阅读列表失败");
             return;
         }
-        foreach (var item in recommendations)
-        {
-            item.Url = $"cc98:/{item.Url}";
-        }
+
+        foreach (var item in recommendations) item.Url = $"cc98:/{item.Url}";
         FlipTopics.AddRange(recommendations);
-        Pips.NumberOfPages = recommendations.Count;         
+        Pips.NumberOfPages = recommendations.Count;
     }
 
-        
+
     private void ContentCard_PointerEntered(object sender, PointerRoutedEventArgs e)
     {
         var h = sender as HyperlinkButton;
@@ -95,30 +101,26 @@ public sealed partial class Index : Page
         var translate = h?.RenderTransform as TranslateTransform;
         UiEx.AnimateCard(translate, 0, 0); // 恢复原位
     }
-        
 
-    public bool IsOnlineMode = false;
-    public string NaviCode = "";
     private void TopicItem_Click(object sender, RoutedEventArgs e)
     {
         var button = sender as HyperlinkButton;
         var tag = button?.Tag;
         if (tag == null) return;
-        var param = new TopicNavigationInfo { TopicId = tag.ToInt()};
+        var param = new TopicNavigationInfo { TopicId = tag.ToInt() };
         Frame.Navigate(typeof(Topic), param);
     }
 
-        
 
     private void RecomHyperlink_Click(Hyperlink sender, HyperlinkClickEventArgs args)
     {
-        var url = (sender as Hyperlink).NavigateUri.ToString();
+        var url = sender.NavigateUri.ToString();
         if (!string.IsNullOrEmpty(url))
         {
-            var topicId=int.Parse(url.Replace("cc98://topic/", ""));
-            var param=new TopicNavigationInfo { TopicId = topicId };
-            Frame.Navigate(typeof(Topic),param);
-        } 
+            var topicId = int.Parse(url.Replace("cc98://topic/", ""));
+            var param = new TopicNavigationInfo { TopicId = topicId };
+            Frame.Navigate(typeof(Topic), param);
+        }
     }
 
     private async void IndexAction_Click(object sender, RoutedEventArgs e)
@@ -130,15 +132,11 @@ public sealed partial class Index : Page
         {
             case "refresh":
                 var url = ApiEndpoints.Forum.Index();
-                var success= await IndexDataService.Instance.RefreshFromApiAsync(url);
+                var success = await IndexDataService.Instance.RefreshFromApiAsync(url);
                 if (success)
-                {
                     await LoadFromCacheAsync();
-                }
                 else
-                {
                     Flower.Play(FlowStatus.Fail, "刷新首页失败");
-                }
                 break;
             case "search":
 
@@ -153,6 +151,7 @@ public sealed partial class Index : Page
                     Flower.Play("\uEA39", "当前登录方式不支持抽卡");
                     return;
                 }
+
                 Frame.Navigate(typeof(Game));
                 break;
             case "stat":
@@ -162,6 +161,7 @@ public sealed partial class Index : Page
                 break;
         }
     }
+
     private async Task LoadForumStat()
     {
         var stats = await IndexDataService.Instance.GetStatisticsAsync();

@@ -6,7 +6,7 @@ namespace CC98.Services;
 public static class LocalCacheExtensions
 {
     /// <summary>
-    /// 将当前缓存的内容保存到新路径
+    ///     将当前缓存的内容保存到新路径
     /// </summary>
     public static async Task<(bool Success, string Message)> SaveToAsync(
         this LocalCache cache,
@@ -17,7 +17,7 @@ public static class LocalCacheExtensions
     }
 
     /// <summary>
-    /// 更新当前缓存文件
+    ///     更新当前缓存文件
     /// </summary>
     public static async Task<(bool Success, string Message)> UpdateAsync<T>(
         this LocalCache cache,

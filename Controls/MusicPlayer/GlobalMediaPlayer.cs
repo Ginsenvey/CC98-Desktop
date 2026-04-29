@@ -9,7 +9,6 @@ namespace CC98.Controls.MusicPlayer;
 public sealed class GlobalMediaPlayer : IDisposable
 {
     private static readonly Lazy<GlobalMediaPlayer> Lazy = new(() => new());
-    public static GlobalMediaPlayer Instance => Lazy.Value;
 
     private readonly MediaPlayer _player;
 
@@ -29,8 +28,25 @@ public sealed class GlobalMediaPlayer : IDisposable
 
         //也可以转发播放会话位置变化（如果需要）
         if (_player.PlaybackSession != null)
-        {
             _player.PlaybackSession.PositionChanged += (s, e) => PlaybackSessionPositionChanged?.Invoke(s, e);
+    }
+
+    public static GlobalMediaPlayer Instance => Lazy.Value;
+
+    public MediaPlaybackSession PlaybackSession => _player.PlaybackSession;
+
+    public bool IsPlaying { get; private set; }
+
+    public void Dispose()
+    {
+        // 单例通常不需要被释放，除非程序退出或明确需要清理
+        try
+        {
+            _player?.Pause();
+            _player?.Dispose();
+        }
+        catch
+        {
         }
     }
 
@@ -42,10 +58,6 @@ public sealed class GlobalMediaPlayer : IDisposable
 
     // 如果 UI需要监听 PlaybackSession 的 PositionChanged
     public event TypedEventHandler<MediaPlaybackSession, object> PlaybackSessionPositionChanged;
-
-    public MediaPlaybackSession PlaybackSession => _player.PlaybackSession;
-
-    public bool IsPlaying { get; private set; }
 
     public void SetSource(MediaSource source)
     {
@@ -66,27 +78,12 @@ public sealed class GlobalMediaPlayer : IDisposable
 
     public void TogglePlayPause()
     {
-        if (IsPlaying) Pause(); else Play();
+        if (IsPlaying) Pause();
+        else Play();
     }
 
     public void Seek(TimeSpan position)
     {
-        if (_player.PlaybackSession != null)
-        {
-            _player.PlaybackSession.Position = position;
-        }
-    }
-
-    public void Dispose()
-    {
-        // 单例通常不需要被释放，除非程序退出或明确需要清理
-        try
-        {
-            _player?.Pause();
-            _player?.Dispose();
-        }
-        catch
-        {
-        }
+        if (_player.PlaybackSession != null) _player.PlaybackSession.Position = position;
     }
 }

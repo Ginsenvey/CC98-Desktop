@@ -1,4 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
+
 <UserControl
     x:Class="CC98.Controls.SmartImage.SmartImage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
@@ -9,12 +10,12 @@
 
     <Grid>
         <Image x:Name="InnerImage"
-               Stretch="{x:Bind Stretch, Mode=OneWay}" Unloaded="InnerImage_Unloaded"/>
+               Stretch="{x:Bind Stretch, Mode=OneWay}" Unloaded="InnerImage_Unloaded" />
         <ProgressRing x:Name="LoadingIndicator"
                       IsActive="False"
                       Width="16"
                       Height="16"
                       HorizontalAlignment="Center"
-                      VerticalAlignment="Center"/>
+                      VerticalAlignment="Center" />
     </Grid>
 </UserControl>

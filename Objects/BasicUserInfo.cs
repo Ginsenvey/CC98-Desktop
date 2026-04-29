@@ -1,7 +1,7 @@
 ﻿namespace CC98.Objects;
 
 /// <summary>
-/// 基础信息，用于从id获取头像
+///     基础信息，用于从id获取头像
 /// </summary>
 public class BasicUserInfo
 {

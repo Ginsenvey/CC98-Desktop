@@ -9,6 +9,7 @@ using CC98.Services;
 using DevWinUI;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Navigation;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -16,20 +17,23 @@ using Microsoft.UI.Xaml.Controls;
 namespace CC98.Views;
 
 /// <summary>
-/// An empty page that can be used on its own or navigated to within a Frame.
+///     An empty page that can be used on its own or navigated to within a Frame.
 /// </summary>
 public sealed partial class Search : Page
 {
+    public int CurrentIndex;
+    public string Key = "";
     public ApplicationDataContainer Set = ApplicationData.Current.LocalSettings;
     public ObservableCollection<TopicInfo> Topics = [];
+    public SearchType Type = SearchType.Topic;
+
     public Search()
     {
         InitializeComponent();
         SearchList.ItemsSource = Topics;
     }
-    public string Key = "";
-    public SearchType Type = SearchType.Topic;
-    protected override async void OnNavigatedTo(Microsoft.UI.Xaml.Navigation.NavigationEventArgs e)
+
+    protected override async void OnNavigatedTo(NavigationEventArgs e)
     {
         base.OnNavigatedTo(e);
 
@@ -46,20 +50,16 @@ public sealed partial class Search : Page
                     await SearchTopic(HttpUtility.UrlEncode(Key), CurrentIndex);
                     break;
                 case SearchType.User:
-                    SearchUser(Key);//弃用
+                    SearchUser(Key); //弃用
                     break;
             }
         }
-
-
-
     }
 
     private void SearchUser(string key)
     {
         var url = ApiEndpoints.User.SearchUserByName(key);
         //替换实现
-
     }
 
     private async Task<bool> SearchTopic(string key, int start)
@@ -67,19 +67,16 @@ public sealed partial class Search : Page
         var searchUrl = ApiEndpoints.Topic.SearchTopic(key, start);
         var searchResult = await RequestSender.Fetch<List<TopicInfo>>(searchUrl);
         if (!searchResult.IsSuccess || searchResult.Data == null)
-        {
             //
             return false;
-        }
         var data = searchResult.Data;
 
         Topics.AddRange(data);
         if (data.Count > 0) return true;
 
         return false;
-
     }
-    public int CurrentIndex = 0;
+
     private async void NaviBar_Click(object sender, RoutedEventArgs e)
     {
         var b = sender as Button;
@@ -91,10 +88,7 @@ public sealed partial class Search : Page
                 if (CurrentIndex > 0)
                 {
                     CurrentIndex -= 20;
-                    if (!await SearchTopic(Key, CurrentIndex))
-                    {
-                        CurrentIndex += 20;
-                    }
+                    if (!await SearchTopic(Key, CurrentIndex)) CurrentIndex += 20;
                 }
                 else
                 {
@@ -105,23 +99,20 @@ public sealed partial class Search : Page
             else if (tag == "Forward")
             {
                 CurrentIndex += 20;
-                if (!await SearchTopic(Key, CurrentIndex))
-                {
-                    CurrentIndex -= 20;
-                }
+                if (!await SearchTopic(Key, CurrentIndex)) CurrentIndex -= 20;
             }
 
-            PageIndex.Text = "第 " + (CurrentIndex / 20 + 1).ToString() + " 页";
+            PageIndex.Text = "第 " + (CurrentIndex / 20 + 1) + " 页";
             RootViewer.ScrollToVerticalOffset(0);
         }
     }
+
     private void SearchContent_Click(object sender, RoutedEventArgs e)
     {
         var h = (HyperlinkButton)sender;
         if (h.Tag is not string t) return;
 
         Frame.Navigate(typeof(Topic), t);
-
     }
 
     private void Person_Click(object sender, RoutedEventArgs e)
@@ -129,10 +120,10 @@ public sealed partial class Search : Page
         var h = (HyperlinkButton)sender;
         if (h.Tag is not string tag || tag == "0") return;
 
-        var param = new Dictionary<string, string>()
+        var param = new Dictionary<string, string>
         {
-            {"Mode","Others" },
-            {"UserId",tag }
+            { "Mode", "Others" },
+            { "UserId", tag }
         };
         Frame.Navigate(typeof(Profile), param);
     }

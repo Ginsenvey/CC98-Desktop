@@ -1,20 +1,25 @@
-﻿using CC98.Kernel;
+﻿using System;
+using System.Diagnostics;
+using System.Net;
+using System.Threading.Tasks;
+using System.Web;
+using Windows.ApplicationModel;
+using Windows.ApplicationModel.Activation;
+using Windows.Storage;
+using CC98.Kernel;
 using CC98.Kernel.Network;
 using CC98.Services;
+using CC98.Views;
 using DevWinUI;
-
+using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.Windows.AppNotifications;
 using Microsoft.Windows.AppNotifications.Builder;
-
-using System;
-using System.Diagnostics;
-using System.Net;
-using System.Threading.Tasks;
-using Windows.ApplicationModel;
-using Windows.ApplicationModel.Activation;
-using Windows.Storage;
+using WinRT.Interop;
+using LaunchActivatedEventArgs = Microsoft.UI.Xaml.LaunchActivatedEventArgs;
+using Symbol = FluentIcons.Common.Symbol;
+using SymbolIcon = FluentIcons.WinUI.SymbolIcon;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -22,24 +27,28 @@ using Windows.Storage;
 namespace CC98;
 
 /// <summary>
-/// Provides application-specific behavior to supplement the default Application class.
+///     Provides application-specific behavior to supplement the default Application class.
 /// </summary>
 public partial class App : Application
 {
+    private static AppLog _logger;
+    private SystemTrayIcon? _trayIcon;
+
+    public ApplicationDataContainer Set = ApplicationData.Current.LocalSettings;
+
+    public App()
+    {
+        InitializeComponent();
+    }
+
     /// <summary>
-    /// 获取应用程序的当前实例。
+    ///     获取应用程序的当前实例。
     /// </summary>
     public new static App Current => (App)Application.Current;
 
     public Window AppMainWindow { get; set; }
     public Window LoginPage { get; private set; }
-
-    public ApplicationDataContainer Set = ApplicationData.Current.LocalSettings;
-
-
-    private static AppLog _logger;
     public static AppLog Logger => _logger ?? throw new InvalidOperationException("Logger未初始化");
-    private SystemTrayIcon? _trayIcon;
 
     public static event Action<ElementTheme>? ThemeChanged;
 
@@ -47,14 +56,11 @@ public partial class App : Application
     {
         ThemeChanged?.Invoke(theme);
     }
-    public App()
-    {
-        InitializeComponent();
-    }
 
 
     #region 应用启动
-    protected override async void OnLaunched(Microsoft.UI.Xaml.LaunchActivatedEventArgs args)
+
+    protected override async void OnLaunched(LaunchActivatedEventArgs args)
     {
         await InitializeAppLog();
         var e = AppInstance.GetActivatedEventArgs();
@@ -63,13 +69,11 @@ public partial class App : Application
             AuthFromOpenId(e);
             return;
         }
+
         var isActive = ValidationHelper.GetValue(Set, "IsActive");
         if (isActive == "0")
-        {
             ActivateLogin(0);
-        }
         else //未登录
-        {
             try
             {
                 InitializeNetwork();
@@ -79,9 +83,6 @@ public partial class App : Application
                 //报错
                 ShowError(ex.Message);
             }
-        }
-
-
     }
 
     private async Task InitializeAppLog()
@@ -98,19 +99,19 @@ public partial class App : Application
             Debug.WriteLine(ex.Message);
             throw;
         }
+
         AppDomain.CurrentDomain.UnhandledException += async (s, e) =>
         {
             await Logger.WriteAsync("全局异常捕获", $"未处理异常: {e.ExceptionObject}");
         };
-
-
     }
+
     private async Task StartUp()
     {
         try
         {
             //必须在构造函数前加上异常处理
-            AppMainWindow = new Views.MainWindow();
+            AppMainWindow = new MainWindow();
             AppMainWindow.Closed += Window_Closed;
             AppMainWindow.Activate();
             DisplayTrayIcon();
@@ -119,16 +120,15 @@ public partial class App : Application
         {
             await Logger.WriteAsync("App", "主窗口启动出错", ex.Message);
         }
-
     }
 
     private void ActivateLogin(int mode)
     {
-        LoginPage = new Views.Login(mode);
-        var hWnd = WinRT.Interop.WindowNative.GetWindowHandle(LoginPage);
+        LoginPage = new Login(mode);
+        var hWnd = WindowNative.GetWindowHandle(LoginPage);
         var windowStyle = Win32Interop.GetWindowLong(hWnd, Win32Interop.GwlStyle);
         Win32Interop.SetWindowLong(hWnd, Win32Interop.GwlStyle, windowStyle & ~Win32Interop.WsThickframe);
-        var desiredWidth = 720;  // 逻辑像素
+        var desiredWidth = 720; // 逻辑像素
         var desiredHeight = 460; // 逻辑像素
         var dpi = Win32Interop.GetDpiForWindow(hWnd);
         var scalingFactor = dpi / 96.0;
@@ -146,10 +146,11 @@ public partial class App : Application
     #endregion
 
     #region 认证
+
     private async void AuthFromOpenId(IActivatedEventArgs e)
     {
         var protocol = (ProtocolActivatedEventArgs)e;
-        var query = System.Web.HttpUtility.ParseQueryString(protocol.Uri.Query);
+        var query = HttpUtility.ParseQueryString(protocol.Uri.Query);
         var code = ValidationHelper.GetValue(query, "code");
         var iss = ValidationHelper.GetValue(query, "iss");
         var state = ValidationHelper.GetValue(query, "state");
@@ -160,12 +161,10 @@ public partial class App : Application
             ActivateLogin(0);
             return;
         }
+
         var stateToVerify = PasswordManager.RetrievePassword("State");
         PasswordManager.RemovePassword("State");
-        if (stateToVerify != state)
-        {
-            ShowError("警告", "返回验证参数不正确", "你可能重复点击了登录按钮，或当前网络环境有风险。");
-        }
+        if (stateToVerify != state) ShowError("警告", "返回验证参数不正确", "你可能重复点击了登录按钮，或当前网络环境有风险。");
         var veri = PasswordManager.RetrievePassword("Verifier");
         PasswordManager.ClearAllPasswords("Verifier");
         if (veri != null)
@@ -178,6 +177,7 @@ public partial class App : Application
                 ActivateLogin(0);
                 return;
             }
+
             var token = result.Data;
             if (token == null)
             {
@@ -185,6 +185,7 @@ public partial class App : Application
                 ActivateLogin(0);
                 return;
             }
+
             if (token.IsSucceeded)
             {
                 InjectTokenFromAuth(token);
@@ -195,7 +196,6 @@ public partial class App : Application
                 ShowError("登录失败", "未取得有效令牌", token.Message);
                 ActivateLogin(0);
             }
-
         }
     }
 
@@ -208,22 +208,25 @@ public partial class App : Application
         PasswordManager.SavePassword(result.AccessToken, "Access");
         PasswordManager.SavePassword(result.RefreshToken, "Refresh");
         Set.Values["IsActive"] = "1";
-        AppMainWindow = new Views.MainWindow();
+        AppMainWindow = new MainWindow();
         AppMainWindow.Activate();
     }
+
     #endregion
 
     #region 网络
+
     private async void InitializeNetwork()
     {
-        var networkStatus = await LoginService.Vpn.CheckNetwork(false);
+        var networkStatus = await LoginService.Vpn.CheckNetworkAsync(false);
         if (networkStatus == NetworkStatus.InCampus)
         {
             //启动
             await StartUp();
             return;
         }
-        if (networkStatus == NetworkStatus.NotInCampus)//在校外
+
+        if (networkStatus == NetworkStatus.NotInCampus) //在校外
         {
             await Logger.WriteAsync("App", "初始化网络", "检测VPN可用性");
             if (ValidationHelper.GetValue(Set, "IsVpnUsable") != "1")
@@ -233,6 +236,7 @@ public partial class App : Application
                 ActivateLogin(1);
                 return;
             }
+
             //检测是否已初始化Ticket。若已初始化，使用并检查有效性。无效则重连。未初始化是出错的情况。
             if (!PasswordManager.PasswordExists("Ticket") || !PasswordManager.PasswordExists("Route"))
             {
@@ -241,6 +245,7 @@ public partial class App : Application
                 ShowError("VPN凭据不完整");
                 return;
             }
+
             if (!InjectTokenFromVault())
             {
                 //报错
@@ -248,8 +253,9 @@ public partial class App : Application
                 ShowError("VPN凭据不完整");
                 return;
             }
+
             await Logger.WriteAsync("App", "初始化网络", "注入已有Cookie成功,启用VPN模式检查网络");
-            var newStatus = await LoginService.Vpn.CheckNetwork(true);
+            var newStatus = await LoginService.Vpn.CheckNetworkAsync(true);
             await Logger.WriteAsync("App", "初始化网络", $"新的网络状态为：{newStatus}");
             if (newStatus == NetworkStatus.ByVpn)
             {
@@ -259,6 +265,7 @@ public partial class App : Application
                 //启动
                 return;
             }
+
             var success = await ReloginVpn();
             await Logger.WriteAsync("App", "初始化网络", success ? "重连成功" : "重连失败");
             if (success)
@@ -275,19 +282,10 @@ public partial class App : Application
                 ShowError("无法连接WebVPN", "账户欠费或者密码不正确", "请重新配置凭据");
             }
         }
-        if (networkStatus == NetworkStatus.MirrorError)
-        {
-            ShowError("出错", "连接镜像站失败", "日志已记录");
-        }
-        if (networkStatus == NetworkStatus.UnknownError)
-        {
-            ShowError("出错", "IP可能被镜像站拦截", "日志已记录");
-        }
-        if (networkStatus == NetworkStatus.NoConnection)
-        {
-            ShowError("出错", "无互联网连接", "日志已记录");
-        }
-        return;
+
+        if (networkStatus == NetworkStatus.MirrorError) ShowError("出错", "连接镜像站失败", "日志已记录");
+        if (networkStatus == NetworkStatus.UnknownError) ShowError("出错", "IP可能被镜像站拦截", "日志已记录");
+        if (networkStatus == NetworkStatus.NoConnection) ShowError("出错", "无互联网连接", "日志已记录");
     }
 
     private bool InjectTokenFromVault()
@@ -299,10 +297,7 @@ public partial class App : Application
         var route = new Cookie("route", routeValue, "/", "webvpn.zju.edu.cn");
         ticket.HttpOnly = true;
         //注入环节
-        if (string.IsNullOrEmpty(ticketValue) || string.IsNullOrEmpty(routeValue))
-        {
-            return false;
-        }
+        if (string.IsNullOrEmpty(ticketValue) || string.IsNullOrEmpty(routeValue)) return false;
         LoginService.Vpn.CookieContainer.Add(ticket);
         LoginService.Vpn.CookieContainer.Add(route);
         return true;
@@ -311,9 +306,7 @@ public partial class App : Application
     private async Task<bool> ReloginVpn()
     {
         if (!PasswordManager.PasswordExists("VpnUserName") || !PasswordManager.PasswordExists("VpnPassWord"))
-        {
             return false;
-        }
         var id = PasswordManager.RetrievePassword("VpnUserName");
         var pass = PasswordManager.RetrievePassword("VpnPassWord");
         var res = await LoginService.Vpn.LoginAsync(id, pass);
@@ -322,22 +315,17 @@ public partial class App : Application
         {
             var confirmRes = await LoginService.Vpn.ConfirmAsync();
             if (confirmRes.Status == VpnLoginStatus.Success)
-            {
                 //
                 return true;
-            }
-            else
-            {
-                //报错
-                ShowError("顶号失败");
-                return false;
-            }
-        }
-        if (res.Status == VpnLoginStatus.NeedCaptcha || res.Status == VpnLoginStatus.Error)
-        {
+
             //报错
+            ShowError("顶号失败");
             return false;
         }
+
+        if (res.Status == VpnLoginStatus.NeedCaptcha || res.Status == VpnLoginStatus.Error)
+            //报错
+            return false;
         return false;
     }
 
@@ -347,7 +335,7 @@ public partial class App : Application
         var newRoute = LoginService.Vpn.Route;
         var ticket = newTicket.Value;
         var route = newRoute.Value;
-        if (string.IsNullOrEmpty(ticket) || (string.IsNullOrEmpty(route)))
+        if (string.IsNullOrEmpty(ticket) || string.IsNullOrEmpty(route))
         {
             //报错
             ShowError("VPN凭据不完整");
@@ -360,10 +348,10 @@ public partial class App : Application
         return true;
         //保存失败或者token为空时，会出现VPN启用但找不到令牌的情况。
     }
+
     #endregion
 
     #region 其他
-
 
     private void Window_Closed(object sender, WindowEventArgs args)
     {
@@ -374,7 +362,6 @@ public partial class App : Application
             _trayIcon = null;
         }
     }
-
 
 
     private void DisplayTrayIcon()
@@ -390,14 +377,10 @@ public partial class App : Application
             {
                 if (!AppMainWindow.Visible) AppMainWindow.AppWindow.Show();
                 AppMainWindow.Activate();
-                var appWindow = Microsoft.UI.Windowing.AppWindow.GetFromWindowId(AppMainWindow.AppWindow.Id);
-                if (appWindow.Presenter is Microsoft.UI.Windowing.OverlappedPresenter overlappedPresenter)
-                {
-                    if (overlappedPresenter.State == Microsoft.UI.Windowing.OverlappedPresenterState.Minimized)
-                    {
+                var appWindow = AppWindow.GetFromWindowId(AppMainWindow.AppWindow.Id);
+                if (appWindow.Presenter is OverlappedPresenter overlappedPresenter)
+                    if (overlappedPresenter.State == OverlappedPresenterState.Minimized)
                         overlappedPresenter.Restore();
-                    }
-                }
             });
         };
         _trayIcon.RightClick += (s, e) =>
@@ -405,13 +388,12 @@ public partial class App : Application
             // 使用 WinUI 的 MenuFlyout 并将其赋值给事件参数的 Flyout 属性
             var flyout = new MenuFlyout();
             var titleItem = new MenuFlyoutItem { Text = "CC98", IsEnabled = false, Width = 180 };
-            var openItem = new MenuFlyoutItem { Text = "进入论坛", Width = 180, Icon = new FluentIcons.WinUI.SymbolIcon { Symbol = FluentIcons.Common.Symbol.Home } };
-            openItem.Click += (_, __) =>
-            {
-                AppMainWindow.DispatcherQueue.TryEnqueue(() => AppMainWindow.Activate());
-            };
+            var openItem = new MenuFlyoutItem
+                { Text = "进入论坛", Width = 180, Icon = new SymbolIcon { Symbol = Symbol.Home } };
+            openItem.Click += (_, __) => { AppMainWindow.DispatcherQueue.TryEnqueue(() => AppMainWindow.Activate()); };
 
-            var exitItem = new MenuFlyoutItem { Text = "退出", Width = 180, Icon = new FluentIcons.WinUI.SymbolIcon { Symbol = FluentIcons.Common.Symbol.ArrowExit } };
+            var exitItem = new MenuFlyoutItem
+                { Text = "退出", Width = 180, Icon = new SymbolIcon { Symbol = Symbol.ArrowExit } };
             exitItem.Click += (_, __) =>
             {
                 LoginService.Vpn.Dispose();
@@ -441,11 +423,8 @@ public partial class App : Application
         };
 
         _trayIcon.IsVisible = true;
-
-
-
-
     }
+
     private void ShowError(string title, string subtitle = "", string message = "")
     {
         var notification = new AppNotificationBuilder()

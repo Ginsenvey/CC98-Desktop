@@ -12,64 +12,69 @@ using CC98.Services;
 using DevWinUI;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Navigation;
 
 namespace CC98.Views;
 
 public sealed partial class Board : Page
 {
-    public ObservableCollection<SimpleTopicInfo> Topics = [];
-    public ApplicationDataContainer Set = ApplicationData.Current.LocalSettings;
-    //是否精华帖
-    public bool IsBest = false;
-    public int BoardId = 0;
+    public BoardData BoardData = new()
+    {
+        BoardMasters = [], Id = 0, BigPaper = "", Description = "", Name = "版面", TodayCount = 9898, TopicCount = 9898
+    };
+
+    public int BoardId;
+
     public Increment Increment = new(20);
 
-    public BoardData BoardData = new() { BoardMasters = [],Id=0,BigPaper="",Description="", Name = "版面", TodayCount = 9898, TopicCount = 9898 };
+    //是否精华帖
+    public bool IsBest;
+    public ApplicationDataContainer Set = ApplicationData.Current.LocalSettings;
+    public ObservableCollection<SimpleTopicInfo> Topics = [];
+
     public Board()
     {
         InitializeComponent();
         LoadSet();
     }
 
-    protected override async void OnNavigatedTo(Microsoft.UI.Xaml.Navigation.NavigationEventArgs e)
+    protected override async void OnNavigatedTo(NavigationEventArgs e)
     {
         base.OnNavigatedTo(e);
         var args = e.TryGetParameter<int>();
         BoardId = args;
-        BoardSymbol.Symbol=BoardIconHelper.GetSymbol(BoardId,"");
+        BoardSymbol.Symbol = BoardIconHelper.GetSymbol(BoardId, "");
         await GetData();
         await LoadTopics();
     }
+
     private void LoadSet()
     {
         var showBigPaper = ValidationHelper.GetValue(Set, "ShowBigPaper");
-        if (showBigPaper== "0")
-        {
+        if (showBigPaper == "0")
             //赋予默认值：打开
             Set.Values["ShowBigPaper"] = "1";
-        }
-        if (showBigPaper == "2")
-        {
-            BannerBox.Visibility = Visibility.Collapsed;
-        }
+        if (showBigPaper == "2") BannerBox.Visibility = Visibility.Collapsed;
     }
+
     private async Task GetData()
     {
         var boardDataUrl = ApiEndpoints.Board.BoardInfo(BoardId);
         var boardDataResult = await RequestSender.Fetch<BoardData>(boardDataUrl);
-        if (!boardDataResult.IsSuccess || boardDataResult.Data == null) 
+        if (!boardDataResult.IsSuccess || boardDataResult.Data == null)
         {
             Flower.Play("\uEA39", boardDataResult.Message);
             return;
         }
-        var data= boardDataResult.Data;
+
+        var data = boardDataResult.Data;
         BoardData.Id = data.Id;
         BoardData.Name = data.Name;
         BoardData.Description = data.Description;
         BoardData.BigPaper = data.BigPaper;
         BoardData.BoardMasters = data.BoardMasters;
         BoardData.TopicCount = data.TopicCount;
-        BoardData.TodayCount = data.TodayCount;   
+        BoardData.TodayCount = data.TodayCount;
     }
 
     private async Task<bool> LoadTopics()
@@ -83,24 +88,24 @@ public sealed partial class Board : Page
                 Flower.Play(FlowStatus.Fail, result.Message);
                 return false;
             }
-            var bests= result.Data?.Topics;
-            Increment.HasMore= bests.Count == Increment.PageSize;
+
+            var bests = result.Data?.Topics;
+            Increment.HasMore = bests.Count == Increment.PageSize;
             Topics.AddRange(bests);
             return true;
         }
-        else
+
+        var topicResult = await RequestSender.Fetch<List<SimpleTopicInfo>>(topicUrl);
+        if (topicResult.IsNotValid)
         {
-            var topicResult = await RequestSender.Fetch<List<SimpleTopicInfo>>(topicUrl);
-            if (topicResult.IsNotValid)
-            {
-                Flower.Play(FlowStatus.Fail, topicResult.Message);
-                return false;
-            }
-            var data = topicResult.Data;
-            Increment.HasMore = data.Count == Increment.PageSize;
-            Topics.AddRange(data);
-            return true;
+            Flower.Play(FlowStatus.Fail, topicResult.Message);
+            return false;
         }
+
+        var data = topicResult.Data;
+        Increment.HasMore = data.Count == Increment.PageSize;
+        Topics.AddRange(data);
+        return true;
     }
 
 
@@ -122,8 +127,8 @@ public sealed partial class Board : Page
             case "Send":
                 var param = new SketchNavigationInfo
                 {
-                    EditorMode=EditorMode.DraftNewTopic,
-                    BoardId=BoardId
+                    EditorMode = EditorMode.DraftNewTopic,
+                    BoardId = BoardId
                 };
                 Frame.Navigate(typeof(Sketch), param);
                 break;
@@ -132,10 +137,8 @@ public sealed partial class Board : Page
                 var content = new StringContent("", Encoding.UTF8, "application/json");
                 var result = await RequestSender.Put(url, content);
                 if (!result.IsSuccess)
-                {
                     //
                     return;
-                }
                 var i = new NavigationItem
                 {
                     IconSymbol = BoardIconHelper.GetSymbol(BoardId, BoardData.Name),
@@ -151,11 +154,10 @@ public sealed partial class Board : Page
                 Increment.Clear();
                 Topics.Clear();
                 IsBest = true;
-                            
+
                 await LoadTopics();
                 break;
         }
-
     }
 
     private async void BackFromBest_Click(object sender, RoutedEventArgs e)
@@ -168,11 +170,10 @@ public sealed partial class Board : Page
         await LoadTopics();
     }
 
-        
 
     private async void TopicRepeater_ElementPrepared(ItemsRepeater sender, ItemsRepeaterElementPreparedEventArgs args)
     {
-        await Increment.LoadMore(args.Index,LoadTopics);
+        await Increment.LoadMore(args.Index, LoadTopics);
     }
 
     private async void BoardAction_Click(object sender, RoutedEventArgs e)
@@ -223,9 +224,10 @@ public sealed partial class Board : Page
         {
             //
             Flower.Play(FlowStatus.Fail, result.Message);
-            await App.Logger.WriteAsync("Board", "关注版面失败",result.Message);
+            await App.Logger.WriteAsync("Board", "关注版面失败", result.Message);
             return;
         }
+
         var i = new NavigationItem
         {
             IconSymbol = BoardIconHelper.GetSymbol(BoardId, BoardData.Name),
