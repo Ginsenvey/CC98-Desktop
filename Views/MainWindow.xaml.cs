@@ -39,10 +39,10 @@ public sealed partial class MainWindow : Window
 {
     private readonly HashSet<(Type from, Type to)> _rules =
     [
-        (typeof(Sketch), typeof(Topic)),
-        (typeof(Topic), typeof(Message)),
-        (typeof(Topic), typeof(Focus)),
-        (typeof(Profile), typeof(Follow))
+        (typeof(SketchPage), typeof(TopicPage)),
+        (typeof(TopicPage), typeof(MessagePage)),
+        (typeof(TopicPage), typeof(FocusPage)),
+        (typeof(ProfilePage), typeof(FollowPage))
     ];
 
     public ObservableCollection<string> Collections = [];
@@ -229,15 +229,15 @@ public sealed partial class MainWindow : Window
 
                     var index = await FetchIndex();
                     if (!index) Flower.Play(FlowStatus.Fail, "刷新首页失败");
-                    ContentFrame.Navigate(typeof(Index));
+                    ContentFrame.Navigate(typeof(IndexPage));
                     break;
 
                 case "2":
                     var param = new ProfileNavigationInfo { IsMe = true };
-                    ContentFrame.Navigate(typeof(Profile), param);
+                    ContentFrame.Navigate(typeof(ProfilePage), param);
                     break;
                 case "3":
-                    ContentFrame.Navigate(typeof(Discover));
+                    ContentFrame.Navigate(typeof(DiscoverPage));
                     break;
             }
         }
@@ -245,7 +245,7 @@ public sealed partial class MainWindow : Window
         {
             Set.Values["TitlePage"] = "1";
             var index = await FetchIndex();
-            if (index) ContentFrame.Navigate(typeof(Index));
+            if (index) ContentFrame.Navigate(typeof(IndexPage));
         }
     }
 
@@ -414,32 +414,32 @@ public sealed partial class MainWindow : Window
             switch (tag)
             {
                 case "Index":
-                    ContentFrame.Navigate(typeof(Index));
+                    ContentFrame.Navigate(typeof(IndexPage));
                     break;
                 case "Section":
-                    ContentFrame.Navigate(typeof(Section));
+                    ContentFrame.Navigate(typeof(SectionPage));
                     break;
                 case "Discover":
-                    ContentFrame.Navigate(typeof(Discover));
+                    ContentFrame.Navigate(typeof(DiscoverPage));
                     break;
                 case "Favorite":
-                    ContentFrame.Navigate(typeof(Favorite));
+                    ContentFrame.Navigate(typeof(FavoritePage));
                     break;
                 case "Setting":
-                    ContentFrame.Navigate(typeof(Setting));
+                    ContentFrame.Navigate(typeof(SettingPage));
                     break;
                 case "Message":
                     var param = new MessageNavigationInfo { HasTarget = false };
-                    ContentFrame.Navigate(typeof(Message), param);
+                    ContentFrame.Navigate(typeof(MessagePage), param);
                     break;
                 case "Focus":
-                    ContentFrame.Navigate(typeof(Focus));
+                    ContentFrame.Navigate(typeof(FocusPage));
                     break;
                 default:
                     if (tag.All(char.IsDigit))
                         try
                         {
-                            ContentFrame.Navigate(typeof(Board), int.Parse(tag));
+                            ContentFrame.Navigate(typeof(BoardPage), int.Parse(tag));
                         }
                         catch
                         {
@@ -521,7 +521,7 @@ public sealed partial class MainWindow : Window
     private void Me_Click(object sender, RoutedEventArgs e)
     {
         var param = new ProfileNavigationInfo { IsMe = true };
-        ContentFrame.Navigate(typeof(Profile), param);
+        ContentFrame.Navigate(typeof(ProfilePage), param);
     }
 
 

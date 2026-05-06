@@ -1,0 +1,31 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+
+<Page
+    x:Class="CC98.Views.MessagePage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d"
+    Background="{ThemeResource DesktopAcrylicTransparentBrush}">
+
+    <Grid Padding="15,5,15,15">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*" MinHeight="60" />
+            <RowDefinition Height="12*" />
+        </Grid.RowDefinitions>
+        <SelectorBar Grid.Row="0" HorizontalAlignment="Left" SelectionChanged="NaviBar_SelectionChanged"
+                     x:Name="NaviBar">
+            <SelectorBarItem Text="回复" Tag="Reply" />
+            <SelectorBarItem Text="@我的" Tag="At" />
+            <SelectorBarItem Text="私信" x:Name="ChatMsg" Tag="Chat" />
+            <SelectorBarItem Text="系统通知" x:Name="SystemNotice" Tag="System" />
+        </SelectorBar>
+        <TextBlock x:Name="MsgCount" Grid.Row="0" HorizontalAlignment="Right" VerticalAlignment="Center"
+                   Margin="0,0,3,0" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="0条未读信息" />
+        <Grid Grid.Row="1" CornerRadius="6" BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}"
+              BorderThickness="1">
+            <Frame x:Name="MsgFrame" />
+        </Grid>
+    </Grid>
+</Page>

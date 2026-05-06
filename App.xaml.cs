@@ -127,7 +127,7 @@ public partial class App : Application
 
     private void ActivateLogin(int mode)
     {
-        LoginPage = new Views.Login(mode);
+        LoginPage = new Views.LoginWindow(mode);
         var hWnd = WinRT.Interop.WindowNative.GetWindowHandle(LoginPage);
         var windowStyle = NativeMethods.GetWindowLong(hWnd, NativeMethods.GwlStyle);
         NativeMethods.SetWindowLong(hWnd, NativeMethods.GwlStyle, windowStyle & ~NativeMethods.WsThickframe);
