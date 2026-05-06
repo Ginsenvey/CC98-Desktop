@@ -70,7 +70,12 @@
                 <Setter Property="FontFamily" Value="{StaticResource HarmonySans}" />
             </Style>
 
-
+            <tool:MarkdownConfig x:Key="CustomMarkdownConfig" Themes="{ThemeResource CustomMarkdownThemes}">
+                <tool:MarkdownConfig.ImageProvider>
+                    <primitives:SmartMarkdownImageProvider></primitives:SmartMarkdownImageProvider>
+                </tool:MarkdownConfig.ImageProvider>
+            </tool:MarkdownConfig>
+            <tool:MarkdownThemes x:Key="CustomMarkdownThemes" />
             <primitives:SmartImageLoader x:Key="PortraitLoader" LowRes="True" />
             <primitives:SmartImageLoader x:Key="CustomPortraitLoader" LowRes="False" />
             <services:HexToBrushConverter x:Key="HexToColorBrush" />
@@ -80,6 +85,7 @@
             <services:BooltoVisibilityConverter x:Key="BoolToVisibility" />
             <services:ReBooltoVisibilityConverter x:Key="ReBoolToVisibility" />
             <services:BoolToAlignmentConverter x:Key="AlignmentConverter" />
+            
         </ResourceDictionary>
     </Application.Resources>
 </Application>

@@ -8,9 +8,9 @@ namespace CC98.Services;
 
 public class Messenger
 {
-    private static Messenger _instance;
+    private static Messenger? _instance;
     public static Messenger Instance => _instance ??= new();
-    public event Action<NavigationItem> NavigationItemAdded;
+    public event Action<NavigationItem>? NavigationItemAdded;
 
     public void AddNavigationItem(NavigationItem item)
     {

@@ -428,7 +428,7 @@ public sealed partial class Login : Window
             if (!token.IsError)
             {
                 //InjectToken(token);
-            }
+            } 
             else
             {
                 //await App.Logger.WriteAsync("Login", "登录失败", token.Message);

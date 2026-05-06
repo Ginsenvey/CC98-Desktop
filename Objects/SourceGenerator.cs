@@ -34,7 +34,7 @@ namespace CC98.Objects;
 [JsonSerializable(typeof(PostBasicInfo))]
 [JsonSerializable(typeof(CardStat))]
 [JsonSerializable(typeof(Card))]
-[JsonSerializable(typeof(CachedIndexData))]
+[JsonSerializable(typeof(IndexData))]
 [JsonSerializable(typeof(ForumStatistics))]
 [JsonSerializable(typeof(LogEntry))]
 [JsonSerializable(typeof(CardStatInfoPair))]

@@ -9,6 +9,9 @@ using Windows.Storage;
 
 namespace CC98.Kernel.Authorize;
 
+/// <summary>
+/// 集成OpenId Connect的登录服务，提供密码登录、OAuth登录和刷新令牌功能。
+/// </summary>
 public static class LoginService
 {
     public static VpnService Vpn = new();
@@ -28,7 +31,7 @@ public static class LoginService
     /// <returns></returns>
     public static async Task<TokenResponse?> LoginWithPasswordAsync(string userName, string password,CancellationToken cancellationToken=default)
     {
-        var disco=await HttpClient.GetDiscoveryDocumentAsync(ApiEndpoints.OpenId.Endpoint);
+        var disco=await HttpClient.GetDiscoveryDocumentAsync(ApiEndpoints.OpenId.Endpoint, cancellationToken: cancellationToken);
         if(disco.IsError)throw new Exception($"无法获取OpenId配置: {disco.Error}");
 
         return await HttpClient.RequestPasswordTokenAsync(new PasswordTokenRequest
@@ -64,7 +67,7 @@ public static class LoginService
     /// <returns></returns>
     public static async Task<TokenResponse?> GetNewTokenAsync(string refreshToken, bool isPassWordLogin, CancellationToken cancellationToken = default)
     {
-        var disco = await HttpClient.GetDiscoveryDocumentAsync(ApiEndpoints.OpenId.Endpoint);
+        var disco = await HttpClient.GetDiscoveryDocumentAsync(ApiEndpoints.OpenId.Endpoint, cancellationToken: cancellationToken);
         if (disco.IsError) throw new Exception($"无法获取OpenId配置: {disco.Error}");
 
         return await HttpClient.RequestRefreshTokenAsync(new RefreshTokenRequest

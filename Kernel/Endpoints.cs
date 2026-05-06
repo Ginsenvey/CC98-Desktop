@@ -226,6 +226,10 @@ public static class ApiEndpoints
         {
             return $"{Base}/board/{boardId}/topic";
         }
+        public static string Tags(int boardId)
+        {
+            return $"{Base}/board/{boardId}/tags";
+        }
     }
 
     public static class Topic

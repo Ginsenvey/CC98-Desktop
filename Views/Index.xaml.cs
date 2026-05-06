@@ -62,18 +62,26 @@ public sealed partial class Index : Page
     private async Task LoadFromCacheAsync()
     {
         //只从缓存中读取。
-        List<string> sectionNames =
-            ["hotTopic", "schoolEvent", "academics", "study", "emotion", "fleaMarket", "fullTimeJob", "partTimeJob"];
-        List<string> sectionDisplayNames = ["十大话题", "校园活动", "学术通知", "学习天地", "感性·情感", "跳蚤市场", "求职广场", "实习兼职"];
+        (string Key, string DisplayName)[] sections =
+[
+    ("hotTopic", "十大话题"),
+    ("schoolEvent", "校园活动"),
+    ("academics", "学术通知"),
+    ("study", "学习天地"),
+    ("emotion", "感性·情感"),
+    ("fleaMarket", "跳蚤市场"),
+    ("fullTimeJob", "求职广场"),
+    ("partTimeJob", "实习兼职")
+];
         Sections.Clear();
         FlipTopics.Clear();
-        for (var i = 0; i < sectionNames.Count; i++)
+        for (var i = 0; i < sections.Length; i++)
         {
-            var propertyName = sectionNames[i];
-            var name = sectionDisplayNames[i];
-            var hotTopics = await _indexService.GetTopicPartitionAsync(propertyName);
+            var propertyName = sections[i].Key;
+            var name = sections[i].DisplayName;
+            var topics = await _indexService.GetTopicPartitionAsync(propertyName);
             var section = new SectionCard
-                { SectionName = name, IndexTopics = hotTopics, HexColor = ColorEx.GenerateMorandiColorHex() };
+                { SectionName = name, IndexTopics = topics, HexColor = ColorEx.GenerateMorandiColorHex() };
             Sections.Add(section);
         }
 
@@ -166,18 +174,18 @@ public sealed partial class Index : Page
 
     private async Task LoadForumStat()
     {
-        var stats = await IndexDataService.Instance.GetStatisticsAsync();
-        if (stats == null) return;
+        var data = await IndexDataService.Instance.LoadFromCacheAsync();
+        if (data == null) return;
         ForumStatList.ItemsSource = new List<CardStatInfoPair>
         {
-            new() { StatItem = "今日帖数", Value = stats.TodayCount },
-            new() { StatItem = "今日主题数", Value = stats.TodayTopicCount },
-            new() { StatItem = "全站帖数", Value = stats.PostCount },
-            new() { StatItem = "全站话题", Value = stats.TopicCount },
-            new() { StatItem = "在线用户", Value = stats.OnlineUserCount },
-            new() { StatItem = "全站用户", Value = stats.UserCount }
+            new() { StatItem = "今日帖数", Value = data.TodayCount },
+            new() { StatItem = "今日主题数", Value = data.TodayTopicCount },
+            new() { StatItem = "全站帖数", Value = data.PostCount },
+            new() { StatItem = "全站话题", Value = data.TopicCount },
+            new() { StatItem = "在线用户", Value = data.OnlineUserCount },
+            new() { StatItem = "全站用户", Value = data.UserCount }
         };
-        welcome.Text = $"欢迎新用户 {stats.LastUserName}";
+        welcome.Text = $"欢迎新用户 {data.LastUserName}";
     }
 
     private void ForumStat_Unloaded(object sender, RoutedEventArgs e)

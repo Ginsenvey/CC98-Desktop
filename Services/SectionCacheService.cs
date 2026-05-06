@@ -74,7 +74,7 @@ public class BoardSectionManager
             Console.WriteLine($"读取分区缓存失败: {ex.Message}");
         }
 
-        return new List<SectionInfo>();
+        return [];
     }
 
     /// <summary>
@@ -202,12 +202,12 @@ public class BoardSectionManager
             var folder = ApplicationData.Current.LocalCacheFolder;
             var filePath = Path.Combine(folder.Path, CacheFileName);
 
-            var result = await LocalCache.SaveJsonAsync(
+            var (Success, Message) = await LocalCache.SaveJsonAsync(
                 filePath,
                 json,
                 false);
 
-            return result.Success;
+            return Success;
         }
         catch (Exception ex)
         {

@@ -27,6 +27,7 @@ using Microsoft.UI.Xaml.Navigation;
 using CC98.Services.Extensions;
 using CC98.Kernel.Authorize;
 using CC98.Services.Helpers;
+using CC98.Controls.Extensions;
 
 namespace CC98.Views;
 
@@ -53,10 +54,7 @@ public sealed partial class Topic : Page
 
     private void Topic_Unloaded(object sender, RoutedEventArgs e)
     {
-        if (Pager != null)
-        {
-            Pager.SelectedIndexChanged -= Pager_SelectedIndexChanged;
-        }
+        Pager?.SelectedIndexChanged -= Pager_SelectedIndexChanged;
         GlobalMediaPlayer.Instance.Pause();
     }
 
@@ -70,24 +68,19 @@ public sealed partial class Topic : Page
             item.Click -= CollectionItem_Click;  // 取消订阅
         }
         CollectionMenu.Items.Clear();
-        if (Pager != null)
-        {
-            Pager.SelectedIndexChanged -= Pager_SelectedIndexChanged;
-        }
-        if (VotePanel != null)
-        {
-            VotePanel.IsOpen = false;
-            VotePanel.Target = null;
-            VotePanel.Content = null;
-        }
-
+        Pager?.SelectedIndexChanged -= Pager_SelectedIndexChanged;
+        VotePanel?.IsOpen = false;
+        VotePanel?.Target = null;
+        VotePanel?.Content = null;
+        VotePanel?.IsOpen = false;
+        VotePanel?.Target = null;
+        VotePanel?.Content = null;
         if (ProfileViewer != null)
         {
             ProfileViewer.IsOpen = false;
             ProfileViewer.Target = null;
             ProfileViewer.Content = null;
         }
-
     }
     protected override async void OnNavigatedTo(NavigationEventArgs e)
     {
@@ -551,7 +544,7 @@ public sealed partial class Topic : Page
                             }
                             else
                             {
-                                Flower.Play("\uEA39", $"下载失败，状态码为{fileres.StatusCode.ToString()}");
+                                Flower.Play("\uEA39", $"下载失败，状态码为{fileres.StatusCode}");
                             }
                         }
                         catch (Exception ex)
@@ -856,7 +849,7 @@ public sealed partial class Topic : Page
         if (VoteList.SelectedItems.Count > 0)
         {
             var list = VoteList.SelectedItems.Select(g => VoteList.Items.IndexOf(g) + 1).ToList();
-            var r = await RequestSender.SendVoteResult(ValidationHelper.GetValue(Set, "CurrentTopicId"), list);
+            var r = await SendVoteResult(TopicId, list);
             if (r == "1")
             {
                 Flower.Play(FlowStatus.Success, "投票完成");
@@ -864,7 +857,7 @@ public sealed partial class Topic : Page
             }
             else
             {
-                Flower.Play("\uEA39", "投票失败");
+                Flower.Play(FlowStatus.Fail, "投票失败");
             }
         }
         else
@@ -872,7 +865,20 @@ public sealed partial class Topic : Page
             Flower.Play("\uEA39", "选择至少一项");
         }
     }
+    public static async Task<string> SendVoteResult(int id, List<int> list)
+    {
+        var url = ApiEndpoints.Topic.Vote(id);
+        var post = new Dictionary<string, object>
+        {
+            { "items", list }
+        };
+        var postText = JsonSerialize.Serialize(post);
+        var requestBody = new StringContent(postText, Encoding.UTF8, "application/json");
+        var r = await LoginService.Vpn.PostAsync(url, requestBody);
+        if (r.IsSuccessStatusCode) return "1";
 
+        return "0";
+    }
     private async void Person_ContextRequested(UIElement sender, ContextRequestedEventArgs args)
     {
         try

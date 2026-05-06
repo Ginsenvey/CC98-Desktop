@@ -1,37 +1,11 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
-using System.Threading.Tasks;
-using Microsoft.UI.Dispatching;
+using System.Text;
 
-namespace CC98.Controls.Primitives;
+namespace CC98.Controls.Extensions;
 
-public static class DispatcherQueueExtensions
-{
-    public static async Task EnqueueAsync(this DispatcherQueue dispatcher,
-        Action action,
-        DispatcherQueuePriority priority = DispatcherQueuePriority.Normal)
-    {
-        var tcs = new TaskCompletionSource<bool>();
-
-        if (!dispatcher.TryEnqueue(priority, () =>
-            {
-                try
-                {
-                    action();
-                    tcs.TrySetResult(true);
-                }
-                catch (Exception ex)
-                {
-                    tcs.TrySetException(ex);
-                }
-            }))
-            tcs.TrySetException(new InvalidOperationException("Failed to enqueue the action"));
-
-        await tcs.Task;
-    }
-}
-
-public static class StringExtensions
+public static class UrlExtensions
 {
     /// <summary>
     ///     判断字符串是否为合法的 URL（支持 http、https、ms-appx、ms-appdata）
@@ -166,3 +140,4 @@ public static class StringExtensions
 
     #endregion
 }
+
