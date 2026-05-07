@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics.CodeAnalysis;
 using System.Net;
 using System.Threading.Tasks;
 
@@ -10,7 +11,9 @@ namespace CC98.Objects;
 
 public class ApiResponse<T>
 {
+    [MemberNotNullWhen(true, nameof(Data))]
     public bool IsSuccess { get; set; }
+    
     public T? Data { get; set; }
     public string Message { get; set; } = string.Empty;
     public int StatusCode { get; set; }

@@ -44,7 +44,7 @@ public sealed partial class GamePage
         if (!profileResult.IsSuccess || profileResult.Data == null) return;
         var data = profileResult.Data;
         CardDrawStat.Wealth = data.Wealth;
-        var statUrl = ApiEndpoints.Forum.CardStat();
+        var statUrl = ApiEndpoints.Forum.CardStat;
         var statResult = await RequestSender.Fetch<CardStat>(statUrl);
         if (!statResult.IsSuccess || statResult.Data == null)
             //

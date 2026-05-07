@@ -17,6 +17,7 @@ using Windows.ApplicationModel;
 using Windows.ApplicationModel.Activation;
 using Windows.Storage;
 using CC98.Services.Helpers;
+using Microsoft.Extensions.Caching.Memory;
 using NativeMethods = CC98.Services.Helpers.NativeMethods;
 
 // To learn more about WinUI, the WinUI project structure,
@@ -38,6 +39,11 @@ public partial class App : Application
     public Window LoginPage { get; private set; }
 
     public ApplicationDataContainer Set = ApplicationData.Current.LocalSettings;
+
+    /// <summary>
+    /// 内存缓存服务。
+    /// </summary>
+    public IMemoryCache MemoryCache { get; } = new MemoryCache(new MemoryCacheOptions());
 
 
     private static AppLog _logger;
@@ -181,7 +187,7 @@ public partial class App : Application
                 ActivateLogin(0);
                 return;
             }
-            
+
 
         }
     }

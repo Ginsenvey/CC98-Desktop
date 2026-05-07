@@ -384,7 +384,7 @@ public sealed partial class SketchPage : Page
             { "notifyPoster", NotifyPoster }, //常为true
             { "title", SetTitle.Text }
         };
-        var replyText = JsonSerialize.Serialize(reply);
+        var replyText = SerializationHelper.TrySerialize(reply);
         var requestBody = new StringContent(replyText, Encoding.UTF8, "application/json");
         var res = await RequestSender.Put(url, requestBody);
         if (!res.IsSuccess)
@@ -407,7 +407,7 @@ public sealed partial class SketchPage : Page
 
     private async Task<string> UploadFileAsync(string filePath)
     {
-        var url = ApiEndpoints.Forum.UploadFile();
+        var url = ApiEndpoints.Forum.UploadFile;
         using var formData = new MultipartFormDataContent();
         var fileContent = new ByteArrayContent(File.ReadAllBytes(filePath));
         fileContent.Headers.ContentType = new("multipart/form-data");
@@ -496,7 +496,7 @@ public sealed partial class SketchPage : Page
                 { "notifyAllReplier", NotifyAllReplier },
                 { "title", "" }
             };
-        var replyText = JsonSerialize.Serialize(reply);
+        var replyText = SerializationHelper.TrySerialize(reply);
         var requestBody = new StringContent(replyText, Encoding.UTF8, "application/json");
         var res = await RequestSender.Submit<int>(url, requestBody);
         if (!res.IsSuccess)
@@ -532,7 +532,7 @@ public sealed partial class SketchPage : Page
             { "title", SetTitle.Text },
             { "type", PostTypeValue }
         };
-        var text = JsonSerialize.Serialize(post);
+        var text = SerializationHelper.TrySerialize(post);
         var requestBody = new StringContent(text, Encoding.UTF8, "application/json");
         var res = await RequestSender.Submit<int>(url, requestBody);
         if (!res.IsSuccess)

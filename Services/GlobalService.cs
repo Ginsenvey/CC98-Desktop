@@ -4,28 +4,44 @@
 
 public class GlobalService
 {
-    private static GlobalService? _instance;
-    public static readonly object Lock = new();
-    public int AtCount = 0;
-    public int MessageCount = 0;
-    public int ReplyCount = 0;
-    public bool ShouldReplaceNavigationArgs = false;
-    public int SystemCount = 0;
+    /// <summary>
+    /// 当前用户的 @ 消息总数。
+    /// </summary>
+    public int AtCount { get; set; }
 
+    /// <summary>
+    /// 当前用户的私信消息总数。
+    /// </summary>
+    public int MessageCount { get; set; }
+
+    /// <summary>
+    /// 当前用户的回复消息总数。
+    /// </summary>
+    public int ReplyCount { get; set; }
+
+    /// <summary>
+    /// 当前用户的系统消息总数。
+    /// </summary>
+    public int SystemCount { get; set; }
+
+    /// <summary>
+    /// 是否替换导航参数。
+    /// </summary>
+    // TODO: 这个属性的命名可能需要更改，以更好地反映其用途。
+    public bool ShouldReplaceNavigationArgs { get; set; }
+
+
+    /// <summary>
+    /// 受保护的构造方法。
+    /// </summary>
     private GlobalService()
     {
     }
 
-    public static GlobalService Instance
-    {
-        get
-        {
-            lock (Lock)
-            {
-                return _instance ??= new();
-            }
-        }
-    }
+    /// <summary>
+    /// 获取当前对象的唯一实例。
+    /// </summary>
+    public static GlobalService Instance { get; } = new();
 
     public object? NavigationAnchor { get; set; }
 }

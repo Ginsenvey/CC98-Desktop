@@ -152,7 +152,7 @@ public sealed partial class MainWindow : Window
         var customBoards = ValidationHelper.GetValue(Set, "CustomBoards");
         if (customBoards != "0")
         {
-            var boardinfo = JsonSerialize.Deserialize<Dictionary<string, string>>(customBoards);
+            var boardinfo = SerializationHelper.TryDeserialize<Dictionary<string, string>>(customBoards);
             boardinfo?.Remove(tag);
         }
 
@@ -164,7 +164,7 @@ public sealed partial class MainWindow : Window
     {
         var customBoards = ValidationHelper.GetValue(Set, "CustomBoards");
         if (customBoards != "0")
-            Memory = JsonSerialize.Deserialize<Dictionary<int, string>>(customBoards) ?? [];
+            Memory = SerializationHelper.TryDeserialize<Dictionary<int, string>>(customBoards) ?? [];
         else
             Set.Values["CustomBoards"] = "0";
         //初始化本地缓存
@@ -204,7 +204,7 @@ public sealed partial class MainWindow : Window
                 Name = data.Name, IconSymbol = BoardIconHelper.GetSymbol(boardId, data.Name), Tag = boardId.ToString(),
                 IsEditable = true
             });
-            var boardjsontext = JsonSerialize.Serialize(Memory);
+            var boardjsontext = SerializationHelper.TrySerialize(Memory);
             Set.Values["CustomBoards"] = boardjsontext;
         }
         else
@@ -268,7 +268,7 @@ public sealed partial class MainWindow : Window
 
     private async Task<bool> FetchIndex()
     {
-        var url = ApiEndpoints.Forum.Index();
+        var url = ApiEndpoints.Forum.Index;
         return await IndexDataService.Instance.RefreshFromApiAsync(url);
     }
 
@@ -381,7 +381,7 @@ public sealed partial class MainWindow : Window
         if (groups.Count > 0)
         {
             //临时存储收藏夹列表
-            var favoJson = JsonSerialize.Serialize(groups);
+            var favoJson = SerializationHelper.TrySerialize(groups);
             Set.Values["Favorites"] = favoJson;
             return true;
         }

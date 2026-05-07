@@ -157,7 +157,7 @@ public sealed partial class VpnService : IDisposable
         var loginRes = await HttpClient.PostAsync(LoginPswUrl, content, cancellationToken);
         if (loginRes.StatusCode != HttpStatusCode.OK)
             throw new InvalidOperationException($"网络请求失败:{loginRes.StatusCode}");
-        var result = await loginRes.Content.ReadFromJsonAsync(Cc98JsonContext.Default.VpnLoginResult, cancellationToken);
+        var result = await loginRes.Content.ReadFromJsonAsync(CC98JsonContext.Default.VpnLoginResult, cancellationToken);
         if (result == null) throw new InvalidOperationException("登录结果为空");
         if (!result.IsSuccess)
         {
@@ -178,7 +178,7 @@ public sealed partial class VpnService : IDisposable
             var res = await HttpClient.PostAsync(ConfirmUrl, null, cancellationToken);
             if (res.StatusCode != HttpStatusCode.OK) return VpnLoginResult.Failure($"网络请求失败:{res.StatusCode}");
 
-            var result = await res.Content.ReadFromJsonAsync(Cc98JsonContext.Default.VpnLoginResult, cancellationToken);
+            var result = await res.Content.ReadFromJsonAsync(CC98JsonContext.Default.VpnLoginResult, cancellationToken);
 
             if (result == null) return VpnLoginResult.Failure("登录结果为空");
             if (result.IsSuccess)

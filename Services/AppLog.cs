@@ -1,5 +1,6 @@
 ﻿using CC98.Objects;
 using CC98.Services.Extensions;
+
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -8,7 +9,9 @@ using System.Text;
 using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using System.Threading;
 using System.Threading.Tasks;
+
 using Windows.Storage;
 
 namespace CC98.Services;
@@ -135,7 +138,7 @@ public class AppLog
     /// <summary>
     ///     保存日志到默认位置
     /// </summary>
-    public async Task SaveToFileAsync(string? customName = null)
+    public async Task SaveToFileAsync(string? customName = null, CancellationToken cancellationToken = default)
     {
         await InitializeAsyncIfNeeded();
 
@@ -146,9 +149,9 @@ public class AppLog
 
             var logsToSave = GetRecentLogs(null); // 保存所有日志
 
-            var json = JsonSerialize.Serialize(logsToSave);
+            var json = SerializationHelper.TrySerialize(logsToSave);
 
-            await LocalCache.SaveJsonAsync(filePath, json, validateJson: false);
+            await JsonFileCache<>.SaveAsync(filePath, json, validateJson: false);
         }
         catch (Exception ex)
         {
@@ -193,9 +196,9 @@ public class AppLog
                 Logs = logsToSave
             };
 
-            var json = JsonSerialize.Serialize(exportData);
+            var json = SerializationHelper.TrySerialize(exportData);
 
-            var result = await LocalCache.SaveJsonAsync(
+            var result = await JsonFileCache<>.SaveAsync(
                 targetPath, json, validateJson: false);
 
             if (result.Success)
@@ -471,26 +474,33 @@ public class AppLog
     /// <summary>
     ///     从文件加载最近日志
     /// </summary>
-    private async Task LoadRecentLogsAsync()
+    private async Task LoadRecentLogsAsync(CancellationToken cancellationToken = default)
     {
         try
         {
             // 查找最新的日志文件
-            var logFiles = Directory.GetFiles(LogDirectory, "*.json")
-                .Where(f => Path.GetFileName(f).StartsWith($"{_appName}_log_"))
-                .OrderByDescending(f => f)
+            var recentLogFilePath =
+                (from file in Directory.EnumerateFiles(LogDirectory, "*.json")
+                 let fileName = Path.GetFileName(file)
+                 where fileName.StartsWith($"{_appName}_log_")
+                 orderby file descending
+                 select file)
                 .FirstOrDefault();
 
-            if (logFiles != null)
+
+            // 未找到文件不影响使用，直接返回
+            if (recentLogFilePath == null)
             {
-                var cache = await LocalCache.CreateAsync(logFiles);
-                if (cache.IsAvailable)
+                return;
+            }
+
+            var cache = await JsonFileCache<>.CreateAsync(recentLogFilePath, cancellationToken);
+            if (cache.IsAvailable)
+            {
+                var loadedLogs = cache.ReadAs<List<LogEntry>>();
+                lock (_lock)
                 {
-                    var loadedLogs = cache.ReadAs<List<LogEntry>>();
-                    lock (_lock)
-                    {
-                        _logs.AddRange(loadedLogs);
-                    }
+                    _logs.AddRange(loadedLogs);
                 }
             }
         }

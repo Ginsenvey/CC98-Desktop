@@ -10,7 +10,7 @@
     xmlns:dev="using:DevWinUI"
     xmlns:obj="using:CC98.Objects"
     xmlns:infoFlower="using:CC98.Controls.InfoFlower"
-    Background="{ThemeResource DesktopAcrylicTransparentBrush}">
+    Background="{ThemeResource DesktopAcrylicTransparentBrush}" Loaded="SectionPage_OnLoaded">
     <Page.Resources>
         <DataTemplate x:Key="BoardCase" x:DataType="obj:BoardInfo">
             <HyperlinkButton Content="{x:Bind Name}" Padding="8" Tag="{x:Bind Id}" Click="BoardButton_Click"

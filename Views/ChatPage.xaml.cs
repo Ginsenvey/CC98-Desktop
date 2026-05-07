@@ -163,7 +163,7 @@ public sealed partial class ChatPage : Page
             ReceiverId = CurrentUserId,
             Content = ReplyBody.Text
         };
-        var postText = JsonSerialize.Serialize(post);
+        var postText = SerializationHelper.TrySerialize(post);
         var requestBody = new StringContent(postText, Encoding.UTF8, "application/json");
         var res = await RequestSender.Submit<object>(url, requestBody);
         if (res.IsSuccess)

@@ -1,7 +1,11 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Text.Json.Serialization;
+using System.Text.Json.Serialization.Metadata;
+
 using CC98.Kernel.Authorize;
 using CC98.Kernel.Network;
+
 using static CC98.Services.AppLog;
 using static CC98.Services.IndexDataService;
 
@@ -76,6 +80,9 @@ namespace CC98.Objects;
 [JsonSerializable(typeof(List<Card>))]
 [JsonSerializable(typeof(List<ExportLog>))]
 [JsonSerializable(typeof(List<RatingReason>))]
-internal partial class Cc98JsonContext : JsonSerializerContext
+[JsonSerializable(typeof(SectionInfo[]), TypeInfoPropertyName = "SectionInfos")]
+
+internal partial class CC98JsonContext : JsonSerializerContext
 {
 }
+

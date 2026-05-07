@@ -9,6 +9,7 @@ using CC98.Kernel.Authorize;
 using CC98.Objects;
 using CC98.Services.Extensions;
 using System.Text.Json.Serialization;
+using System.Threading;
 using CC98.Kernel;
 
 namespace CC98.Services;
@@ -16,35 +17,30 @@ namespace CC98.Services;
 public class IndexDataService
 {
     private const string CacheFileName = "index_data.json";
-    private static IndexDataService? _instance;
-    private static readonly object Lock = new();
 
+    /// <summary>
+    /// 受保护的构造方法。
+    /// </summary>
     private IndexDataService()
     {
     }
 
-    public static IndexDataService Instance
-    {
-        get
-        {
-            lock (Lock)
-            {
-                return _instance ??= new();
-            }
-        }
-    }
+    /// <summary>
+    /// 获取该类型的实例。
+    /// </summary>
+    public static IndexDataService Instance { get; } = new();
 
     /// <summary>
     ///     从API获取数据并更新缓存
     /// </summary>
-    public async Task<bool> RefreshFromApiAsync(string apiUrl)
+    public async Task<bool> RefreshFromApiAsync(string apiUrl, CancellationToken cancellationToken = default)
     {
         try
         {
-            var res = await RequestSender.Fetch<IndexData>(apiUrl);
+            var res = await RequestSender.Fetch<IndexData>(apiUrl, cancellationToken);
             if (res.IsSuccess)
             {
-                return await SaveToCacheAsync(res.Data!);
+                return await SaveToCacheAsync(res.Data, cancellationToken);
             }
             return false;
         }
@@ -58,17 +54,17 @@ public class IndexDataService
     /// <summary>
     ///     从缓存读取数据
     /// </summary>
-    public async Task<IndexData?> LoadFromCacheAsync()
+    public async Task<IndexData?> LoadFromCacheAsync(CancellationToken cancellationToken = default)
     {
         try
         {
             var folder = ApplicationData.Current.LocalCacheFolder;
             var filePath = Path.Combine(folder.Path, CacheFileName);
 
-            var cache = await LocalCache.CreateAsync(filePath);
+            var cache = await JsonFileCache<>.CreateAsync(filePath);
 
             if (cache.IsAvailable && !string.IsNullOrWhiteSpace(cache.Content))
-                return JsonSerialize.Deserialize<IndexData>(cache.Content);
+                return SerializationHelper.TryDeserialize<IndexData>(cache.Content);
         }
         catch (Exception ex)
         {
@@ -81,11 +77,11 @@ public class IndexDataService
     /// <summary>
     ///     获取指定分区的帖子列表
     /// </summary>
-    public async Task<List<IndexTopic>> GetTopicPartitionAsync(string partitionName, int? maxCount = null)
+    public async Task<List<IndexTopic>> GetTopicPartitionAsync(string partitionName, int? maxCount = null, CancellationToken cancellationToken = default)
     {
-        var cachedData = await LoadFromCacheAsync();
+        var cachedData = await LoadFromCacheAsync(cancellationToken);
 
-        if (cachedData != null&&cachedData.GetPartitions().TryGetValue(partitionName, out var partitionTopics))
+        if (cachedData != null && cachedData.GetPartitions().TryGetValue(partitionName, out var partitionTopics))
         {
             var topics = partitionTopics ?? [];
             if (maxCount.HasValue) return [.. topics.Take(maxCount.Value)];
@@ -98,9 +94,9 @@ public class IndexDataService
     /// <summary>
     ///     获取推荐阅读列表
     /// </summary>
-    public async Task<List<FlipTopic>> GetRecommendationReadingAsync(int? maxCount = null)
+    public async Task<List<FlipTopic>> GetRecommendationReadingAsync(int? maxCount = null, CancellationToken cancellationToken = default)
     {
-        var cachedData = await LoadFromCacheAsync();
+        var cachedData = await LoadFromCacheAsync(cancellationToken);
 
         if (cachedData != null)
         {
@@ -116,8 +112,9 @@ public class IndexDataService
     /// <summary>
     ///     清理缓存
     /// </summary>
-    public async Task ClearCacheAsync()
+    public void ClearCache()
     {
+
         try
         {
             var folder = ApplicationData.Current.LocalCacheFolder;
@@ -138,16 +135,16 @@ public class IndexDataService
     /// <summary>
     ///     保存到缓存
     /// </summary>
-    private async Task<bool> SaveToCacheAsync(IndexData data)
+    private async Task<bool> SaveToCacheAsync(IndexData data, CancellationToken cancellationToken = default)
     {
         try
         {
-            var json = JsonSerialize.Serialize<IndexData>(data);
+            var json = SerializationHelper.TrySerialize<IndexData>(data);
 
             var folder = ApplicationData.Current.LocalCacheFolder;
             var filePath = Path.Combine(folder.Path, CacheFileName);
 
-            var (Success, Message) = await LocalCache.SaveJsonAsync(
+            var (Success, Message) = await JsonFileCache<>.SaveAsync(
                 filePath,
                 json,
                 false);

@@ -9,39 +9,47 @@ public static class ApiEndpoints
     private const string Oidc = "https://openid.cc98.org";
     private const string Card = "https://card.cc98.org";
 
+    /// <summary>
+    /// 提供论坛相关功能的 API 地址。该类型为静态类型。
+    /// </summary>
     public static class Forum
     {
         public static string AppCenter => Oidc;
 
-        public static string AllBoards()
+        /// <summary>
+        /// 获取所有版面信息的 API 地址。
+        /// </summary>
+        public static string AllBoards => $"{Base}/Board/all";
+
+        /// <summary>
+        /// 获取论坛首页相关数据的 API 地址。
+        /// </summary>
+        public static string Index => $"{Base}/config/index";
+
+        /// <summary>
+        /// 获取抽卡统计信息的 API 地址。
+        /// </summary>
+        public static string CardStat => $"{Card}/api/collection/stat";
+
+        /// <summary>
+        /// 获取特定抽卡规则的 API 地址。
+        /// </summary>
+        /// <param name="ruleId">抽卡规则的标识。</param>
+        /// <returns><paramref name="ruleId"/> 对应的抽卡规则的 API 地址。</returns>
+        public static string DrawCard(int ruleId)
         {
-            return $"{Base}/Board/all";
+            return $"{Card}/api/draw/{ruleId}";
         }
 
-        public static string Index()
-        {
-            return $"{Base}/config/index";
-        }
+        /// <summary>
+        /// 获取分解所有多余卡牌的 API 地址。
+        /// </summary>
+        public static string DestroyAllCards => $"{Card}/api/collection/all-rest";
 
-        public static string CardStat()
-        {
-            return $"{Card}/api/collection/stat";
-        }
-
-        public static string DrawCard(int rule)
-        {
-            return $"{Card}/api/draw/{rule}";
-        }
-
-        public static string DestoryAllCards()
-        {
-            return $"{Card}/api/collection/all-rest";
-        }
-
-        public static string UploadFile()
-        {
-            return $"{Base}/file";
-        }
+        /// <summary>
+        /// 获取上传文件的 API 地址。
+        /// </summary>
+        public static string UploadFile => $"{Base}/file";
     }
 
 

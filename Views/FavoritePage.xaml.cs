@@ -52,7 +52,7 @@ public sealed partial class FavoritePage : Page
         if (f != "0")
         {
             //likecollection.MenuItems.Clear();
-            var data = JsonSerialize.Deserialize<List<Favorites>>(f);
+            var data = SerializationHelper.TryDeserialize<List<Favorites>>(f);
             if (data != null)
             {
                 FavoritesList.Clear();

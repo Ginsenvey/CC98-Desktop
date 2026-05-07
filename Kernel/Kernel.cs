@@ -26,12 +26,12 @@ public static class RequestSender
     /// <summary>
     ///     封装通用GET请求，并实现自动错误处理。
     /// </summary>
-    public static async Task<ApiResponse<T>> Fetch<T>(string endpoint)
+    public static async Task<ApiResponse<T>> Fetch<T>(string endpoint, CancellationToken cancellationToken = default)
     {
         try
         {
             var res = await LoginService.Vpn.GetAsync(endpoint);
-            return await Deserialize<T>(res);
+            return await Deserialize<T>(res,cancellationToken);
         }
         catch (HttpRequestException ex)
         {
@@ -154,7 +154,7 @@ public static class RequestSender
 
         try
         {
-            var obj = await res.Content.ReadFromJsonAsync(typeof(T), Cc98JsonContext.Default, cancellationToken);
+            var obj = await res.Content.ReadFromJsonAsync(typeof(T), CC98JsonContext.Default, cancellationToken);
             return ApiResponse<T>.Success((T?)obj!);
         }
         catch (JsonException ex)

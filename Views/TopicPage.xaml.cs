@@ -131,7 +131,7 @@ public sealed partial class TopicPage : Page
         {
             Flower.Play(FlowStatus.Fail, "收藏夹未缓存");
         }
-        var favoritesList = JsonSerialize.Deserialize<List<Favorites>>(favoritesJson);
+        var favoritesList = SerializationHelper.TryDeserialize<List<Favorites>>(favoritesJson);
         if (favoritesList == null)
         {
             Flower.Play(FlowStatus.Fail, "解析收藏夹缓存出错");
@@ -875,7 +875,7 @@ public sealed partial class TopicPage : Page
         {
             { "items", list }
         };
-        var postText = JsonSerialize.Serialize(post);
+        var postText = SerializationHelper.TrySerialize(post);
         var requestBody = new StringContent(postText, Encoding.UTF8, "application/json");
         var r = await LoginService.Vpn.PostAsync(url, requestBody);
         if (r.IsSuccessStatusCode) return "1";
