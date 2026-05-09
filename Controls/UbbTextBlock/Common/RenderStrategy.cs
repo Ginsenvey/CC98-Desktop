@@ -14,6 +14,7 @@ using Microsoft.UI.Xaml.Controls.Primitives;
 using Microsoft.UI.Xaml.Documents;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Shapes;
+using CC98.Controls.Extensions;
 
 namespace CC98.Controls.UbbTextBlock.Common;
 

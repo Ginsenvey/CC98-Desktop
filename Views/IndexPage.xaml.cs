@@ -45,7 +45,6 @@ public sealed partial class IndexPage
         LoadSet();
     }
 
-    public IndexDataService.ForumStatistics? Statistics { get; private set; }
 
     protected override async void OnNavigatedTo(NavigationEventArgs e)
     {
@@ -79,13 +78,13 @@ public sealed partial class IndexPage
         {
             var propertyName = sections[i].Key;
             var name = sections[i].DisplayName;
-            var topics = await _indexService.GetTopicPartitionAsync(propertyName);
+            var topics = await IndexDataService.GetTopicPartitionAsync(propertyName);
             var section = new SectionCard
                 { SectionName = name, IndexTopics = topics, HexColor = ColorEx.GenerateMorandiColorHex() };
             Sections.Add(section);
         }
 
-        var recommendations = await _indexService.GetRecommendationReadingAsync();
+        var recommendations = await IndexDataService.GetRecommendationReadingAsync();
         if (recommendations == null)
         {
             await App.Logger.WriteAsync("Index", "获取推荐阅读列表失败");
@@ -142,7 +141,7 @@ public sealed partial class IndexPage
         {
             case "refresh":
                 var url = ApiEndpoints.Forum.Index;
-                var success = await IndexDataService.Instance.RefreshFromApiAsync(url);
+                var success = await IndexDataService.RefreshFromApiAsync(url);
                 if (success)
                     await LoadFromCacheAsync();
                 else
@@ -174,7 +173,7 @@ public sealed partial class IndexPage
 
     private async Task LoadForumStat()
     {
-        var data = await IndexDataService.Instance.LoadFromCacheAsync();
+        var data = await IndexDataService.LoadFromCacheAsync();
         if (data == null) return;
         ForumStatList.ItemsSource = new List<CardStatInfoPair>
         {

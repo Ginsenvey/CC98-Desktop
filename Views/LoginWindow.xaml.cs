@@ -1,9 +1,5 @@
-﻿using System;
-using System.Net;
-using System.Threading.Tasks;
-using Windows.Storage;
-using Windows.System;
-using CC98.Kernel;
+﻿using CC98.Kernel;
+using CC98.Kernel.Authorize;
 using CC98.Kernel.Network;
 using CC98.Objects;
 using CC98.Services;
@@ -13,7 +9,13 @@ using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media.Imaging;
 using Microsoft.Windows.AppNotifications;
 using Microsoft.Windows.AppNotifications.Builder;
-using CC98.Kernel.Authorize;
+using System;
+using System.Net;
+using System.Threading.Tasks;
+using Windows.Graphics;
+using Windows.Storage;
+using Windows.System;
+using Windows.UI.WindowManagement;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -27,7 +29,8 @@ public sealed partial class LoginWindow : Window
 {
     public int Mode;
     public ApplicationDataContainer Set;
-
+    private const string TipText= "如果尚未连接浙江大学内网，请在此处登录WebVPN,或者使用[ZJU Connect](https://github.com/Mythologyli/ZJU-Connect-for-Windows/releases).";
+    private const string GuideText= "**在校外登录** \r\n\r\n先配置应用的内建WebVPN,再使用密码登录。\r\n\r\n**忘记密码/无账号？**\r\n\r\n进入[CC98](https://www.cc98.org/logon)官网操作。\r\n\r\n**遇到问题/想要新功能?**\r\n\r\n你可以在微软商店或[开发进度记录楼](https://www.cc98.org/topic/6173309)反馈此问题。\r\n\r\n你也可以克隆本应用仓库，自由修改和编译新的分支。不过，在分发时，应当告知所有的改动。\r\n\r\n**成为开发者**\r\n\r\n本应用使用`WinUI3`,`C#`,`XAML`构建。欢迎所有对.NET生态感兴趣的uu加入本应用的开发，欢迎所有使用者对本应用UI、功能和代码提供建议。";
     public LoginWindow(int mode)
     {
         InitializeComponent();
@@ -35,15 +38,18 @@ public sealed partial class LoginWindow : Window
         SetTitleBar(GridTitleBar);
         RootGrid.RequestedTheme = ElementTheme.Light;
         AppWindow.TitleBar.PreferredHeightOption = TitleBarHeightOption.Standard;
+
         var presenter = OverlappedPresenter.Create();
         presenter.IsResizable = false;
         presenter.IsMaximizable = false;
         presenter.IsMinimizable = false;
         presenter.SetBorderAndTitleBar(true, true);
         AppWindow.SetPresenter(presenter);
+        var desiredWidth = 1440;
+        var desiredHeight = 920;
+        AppWindow.Resize(new SizeInt32(desiredWidth, desiredHeight));
         CenterWindow();
-        tip.Text =
-            "如果尚未连接浙江大学内网，请在此处登录WebVPN,或者使用[ZJU Connect](https://github.com/Mythologyli/ZJU-Connect-for-Windows/releases).";
+        tip.Text = TipText;
         Set = ApplicationData.Current.LocalSettings;
         LoadParams(mode);
     }
@@ -204,8 +210,7 @@ public sealed partial class LoginWindow : Window
         LoginPane.Visibility = Visibility.Collapsed;
         GuidePane.Visibility = Visibility.Visible;
         VpnPane.Visibility = Visibility.Collapsed;
-        var guidance =
-            "> 在校外连接需要配置应用的内建WebVPN,或者使用[ZJU Connect](https://github.com/Mythologyli/ZJU-Connect-for-Windows/releases)，打开RVPN，并设置系统代理。\r\n\r\n  **忘记密码/无账号？**\r\n\r\n进入[CC98](https://www.cc98.org/logon)官网操作。\r\n\r\n**遇到问题/想要新功能?**\r\n\r\n你可以在微软商店或[开发进度记录楼](https://www.cc98.org/topic/6173309)反馈此问题。\r\n\r\n你也可以克隆本应用仓库，自由修改和编译新的分支。不过，在分发时，应当告知所有的改动。\r\n\r\n**成为开发者**\r\n\r\n本应用使用`Windows App SDK`,`C#`,`XAML`构建。欢迎所有对.NET生态感兴趣的uu加入本应用的开发，欢迎所有使用者对本应用UI、功能和代码提供建议。";
+        var guidance = GuideText;
         GuidePresenter.Text = guidance;
     }
 

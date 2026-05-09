@@ -39,7 +39,6 @@ namespace CC98.Objects;
 [JsonSerializable(typeof(CardStat))]
 [JsonSerializable(typeof(Card))]
 [JsonSerializable(typeof(IndexData))]
-[JsonSerializable(typeof(ForumStatistics))]
 [JsonSerializable(typeof(LogEntry))]
 [JsonSerializable(typeof(CardStatInfoPair))]
 [JsonSerializable(typeof(GachaInfo))]

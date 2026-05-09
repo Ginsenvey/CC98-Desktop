@@ -8,6 +8,7 @@ using CC98.Controls.Primitives;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
+using CC98.Controls.Extensions;
 
 namespace CC98.Controls.VideoPlayer;
 

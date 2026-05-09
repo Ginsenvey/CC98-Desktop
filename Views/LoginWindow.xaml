@@ -61,7 +61,7 @@
 
             <ScrollViewer Grid.Row="1" Padding="5">
                 <tool:MarkdownTextBlock x:Name="GuidePresenter" Background="Transparent"
-                                        Foreground="{ThemeResource TextFillColorSecondaryBrush}" FontSize="12" />
+                                        Foreground="{ThemeResource TextFillColorSecondaryBrush}" FontSize="12"/>
             </ScrollViewer>
         </Grid>
         <Grid x:Name="PasswordLoginPane" Grid.Column="2" Grid.Row="1" Padding="20" RowSpacing="15"

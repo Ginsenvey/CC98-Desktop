@@ -21,39 +21,30 @@ public sealed partial class SectionPage : Page
 {
     public ObservableCollection<SectionInfo> AllSections { get; } = [];
     
-    private BoardSectionManager Manager => BoardSectionManager.Instance;
-
-    private static ApplicationDataContainer DataContainer => ApplicationData.Current.LocalSettings;
+    private static BoardSectionManager Manager => BoardSectionManager.Instance;
 
     public SectionPage()
     {
         InitializeComponent();
-        LoadSet();
     }
 
-    private void LoadSet()
+    protected override async void OnNavigatedTo(Microsoft.UI.Xaml.Navigation.NavigationEventArgs e)
     {
-        var theme = ValidationHelper.GetValue(DataContainer, "ThemePic");
-        if (theme != "0")
-        {
-            //ThemePresenter.Source = new BitmapImage(new Uri(_Theme));
-        }
+        base.OnNavigatedTo(e);
+        await LoadSection();
     }
-    
     private async Task LoadSection()
     {
-        var data = await Manager.LoadFromCacheAsync();
+        var data = await Manager.GetSectionDataAsync();
         if (data != null) AllSections.AddRange(data);
     }
 
-    private async void SectionPage_OnLoaded(object sender, RoutedEventArgs e)
+    private void BoardButton_Click(object sender, RoutedEventArgs e)
     {
-        // 检查缓存是否存在
-        var hasCache = Manager.HasValidCache;
-
-        if (!hasCache)
-            // 没有缓存，立即刷新
-            await Manager.RefreshFromApiAsync(ApiEndpoints.Forum.AllBoards);
-        await LoadSection();
+        var button = sender as Button;
+        if(button?.Tag is int boardId)
+        {
+            Frame.Navigate(typeof(BoardPage), boardId);
+        }
     }
 }

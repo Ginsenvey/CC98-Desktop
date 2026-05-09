@@ -51,7 +51,7 @@ public sealed partial class BoardPage
     public BoardData BoardData { get; } = new();
 
     public BoardTopicFilterType FilterType { get; set; } = BoardTopicFilterType.Latest;
-    public Increment Increment1 { get; } = new(20);
+    public Increment Increment { get; } = new(20);
 
 
     public BoardPage()
@@ -101,7 +101,7 @@ public sealed partial class BoardPage
 
     private async Task<bool> LoadTopics()
     {
-        var topicUrl = ApiEndpoints.Board.TopicList((int)FilterType, BoardId, Increment1.StartIndex);
+        var topicUrl = ApiEndpoints.Board.TopicList((int)FilterType, BoardId, Increment.StartIndex);
 
         if (FilterType == BoardTopicFilterType.Best)
         {
@@ -112,7 +112,7 @@ public sealed partial class BoardPage
                 return false;
             }
             var bests = result.Data?.Topics;
-            Increment1.HasMore = bests.Count == Increment1.PageSize;
+            Increment.HasMore = bests.Count == Increment.PageSize;
             Topics.AddRange(bests);
             return true;
         }
@@ -125,7 +125,7 @@ public sealed partial class BoardPage
         }
 
         var data = topicResult.Data;
-        Increment1.HasMore = data.Count == Increment1.PageSize;
+        Increment.HasMore = data.Count == Increment.PageSize;
         Topics.AddRange(data);
         return true;
     }
@@ -144,7 +144,7 @@ public sealed partial class BoardPage
 
     private async void TopicRepeater_ElementPrepared(ItemsRepeater sender, ItemsRepeaterElementPreparedEventArgs args)
     {
-        await Increment1.LoadMore(args.Index, LoadTopics);
+        await Increment.LoadMore(args.Index, LoadTopics);
     }
 
     private async void BoardAction_Click(object sender, RoutedEventArgs e)
@@ -158,7 +158,7 @@ public sealed partial class BoardPage
                 await Launcher.LaunchUriAsync(new(ApiEndpoints.Board.WebUrl(BoardId)));
                 break;
             case "refresh":
-                Increment1.Clear();
+                Increment.Clear();
                 Topics.Clear();
                 await GetData();
                 await LoadTopics();
@@ -214,7 +214,7 @@ public sealed partial class BoardPage
     {
         var item = sender as SelectorBar;
         if (item?.SelectedItem.Tag is not string tag) return;
-        Increment1.Clear();
+        Increment.Clear();
         Topics.Clear();
         //切换时，清除已有列表，重置增量更新，修改当前筛选类型
         FilterType = tag switch

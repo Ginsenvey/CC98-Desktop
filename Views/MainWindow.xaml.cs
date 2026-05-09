@@ -269,7 +269,7 @@ public sealed partial class MainWindow : Window
     private async Task<bool> FetchIndex()
     {
         var url = ApiEndpoints.Forum.Index;
-        return await IndexDataService.Instance.RefreshFromApiAsync(url);
+        return await IndexDataService.RefreshFromApiAsync(url);
     }
 
     private void LoadSettings()

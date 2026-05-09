@@ -32,8 +32,7 @@ public class BoardSectionManager
     /// <summary>
     /// 本地缓存文件的完整路径。
     /// </summary>
-    private static string CacheFileFullPath { get; } =
-        Path.Combine(ApplicationData.Current.LocalCacheFolder.Path, CacheFileName);
+    private static string CacheFilePath { get; } =Path.Combine(ApplicationData.Current.LocalCacheFolder.Path, CacheFileName);
 
     /// <summary>
     ///     私有构造方法。
@@ -71,7 +70,7 @@ public class BoardSectionManager
     /// <summary>
     /// 本地缓存对象。
     /// </summary>
-    private JsonFileCache<SectionInfo[]> JsonFileCache { get; } = new(CacheFileFullPath);
+    private JsonFileCache<SectionInfo[]> JsonFileCache { get; } = new(CacheFilePath);
 
     /// <summary>
     ///     强制从官方 API 刷新分区数据并更新缓存。
@@ -101,7 +100,7 @@ public class BoardSectionManager
     /// <summary>
     ///     清理缓存。
     /// </summary>
-    public void ClearCacheAsync(CancellationToken cancellationToken = default)
+    public void ClearCacheAsync()
     {
         try
         {

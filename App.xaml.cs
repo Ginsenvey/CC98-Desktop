@@ -133,22 +133,10 @@ public partial class App : Application
 
     private void ActivateLogin(int mode)
     {
-        LoginPage = new Views.LoginWindow(mode);
-        var hWnd = WinRT.Interop.WindowNative.GetWindowHandle(LoginPage);
-        var windowStyle = NativeMethods.GetWindowLong(hWnd, NativeMethods.GwlStyle);
-        NativeMethods.SetWindowLong(hWnd, NativeMethods.GwlStyle, windowStyle & ~NativeMethods.WsThickframe);
-        var desiredWidth = 720;  // 逻辑像素
-        var desiredHeight = 460; // 逻辑像素
-        var dpi = NativeMethods.GetDpiForWindow(hWnd);
-        var scalingFactor = dpi / 96.0;
-        NativeMethods.SetWindowPos(
-            hWnd,
-            NativeMethods.HwndTop,
-            0, 0,
-            (int)(desiredWidth * scalingFactor),
-            (int)(desiredHeight * scalingFactor),
-            NativeMethods.SwpNomove | NativeMethods.SwpNozorder);
-        LoginPage.Title = "登录";
+        LoginPage = new Views.LoginWindow(mode)
+        {
+            Title = "登录",
+        };
         LoginPage.Activate();
     }
 

@@ -19,7 +19,7 @@ namespace CC98.Services;
 public class AppLog
 {
     private readonly string _appName;
-    private readonly object _lock = new();
+    private readonly Lock _lock = new();
     private readonly List<LogEntry> _logs = [];
 
     /// <summary>
@@ -110,12 +110,12 @@ public class AppLog
         var beijingTime = GetBeijingTime();
         var newEntries = new List<LogEntry>();
 
-        foreach (var entry in entries)
+        foreach (var (Domain, Info, Message) in entries)
         {
             var logEntry = new LogEntry(
-                entry.Domain?.Trim() ?? "Unknown",
-                entry.Info?.Trim() ?? string.Empty,
-                entry.Message?.Trim() ?? string.Empty,
+                Domain?.Trim() ?? "Unknown",
+                Info?.Trim() ?? string.Empty,
+                Message?.Trim() ?? string.Empty,
                 beijingTime
             );
 
@@ -148,10 +148,8 @@ public class AppLog
             var filePath = Path.Combine(LogDirectory, fileName);
 
             var logsToSave = GetRecentLogs(null); // 保存所有日志
-
-            var json = SerializationHelper.TrySerialize(logsToSave);
-
-            await JsonFileCache<>.SaveAsync(filePath, json, validateJson: false);
+            var cache = new JsonFileCache<List<LogEntry>>(filePath);
+            await cache.UpdateDataAsync(logsToSave, cancellationToken);
         }
         catch (Exception ex)
         {
@@ -163,30 +161,18 @@ public class AppLog
     /// <summary>
     ///     另存日志到用户桌面
     /// </summary>
-    public async Task<(bool Success, string Path)> SaveToDesktopAsync(
-        string? fileName = null,
-        int? maxLogs = 1000)
+    public async Task<(bool Success, string Path)> SaveToDesktopAsync(string? fileName = null,int? maxLogs = 1000,CancellationToken cancellationToken=default)
     {
         await InitializeAsyncIfNeeded();
 
         try
         {
-            var desktopPath = Environment.GetFolderPath(
-                Environment.SpecialFolder.Desktop);
-
+            var desktopPath = Environment.GetFolderPath(Environment.SpecialFolder.Desktop);
             var targetFileName = fileName ?? $"{_appName}_日志_{DateTime.Now:yyyy年MM月dd日_HH时mm分}.json";
             var targetPath = Path.Combine(desktopPath, targetFileName);
 
             // 确定要保存的日志
             var logsToSave = GetRecentLogs(maxLogs);
-
-            var jsonOptions = new JsonSerializerOptions
-            {
-                WriteIndented = true,
-                Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
-                PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-                Converters = { new BeijingTimeConverter() }
-            };
 
             var exportData = new ExportLog
             {
@@ -197,21 +183,13 @@ public class AppLog
             };
 
             var json = SerializationHelper.TrySerialize(exportData);
-
-            var result = await JsonFileCache<>.SaveAsync(
-                targetPath, json, validateJson: false);
-
-            if (result.Success)
-            {
-                await WriteAsync("AppLog", "日志导出", $"日志已导出到桌面: {targetPath}");
-                return (true, targetPath);
-            }
-
-            return (false, result.Message);
+            var cache = new JsonFileCache<ExportLog>(targetPath);
+            await cache.UpdateDataAsync(exportData, cancellationToken);
+            return (true, targetPath);
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"[错误] 导出日志到桌面失败: {ex.Message}");
+            await WriteAsync("AppLog", "导出失败", $"导出日志到桌面失败: {ex.Message}");
             return (false, ex.Message);
         }
     }
@@ -494,13 +472,13 @@ public class AppLog
                 return;
             }
 
-            var cache = await JsonFileCache<>.CreateAsync(recentLogFilePath, cancellationToken);
-            if (cache.IsAvailable)
+            var cache = new JsonFileCache<LogEntry>(recentLogFilePath);
+            var data = await cache.GetDataAsync(cancellationToken);
+            if (data != null)
             {
-                var loadedLogs = cache.ReadAs<List<LogEntry>>();
                 lock (_lock)
                 {
-                    _logs.AddRange(loadedLogs);
+                    _logs.AddRange(data);
                 }
             }
         }

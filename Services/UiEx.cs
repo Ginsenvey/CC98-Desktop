@@ -4,6 +4,9 @@ using Microsoft.UI.Xaml.Media.Animation;
 
 namespace CC98.Services;
 
+/// <summary>
+/// 卡片控件的浮动动画工具类。
+/// </summary>
 public class UiEx
 {
     public static void AnimateCard(TranslateTransform transform, double targetX, double targetY)
