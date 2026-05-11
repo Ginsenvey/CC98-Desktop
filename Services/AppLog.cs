@@ -3,6 +3,7 @@ using CC98.Services.Extensions;
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
@@ -30,14 +31,11 @@ public class AppLog
     public AppLog(string appName, string? logDirectory = null)
     {
         if (string.IsNullOrWhiteSpace(appName))
+        {
             throw new ArgumentException("应用名称不能为空", nameof(appName));
-
+        }
         _appName = SanitizeFileName(appName);
-
-        // 设置日志目录
-        LogDirectory = string.IsNullOrWhiteSpace(logDirectory)
-            ? GetDefaultLogDirectory()
-            : logDirectory;
+        LogDirectory = string.IsNullOrWhiteSpace(logDirectory)? DefaultLogDirectory: logDirectory;
     }
 
     // 日志条目结构
@@ -68,20 +66,17 @@ public class AppLog
     #region 核心日志记录方法
 
     /// <summary>
-    ///     写入日志（异步）。禁止使用同步方法读写文件。
+    /// 写入日志。禁止使用同步方法读写文件。
     /// </summary>
     /// <param name="domain">事件发生域</param>
     /// <param name="info">事件简述</param>
     /// <param name="message">事件详情</param>
-    public async Task WriteAsync(
-        string domain,
-        string info,
-        string message = "")
+    public async Task WriteAsync(string domain,string info,string message = "")
     {
         await InitializeAsyncIfNeeded();
 
         var entry = new LogEntry(
-            domain?.Trim() ?? "Unknown",
+            domain?.Trim() ?? "未知的错误发生域",
             info?.Trim() ?? string.Empty,
             message?.Trim() ?? string.Empty,
             GetBeijingTime()
@@ -92,44 +87,10 @@ public class AppLog
             _logs.Add(entry);
         }
 
-        // 控制台输出
-        WriteToConsole(entry);
-
-        // 自动保存（每次写入都保存，确保不丢失）
+        // 自动保存
         await SaveToFileAsync();
     }
 
-
-    /// <summary>
-    ///     批量写入日志
-    /// </summary>
-    public async Task WriteBatchAsync(IEnumerable<(string Domain, string Info, string Message)> entries)
-    {
-        await InitializeAsyncIfNeeded();
-
-        var beijingTime = GetBeijingTime();
-        var newEntries = new List<LogEntry>();
-
-        foreach (var (Domain, Info, Message) in entries)
-        {
-            var logEntry = new LogEntry(
-                Domain?.Trim() ?? "Unknown",
-                Info?.Trim() ?? string.Empty,
-                Message?.Trim() ?? string.Empty,
-                beijingTime
-            );
-
-            newEntries.Add(logEntry);
-            WriteToConsole(logEntry);
-        }
-
-        lock (_lock)
-        {
-            _logs.AddRange(newEntries);
-        }
-
-        await SaveToFileAsync();
-    }
 
     #endregion
 
@@ -146,20 +107,19 @@ public class AppLog
         {
             var fileName = customName ?? GetDefaultLogFileName();
             var filePath = Path.Combine(LogDirectory, fileName);
-
             var logsToSave = GetRecentLogs(null); // 保存所有日志
             var cache = new JsonFileCache<List<LogEntry>>(filePath);
             await cache.UpdateDataAsync(logsToSave, cancellationToken);
         }
         catch (Exception ex)
         {
-            // 保存失败时，尝试记录到控制台
-            Console.WriteLine($"[错误] 保存日志失败: {ex.Message}");
+            //调试输出
+            Debug.WriteLine($"[错误] 保存日志失败: {ex.Message}");
         }
     }
 
     /// <summary>
-    ///     另存日志到用户桌面
+    /// 另存日志到用户桌面
     /// </summary>
     public async Task<(bool Success, string Path)> SaveToDesktopAsync(string? fileName = null,int? maxLogs = 1000,CancellationToken cancellationToken=default)
     {
@@ -182,7 +142,6 @@ public class AppLog
                 Logs = logsToSave
             };
 
-            var json = SerializationHelper.TrySerialize(exportData);
             var cache = new JsonFileCache<ExportLog>(targetPath);
             await cache.UpdateDataAsync(exportData, cancellationToken);
             return (true, targetPath);
@@ -195,7 +154,7 @@ public class AppLog
     }
 
     /// <summary>
-    ///     保存为纯文本格式（便于阅读）
+    /// 保存为纯文本格式，计划增加到启动窗口的日志查看器中，以便进行异常追踪
     /// </summary>
     public async Task<string> SaveAsTextAsync(string? filePath = null)
     {
@@ -254,9 +213,9 @@ public class AppLog
     }
 
     /// <summary>
-    ///     清理旧日志文件
+    ///  清理旧日志文件
     /// </summary>
-    public async Task CleanOldFilesAsync(int daysToKeep = 30)
+    public async Task<(bool success, int deletedCount)> CleanOldFilesAsync(int daysToKeep = 30)
     {
         await InitializeAsyncIfNeeded();
 
@@ -271,19 +230,20 @@ public class AppLog
             var cutoffDate = DateTime.Now.AddDays(-daysToKeep);
 
             foreach (var file in logFiles)
+            {
                 if (file.LastWriteTime < cutoffDate)
                 {
                     file.Delete();
                     deletedCount++;
                 }
+            }
+            return (true, deletedCount);
 
-            if (deletedCount > 0)
-                await WriteAsync("AppLog", "清理旧文件",
-                    $"清理了 {deletedCount} 个 {daysToKeep} 天前的日志文件");
         }
         catch (Exception ex)
         {
-            await WriteAsync("AppLog", "清理失败", $"清理旧日志文件失败: {ex.Message}");
+            Debug.WriteLine($"[错误] 清理旧日志文件失败: {ex.Message}");
+            return (false, 0);
         }
     }
 
@@ -368,7 +328,7 @@ public class AppLog
     #region 辅助方法
 
     /// <summary>
-    ///     初始化日志系统
+    /// 初始化日志系统
     /// </summary>
     public async Task InitializeAsync()
     {
@@ -377,45 +337,38 @@ public class AppLog
         try
         {
             // 创建日志目录
-            if (!Directory.Exists(LogDirectory))
-                Directory.CreateDirectory(LogDirectory);
+            if (!Directory.Exists(LogDirectory))Directory.CreateDirectory(LogDirectory);
 
             // 尝试加载最近的日志文件
             await LoadRecentLogsAsync();
 
             IsInitialized = true;
         }
-        catch (Exception ex)
+        catch
         {
             // 使用备用目录
             LogDirectory = Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.Desktop),
+                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
                 $"{_appName}_日志");
 
             Directory.CreateDirectory(LogDirectory);
             IsInitialized = true;
-
-            await WriteAsync("AppLog", "初始化备用方案",
-                $"日志系统使用备用目录: {ex.Message}");
         }
     }
 
     private async Task InitializeAsyncIfNeeded()
     {
-        if (!IsInitialized)
-            await InitializeAsync();
+        if (!IsInitialized)await InitializeAsync();
     }
 
-    private string GetDefaultLogDirectory()
-    {
-        return ApplicationData.Current.LocalCacheFolder.Path;
-    }
+    private static string DefaultLogDirectory=>ApplicationData.Current.LocalCacheFolder.Path;
+    
 
     private string GetDefaultLogFileName()
     {
         return $"{_appName}_log_{DateTime.Now:yyyyMMdd}.json";
     }
-
+    //删除非法字符
     private static string SanitizeFileName(string fileName)
     {
         var invalidChars = Path.GetInvalidFileNameChars();
@@ -423,7 +376,7 @@ public class AppLog
     }
 
     /// <summary>
-    ///     获取北京时间
+    /// 获取北京时间
     /// </summary>
     private static DateTime GetBeijingTime()
     {
@@ -441,16 +394,7 @@ public class AppLog
     }
 
     /// <summary>
-    ///     控制台输出
-    /// </summary>
-    private static void WriteToConsole(LogEntry entry)
-    {
-        Console.WriteLine($"[{entry.Time:HH:mm:ss}] [{entry.Domain}] {entry.Info}");
-        if (!string.IsNullOrWhiteSpace(entry.Message)) Console.WriteLine($"      {entry.Message}");
-    }
-
-    /// <summary>
-    ///     从文件加载最近日志
+    ///  从文件加载最近日志
     /// </summary>
     private async Task LoadRecentLogsAsync(CancellationToken cancellationToken = default)
     {
@@ -465,25 +409,20 @@ public class AppLog
                  select file)
                 .FirstOrDefault();
 
-
             // 未找到文件不影响使用，直接返回
-            if (recentLogFilePath == null)
-            {
-                return;
-            }
+            if (recentLogFilePath == null) return;
 
             var cache = new JsonFileCache<LogEntry>(recentLogFilePath);
             var data = await cache.GetDataAsync(cancellationToken);
-            if (data != null)
+            if (data == null) return;
+            lock (_lock)
             {
-                lock (_lock)
-                {
-                    _logs.AddRange(data);
-                }
+                _logs.AddRange(data);
             }
         }
         catch
         {
+            Debug.WriteLine("[警告] 加载日志文件失败，可能是文件损坏或格式不正确。将使用空日志继续运行。");
             // 加载失败不影响正常使用
         }
     }
@@ -507,22 +446,7 @@ public class AppLog
 
     public bool IsInitialized { get; private set; }
 
-    public List<string> Domains
-    {
-        get
-        {
-            lock (_lock)
-            {
-                return
-                [
-                    .. _logs
-                        .Select(l => l.Domain)
-                        .Distinct()
-                        .OrderBy(d => d)
-                ];
-            }
-        }
-    }
+    
 
     #endregion
 }
