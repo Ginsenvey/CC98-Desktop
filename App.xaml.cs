@@ -46,7 +46,7 @@ public partial class App : Application
     public IMemoryCache MemoryCache { get; } = new MemoryCache(new MemoryCacheOptions());
 
 
-    private static AppLog _logger;
+    private static AppLog? _logger;
     public static AppLog Logger => _logger ?? throw new InvalidOperationException("Logger未初始化");
     private SystemTrayIcon? _trayIcon;
 

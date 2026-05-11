@@ -60,7 +60,6 @@ public sealed partial class MainWindow : Window
         AppWindow.SetIcon(iconPath);
         AppWindow.SetTaskbarIcon(iconPath);
         AppWindow.Changed += AppWindow_Changed;
-        ;
         LoadSettings();
         App.ThemeChanged += OnAppThemeChanged;
         Messenger.Instance.NavigationItemAdded += OnNavigationItemAdded;

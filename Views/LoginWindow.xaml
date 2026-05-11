@@ -14,7 +14,6 @@
     <Window.SystemBackdrop>
         <MicaBackdrop />
     </Window.SystemBackdrop>
-
     <Grid x:Name="RootGrid" UseLayoutRounding="True">
 
         <Grid.ColumnDefinitions>
@@ -128,13 +127,13 @@
                 </StackPanel>
             </dev:ProgressButton>
         </Grid>
-        <Grid x:Name="LoginPane" Grid.Column="2" Grid.Row="1" Padding="20" RowSpacing="10">
+        <Grid x:Name="LoginPane" Grid.Column="2" Grid.Row="1" Padding="20" RowSpacing="11">
             <Grid.RowDefinitions>
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
 
             <TextBlock Text="欢迎回家。" FontWeight="Bold" FontSize="18" Foreground="LightSeaGreen" />
