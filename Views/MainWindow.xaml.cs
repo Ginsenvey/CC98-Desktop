@@ -47,24 +47,9 @@ public sealed partial class MainWindow : Window
 
     public ObservableCollection<string> Collections = [];
     public GlobalService GlobalService = GlobalService.Instance;
+    //需要迁移到新的存取关注版面的方式
     public Dictionary<int, string> Memory = [];
     public ApplicationDataContainer Set = ApplicationData.Current.LocalSettings;
-
-    public MainWindow()
-    {
-        InitializeComponent();
-        ExtendsContentIntoTitleBar = true;
-        SetTitleBar(UserArea);
-        AppWindow.TitleBar.PreferredHeightOption = TitleBarHeightOption.Tall;
-        var iconPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "cc98.ico");
-        AppWindow.SetIcon(iconPath);
-        AppWindow.SetTaskbarIcon(iconPath);
-        AppWindow.Changed += AppWindow_Changed;
-        LoadSettings();
-        App.ThemeChanged += OnAppThemeChanged;
-        Messenger.Instance.NavigationItemAdded += OnNavigationItemAdded;
-        Surfing();
-    }
 
     public ObservableCollection<CategoryBase> MenuItems { get; } = [];
     public ObservableCollection<CategoryBase> FooterMenuItems { get; } = [];
@@ -72,18 +57,74 @@ public sealed partial class MainWindow : Window
     public NavigationView NavigationView => Navi;
     public int UnreadCount { get; set; }
 
-    private DispatcherTimer SyncTimer { get; set; }
+    private DispatcherTimer? SyncTimer { get; set; }
 
+    public MainWindow()
+    {
+        InitializeComponent();
+        AppWindow.Changed += AppWindow_Changed;
+        App.ThemeChanged += OnAppThemeChanged;
+    }
     private void AppWindow_Changed(AppWindow sender, AppWindowChangedEventArgs args)
     {
-        if (args.DidPresenterChange && AppWindow.Presenter is OverlappedPresenter presenter)
-            // 检查窗口是否最小化
-            if (presenter.State == OverlappedPresenterState.Minimized)
-                // 取消最小化到任务栏，改为隐藏到托盘
-                AppWindow.Hide();
+        //在最小化时隐藏到托盘
+        if (args.DidPresenterChange && AppWindow.Presenter is OverlappedPresenter presenter && presenter.State == OverlappedPresenterState.Minimized)
+            AppWindow.Hide();
+    }
+    private void RootGrid_Loaded(object sender, RoutedEventArgs e)
+    {
+        //设置窗口状态
+        SetWindowState();
+        //加载自定义设置
+        LoadSettings();
+        //加载内容
+        PrepareContent();
     }
 
-    private void Surfing()
+
+    private void SetWindowState()
+    {
+        ExtendsContentIntoTitleBar = true;
+        SetTitleBar(UserArea);
+        AppWindow.TitleBar.PreferredHeightOption = TitleBarHeightOption.Tall;
+        var iconPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "cc98.ico");
+        AppWindow.SetIcon(iconPath);
+        AppWindow.SetTaskbarIcon(iconPath);
+        Messenger.Instance.NavigationItemAdded += OnNavigationItemAdded;
+    }
+    
+
+    
+    private void LoadSettings()
+    {
+        int effect = AppSettings.Current.Effect;
+        SystemBackdrop = effect switch
+        {
+            0 => new MicaSystemBackdrop(),
+            1 => new MicaSystemBackdrop(MicaKind.BaseAlt),
+            2 => new AcrylicSystemBackdrop(),
+            3 => new AcrylicSystemBackdrop(DesktopAcrylicKind.Thin),
+            4 => null,
+            _ => new MicaSystemBackdrop()
+        };
+
+        int theme = AppSettings.Current.Theme;
+        RootGrid.RequestedTheme = theme switch
+        {
+            1 => ElementTheme.Light,
+            2 => ElementTheme.Dark,
+            _ => ElementTheme.Default
+        };
+
+
+        if (string.IsNullOrEmpty(AppSettings.Current.ThemePicture)) return;
+        var themesPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Themes");
+        var files = Directory.GetFiles(themesPath, "*.jpg", SearchOption.AllDirectories);
+        var file = files[0];
+        //加载到FlipView
+    }
+
+    private void PrepareContent()
     {
         CheckLoginStatus();
         LoadPortrait();
@@ -93,16 +134,15 @@ public sealed partial class MainWindow : Window
 
     private async void LoadPortrait()
     {
-        var portraitUrl = ValidationHelper.GetValue(Set, "Portrait");
-        if (portraitUrl == "0")
-        {
-            var profileUrl = ApiEndpoints.User.UserProfile(true, 0);
-            var profileResult = await RequestSender.Fetch<UserInfo>(profileUrl);
-            if (!profileResult.IsSuccess || profileResult.Data == null) return;
-            var data = profileResult.Data;
-            portraitUrl = data.PortraitUrl;
-            Set.Values["Portrait"] = data.PortraitUrl;
-        }
+        var portraitUrl = AppSettings.Current.Portrait;
+        if (string.IsNullOrEmpty(portraitUrl)) return;
+
+        var profileUrl = ApiEndpoints.User.UserProfile(true, 0);
+        var profileResult = await RequestSender.Fetch<UserInfo>(profileUrl);
+        if (!profileResult.IsSuccess) return;
+        var data = profileResult.Data;
+        portraitUrl = data.PortraitUrl;
+        AppSettings.Current.Portrait = data.PortraitUrl;
 
         MyPicture.Src = portraitUrl;
     }
@@ -121,7 +161,7 @@ public sealed partial class MainWindow : Window
     private void LoadMenuItem()
     {
         var favorite = new NavigationGroup { Name = "集锦", IsEditable = false };
-        var pinnedGroup = new NavigationGroup { Name = "推荐", IsEditable = true };
+        var pinnedGroup = new NavigationGroup { Name = "关注", IsEditable = true };
         MenuItems.Add(new NavigationItem
             { Name = "今日话题", IconSymbol = Symbol.Grid, Tag = "Index", IsEditable = false });
         MenuItems.Add(new NavigationItem
@@ -141,21 +181,22 @@ public sealed partial class MainWindow : Window
 
     private async void PinOff_Click(object sender, RoutedEventArgs e)
     {
-        if ((sender as MenuFlyoutItem)?.Tag is not string tag) return;
-        var boardId = int.Parse(tag);
+        if ((sender as MenuFlyoutItem)?.Tag is not int boardId) return;
         var url = ApiEndpoints.Board.EditFocusBoards(boardId);
         var result = await RequestSender.Delete(url);
         if (!result.IsSuccess)
+        {
             //
             return;
+        }
         var customBoards = ValidationHelper.GetValue(Set, "CustomBoards");
         if (customBoards != "0")
         {
-            var boardinfo = SerializationHelper.TryDeserialize<Dictionary<string, string>>(customBoards);
-            boardinfo?.Remove(tag);
+            var boardinfo = SerializationHelper.TryDeserialize<Dictionary<int, string>>(customBoards);
+            boardinfo?.Remove(boardId);
         }
 
-        var item = MenuItems.OfType<NavigationItem>().First(g => g.Tag == tag);
+        var item = MenuItems.OfType<NavigationItem>().First(g => g.Tag == boardId.ToString());
         MenuItems.Remove(item);
     }
 
@@ -271,35 +312,7 @@ public sealed partial class MainWindow : Window
         return await IndexDataService.RefreshFromApiAsync(url);
     }
 
-    private void LoadSettings()
-    {
-        var effect = ValidationHelper.GetValue(Set, "Effect");
-        SystemBackdrop = effect switch
-        {
-            "0" => new MicaSystemBackdrop(),
-            "1" => new MicaSystemBackdrop(MicaKind.BaseAlt),
-            "2" => new AcrylicSystemBackdrop(),
-            "3" => new AcrylicSystemBackdrop(DesktopAcrylicKind.Thin),
-            "4" => null,
-            _ => new MicaSystemBackdrop()
-        };
-        var theme = ValidationHelper.GetValue(Set, "Theme");
-        RootGrid.RequestedTheme = theme switch
-        {
-            "1" => ElementTheme.Light,
-            "2" => ElementTheme.Dark,
-            _ => ElementTheme.Default
-        };
-
-
-        if (ValidationHelper.GetValue(Set, "ThemePic") == "0")
-        {
-            var themesPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Themes");
-            var files = Directory.GetFiles(themesPath, "*.jpg", SearchOption.AllDirectories);
-            var file = files[0];
-            Set.Values["Themepic"] = file;
-        }
-    }
+    
 
     private void OnAppThemeChanged(ElementTheme theme)
     {
@@ -559,4 +572,6 @@ public sealed partial class MainWindow : Window
     }
 
     #endregion
+
+    
 }

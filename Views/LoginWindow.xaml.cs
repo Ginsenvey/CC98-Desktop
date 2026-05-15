@@ -238,10 +238,10 @@ public sealed partial class LoginWindow : Window
         if (status == NetworkStatus.InCampus)
         {
             var oidcService = new OpenId();
-            var loop = oidcService.GenerateAuthLoop();
-            PasswordManager.SavePassword(loop.veri, "Verifier");
-            PasswordManager.SavePassword(loop.state, "State");
-            await Launcher.LaunchUriAsync(new(loop.url));
+            var (url, veri, state) = oidcService.GenerateAuthLoop();
+            PasswordManager.SavePassword(veri, "Verifier");
+            PasswordManager.SavePassword(state, "State");
+            await Launcher.LaunchUriAsync(new(url));
             await Task.Delay(2000);
             Application.Current.Exit();
         }

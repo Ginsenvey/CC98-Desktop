@@ -19,6 +19,8 @@ using Windows.Storage;
 using CC98.Services.Helpers;
 using Microsoft.Extensions.Caching.Memory;
 using NativeMethods = CC98.Services.Helpers.NativeMethods;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.DependencyInjection;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -138,6 +140,28 @@ public partial class App : Application
             Title = "登录",
         };
         LoginPage.Activate();
+    }
+
+    #endregion
+
+    #region 依赖注入
+    public static IHost Host { get; private set; } = CreateHost();
+    private static IHost CreateHost()
+    {
+        return Microsoft.Extensions.Hosting.Host.CreateDefaultBuilder()
+            .ConfigureServices(services =>
+            {
+                services.AddSingleton<IVpnService, VpnService>();
+                services.AddTransient<VpnMessageHandler>();
+                services.AddHttpClient("VpnClient")
+                    .AddHttpMessageHandler<VpnMessageHandler>();
+                services.AddSingleton<ILoginService, LoginService>();
+            })
+            .Build();
+    }
+    public static T GetService<T>() where T : notnull
+    {
+        return Host.Services.GetRequiredService<T>();
     }
 
     #endregion

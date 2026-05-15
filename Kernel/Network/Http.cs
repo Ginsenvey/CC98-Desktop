@@ -12,6 +12,8 @@ using Windows.Media.Core;
 using Windows.Storage.Streams;
 
 namespace CC98.Kernel.Network;
+//Todo：使用Polly重写异常处理逻辑，在Kernel中直接使用HttpClient发送请求，删除VpnService中的GetAsync、PostAsync等方法，保留SendRequestAsync作为核心请求发送函数，并在Kernel中实现自动重试和令牌刷新逻辑。这样可以简化VpnService的职责，使其专注于VPN连接和令牌管理，而将请求发送和错误处理的逻辑集中在Kernel中，提升代码的清晰度和可维护性。
+//那么，VpnService应当负责维护一个Client，进行Cookie注入和URL转写
 
 public sealed partial class VpnService
 {
@@ -23,7 +25,7 @@ public sealed partial class VpnService
     public async Task<MediaSource?> GetSourceAsync([StringSyntax(StringSyntaxAttribute.Uri)] string url,
         CancellationToken cancellationToken = default)
     {
-        if (!IsLoggedIn && IsVpnEnabled)
+        if (!IsLoggedIn && IsEnabled)
             throw new InvalidOperationException("WebVPN 未连接");
         try
         {
@@ -64,9 +66,9 @@ public sealed partial class VpnService
 
     public async Task<byte[]?> GetByteArrayAsync(string url)
     {
-        if (!IsLoggedIn && IsVpnEnabled)
+        if (!IsLoggedIn && IsEnabled)
             throw new("WebVPN未连接");
-        var targetUrl = IsVpnEnabled ? ConvertUrl(url) : url;
+        var targetUrl = IsEnabled ? ConvertUrl(url) : url;
         try
         {
             var res = await HttpClient.GetAsync(targetUrl);
@@ -122,9 +124,9 @@ public sealed partial class VpnService
 
     public async Task<HttpResponseMessage> SendAsync(string url, HttpRequestMessage request)
     {
-        if (!IsLoggedIn && IsVpnEnabled)
+        if (!IsLoggedIn && IsEnabled)
             throw new("WebVPN未连接");
-        var targetUrl = IsVpnEnabled ? ConvertUrl(url) : url;
+        var targetUrl = IsEnabled ? ConvertUrl(url) : url;
         request.RequestUri = new(targetUrl);
         var res = await HttpClient.SendAsync(request);
         if (res.StatusCode == HttpStatusCode.Unauthorized)
@@ -138,9 +140,9 @@ public sealed partial class VpnService
 
     public async Task<HttpResponseMessage> DeleteAsync(string url)
     {
-        if (!IsLoggedIn && IsVpnEnabled)
+        if (!IsLoggedIn && IsEnabled)
             throw new("WebVPN未连接");
-        var targetUrl = IsVpnEnabled ? ConvertUrl(url) : url;
+        var targetUrl = IsEnabled ? ConvertUrl(url) : url;
         using var request = new HttpRequestMessage(HttpMethod.Delete, targetUrl);
         var res = await HttpClient.SendAsync(request);
         if (res.StatusCode == HttpStatusCode.Unauthorized)
@@ -154,9 +156,9 @@ public sealed partial class VpnService
 
     public async Task<HttpResponseMessage> PutAsync(string url, HttpContent? content)
     {
-        if (!IsLoggedIn && IsVpnEnabled)
+        if (!IsLoggedIn && IsEnabled)
             throw new("WebVPN未连接");
-        var targetUrl = IsVpnEnabled ? ConvertUrl(url) : url;
+        var targetUrl = IsEnabled ? ConvertUrl(url) : url;
         using var request = new HttpRequestMessage(HttpMethod.Put, targetUrl);
         request.Content = content;
         var res = await HttpClient.SendAsync(request);
@@ -175,10 +177,10 @@ public sealed partial class VpnService
     private async Task<HttpResponseMessage> SendRequestAsync(HttpMethod method, string url, HttpContent? content,
         CancellationToken cancellationToken = default)
     {
-        if (!IsLoggedIn && IsVpnEnabled)
+        if (!IsLoggedIn && IsEnabled)
             throw new("WebVPN未连接");
 
-        var targetUrl = IsVpnEnabled ? ConvertUrl(url) : url;
+        var targetUrl = IsEnabled ? ConvertUrl(url) : url;
 
         using var request = new HttpRequestMessage(method, targetUrl);
         request.Content = content;

@@ -12,20 +12,9 @@ public sealed partial class AppSettings : INotifyPropertyChanged
 {
     //需要迁移的设置项
 
-    private ApplicationDataContainer LocalSettings => ApplicationData.Current.LocalSettings;
+    private static ApplicationDataContainer LocalSettings => ApplicationData.Current.LocalSettings;
     public static AppSettings Current { get; } = new();
 
-    private T? GetValueByName<T>(string key)
-    {
-        if (LocalSettings.Values.TryGetValue(key, out var value) && value is T propertyValue)
-        {
-            return propertyValue;
-        }
-        else
-        {
-            return default;
-        }
-    }
     private T? GetValue<T>(string key)
     {
         if (LocalSettings.Values.TryGetValue(key, out var value) && value is T propertyValue)
@@ -37,7 +26,7 @@ public sealed partial class AppSettings : INotifyPropertyChanged
             return default;
         }
     }
-    private bool SetValue<T>(string key, object value)
+    private bool SetValue(string key, object value)
     {
         try
         {
@@ -57,7 +46,7 @@ public sealed partial class AppSettings : INotifyPropertyChanged
     /// </summary>
     public bool HideImage
     {
-        get => GetValueByName<bool>(nameof(HideImage));
+        get => GetValue<bool>(nameof(HideImage));
         set
         {
             try
@@ -75,59 +64,61 @@ public sealed partial class AppSettings : INotifyPropertyChanged
     public bool ShowBigPaper
     {
         get => GetValue<bool>(nameof(ShowBigPaper));
-        set=> SetValue<bool>(nameof(ShowBigPaper), value);
+        set=> SetValue(nameof(ShowBigPaper), value);
     }
     public int ActiveMode
     {
         get => GetValue<int>(nameof(ActiveMode));
-        set => SetValue<int>(nameof(ActiveMode), value);
+        set => SetValue(nameof(ActiveMode), value);
     }
     public int UserId
     {
         get => GetValue<int>(nameof(UserId));
-        set => SetValue<int>(nameof(UserId), value);
+        set => SetValue(nameof(UserId), value);
     }
     public int TitlePage
     {
         get => GetValue<int>(nameof(TitlePage));
-        set => SetValue<int>(nameof(TitlePage), value);
+        set => SetValue(nameof(TitlePage), value);
     }
     public int Theme 
     {         
         get => GetValue<int>(nameof(Theme));
-        set => SetValue<int>(nameof(Theme), value);
+        set => SetValue(nameof(Theme), value);
     }
     public int Effect
     {
         get => GetValue<int>(nameof(Effect));
-        set => SetValue<int>(nameof(Effect), value);
+        set => SetValue(nameof(Effect), value);
     }
     public bool IsTailVisible
     {
         get => GetValue<bool>(nameof(IsTailVisible));
-        set => SetValue<bool>(nameof(IsTailVisible), value);
+        set => SetValue(nameof(IsTailVisible), value);
     }
     public string CustomBoards
     {
         get => GetValue<string>(nameof(CustomBoards)) ?? string.Empty;
-        set => SetValue<string>(nameof(CustomBoards), value);
+        set => SetValue(nameof(CustomBoards), value);
     }
     public string ThemePicture
     {
         get => GetValue<string>(nameof(ThemePicture)) ?? string.Empty;
-        set => SetValue<string>(nameof(ThemePicture), value);
+        set => SetValue(nameof(ThemePicture), value);
     }
     public string Portrait
     {
         get => GetValue<string>(nameof(Portrait)) ?? string.Empty;
-        set => SetValue<string>(nameof(Portrait), value);
+        set => SetValue(nameof(Portrait), value);
     }
     //开发者模式，禁用网络检查
     public string DevelopMode
     {
         get => GetValue<string>(nameof(DevelopMode)) ?? string.Empty;
-        set => SetValue<string>(nameof(DevelopMode), value);
+        set => SetValue(nameof(DevelopMode), value);
     }
+
+
     public event PropertyChangedEventHandler? PropertyChanged;
 
     private void OnPropertyChanged([CallerMemberName] string? propertyName = null)

@@ -110,6 +110,7 @@ public static class RequestSender
         }
         catch (Exception ex)
         {
+            await App.Logger.WriteAsync("Kernel", "其他错误", ex.Message);
             return ApiResponse.Fail($"系统错误: {ex.Message}");
         }
     }
@@ -142,7 +143,7 @@ public static class RequestSender
         }
         catch (Exception ex)
         {
-            await App.Logger.WriteAsync("AOT", "其他错误", ex.Message);
+            await App.Logger.WriteAsync("Kernel", "其他错误", ex.Message);
             return ApiResponse<T>.Fail($"系统错误: {ex.Message}");
         }
     }

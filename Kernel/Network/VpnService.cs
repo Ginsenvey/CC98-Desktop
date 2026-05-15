@@ -12,20 +12,19 @@ using System.Threading.Tasks;
 
 using CC98.Objects;
 using HtmlAgilityPack;
-
+//HttpClient可使用工厂函数提供，也应该是单例
+//使用delegate handler来实现VPN请求的转发和URL转换，以及cookie全局注入
 namespace CC98.Kernel.Network;
 
 /// <summary>
-///     WebVPN服务类,Http请求的封装。
+/// WebVPN服务类,Http请求的封装。
 /// </summary>
-/// <remarks>
-///     此层面不处理错误，只负责请求发送和响应接收。
-///     尽可能不依赖于CC98.Kernel的其他部分
-/// </remarks>
-public sealed partial class VpnService : IDisposable
+public sealed partial class VpnService(IHttpClientFactory httpClientFactory) : IVpnService,IDisposable
 {
+
+    #region 常量
     /// <summary>
-    ///     加密密码使用的密钥。
+    /// 加密密码使用的密钥。
     /// </summary>
     private const string PasswordEncryptKey = "wrdvpnisawesome!";
 
@@ -33,62 +32,27 @@ public sealed partial class VpnService : IDisposable
     ///     加密域名所用的密钥。
     /// </summary>
     private const string HostEncryptKey = "wrdvpnisthebest!";
-
-
     private const string RouteCookieName = "route";
     private const string TicketCookieName = "wengine_vpn_ticketwebvpn_zju_edu_cn";
-
-    public VpnService()
-    {
-        CookieContainer = new();
-        //在此处启用Proxy以开始调试
-        var handler = new HttpClientHandler
-        {
-            AllowAutoRedirect = true,
-            CookieContainer = CookieContainer,
-            UseCookies = true,
-            AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate
-            //Proxy=new WebProxy("127.0.0.1:9000")
-        };
-
-        HttpClient = new(handler)
-        {
-            BaseAddress = new(BaseUrl)
-        };
-
-        HttpClient.DefaultRequestHeaders.Add("Referer", BaseUrl);
-        HttpClient.DefaultRequestHeaders.Connection.ParseAdd("keep-alive");
-        HttpClient.DefaultRequestHeaders.Add("User-Agent",
-            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36 Edg/138.0.0.0");
-    }
-
-    /// <summary>
-    ///     提供 HTTP 服务。
-    /// </summary>
-    public HttpClient HttpClient { get; }
-
-    /// <summary>
-    ///     Cookie 容器。
-    /// </summary>
-    public CookieContainer CookieContainer { get; }
-
+    #endregion
+    public HttpClient HttpClient { get; } = httpClientFactory.CreateClient("VpnClient");
+    private readonly List<string> _cookies = [];
     public bool IsLoggedIn { get; set; }
-    public bool IsVpnEnabled { get; set; }
+    public bool IsEnabled { get; set; }
 
     public string CaptchaValue { get; set; } = "";
     private string LastRandCode { get; set; } = "";
     public string LastCaptchaId { get; set; } = "";
     private bool IsDisposed { get; set; }
 
-    public Cookie Ticket => CookieContainer.GetCookies(new(BaseUrl))[TicketCookieName] ?? new Cookie();
-    public Cookie Route => CookieContainer.GetCookies(new(BaseUrl))[RouteCookieName] ?? new Cookie();
+    //public Cookie Ticket => CookieContainer.GetCookies(new(BaseUrl))[TicketCookieName] ?? new Cookie();
+    //public Cookie Route => CookieContainer.GetCookies(new(BaseUrl))[RouteCookieName] ?? new Cookie();
 
-    public async Task<VpnLoginResult> LoginAsync(string username, string password,
-        CancellationToken cancellationToken = default)
+    public async Task<VpnLoginResult> LoginAsync(string userName, string password,CancellationToken cancellationToken = default)
     {
         try
         {
-            return await LoginCoreAsync(username, password, cancellationToken);
+            return await LoginCoreAsync(userName, password, cancellationToken);
         }
 
         catch (InvalidOperationException ex)
@@ -111,7 +75,7 @@ public sealed partial class VpnService : IDisposable
     }
 
     /// <summary>
-    ///     更新随机代码和验证码ID的核心方法。
+    /// 更新随机代码和验证码ID的核心方法。
     /// </summary>
     /// <param name="cancellationToken">用于取消操作的令牌。</param>
     /// <returns>表示异步操作的任务。</returns>
@@ -128,15 +92,14 @@ public sealed partial class VpnService : IDisposable
     }
 
     /// <summary>
-    ///     执行 VPN 登录的核心方法。
+    /// 执行 VPN 登录的核心方法。
     /// </summary>
-    /// <param name="username">登录的用户名。</param>
+    /// <param name="userName">登录的用户名。</param>
     /// <param name="password">登录的密码。</param>
     /// <param name="cancellationToken">用于取消操作的令牌。</param>
     /// <returns>表示异步操作的任务。任务结果为登录结果。</returns>
     /// <exception cref="InvalidOperationException"></exception>
-    private async Task<VpnLoginResult> LoginCoreAsync(string username, string password,
-        CancellationToken cancellationToken = default)
+    private async Task<VpnLoginResult> LoginCoreAsync(string userName, string password,CancellationToken cancellationToken = default)
     {
         if (CaptchaValue == "") await UpdateCodeCoreAsync(cancellationToken);
         var csrf = LastRandCode;
@@ -150,7 +113,7 @@ public sealed partial class VpnService : IDisposable
             { "captcha", CaptchaValue },
             { "needCaptcha", "false" },
             { "captcha_id", captchaId },
-            { "username", username },
+            { "username", userName },
             { "password", encryptedPassword }
         };
         var content = new FormUrlEncodedContent(formData);
@@ -204,7 +167,7 @@ public sealed partial class VpnService : IDisposable
     }
 
     /// <summary>
-    ///     注销会话
+    /// 注销会话
     /// </summary>
     /// <returns></returns>
     public async Task Logout(CancellationToken cancellationToken = default)
@@ -220,11 +183,11 @@ public sealed partial class VpnService : IDisposable
     }
 
     /// <summary>
-    ///     标准URL转换函数
+    /// 标准URL转换函数
     /// </summary>
     /// <param name="origin"></param>
     /// <returns></returns>
-    public static string ConvertUrl(string origin)
+    public string ConvertUrl(string origin)
     {
         var uri = new Uri(origin);
 
@@ -360,6 +323,19 @@ public sealed partial class VpnService : IDisposable
         var prefixHex = Convert.ToHexStringLower(keyData);
         var bodyHex = Convert.ToHexStringLower(encryptedData).Cut(text.Length * 2);
         return $"{prefixHex}{bodyHex}";
+    }
+    /// <summary>
+    /// 获取所有Cookie.
+    /// </summary>
+    /// <returns></returns>
+    public IEnumerable<string> GetCookies() => _cookies;
+    /// <summary>
+    /// 向VPN服务添加Cookie。VPN请求转发器会在每次发送请求时注入这些Cookie。
+    /// </summary>
+    /// <param name="cookies"></param>
+    public void SetCookies(params string[] cookies)
+    {
+        _cookies.AddRange(cookies);
     }
 
     #region URL 地址

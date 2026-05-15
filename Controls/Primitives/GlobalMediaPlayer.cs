@@ -3,10 +3,10 @@ using Windows.Foundation;
 using Windows.Media.Core;
 using Windows.Media.Playback;
 
-namespace CC98.Controls.MusicPlayer;
+namespace CC98.Controls.Primitives;
 
 // 全局单例封装 MediaPlayer，负责媒体源、播放控制和事件转发
-public sealed class GlobalMediaPlayer : IDisposable
+public sealed partial class GlobalMediaPlayer : IDisposable
 {
     private static readonly Lazy<GlobalMediaPlayer> Lazy = new(() => new());
 
@@ -27,8 +27,7 @@ public sealed class GlobalMediaPlayer : IDisposable
         _player.CurrentStateChanged += (s, e) => CurrentStateChanged?.Invoke(s, e);
 
         //也可以转发播放会话位置变化（如果需要）
-        if (_player.PlaybackSession != null)
-            _player.PlaybackSession.PositionChanged += (s, e) => PlaybackSessionPositionChanged?.Invoke(s, e);
+        _player.PlaybackSession?.PositionChanged += (s, e) => PlaybackSessionPositionChanged?.Invoke(s, e);
     }
 
     public static GlobalMediaPlayer Instance => Lazy.Value;
@@ -84,6 +83,6 @@ public sealed class GlobalMediaPlayer : IDisposable
 
     public void Seek(TimeSpan position)
     {
-        if (_player.PlaybackSession != null) _player.PlaybackSession.Position = position;
+        _player.PlaybackSession?.Position = position;
     }
 }

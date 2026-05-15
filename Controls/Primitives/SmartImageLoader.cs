@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Concurrent;
+using System.Threading;
 using System.Threading.Tasks;
 using CC98.Controls.Picture;
 using CC98.Services.Helpers;
@@ -11,7 +12,7 @@ public class SmartImageLoader : IImageLoader
 {
     // 单例实例
     private static SmartImageLoader? _instance;
-    private static readonly object Lock = new();
+    private static readonly Lock Lock = new();
 
 
     private static readonly ConcurrentDictionary<bool, SmartImageLoader> Instances = new();
@@ -58,8 +59,7 @@ public class SmartImageLoader : IImageLoader
 
         try
         {
-            if (UrlEx.IsLocalPath(src))
-                result = await UrlEx.LoadLocalImage(src);
+            if (UrlEx.IsLocalPath(src))result = await UrlEx.LoadLocalImage(src);
             else if (UrlEx.IsWebUrl(src)) result = await UrlEx.LoadWebImageAsync(src, LowRes);
         }
         catch
@@ -69,8 +69,12 @@ public class SmartImageLoader : IImageLoader
 
         // 缓存
         if (result != null)
-            Cache.AddOrUpdate(cacheKey, new WeakReference<BitmapSource?>(result),
-                (k, old) => new(result));
+        {
+            Cache.AddOrUpdate(
+                cacheKey, 
+                new WeakReference<BitmapSource?>(result),
+               (k, old) => new(result));
+        }
 
         return result;
     }

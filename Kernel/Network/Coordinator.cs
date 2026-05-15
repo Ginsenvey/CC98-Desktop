@@ -9,6 +9,7 @@ using Microsoft.Windows.AppNotifications.Builder;
 
 namespace CC98.Kernel.Network;
 
+
 /// <summary>
 ///     协调器类，确保令牌刷新操作的线程安全和单次执行。
 /// </summary>

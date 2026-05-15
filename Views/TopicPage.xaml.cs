@@ -10,7 +10,6 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Windows.ApplicationModel.DataTransfer;
 using Windows.Storage;
-using CC98.Controls.MusicPlayer;
 using CC98.Controls.Primitives;
 using CC98.Controls.UbbTextBlock;
 using CC98.Controls.UbbTextBlock.Common.Events;
