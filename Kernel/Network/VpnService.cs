@@ -328,6 +328,7 @@ public sealed partial class VpnService(IHttpClientFactory httpClientFactory) : I
     /// 获取所有Cookie.
     /// </summary>
     /// <returns></returns>
+    /// <remarks>应该由CookieContainer提供</remarks>
     public IEnumerable<string> GetCookies() => _cookies;
     /// <summary>
     /// 向VPN服务添加Cookie。VPN请求转发器会在每次发送请求时注入这些Cookie。

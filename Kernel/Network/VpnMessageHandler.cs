@@ -19,6 +19,8 @@ public partial class VpnMessageHandler(IVpnService vpnService) : DelegatingHandl
         {
             var targetUrl = vpnService.ConvertUrl(request.RequestUri!.ToString());
             request.RequestUri = new Uri(targetUrl);
+            //问题：cookieContainer会自动管理新加入的cookie;登录时，handler也会添加cookie，这样是重复的。
+            //是否由委托处理器来管理cookie？
             foreach (var cookie in vpnService.GetCookies())
             {
                 request.Headers.Add("Cookie", cookie);

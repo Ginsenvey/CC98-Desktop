@@ -21,6 +21,8 @@ using Microsoft.Extensions.Caching.Memory;
 using NativeMethods = CC98.Services.Helpers.NativeMethods;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.DependencyInjection;
+using Duende.AccessTokenManagement;
+using CC98.Objects;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -36,11 +38,13 @@ public partial class App : Application
     /// 获取应用程序的当前实例。
     /// </summary>
     public new static App Current => (App)Application.Current;
-
     public Window AppMainWindow { get; set; }
     public Window LoginPage { get; private set; }
 
     public ApplicationDataContainer Set = ApplicationData.Current.LocalSettings;
+
+    public static ILoginService LoginService => GetService<ILoginService>();
+    public static IVpnService Vpn => GetService<IVpnService>();
 
     /// <summary>
     /// 内存缓存服务。
@@ -145,17 +149,41 @@ public partial class App : Application
     #endregion
 
     #region 依赖注入
+    private const string WebClientId = "9a1fd200-8687-44b1-4c20-08d50a96e5cd";
+    private const string DesktopClientId = "d47a2448-779f-42f3-164f-08dd8896bbe5";
+    private const string WebClientSecret = "8b53f727-08e2-4509-8857-e34bf92b27f2";
     public static IHost Host { get; private set; } = CreateHost();
     private static IHost CreateHost()
     {
         return Microsoft.Extensions.Hosting.Host.CreateDefaultBuilder()
-            .ConfigureServices(services =>
+            .ConfigureServices((context,services) =>
             {
-                services.AddSingleton<IVpnService, VpnService>();
+                //配置文件
+                //services.Configure<>;
+                //VPN服务和委托处理器
+                services.AddSingleton<VpnService>();
                 services.AddTransient<VpnMessageHandler>();
+                //HTTP
                 services.AddHttpClient("VpnClient")
                     .AddHttpMessageHandler<VpnMessageHandler>();
-                services.AddSingleton<ILoginService, LoginService>();
+                //论坛登录服务
+                services.AddSingleton<LoginService>();
+                //Token缓存和自动刷新
+                services.AddDistributedMemoryCache();
+                services.AddClientCredentialsTokenManagement()
+                .AddClient("cc98-password", client =>
+                {
+                    client.ClientId = ClientId.Parse(WebClientId);
+                    client.ClientSecret = ClientSecret.Parse(WebClientSecret);
+                    client.ClientCredentialStyle = Duende.IdentityModel.Client.ClientCredentialStyle.AuthorizationHeader;
+                    client.TokenEndpoint = new Uri(ApiEndpoints.OpenId.TokenEndpoint());
+                })
+                .AddClient("cc98-desktop", client =>
+                {
+                    client.ClientId = ClientId.Parse(DesktopClientId);
+                    client.ClientCredentialStyle = Duende.IdentityModel.Client.ClientCredentialStyle.AuthorizationHeader;
+                    client.TokenEndpoint = new Uri(ApiEndpoints.OpenId.TokenEndpoint());
+                });
             })
             .Build();
     }
@@ -191,7 +219,7 @@ public partial class App : Application
         PasswordManager.ClearAllPasswords("Verifier");
         if (veri != null)
         {
-            var result = await LoginService.OAuth(veri, code);
+            var result = await LoginService.LoginWithOpenIdAsync(veri, code);
             if (result.IsError)
             {
                 //
@@ -221,7 +249,7 @@ public partial class App : Application
     #region 网络
     private async void InitializeNetwork()
     {
-        var networkStatus = await LoginService.Vpn.CheckNetworkAsync(false);
+        var networkStatus = await Vpn.CheckNetworkAsync(false);
         if (networkStatus == NetworkStatus.InCampus)
         {
             //启动
@@ -254,12 +282,12 @@ public partial class App : Application
                 return;
             }
             await Logger.WriteAsync("App", "初始化网络", "注入已有Cookie成功,启用VPN模式检查网络");
-            var newStatus = await LoginService.Vpn.CheckNetworkAsync(true);
+            var newStatus = await Vpn.CheckNetworkAsync(true);
             await Logger.WriteAsync("App", "初始化网络", $"新的网络状态为：{newStatus}");
             if (newStatus == NetworkStatus.ByVpn)
             {
-                LoginService.Vpn.IsLoggedIn = true;
-                LoginService.Vpn.IsVpnEnabled = true;
+                Vpn.IsLoggedIn = true;
+                Vpn.IsEnabled = true;
                 await StartUp();
                 //启动
                 return;
@@ -268,7 +296,8 @@ public partial class App : Application
             await Logger.WriteAsync("App", "初始化网络", success ? "重连成功" : "重连失败");
             if (success)
             {
-                LoginService.Vpn.IsVpnEnabled = true;
+                Vpn.IsLoggedIn = true;
+                Vpn.IsEnabled = true;
                 SaveToken();
                 //此时vpn应该可用
                 await StartUp();
@@ -308,8 +337,7 @@ public partial class App : Application
         {
             return false;
         }
-        LoginService.Vpn.CookieContainer.Add(ticket);
-        LoginService.Vpn.CookieContainer.Add(route);
+        Vpn.SetCookies(ticket.ToString(), route.ToString());
         return true;
     }
 
@@ -321,11 +349,11 @@ public partial class App : Application
         }
         var id = PasswordManager.RetrievePassword("VpnUserName");
         var pass = PasswordManager.RetrievePassword("VpnPassWord");
-        var res = await LoginService.Vpn.LoginAsync(id, pass);
+        var res = await Vpn.LoginAsync(id, pass);   
         if (res.Status == VpnLoginStatus.Success) return true;
         if (res.Status == VpnLoginStatus.NeedConfirm)
         {
-            var confirmRes = await LoginService.Vpn.ConfirmAsync();
+            var confirmRes = await Vpn.ConfirmAsync();
             if (confirmRes.Status == VpnLoginStatus.Success)
             {
                 //
@@ -345,25 +373,10 @@ public partial class App : Application
         }
         return false;
     }
-
+    //Todo:改进cookie的保存形式
     private bool SaveToken()
     {
-        var newTicket = LoginService.Vpn.Ticket;
-        var newRoute = LoginService.Vpn.Route;
-        var ticket = newTicket.Value;
-        var route = newRoute.Value;
-        if (string.IsNullOrEmpty(ticket) || (string.IsNullOrEmpty(route)))
-        {
-            //报错
-            ShowError("VPN凭据不完整");
-            return false;
-        }
-
-        //更新环节
-        PasswordManager.SavePassword(ticket, "Ticket");
-        PasswordManager.SavePassword(route, "Route");
-        return true;
-        //保存失败或者token为空时，会出现VPN启用但找不到令牌的情况。
+        throw new NotImplementedException("此方法尚未实现");
     }
     #endregion
 
@@ -419,7 +432,6 @@ public partial class App : Application
             var exitItem = new MenuFlyoutItem { Text = "退出", Width = 180, Icon = new FluentIcons.WinUI.SymbolIcon { Symbol = FluentIcons.Common.Symbol.ArrowExit } };
             exitItem.Click += (_, __) =>
             {
-                LoginService.Vpn.Dispose();
                 AppMainWindow.DispatcherQueue.TryEnqueue(() =>
                 {
                     AppMainWindow.Close();

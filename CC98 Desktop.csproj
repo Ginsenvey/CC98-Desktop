@@ -180,6 +180,7 @@
     <PackageReference Include="CSharpMath.SkiaSharp" Version="1.0.0-pre.1" />
     <PackageReference Include="DevWinUI" Version="9.9.4" />
     <PackageReference Include="DevWinUI.Controls" Version="9.9.4" />
+    <PackageReference Include="Duende.AccessTokenManagement" Version="4.2.0" />
     <PackageReference Include="Duende.IdentityModel.OidcClient" Version="7.1.0" />
     <PackageReference Include="FluentIcons.WinUI" Version="2.1.326" />
     <PackageReference Include="HtmlAgilityPack" Version="1.12.4" />

@@ -324,7 +324,7 @@ public static class ApiEndpoints
         ///     令牌获取地址
         /// </summary>
         /// <returns>包含ACT,RFT的Json.</returns>
-        public static string GetTokenUrl()
+        public static string TokenEndpoint()
         {
             return $"{Oidc}/connect/token";
         }

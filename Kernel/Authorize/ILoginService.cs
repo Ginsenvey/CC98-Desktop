@@ -36,4 +36,7 @@ public interface ILoginService
     /// </summary>
     /// <returns></returns>
     public Task<TokenResponse?> GetNewTokenAsync(CancellationToken cancellationToken = default);
+
+    public string GetAccessToken();
+    public string GetRefreshToken();
 }

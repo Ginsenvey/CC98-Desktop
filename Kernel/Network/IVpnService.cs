@@ -2,8 +2,11 @@
 using System.Collections.Generic;
 using System.Net.Http;
 using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace CC98.Kernel.Network;
+//Todo:将VPN的HTTP客户端与登录服务分离
 public interface IVpnService
 {
     /// <summary>
@@ -16,7 +19,13 @@ public interface IVpnService
     public bool IsLoggedIn { get; set; }
     public HttpClient HttpClient { get; }
     IEnumerable<string> GetCookies();
+    void SetCookies(params string[] cookies);
 
     public string ConvertUrl(string originalUrl);
 
+    public Task<NetworkStatus> CheckNetworkAsync(bool useVpn,CancellationToken cancellation=default);
+
+    public Task<VpnLoginResult> LoginAsync(string userName, string password,CancellationToken cancellation=default);
+
+    public Task<VpnLoginResult> ConfirmAsync(CancellationToken cancellation=default);
 }
