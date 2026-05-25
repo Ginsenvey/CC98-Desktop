@@ -9,6 +9,7 @@ using Windows.Storage;
 using Windows.Storage.Streams;
 using Microsoft.UI.Xaml.Media.Imaging;
 using CC98.Kernel.Authorize;
+using System.Net.Http;
 
 namespace CC98.Services.Helpers;
 
@@ -94,7 +95,9 @@ public static partial class UrlEx
     public static async Task<BitmapSource> LoadWebImageAsync(string url, bool lowRes = false,
         CancellationToken cancellationToken = default)
     {
-        var imageBytes = await LoginService.Vpn.GetByteArrayAsync(url);
+        using var client=new HttpClient();
+        var res=await client.GetAsync(url, cancellationToken);
+        var imageBytes = await res.Content.ReadAsByteArrayAsync();
         return await LoadFromBytesAsync(imageBytes, lowRes, cancellationToken);
     }
 

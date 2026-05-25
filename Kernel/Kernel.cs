@@ -15,6 +15,7 @@ using Windows.Storage.Streams;
 using CC98.Kernel.Authorize;
 using CC98.Objects;
 using CC98.Services.Extensions;
+using CC98.Kernel.Network;
 
 namespace CC98.Kernel;
 
@@ -23,15 +24,16 @@ namespace CC98.Kernel;
 /// </summary>
 public static class RequestSender
 {
+    public static HttpClient HttpClient => App.GetService<IVpnService>().HttpClient;
     /// <summary>
-    ///     封装通用GET请求，并实现自动错误处理。
+    /// 封装通用GET请求，并实现自动错误处理。
     /// </summary>
     public static async Task<ApiResponse<T>> Fetch<T>(string endpoint, CancellationToken cancellationToken = default)
     {
         try
         {
-            var res = await LoginService.Vpn.GetAsync(endpoint);
-            return await Deserialize<T>(res,cancellationToken);
+            var res = await HttpClient.GetAsync(endpoint, cancellationToken);
+            return await Deserialize<T>(res, cancellationToken);
         }
         catch (HttpRequestException ex)
         {
@@ -55,11 +57,11 @@ public static class RequestSender
     /// <summary>
     ///     适用于PUT。
     /// </summary>
-    public static async Task<ApiResponse> Put(string endpoint, HttpContent? content)
+    public static async Task<ApiResponse> Put(string endpoint, HttpContent? content,CancellationToken cancellationToken = default)
     {
         try
         {
-            var res = await LoginService.Vpn.PutAsync(endpoint, content);
+            var res = await HttpClient.PutAsync(endpoint, content, cancellationToken);
             var json = await res.Content.ReadAsStringAsync();
             return res.IsSuccessStatusCode
                 ? ApiResponse.Success(json)
@@ -86,11 +88,11 @@ public static class RequestSender
     /// <summary>
     ///     适用于DELETE。
     /// </summary>
-    public static async Task<ApiResponse> Delete(string endpoint)
+    public static async Task<ApiResponse> Delete(string endpoint, CancellationToken cancellationToken = default)
     {
         try
         {
-            var res = await LoginService.Vpn.DeleteAsync(endpoint);
+            var res = await HttpClient.DeleteAsync(endpoint, cancellationToken);
             var json = await res.Content.ReadAsStringAsync();
             return res.IsSuccessStatusCode
                 ? ApiResponse.Success(json)
@@ -122,12 +124,12 @@ public static class RequestSender
     /// <param name="endpoint"></param>
     /// <param name="content"></param>
     /// <returns></returns>
-    public static async Task<ApiResponse<T>> Submit<T>(string endpoint, HttpContent content)
+    public static async Task<ApiResponse<T>> Submit<T>(string endpoint, HttpContent content, CancellationToken cancellationToken = default)
     {
         try
         {
-            var res = await LoginService.Vpn.PostAsync(endpoint, content);
-            return await Deserialize<T>(res);
+            var res = await HttpClient.PostAsync(endpoint, content, cancellationToken);
+            return await Deserialize<T>(res, cancellationToken);
         }
         catch (HttpRequestException ex)
         {

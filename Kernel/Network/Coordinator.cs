@@ -21,7 +21,7 @@ public sealed class Coordinator
     private Coordinator()
     {
     }
-
+    
     /// <summary>
     ///     对象的唯一实例。
     /// </summary>
@@ -41,39 +41,7 @@ public sealed class Coordinator
     /// <returns>表示异步操作的任务。操作结果表示刷新是否成功。</returns>
     private async Task<bool> SilentAuthAsync(CancellationToken cancellationToken = default)
     {
-        try
-        {
-            var r = await LoginService.GetRefreshTokenAsync(cancellationToken);
-            if (r == "1")
-            {
-                return true;
-            }
-            else if (r.StartsWith("2"))
-            {
-                //统一处理令牌失效情况，通知用户并退出应用
-                //触发此处未必是令牌过期，也可能是其他登录失败的情况。
-                ApplicationData.Current.LocalSettings.Values["IsActive"] = 0;
-                var notification = new AppNotificationBuilder()
-                    .AddText("登录过期")
-                    .AddText("请重新登录。")
-                    .BuildNotification();
-                AppNotificationManager.Default.Show(notification);
-                Application.Current.Exit();
-                return false;
-            }
-            else
-            {
-                return false;
-            }
-        }
-        finally
-        {
-            // 重置刷新状态，允许下次刷新
-            lock (Lock)
-            {
-                RefreshTask = null;
-            }
-        }
+        return false;
     }
 
     // 公开的安全调用接口

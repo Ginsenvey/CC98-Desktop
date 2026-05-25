@@ -23,6 +23,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using Duende.AccessTokenManagement;
 using CC98.Objects;
+using CC98.Views;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -39,7 +40,7 @@ public partial class App : Application
     /// </summary>
     public new static App Current => (App)Application.Current;
     public Window AppMainWindow { get; set; }
-    public Window LoginPage { get; private set; }
+    public Window LoginWindow { get; private set; }
 
     public ApplicationDataContainer Set = ApplicationData.Current.LocalSettings;
 
@@ -71,6 +72,10 @@ public partial class App : Application
     #region 应用启动
     protected override async void OnLaunched(Microsoft.UI.Xaml.LaunchActivatedEventArgs args)
     {
+        base.OnLaunched(args);
+        AppMainWindow = new MainWindow();
+        AppMainWindow.Activate();
+        return;
         await InitializeAppLog();
         var e = AppInstance.GetActivatedEventArgs();
         if (e.Kind == ActivationKind.Protocol)
@@ -139,11 +144,11 @@ public partial class App : Application
 
     private void ActivateLogin(int mode)
     {
-        LoginPage = new Views.LoginWindow(mode)
+        LoginWindow = new Views.LoginWindow(mode)
         {
             Title = "登录",
         };
-        LoginPage.Activate();
+        LoginWindow.Activate();
     }
 
     #endregion
@@ -435,7 +440,7 @@ public partial class App : Application
                 AppMainWindow.DispatcherQueue.TryEnqueue(() =>
                 {
                     AppMainWindow.Close();
-                    LoginPage?.Close();
+                    LoginWindow?.Close();
                 });
 
                 // 隐藏并释放托盘对象

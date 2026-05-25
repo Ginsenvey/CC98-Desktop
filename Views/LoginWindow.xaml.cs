@@ -12,6 +12,7 @@ using Microsoft.Windows.AppNotifications.Builder;
 using System;
 using System.IO;
 using System.Net;
+using System.Threading;
 using System.Threading.Tasks;
 using Windows.Graphics;
 using Windows.Storage;
@@ -32,6 +33,9 @@ public sealed partial class LoginWindow : Window
     public ApplicationDataContainer Set=ApplicationData.Current.LocalSettings;
     private const string TipText= "如果尚未连接浙江大学内网，请在此处登录WebVPN,或者使用[ZJU Connect](https://github.com/Mythologyli/ZJU-Connect-for-Windows/releases).";
     private const string GuideText= "**在校外登录** \r\n\r\n先配置应用的内建WebVPN,再使用密码登录。\r\n\r\n**忘记密码/无账号？**\r\n\r\n进入[CC98](https://www.cc98.org/logon)官网操作。\r\n\r\n**遇到问题/想要新功能?**\r\n\r\n你可以在微软商店或[开发进度记录楼](https://www.cc98.org/topic/6173309)反馈此问题。\r\n\r\n你也可以克隆本应用仓库，自由修改和编译新的分支。不过，在分发时，应当告知所有的改动。\r\n\r\n**成为开发者**\r\n\r\n本应用使用`WinUI3`,`C#`,`XAML`构建。欢迎所有对.NET生态感兴趣的uu加入本应用的开发，欢迎所有使用者对本应用UI、功能和代码提供建议。";
+    
+    public ILoginService LoginService=App.GetService<ILoginService>();
+    public static VpnService VpnService => App.GetService<VpnService>();
     public LoginWindow(int mode)
     {
         InitializeComponent();
@@ -93,7 +97,7 @@ public sealed partial class LoginWindow : Window
         {
             LoginPane.Visibility = Visibility.Collapsed;
             VpnPane.Visibility = Visibility.Visible;
-            var captchaId = LoginService.Vpn.LastCaptchaId;
+            var captchaId = VpnService.LastCaptchaId;
             var timeStamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
             var captchaUrl = $"{VpnService.BaseUrl}/captcha/{captchaId}.png?reload={timeStamp}";
             captcha.Source = new BitmapImage(new(captchaUrl));
@@ -104,9 +108,10 @@ public sealed partial class LoginWindow : Window
     
 
 
-    private async Task InitializeNetwork()
+    private async Task InitializeNetworkAsync(CancellationToken cancellation=default)
     {
-        var networkStatus = await LoginService.Vpn.CheckNetworkAsync(false);
+        //检测网络状态，不注入Cookie
+        var networkStatus = await VpnService.CheckNetworkAsync(false,cancellation);
         if (networkStatus == NetworkStatus.InCampus)
         {
             //启动
@@ -139,11 +144,11 @@ public sealed partial class LoginWindow : Window
                 return;
             }
 
-            var newStatus = await LoginService.Vpn.CheckNetworkAsync(true);
+            var newStatus = await VpnService.CheckNetworkAsync(true, cancellation);
             if (newStatus == NetworkStatus.ByVpn)
             {
-                LoginService.Vpn.IsLoggedIn = true;
-                LoginService.Vpn.IsVpnEnabled = true;
+                VpnService.IsLoggedIn = true;
+                VpnService.IsEnabled = true;
                 OpenPasswordLoginPane();
                 //启动
                 return;
@@ -152,7 +157,7 @@ public sealed partial class LoginWindow : Window
             var success = await ReloginVpn();
             if (success)
             {
-                LoginService.Vpn.IsVpnEnabled = true;
+                VpnService.IsEnabled = true;
                 SaveVpnToken();
                 //此时vpn应该可用
                 OpenPasswordLoginPane();
@@ -163,24 +168,10 @@ public sealed partial class LoginWindow : Window
         if (networkStatus == NetworkStatus.UnknownError) Flower.Play(FlowStatus.Fail, "IP被镜像站拦截");
         if (networkStatus == NetworkStatus.NoConnection) Flower.Play(FlowStatus.Fail, "无互联网连接");
     }
-
+    //TODO：rewrite
     private bool SaveVpnToken()
     {
-        var newTicket = LoginService.Vpn.Ticket;
-        var newRoute = LoginService.Vpn.Route;
-        var ticket = newTicket.Value;
-        var route = newRoute.Value;
-        if (string.IsNullOrEmpty(ticket) || string.IsNullOrEmpty(route))
-        {
-            //报错
-            Flower.Play(FlowStatus.Fail, "未获取到完整VPN凭据");
-            return false;
-        }
-
-        //更新环节
-        PasswordManager.SavePassword(ticket, "Ticket");
-        PasswordManager.SavePassword(route, "Route");
-        return true;
+        throw new NotImplementedException();
     }
 
     private bool InjectTokenFromVault()
@@ -193,8 +184,7 @@ public sealed partial class LoginWindow : Window
         ticket.HttpOnly = true;
         //注入环节
         if (string.IsNullOrEmpty(ticketValue) || string.IsNullOrEmpty(routeValue)) return false;
-        LoginService.Vpn.CookieContainer.Add(ticket);
-        LoginService.Vpn.CookieContainer.Add(route);
+        
         return true;
     }
 
@@ -205,11 +195,11 @@ public sealed partial class LoginWindow : Window
             return false;
         var id = PasswordManager.RetrievePassword("VpnUserName");
         var pass = PasswordManager.RetrievePassword("VpnPassWord");
-        var res = await LoginService.Vpn.LoginAsync(id, pass);
+        var res = await VpnService.LoginAsync(id, pass);
         if (res.Status == VpnLoginStatus.Success) return true;
         if (res.Status == VpnLoginStatus.NeedConfirm)
         {
-            var confirmRes = await LoginService.Vpn.ConfirmAsync();
+            var confirmRes = await VpnService.ConfirmAsync();
             if (confirmRes.Status == VpnLoginStatus.Success) return true;
 
             //报错
@@ -234,7 +224,7 @@ public sealed partial class LoginWindow : Window
 
     private async void OIDC_Click(object sender, RoutedEventArgs e)
     {
-        var status = await LoginService.Vpn.CheckNetworkAsync(false);
+        var status = await VpnService.CheckNetworkAsync(false);
         if (status == NetworkStatus.InCampus)
         {
             var oidcService = new OpenId();
@@ -304,13 +294,13 @@ public sealed partial class LoginWindow : Window
 
     private async Task SetupVpn(string id, string pass)
     {
-        var res = await LoginService.Vpn.LoginAsync(id, pass);
+        var res = await VpnService.LoginAsync(id, pass);
         switch (res.Status)
         {
             case VpnLoginStatus.Success:
                 SaveToken(id, pass);
                 Link.IsChecked = false;
-                LoginService.Vpn.IsVpnEnabled = true;
+                VpnService.IsEnabled = true;
                 GoBackOrLaunchApp();
                 break;
             case VpnLoginStatus.Error:
@@ -319,12 +309,12 @@ public sealed partial class LoginWindow : Window
                 Flower.Play(FlowStatus.Fail, res.Description);
                 break;
             case VpnLoginStatus.NeedConfirm:
-                var confirmRes = await LoginService.Vpn.ConfirmAsync();
+                var confirmRes = await VpnService.ConfirmAsync();
                 if (confirmRes.Status == VpnLoginStatus.Success)
                 {
                     SaveToken(id, pass);
                     Link.IsChecked = false;
-                    LoginService.Vpn.IsVpnEnabled = true;
+                    VpnService.IsEnabled = true;
                     GoBackOrLaunchApp();
                 }
                 else
@@ -339,7 +329,7 @@ public sealed partial class LoginWindow : Window
                 Link.IsChecked = false;
                 de.Visibility = Visibility.Collapsed;
                 //从VpnService处直接调用。
-                var captchaId = LoginService.Vpn.LastCaptchaId;
+                var captchaId = VpnService.LastCaptchaId;
                 var timeStamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
                 var captchaUrl = $"{VpnService.BaseUrl}/captcha/{captchaId}.png?reload={timeStamp}";
                 captcha.Source = new BitmapImage(new(captchaUrl));
@@ -353,27 +343,11 @@ public sealed partial class LoginWindow : Window
                 break;
         }
     }
-
+    //TODO:rewrite
     private void SaveToken(string id, string pass)
     {
-        Set.Values["IsVpnUsable"] = "1";
-        var ticket = LoginService.Vpn.Ticket;
-        var route = LoginService.Vpn.Route;
-        var ticketValue = ticket.Value;
-        var routeValue = route.Value;
-
-        PasswordManager.SavePassword(id, "VpnUserName");
-        PasswordManager.SavePassword(pass, "VpnPassWord");
-        if (!string.IsNullOrEmpty(ticketValue) && !string.IsNullOrEmpty(routeValue))
-        {
-            PasswordManager.SavePassword(ticketValue, "Ticket");
-            PasswordManager.SavePassword(routeValue, "Route");
-            Flower.Play(FlowStatus.Success, "已保存VPN凭据");
-        } //保存失败或者token为空时，会出现VPN启用但找不到令牌的情况。
-        else
-        {
-            Flower.Play(FlowStatus.Fail, "未保存VPN凭据");
-        }
+        
+        throw new NotImplementedException();
     }
 
     private void GoBackOrLaunchApp()
@@ -396,7 +370,7 @@ public sealed partial class LoginWindow : Window
     {
         try
         {
-            await InitializeNetwork();
+            await InitializeNetworkAsync();
         }
         catch (Exception ex)
         {
@@ -488,6 +462,6 @@ public sealed partial class LoginWindow : Window
 
     private void captchabox_TextChanged(object sender, TextChangedEventArgs e)
     {
-        LoginService.Vpn.CaptchaValue = captchabox.Text;
+        VpnService.CaptchaValue = captchabox.Text;
     }
 }

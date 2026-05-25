@@ -2,6 +2,7 @@
 using System;
 using System.Diagnostics;
 using System.IO;
+using System.Net.Http;
 using System.Runtime.InteropServices.WindowsRuntime;
 using System.Threading.Tasks;
 using Windows.ApplicationModel.DataTransfer;
@@ -21,17 +22,18 @@ public class ImageExtension
     {
         try
         {
-            var imageBytes = await LoginService.Vpn.GetByteArrayAsync(imageUrl);
+
+            //var imageBytes = await HttpClient.GetByteArrayAsync(imageUrl);
 
             // 创建内存流
-            using var stream = new MemoryStream(imageBytes);
-            var randomAccessStream = new InMemoryRandomAccessStream();
-            await randomAccessStream.WriteAsync(imageBytes.AsBuffer());
-            randomAccessStream.Seek(0);
+            //using var stream = new MemoryStream(imageBytes);
+            //var randomAccessStream = new InMemoryRandomAccessStream();
+            //await randomAccessStream.WriteAsync(imageBytes.AsBuffer());
+            //randomAccessStream.Seek(0);
 
             // 创建数据包
             var dataPackage = new DataPackage();
-            dataPackage.SetBitmap(RandomAccessStreamReference.CreateFromStream(randomAccessStream));
+            //dataPackage.SetBitmap(RandomAccessStreamReference.CreateFromStream(randomAccessStream));
             dataPackage.SetText(imageUrl); // 同时保存URL文本
 
             // 设置描述信息
@@ -49,7 +51,7 @@ public class ImageExtension
             return false;
         }
     }
-
+    //TODO:rewrite
     /// <summary>
     ///     下载图片到用户下载文件夹
     /// </summary>
@@ -76,10 +78,10 @@ public class ImageExtension
 
             // 创建文件
             var file = await downloadsFolder.CreateFileAsync(fileName, CreationCollisionOption.ReplaceExisting);
-            var imageBytes = await LoginService.Vpn.GetByteArrayAsync(imageUrl);
-            await using var stream = await file.OpenStreamForWriteAsync();
-            await stream.WriteAsync(imageBytes);
-            Debug.WriteLine($"图片已保存到: {file.Path}");
+            //var imageBytes = await LoginService.Vpn.GetByteArrayAsync(imageUrl);
+            //await using var stream = await file.OpenStreamForWriteAsync();
+            //await stream.WriteAsync(imageBytes);
+            //WriteLine($"图片已保存到: {file.Path}");
             return file.Path;
         }
         catch (Exception ex)

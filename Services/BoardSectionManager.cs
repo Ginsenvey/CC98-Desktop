@@ -16,6 +16,8 @@ using System.Threading.Tasks;
 
 using Windows.Storage;
 using CC98.Kernel;
+using System.Net.Http;
+using CC98.Kernel.Network;
 
 namespace CC98.Services;
 
@@ -24,6 +26,7 @@ namespace CC98.Services;
 /// </summary>
 public class BoardSectionManager
 {
+    public static HttpClient HttpClient=>App.GetService<IVpnService>().HttpClient;
     /// <summary>
     /// 本地缓存文件名。
     /// </summary>
@@ -81,7 +84,7 @@ public class BoardSectionManager
     {
         try
         {
-            var res = await LoginService.Vpn.GetAsync(ApiEndpoints.Forum.AllBoards);
+            var res = await HttpClient.GetAsync(ApiEndpoints.Forum.AllBoards);
 
             var data =
                 await res.Content.ReadFromJsonAsync<SectionInfo[]>(CC98JsonContext.Default.SectionInfos, cancellationToken)

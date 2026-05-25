@@ -57,7 +57,7 @@ public sealed partial class MediaViewer : Window
         MediaInfo.Text = CurrentUrl;
         Posi.Text = $"{CurrentIndex + 1} / {Pictures.Count}";
     }
-       
+    //TODO:rewrite
     private async void MediaViewer_Activated(object sender, WindowActivatedEventArgs args)
     {
         switch (_mediaType)
@@ -70,9 +70,9 @@ public sealed partial class MediaViewer : Window
                 VideoPlayer.Visibility = Visibility.Visible;
                 Grid.SetRow(VideoPlayer, 1);
                 Grid.SetRowSpan(VideoPlayer, 2);
-                var source = await LoginService.Vpn.GetSourceAsync(CurrentUrl);
-                if (source == null) return;
-                VideoPlayer.Source = source;
+                //var source = await LoginService.Vpn.GetSourceAsync(CurrentUrl);
+                //if (source == null) return;
+                //VideoPlayer.Source = source;
                 break;
         }     
     }

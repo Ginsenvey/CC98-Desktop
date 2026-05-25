@@ -535,19 +535,7 @@ public sealed partial class TopicPage : Page
                         }
                         try
                         {
-                            var targetUrl = LoginService.Vpn.IsVpnEnabled ? VpnService.ConvertUrl(url) : url;
-                            var fileres = await LoginService.Vpn.HttpClient.GetAsync(targetUrl, HttpCompletionOption.ResponseHeadersRead);
-                            if (fileres.StatusCode == HttpStatusCode.OK)
-                            {
-                                using Stream contentStream = await fileres.Content.ReadAsStreamAsync(),
-                                    fileStream = new FileStream(downloadLocation, FileMode.Create, FileAccess.Write, FileShare.None);
-                                await contentStream.CopyToAsync(fileStream);
-                                Flower.Play(FlowStatus.Success, "下载文件成功");
-                            }
-                            else
-                            {
-                                Flower.Play("\uEA39", $"下载失败，状态码为{fileres.StatusCode}");
-                            }
+                            
                         }
                         catch (Exception ex)
                         {
@@ -867,6 +855,7 @@ public sealed partial class TopicPage : Page
             Flower.Play("\uEA39", "选择至少一项");
         }
     }
+    //TODO:需要改成返回一个bool值，表示是否成功。现在的字符串返回值不够语义化。
     public static async Task<string> SendVoteResult(int id, List<int> list)
     {
         var url = ApiEndpoints.Topic.Vote(id);
@@ -876,9 +865,8 @@ public sealed partial class TopicPage : Page
         };
         var postText = SerializationHelper.TrySerialize(post);
         var requestBody = new StringContent(postText, Encoding.UTF8, "application/json");
-        var r = await LoginService.Vpn.PostAsync(url, requestBody);
-        if (r.IsSuccessStatusCode) return "1";
-
+        var r = await RequestSender.Submit<string>(url, requestBody);
+        if (r.IsSuccess) return "1";
         return "0";
     }
     private async void Person_ContextRequested(UIElement sender, ContextRequestedEventArgs args)

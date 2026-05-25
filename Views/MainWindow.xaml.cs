@@ -26,6 +26,7 @@ using CC98.Services.Helpers;
 using CC98.Kernel.Authorize;
 using Microsoft.UI.Xaml.Controls;
 using Symbol = FluentIcons.Common.Symbol;
+using CC98.Kernel.Network;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -332,7 +333,7 @@ public sealed partial class MainWindow : Window
             return;
         }
 
-        LoginService.Vpn.HttpClient.DefaultRequestHeaders.Authorization = new("Bearer", access);
+        //VpnService.HttpClient.DefaultRequestHeaders.Authorization = new("Bearer", access);
         var url = ApiEndpoints.User.UnreadMessage();
         var result = await RequestSender.Fetch<UnreadMessageInfo>(url);
         if (!result.IsSuccess || result.Data == null)
