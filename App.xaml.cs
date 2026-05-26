@@ -24,6 +24,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Duende.AccessTokenManagement;
 using CC98.Objects;
 using CC98.Views;
+using Duende.IdentityModel.OidcClient;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -44,9 +45,9 @@ public partial class App : Application
 
     public ApplicationDataContainer Set = ApplicationData.Current.LocalSettings;
 
-    public static ILoginService LoginService => GetService<ILoginService>();
-    public static IVpnService Vpn => GetService<IVpnService>();
-
+    public LoginService LoginService =>Current.GetService<LoginService>();
+    public IVpnService Vpn =>Current.GetService<IVpnService>();
+    
     /// <summary>
     /// 内存缓存服务。
     /// </summary>
@@ -66,6 +67,7 @@ public partial class App : Application
     public App()
     {
         InitializeComponent();
+        RegisterServices();
     }
 
 
@@ -73,8 +75,8 @@ public partial class App : Application
     protected override async void OnLaunched(Microsoft.UI.Xaml.LaunchActivatedEventArgs args)
     {
         base.OnLaunched(args);
-        AppMainWindow = new MainWindow();
-        AppMainWindow.Activate();
+        var m = new Splash();
+        m.Activate();
         return;
         await InitializeAppLog();
         var e = AppInstance.GetActivatedEventArgs();
@@ -157,16 +159,17 @@ public partial class App : Application
     private const string WebClientId = "9a1fd200-8687-44b1-4c20-08d50a96e5cd";
     private const string DesktopClientId = "d47a2448-779f-42f3-164f-08dd8896bbe5";
     private const string WebClientSecret = "8b53f727-08e2-4509-8857-e34bf92b27f2";
-    public static IHost Host { get; private set; } = CreateHost();
-    private static IHost CreateHost()
+    //必须是实例成员。
+    private IHost Host;
+    private void RegisterServices()
     {
-        return Microsoft.Extensions.Hosting.Host.CreateDefaultBuilder()
-            .ConfigureServices((context,services) =>
+        Host = Microsoft.Extensions.Hosting.Host.CreateDefaultBuilder()
+            .ConfigureServices((context, services) =>
             {
                 //配置文件
                 //services.Configure<>;
                 //VPN服务和委托处理器
-                services.AddSingleton<VpnService>();
+                services.AddSingleton<IVpnService, VpnService>();
                 services.AddTransient<VpnMessageHandler>();
                 //HTTP
                 services.AddHttpClient("VpnClient")
@@ -192,7 +195,13 @@ public partial class App : Application
             })
             .Build();
     }
-    public static T GetService<T>() where T : notnull
+
+    /// <summary>
+    /// 公开方法。允许外部获取服务实例。在发布前确保所有服务都已注册。该方法必须通过App.Current.GetService<T>()的形式调用。
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
+    /// <returns></returns>
+    public T GetService<T>() where T : notnull
     {
         return Host.Services.GetRequiredService<T>();
     }
@@ -224,15 +233,6 @@ public partial class App : Application
         PasswordManager.ClearAllPasswords("Verifier");
         if (veri != null)
         {
-            var result = await LoginService.LoginWithOpenIdAsync(veri, code);
-            if (result.IsError)
-            {
-                //
-                ShowError("登录失败", "发生错误", result.ErrorDescription);
-                ActivateLogin(0);
-                return;
-            }
-
 
         }
     }

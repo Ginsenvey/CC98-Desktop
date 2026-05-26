@@ -1,18 +1,16 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.IO;
-using System.Linq;
-using System.Net;
-using System.Threading.Tasks;
-using Windows.Storage;
-using CC98.Kernel;
+﻿using CC98.Kernel;
+using CC98.Kernel.Authorize;
+using CC98.Kernel.Network;
 using CC98.Objects;
 using CC98.Services;
+using CC98.Services.Extensions;
+using CC98.Services.Helpers;
 using DevWinUI;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Composition.SystemBackdrops;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Media.Animation;
@@ -21,12 +19,15 @@ using Microsoft.Windows.AppLifecycle;
 using Microsoft.Windows.AppNotifications;
 using Microsoft.Windows.AppNotifications.Builder;
 using Microsoft.Windows.BadgeNotifications;
-using CC98.Services.Extensions;
-using CC98.Services.Helpers;
-using CC98.Kernel.Authorize;
-using Microsoft.UI.Xaml.Controls;
+using System;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.IO;
+using System.Linq;
+using System.Net;
+using System.Threading.Tasks;
+using Windows.Storage;
 using Symbol = FluentIcons.Common.Symbol;
-using CC98.Kernel.Network;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -65,7 +66,22 @@ public sealed partial class MainWindow : Window
         InitializeComponent();
         AppWindow.Changed += AppWindow_Changed;
         App.ThemeChanged += OnAppThemeChanged;
+        Test();
     }
+    
+    private async void Test()
+    {
+        try
+        {
+            
+        }
+        catch (Exception ex)
+        {
+            // Handle the exception
+            await App.Logger.WriteAsync("Login", "获取LoginService出错", ex.Message);
+        }
+    }
+
     private void AppWindow_Changed(AppWindow sender, AppWindowChangedEventArgs args)
     {
         //在最小化时隐藏到托盘

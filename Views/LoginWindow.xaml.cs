@@ -3,6 +3,7 @@ using CC98.Kernel.Authorize;
 using CC98.Kernel.Network;
 using CC98.Objects;
 using CC98.Services;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -31,11 +32,12 @@ public sealed partial class LoginWindow : Window
 {
     public int Mode;
     public ApplicationDataContainer Set=ApplicationData.Current.LocalSettings;
+    //TODO：改xaml
     private const string TipText= "如果尚未连接浙江大学内网，请在此处登录WebVPN,或者使用[ZJU Connect](https://github.com/Mythologyli/ZJU-Connect-for-Windows/releases).";
     private const string GuideText= "**在校外登录** \r\n\r\n先配置应用的内建WebVPN,再使用密码登录。\r\n\r\n**忘记密码/无账号？**\r\n\r\n进入[CC98](https://www.cc98.org/logon)官网操作。\r\n\r\n**遇到问题/想要新功能?**\r\n\r\n你可以在微软商店或[开发进度记录楼](https://www.cc98.org/topic/6173309)反馈此问题。\r\n\r\n你也可以克隆本应用仓库，自由修改和编译新的分支。不过，在分发时，应当告知所有的改动。\r\n\r\n**成为开发者**\r\n\r\n本应用使用`WinUI3`,`C#`,`XAML`构建。欢迎所有对.NET生态感兴趣的uu加入本应用的开发，欢迎所有使用者对本应用UI、功能和代码提供建议。";
     
-    public ILoginService LoginService=App.GetService<ILoginService>();
-    public static VpnService VpnService => App.GetService<VpnService>();
+    public LoginService LoginService=App.Current.GetService<LoginService>();
+    public IVpnService VpnService => App.Current.GetService<IVpnService>();
     public LoginWindow(int mode)
     {
         InitializeComponent();
@@ -47,7 +49,6 @@ public sealed partial class LoginWindow : Window
         AppWindow.SetIcon(iconPath);
         AppWindow.SetTaskbarIcon(iconPath);
         SetWindowState();
-        tip.Text = TipText;
         LoadParams(mode);
     }
     /// <summary>
@@ -90,32 +91,28 @@ public sealed partial class LoginWindow : Window
         } //普通登录
         else if (mode == 1) //用户已经登录过，只需要添加VPN凭据
         {
-            LoginPane.Visibility = Visibility.Collapsed;
-            VpnPane.Visibility = Visibility.Visible;
+           
         }
         else //由于密码更改或者套餐到期，尝试使用原凭据VPN登录失败，需要验证码
         {
-            LoginPane.Visibility = Visibility.Collapsed;
-            VpnPane.Visibility = Visibility.Visible;
-            var captchaId = VpnService.LastCaptchaId;
+            
+            var captchaId = ""; //从VpnService处直接调用。
             var timeStamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
-            var captchaUrl = $"{VpnService.BaseUrl}/captcha/{captchaId}.png?reload={timeStamp}";
-            captcha.Source = new BitmapImage(new(captchaUrl));
-            captchabox.Visibility = Visibility.Visible;
+            var captchaUrl = $"{""}/captcha/{captchaId}.png?reload={timeStamp}";
+            
         }
     }
 
-    
-
+   
 
     private async Task InitializeNetworkAsync(CancellationToken cancellation=default)
     {
         //检测网络状态，不注入Cookie
-        var networkStatus = await VpnService.CheckNetworkAsync(false,cancellation);
+        var networkStatus = NetworkStatus.InCampus;
         if (networkStatus == NetworkStatus.InCampus)
         {
             //启动
-            OpenPasswordLoginPane();
+            //OpenPasswordLoginPane();
             return;
         }
 
@@ -124,8 +121,7 @@ public sealed partial class LoginWindow : Window
             if (ValidationHelper.GetValue(Set, "IsVpnUsable") != "1")
             {
                 //打开VPN配置设置
-                LoginPane.Visibility = Visibility.Collapsed;
-                VpnPane.Visibility = Visibility.Visible;
+              
                 return;
             }
 
@@ -144,12 +140,11 @@ public sealed partial class LoginWindow : Window
                 return;
             }
 
-            var newStatus = await VpnService.CheckNetworkAsync(true, cancellation);
+            var newStatus = NetworkStatus.InCampus;
             if (newStatus == NetworkStatus.ByVpn)
             {
-                VpnService.IsLoggedIn = true;
-                VpnService.IsEnabled = true;
-                OpenPasswordLoginPane();
+                
+                //OpenPasswordLoginPane();
                 //启动
                 return;
             }
@@ -157,10 +152,10 @@ public sealed partial class LoginWindow : Window
             var success = await ReloginVpn();
             if (success)
             {
-                VpnService.IsEnabled = true;
+                //VpnService.IsEnabled = true;
                 SaveVpnToken();
                 //此时vpn应该可用
-                OpenPasswordLoginPane();
+                //OpenPasswordLoginPane();
             }
         }
 
@@ -213,14 +208,7 @@ public sealed partial class LoginWindow : Window
         return false;
     }
 
-    private void Guide_Click(object sender, RoutedEventArgs e)
-    {
-        LoginPane.Visibility = Visibility.Collapsed;
-        GuidePane.Visibility = Visibility.Visible;
-        VpnPane.Visibility = Visibility.Collapsed;
-        var guidance = GuideText;
-        GuidePresenter.Text = guidance;
-    }
+   
 
     private async void OIDC_Click(object sender, RoutedEventArgs e)
     {
@@ -242,56 +230,8 @@ public sealed partial class LoginWindow : Window
     }
 
 
-    private void GuideBack_Click(object sender, RoutedEventArgs e)
-    {
-        GuidePresenter.Text = "";
-        LoginPane.Visibility = Visibility.Visible;
-        VpnPane.Visibility = Visibility.Collapsed;
-        GuidePane.Visibility = Visibility.Collapsed;
-    }
 
-    private void LinkToVpn_Click(object sender, RoutedEventArgs e)
-    {
-        if (ValidationHelper.GetValue(Set, "IsVpnUsable") == "1")
-        {
-            Flower.Play(FlowStatus.Info, "已配置VPN，无需其他操作");
-            return;
-        }
-
-        GuidePane.Visibility = Visibility.Collapsed;
-        VpnPane.Visibility = Visibility.Visible;
-        LoginPane.Visibility = Visibility.Collapsed;
-    }
-
-    private void VpnBack_Click(object sender, RoutedEventArgs e)
-    {
-        GuidePane.Visibility = Visibility.Collapsed;
-        VpnPane.Visibility = Visibility.Collapsed;
-        LoginPane.Visibility = Visibility.Visible;
-    }
-
-    private async void Link_Click(object sender, RoutedEventArgs e)
-    {
-        if (string.IsNullOrEmpty(idbox.Text) || string.IsNullOrEmpty(passbox.Password))
-        {
-            //
-            Flower.Play(FlowStatus.Info, "请输入完整凭据");
-            return;
-        }
-
-        Link.IsChecked = true;
-        try
-        {
-            await SetupVpn(idbox.Text, passbox.Password);
-        }
-        catch (Exception ex)
-        {
-            Link.IsChecked = false;
-            Link.ShowError = true;
-            Flower.Play(FlowStatus.Fail, ex.Message);
-        }
-    }
-
+   
     private async Task SetupVpn(string id, string pass)
     {
         var res = await VpnService.LoginAsync(id, pass);
@@ -299,13 +239,13 @@ public sealed partial class LoginWindow : Window
         {
             case VpnLoginStatus.Success:
                 SaveToken(id, pass);
-                Link.IsChecked = false;
+                //Link.IsChecked = false;
                 VpnService.IsEnabled = true;
                 GoBackOrLaunchApp();
                 break;
             case VpnLoginStatus.Error:
-                Link.IsChecked = false;
-                Link.ShowError = true;
+                //Link.IsChecked = false;
+                //Link.ShowError = true;
                 Flower.Play(FlowStatus.Fail, res.Description);
                 break;
             case VpnLoginStatus.NeedConfirm:
@@ -313,32 +253,31 @@ public sealed partial class LoginWindow : Window
                 if (confirmRes.Status == VpnLoginStatus.Success)
                 {
                     SaveToken(id, pass);
-                    Link.IsChecked = false;
+                    //Link.IsChecked = false;
                     VpnService.IsEnabled = true;
                     GoBackOrLaunchApp();
                 }
                 else
                 {
-                    Link.IsChecked = false;
-                    Link.ShowError = true;
+                    //Link.IsChecked = false;
+                    //Link.ShowError = true;
                     Flower.Play(FlowStatus.Fail, res.Description);
                 }
 
                 break;
             case VpnLoginStatus.NeedCaptcha:
-                Link.IsChecked = false;
-                de.Visibility = Visibility.Collapsed;
+                //Link.IsChecked = false;
+                //de.Visibility = Visibility.Collapsed;
                 //从VpnService处直接调用。
-                var captchaId = VpnService.LastCaptchaId;
+                var captchaId = "";
                 var timeStamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
-                var captchaUrl = $"{VpnService.BaseUrl}/captcha/{captchaId}.png?reload={timeStamp}";
-                captcha.Source = new BitmapImage(new(captchaUrl));
-                captchabox.Visibility = Visibility.Visible;
+                var captchaUrl = $"{""}/captcha/{captchaId}.png?reload={timeStamp}";
+                //captcha.Source = new BitmapImage(new(captchaUrl));
+                //captchabox.Visibility = Visibility.Visible;
                 Flower.Play(FlowStatus.Fail, res.Message ?? "需要验证码");
                 break;
             default:
-                Link.IsChecked = false;
-                Link.ShowError = true;
+                
                 Flower.Play(FlowStatus.Fail, res.Description);
                 break;
         }
@@ -354,9 +293,7 @@ public sealed partial class LoginWindow : Window
     {
         if (Mode == 0)
         {
-            VpnPane.Visibility = Visibility.Collapsed;
-            GuidePane.Visibility = Visibility.Collapsed;
-            LoginPane.Visibility = Visibility.Visible;
+            
         }
         else
         {
@@ -379,13 +316,7 @@ public sealed partial class LoginWindow : Window
         }
     }
 
-    private void OpenPasswordLoginPane()
-    {
-        GuidePane.Visibility = Visibility.Collapsed;
-        VpnPane.Visibility = Visibility.Collapsed;
-        LoginPane.Visibility = Visibility.Collapsed;
-        PasswordLoginPane.Visibility = Visibility.Visible;
-    }
+  
 
     private void Debug(string text)
     {
@@ -396,72 +327,11 @@ public sealed partial class LoginWindow : Window
         AppNotificationManager.Default.Show(notification);
     }
 
-    private async void LoginWithPassword_Click(object sender, RoutedEventArgs e)
-    {
-        if (!string.IsNullOrEmpty(ccidbox.Text) && !string.IsNullOrEmpty(ccpassbox.Password))
-        {
-            LoginWithPassword.IsChecked = true;
-            var result = await LoginService.LoginWithPasswordAsync(ccidbox.Text, ccpassbox.Password);
-            LoginWithPassword.IsChecked = false;
-            if (result.IsError)
-            {
-                //
-                await App.Logger.WriteAsync("Login", "登录失败", result.ErrorDescription);
-                LoginWithPassword.ShowError = true;
-                Flower.Play(FlowStatus.Fail, result.ErrorDescription);
-                return;
-            }
-            return;//
-            var token = result;
-            if (token == null)
-            {
-                //
-                await App.Logger.WriteAsync("Login", "登录失败,令牌为空", result.ErrorDescription);
-                LoginWithPassword.ShowError = true;
-                Flower.Play(FlowStatus.Fail, "发生错误。请报告开发者");
-                return;
-            }
+    
 
-            if (!token.IsError)
-            {
-                //InjectToken(token);
-            } 
-            else
-            {
-                //await App.Logger.WriteAsync("Login", "登录失败", token.Message);
-                LoginWithPassword.ShowError = true;
-                //Flower.Play(FlowStatus.Fail, token.Message);
-                Set.Values["IsActive"] = "0";
-            }
-        }
-        else
-        {
-            Flower.Play(FlowStatus.Info, "凭据不完整");
-        }
-    }
+  
 
-    private void InjectToken(AuthorizeResult result)
-    {
-        //在注入之前，必须确认IsValid==true
-        PasswordManager.SavePassword(result.AccessToken, "Access");
-        PasswordManager.SavePassword(result.RefreshToken, "Refresh");
-        LoginWithPassword.IsChecked = false;
-        Set.Values["IsActive"] = "2";
-        App.Current.AppMainWindow = new MainWindow();
-        App.Current.AppMainWindow.Activate();
-        DispatcherQueue.TryEnqueue(() => { Close(); });
-    }
+  
 
-    private void PasswordLoginBack_Click(object sender, RoutedEventArgs e)
-    {
-        PasswordLoginPane.Visibility = Visibility.Collapsed;
-        VpnPane.Visibility = Visibility.Collapsed;
-        GuidePane.Visibility = Visibility.Collapsed;
-        LoginPane.Visibility = Visibility.Visible;
-    }
-
-    private void captchabox_TextChanged(object sender, TextChangedEventArgs e)
-    {
-        VpnService.CaptchaValue = captchabox.Text;
-    }
+   
 }

@@ -16,6 +16,7 @@ using CC98.Kernel.Authorize;
 using CC98.Objects;
 using CC98.Services.Extensions;
 using CC98.Kernel.Network;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace CC98.Kernel;
 
@@ -24,7 +25,8 @@ namespace CC98.Kernel;
 /// </summary>
 public static class RequestSender
 {
-    public static HttpClient HttpClient => App.GetService<IVpnService>().HttpClient;
+    public static HttpClient HttpClient=new HttpClient();
+
     /// <summary>
     /// 封装通用GET请求，并实现自动错误处理。
     /// </summary>

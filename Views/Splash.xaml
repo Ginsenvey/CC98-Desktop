@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Window
+    x:Class="CC98.Views.Splash"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:CC98.Views"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:dev="using:DevWinUI"
+    mc:Ignorable="d"
+    Title="Splash">
+
+    <Window.SystemBackdrop>
+        <MicaBackdrop />
+    </Window.SystemBackdrop>
+
+    <Grid>
+        <dev:ProgressButton  Content="登录" CheckedContent="登录中..." x:Name="button" HorizontalAlignment="Center" VerticalAlignment="Center"></dev:ProgressButton>
+    </Grid>
+</Window>

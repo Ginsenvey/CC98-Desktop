@@ -26,7 +26,7 @@ namespace CC98.Services;
 /// </summary>
 public class BoardSectionManager
 {
-    public static HttpClient HttpClient=>App.GetService<IVpnService>().HttpClient;
+    public static HttpClient HttpClient=>App.Current.GetService<IVpnService>().HttpClient;
     /// <summary>
     /// 本地缓存文件名。
     /// </summary>
