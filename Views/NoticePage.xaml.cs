@@ -17,7 +17,7 @@ public sealed partial class NoticePage : Page
     public Increment Increment = new();
     public ObservableCollection<Notice> Notices = [];
     public NoticeType Type = NoticeType.System;
-
+    public ApiService ApiService = App.Current.GetService<ApiService>();
     public NoticePage()
     {
         InitializeComponent();
@@ -46,7 +46,7 @@ public sealed partial class NoticePage : Page
     private async Task<bool> GetNotice()
     {
         var url = ApiEndpoints.User.SystemNotice(GetTypeName(Type), Increment.StartIndex);
-        var result = await RequestSender.Fetch<List<Notice>>(url);
+        var result = await ApiService.Fetch<List<Notice>>(url);
         if (!result.IsSuccess || result.Data == null)
         {
             //
@@ -83,7 +83,7 @@ public sealed partial class NoticePage : Page
     {
         var param = string.Join("&", topicIds.Select(id => $"id={id}"));
         var url = ApiEndpoints.Topic.BasicTopicInfoList(param);
-        var result = await RequestSender.Fetch<List<BasicTopicInfo>>(url);
+        var result = await ApiService.Fetch<List<BasicTopicInfo>>(url);
         if (!result.IsSuccess || result.Data == null)
         {
             //

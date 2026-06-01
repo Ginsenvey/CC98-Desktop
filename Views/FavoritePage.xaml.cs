@@ -29,7 +29,7 @@ public sealed partial class FavoritePage : Page
     public ApplicationDataContainer Set = ApplicationData.Current.LocalSettings;
     public int SortId;
     public ObservableCollection<SimpleTopicInfo> Topics = [];
-
+    public ApiService ApiService = App.Current.GetService<ApiService>();
     public FavoritePage()
     {
         InitializeComponent();
@@ -64,7 +64,7 @@ public sealed partial class FavoritePage : Page
     private async Task<bool> GetFavoriteTopic()
     {
         var favoriteTopicUrl = ApiEndpoints.Topic.FavoriteTopicList(Increment.StartIndex, (int)CurrenOrder, GroupId);
-        var favoriteTopicResult = await RequestSender.Fetch<List<SimpleTopicInfo>>(favoriteTopicUrl);
+        var favoriteTopicResult = await ApiService.Fetch<List<SimpleTopicInfo>>(favoriteTopicUrl);
         if (!favoriteTopicResult.IsSuccess || favoriteTopicResult.Data == null)
             //
             return false;

@@ -75,9 +75,8 @@ public partial class App : Application
     protected override async void OnLaunched(Microsoft.UI.Xaml.LaunchActivatedEventArgs args)
     {
         base.OnLaunched(args);
-        var m = new Splash();
+        var m = new LoginWindow();
         m.Activate();
-        return;
         await InitializeAppLog();
         var e = AppInstance.GetActivatedEventArgs();
         if (e.Kind == ActivationKind.Protocol)
@@ -85,25 +84,6 @@ public partial class App : Application
             AuthFromOpenId(e);
             return;
         }
-        var isActive = ValidationHelper.GetValue(Set, "IsActive");
-        if (isActive == "0")
-        {
-            ActivateLogin(0);
-        }
-        else //未登录
-        {
-            try
-            {
-                InitializeNetwork();
-            }
-            catch (Exception ex)
-            {
-                //报错
-                ShowError(ex.Message);
-            }
-        }
-
-
     }
 
     private async Task InitializeAppLog()
@@ -122,7 +102,7 @@ public partial class App : Application
         }
         AppDomain.CurrentDomain.UnhandledException += async (s, e) =>
         {
-            await Logger.WriteAsync("全局异常捕获", $"未处理异常: {e.ExceptionObject}");
+            //await Logger.WriteAsync("App", "发生未处理的异常", e.ExceptionObject.ToString());
         };
 
 
@@ -144,14 +124,7 @@ public partial class App : Application
 
     }
 
-    private void ActivateLogin(int mode)
-    {
-        LoginWindow = new Views.LoginWindow(mode)
-        {
-            Title = "登录",
-        };
-        LoginWindow.Activate();
-    }
+  
 
     #endregion
 
@@ -168,30 +141,23 @@ public partial class App : Application
             {
                 //配置文件
                 //services.Configure<>;
+                services.AddSingleton<AppConfig>();
                 //VPN服务和委托处理器
                 services.AddSingleton<IVpnService, VpnService>();
                 services.AddTransient<VpnMessageHandler>();
+                //Token服务
+                services.AddSingleton<ITokenService, TokenService>();
                 //HTTP
-                services.AddHttpClient("VpnClient")
-                    .AddHttpMessageHandler<VpnMessageHandler>();
+                services.AddHttpClient("VpnClient");
+                services.AddHttpClient("ForumClient").AddHttpMessageHandler<VpnMessageHandler>();
+                services.AddHttpClient("IdentityServer", client =>
+                {
+                    client.Timeout = TimeSpan.FromSeconds(30);
+                });
                 //论坛登录服务
                 services.AddSingleton<LoginService>();
-                //Token缓存和自动刷新
-                services.AddDistributedMemoryCache();
-                services.AddClientCredentialsTokenManagement()
-                .AddClient("cc98-password", client =>
-                {
-                    client.ClientId = ClientId.Parse(WebClientId);
-                    client.ClientSecret = ClientSecret.Parse(WebClientSecret);
-                    client.ClientCredentialStyle = Duende.IdentityModel.Client.ClientCredentialStyle.AuthorizationHeader;
-                    client.TokenEndpoint = new Uri(ApiEndpoints.OpenId.TokenEndpoint());
-                })
-                .AddClient("cc98-desktop", client =>
-                {
-                    client.ClientId = ClientId.Parse(DesktopClientId);
-                    client.ClientCredentialStyle = Duende.IdentityModel.Client.ClientCredentialStyle.AuthorizationHeader;
-                    client.TokenEndpoint = new Uri(ApiEndpoints.OpenId.TokenEndpoint());
-                });
+                //主业务服务
+                services.AddSingleton<ApiService>();
             })
             .Build();
     }
@@ -220,7 +186,7 @@ public partial class App : Application
         if (code == "0" || iss == "0" || state == "0" || sessionState == "0")
         {
             ShowError("登录失败", "回调参数不完整", "请报告开发者");
-            ActivateLogin(0);
+            
             return;
         }
         var stateToVerify = PasswordManager.RetrievePassword("State");
@@ -238,17 +204,7 @@ public partial class App : Application
     }
 
 
-    private void InjectTokenFromAuth(AuthorizeResult result)
-    {
-        // 要求为成功状态。
-        Debug.Assert(result.IsSucceeded);
-
-        PasswordManager.SavePassword(result.AccessToken, "Access");
-        PasswordManager.SavePassword(result.RefreshToken, "Refresh");
-        Set.Values["IsActive"] = "1";
-        AppMainWindow = new Views.MainWindow();
-        AppMainWindow.Activate();
-    }
+    
     #endregion
 
     #region 网络
@@ -268,7 +224,7 @@ public partial class App : Application
             {
                 //打开VPN配置设置
                 await Logger.WriteAsync("App", "初始化网络", "未配置VPN,跳转登录");
-                ActivateLogin(1);
+                
                 return;
             }
             //检测是否已初始化Ticket。若已初始化，使用并检查有效性。无效则重连。未初始化是出错的情况。

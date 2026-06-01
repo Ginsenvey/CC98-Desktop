@@ -30,7 +30,7 @@ public sealed partial class FocusPage : Page
     public ApplicationDataContainer Set = ApplicationData.Current.LocalSettings;
     public HashSet<int> TopicIds = [];
     public ObservableCollection<TopicInfo> Topics = [];
-
+    public ApiService ApiService = App.Current.GetService<ApiService>();
     public FocusPage()
     {
         InitializeComponent();
@@ -57,7 +57,7 @@ public sealed partial class FocusPage : Page
         var url = Mode == FocusContentType.Followee
             ? ApiEndpoints.User.Moment(Increment.StartIndex)
             : ApiEndpoints.User.FavoriteTopicUpdate(Increment.StartIndex);
-        var result = await RequestSender.Fetch<List<TopicInfo>>(url);
+        var result = await ApiService.Fetch<List<TopicInfo>>(url);
         if (!result.IsSuccess || result.Data == null)
         {
             //
@@ -72,7 +72,7 @@ public sealed partial class FocusPage : Page
         var param = string.Join("&",
             data.Where(x => !x.IsAnonymous && x.UserId.HasValue).Select(x => $"id={x.UserId}").ToHashSet());
         var userInfoUrl = ApiEndpoints.User.BasicUserInfoList(param);
-        var userInfoResult = await RequestSender.Fetch<List<BasicUserInfo>>(userInfoUrl);
+        var userInfoResult = await ApiService.Fetch<List<BasicUserInfo>>(userInfoUrl);
         if (!userInfoResult.IsSuccess || userInfoResult.Data == null)
             //报错
             Flower.Play(FlowStatus.Fail, "获取用户头像出错");

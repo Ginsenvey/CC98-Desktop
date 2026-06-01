@@ -141,7 +141,7 @@ public sealed partial class IndexPage
         {
             case "refresh":
                 var url = ApiEndpoints.Forum.Index;
-                var success = await IndexDataService.RefreshFromApiAsync(url);
+                var success = await IndexDataService.Instance.RefreshFromApiAsync(url);
                 if (success)
                     await LoadFromCacheAsync();
                 else

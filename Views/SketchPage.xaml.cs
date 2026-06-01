@@ -43,7 +43,7 @@ public sealed partial class SketchPage : Page
     public bool NotifyPoster = true;
     public int PostTypeValue; //普通帖子
     public ApplicationDataContainer Set = ApplicationData.Current.LocalSettings;
-
+    public ApiService ApiService = App.Current.GetService<ApiService>();
     public SketchPage()
     {
         InitializeComponent();
@@ -386,7 +386,7 @@ public sealed partial class SketchPage : Page
         };
         var replyText = SerializationHelper.TrySerialize(reply);
         var requestBody = new StringContent(replyText, Encoding.UTF8, "application/json");
-        var res = await RequestSender.Put(url, requestBody);
+        var res = await ApiService.Put(url, requestBody);
         if (!res.IsSuccess)
         {
             status.Text = $"编辑失败:{res.Message}";
@@ -412,7 +412,7 @@ public sealed partial class SketchPage : Page
         var fileContent = new ByteArrayContent(File.ReadAllBytes(filePath));
         fileContent.Headers.ContentType = new("multipart/form-data");
         formData.Add(fileContent, "files", Path.GetFileName(filePath));
-        var res = await RequestSender.Submit<List<string>>(url, formData);
+        var res = await ApiService.Submit<List<string>>(url, formData);
         if (!res.IsSuccess || res.Data == null)
         {
             //
@@ -498,7 +498,7 @@ public sealed partial class SketchPage : Page
             };
         var replyText = SerializationHelper.TrySerialize(reply);
         var requestBody = new StringContent(replyText, Encoding.UTF8, "application/json");
-        var res = await RequestSender.Submit<int>(url, requestBody);
+        var res = await ApiService.Submit<int>(url, requestBody);
         if (!res.IsSuccess)
         {
             //
@@ -534,7 +534,7 @@ public sealed partial class SketchPage : Page
         };
         var text = SerializationHelper.TrySerialize(post);
         var requestBody = new StringContent(text, Encoding.UTF8, "application/json");
-        var res = await RequestSender.Submit<int>(url, requestBody);
+        var res = await ApiService.Submit<int>(url, requestBody);
         if (!res.IsSuccess)
         {
             //

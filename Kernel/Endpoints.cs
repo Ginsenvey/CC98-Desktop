@@ -63,7 +63,7 @@ public static class ApiEndpoints
         /// <summary>
         ///     单个用户详细信息
         /// </summary>
-        public static string UserProfile(bool isMe, int userId)
+        public static string UserProfile(bool isMe, int userId=0)
         {
             return isMe ? $"{Base}/me" : $"{Base}/user/{userId}";
         }
@@ -313,7 +313,7 @@ public static class ApiEndpoints
     {
         public static string Endpoint => Oidc;
         /// <summary>
-        ///     鉴权服务起点
+        ///     鉴权服务起点,用于产生跳转URL
         /// </summary>
         public static string GetAuthorizeUrl()
         {

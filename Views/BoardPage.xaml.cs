@@ -42,6 +42,7 @@ public sealed partial class BoardPage
     /// 应用程序数据。
     /// </summary>
     private ApplicationDataContainer DataContainer { get; } = ApplicationData.Current.LocalSettings;
+    public ApiService ApiService = App.Current.GetService<ApiService>();
 
     //是否精华帖
     public bool IsBest { get; } = false;
@@ -82,7 +83,7 @@ public sealed partial class BoardPage
     private async Task GetData()
     {
         var boardDataUrl = ApiEndpoints.Board.BoardInfo(BoardId);
-        var boardDataResult = await RequestSender.Fetch<BoardData>(boardDataUrl);
+        var boardDataResult = await ApiService.Fetch<BoardData>(boardDataUrl);
         if (!boardDataResult.IsSuccess || boardDataResult.Data == null)
         {
             Flower.Play(FlowStatus.Fail, boardDataResult.Message);
@@ -105,7 +106,7 @@ public sealed partial class BoardPage
 
         if (FilterType == BoardTopicFilterType.Best)
         {
-            var result = await RequestSender.Fetch<BoardBest>(topicUrl);
+            var result = await ApiService.Fetch<BoardBest>(topicUrl);
             if (result.IsNotValid)
             {
                 Flower.Play(FlowStatus.Fail, result.Message);
@@ -117,7 +118,7 @@ public sealed partial class BoardPage
             return true;
         }
 
-        var topicResult = await RequestSender.Fetch<List<SimpleTopicInfo>>(topicUrl);
+        var topicResult = await ApiService.Fetch<List<SimpleTopicInfo>>(topicUrl);
         if (topicResult.IsNotValid)
         {
             Flower.Play(FlowStatus.Fail, topicResult.Message);
@@ -190,7 +191,7 @@ public sealed partial class BoardPage
     {
         var url = ApiEndpoints.Board.EditFocusBoards(BoardId);
         var content = new StringContent("", Encoding.UTF8, "application/json");
-        var result = await RequestSender.Put(url, content);
+        var result = await ApiService.Put(url, content);
         if (!result.IsSuccess)
         {
             //

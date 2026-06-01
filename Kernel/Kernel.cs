@@ -23,18 +23,18 @@ namespace CC98.Kernel;
 /// <summary>
 ///     对Http请求做二次封装，提供给UI层。
 /// </summary>
-public static class RequestSender
+public class ApiService(IHttpClientFactory httpClientFactory)
 {
-    public static HttpClient HttpClient=new HttpClient();
+    private readonly HttpClient httpClient = httpClientFactory.CreateClient("ForumClient");
 
     /// <summary>
     /// 封装通用GET请求，并实现自动错误处理。
     /// </summary>
-    public static async Task<ApiResponse<T>> Fetch<T>(string endpoint, CancellationToken cancellationToken = default)
+    public async Task<ApiResponse<T>> Fetch<T>(string endpoint, CancellationToken cancellationToken = default)
     {
         try
         {
-            var res = await HttpClient.GetAsync(endpoint, cancellationToken);
+            var res = await httpClient.GetAsync(endpoint, cancellationToken);
             return await Deserialize<T>(res, cancellationToken);
         }
         catch (HttpRequestException ex)
@@ -59,11 +59,11 @@ public static class RequestSender
     /// <summary>
     ///     适用于PUT。
     /// </summary>
-    public static async Task<ApiResponse> Put(string endpoint, HttpContent? content,CancellationToken cancellationToken = default)
+    public  async Task<ApiResponse> Put(string endpoint, HttpContent? content,CancellationToken cancellationToken = default)
     {
         try
         {
-            var res = await HttpClient.PutAsync(endpoint, content, cancellationToken);
+            var res = await httpClient.PutAsync(endpoint, content, cancellationToken);
             var json = await res.Content.ReadAsStringAsync();
             return res.IsSuccessStatusCode
                 ? ApiResponse.Success(json)
@@ -90,11 +90,11 @@ public static class RequestSender
     /// <summary>
     ///     适用于DELETE。
     /// </summary>
-    public static async Task<ApiResponse> Delete(string endpoint, CancellationToken cancellationToken = default)
+    public async Task<ApiResponse> Delete(string endpoint, CancellationToken cancellationToken = default)
     {
         try
         {
-            var res = await HttpClient.DeleteAsync(endpoint, cancellationToken);
+            var res = await httpClient.DeleteAsync(endpoint, cancellationToken);
             var json = await res.Content.ReadAsStringAsync();
             return res.IsSuccessStatusCode
                 ? ApiResponse.Success(json)
@@ -126,11 +126,11 @@ public static class RequestSender
     /// <param name="endpoint"></param>
     /// <param name="content"></param>
     /// <returns></returns>
-    public static async Task<ApiResponse<T>> Submit<T>(string endpoint, HttpContent content, CancellationToken cancellationToken = default)
+    public  async Task<ApiResponse<T>> Submit<T>(string endpoint, HttpContent content, CancellationToken cancellationToken = default)
     {
         try
         {
-            var res = await HttpClient.PostAsync(endpoint, content, cancellationToken);
+            var res = await httpClient.PostAsync(endpoint, content, cancellationToken);
             return await Deserialize<T>(res, cancellationToken);
         }
         catch (HttpRequestException ex)

@@ -30,7 +30,7 @@
                 <ResourceDictionary x:Key="Dark">
                     <Color x:Key="UserNameForegroundColor">#C4ABD4</Color>
                     <Color x:Key="QuoteBackgroundColor">#444444</Color>
-                    <Color x:Key="MarkdownBackgroudColor">#663f3d3d</Color>
+                    <Color x:Key="MarkdownBackgroundColor">#663f3d3d</Color>
                     <Color x:Key="QuoteBorderColor">#ffc4ae</Color>
                     <Color x:Key="PlayControl">#545354</Color>
                     <Color x:Key="Contrast">#FFFFFF</Color>

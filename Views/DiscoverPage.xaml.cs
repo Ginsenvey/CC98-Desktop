@@ -30,7 +30,7 @@ public sealed partial class DiscoverPage : Page
     public ApplicationDataContainer Set = ApplicationData.Current.LocalSettings;
     public HashSet<int> TopicIds = [];
     public ObservableCollection<TopicInfo> Topics = [];
-
+    public ApiService ApiService = App.Current.GetService<ApiService>();
     public DiscoverPage()
     {
         InitializeComponent();
@@ -62,7 +62,7 @@ public sealed partial class DiscoverPage : Page
     private async Task<bool> GetNewTopic()
     {
         var newTopicUrl = ApiEndpoints.Topic.NewTopicList(Increment.StartIndex);
-        var newTopicResult = await RequestSender.Fetch<List<TopicInfo>>(newTopicUrl);
+        var newTopicResult = await ApiService.Fetch<List<TopicInfo>>(newTopicUrl);
         if (!newTopicResult.IsSuccess || newTopicResult.Data == null)
         {
             //忽略加载过快报错
@@ -77,7 +77,7 @@ public sealed partial class DiscoverPage : Page
         var param = string.Join("&",
             data.Where(x => !x.IsAnonymous && x.UserId.HasValue).Select(x => $"id={x.UserId}").ToHashSet());
         var userInfoUrl = ApiEndpoints.User.BasicUserInfoList(param);
-        var userInfoResult = await RequestSender.Fetch<List<BasicUserInfo>>(userInfoUrl);
+        var userInfoResult = await ApiService.Fetch<List<BasicUserInfo>>(userInfoUrl);
         if (!userInfoResult.IsSuccess || userInfoResult.Data == null)
             //报错
             Flower.Play(FlowStatus.Fail, "获取用户头像出错");
@@ -105,7 +105,7 @@ public sealed partial class DiscoverPage : Page
     private async Task GetRandomTile()
     {
         var randomTopicUrl = ApiEndpoints.Topic.RandomTopicList();
-        var randomTopicResult = await RequestSender.Fetch<List<SimpleTopicInfo>>(randomTopicUrl);
+        var randomTopicResult = await ApiService.Fetch<List<SimpleTopicInfo>>(randomTopicUrl);
         if (!randomTopicResult.IsSuccess || randomTopicResult.Data == null) return;
         var data = randomTopicResult.Data;
         RandomTopics.AddRange(data);

@@ -146,6 +146,8 @@
     <None Remove="Themes\Generic.xaml" />
     <None Remove="Topic.xaml" />
     <None Remove="UBBRichTextBlock.xaml" />
+    <None Remove="Views\ForumLoginPage.xaml" />
+    <None Remove="Views\LoginGuidePage.xaml" />
   </ItemGroup>
 
   <ItemGroup>
@@ -193,6 +195,16 @@
     <PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.28000.1839" />
     <PackageReference Include="Microsoft.WindowsAppSDK" Version="2.0.1" />
     <PackageReference Include="SkiaSharp.Views.WinUI" Version="3.119.2" />
+  </ItemGroup>
+  <ItemGroup>
+    <Page Update="Views\ForumLoginPage.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+  </ItemGroup>
+  <ItemGroup>
+    <Page Update="Views\LoginGuidePage.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
   </ItemGroup>
 	
   <ItemGroup>
@@ -341,8 +353,8 @@
     <AppxPackageDir>D:\MSIX\</AppxPackageDir>
     <GenerateTemporaryStoreCertificate>True</GenerateTemporaryStoreCertificate>
     <AppxBundlePlatforms>x64</AppxBundlePlatforms>
-    <PublishAot>True</PublishAot>
-	<PublishTrimmed>True</PublishTrimmed>
+    <PublishAot>False</PublishAot>
+	<PublishTrimmed>False</PublishTrimmed>
 	<TrimMode>full</TrimMode>
     <ApplicationIcon>Assets\cc98.ico</ApplicationIcon>
     <AllowUnsafeBlocks>False</AllowUnsafeBlocks>
@@ -352,30 +364,30 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x86'">
     <Optimize>True</Optimize>
-    <IsPublishable>True</IsPublishable>
+    <IsPublishable>False</IsPublishable>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <Optimize>True</Optimize>
-    <IsPublishable>True</IsPublishable>
+    <IsPublishable>False</IsPublishable>
 	  <RuntimeIdentifier>win-x64</RuntimeIdentifier>
 	  <PlatformTarget>x64</PlatformTarget>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'">
     <Optimize>True</Optimize>
-    <IsPublishable>True</IsPublishable>
+    <IsPublishable>False</IsPublishable>
 	  <RuntimeIdentifier>win-arm64</RuntimeIdentifier>
 	  <PlatformTarget>ARM64</PlatformTarget>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x86'">
-    <IsPublishable>True</IsPublishable>
+    <IsPublishable>False</IsPublishable>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <IsPublishable>True</IsPublishable>
+    <IsPublishable>False</IsPublishable>
 	 <RuntimeIdentifier>win-x64</RuntimeIdentifier>
 	 <PlatformTarget>x64</PlatformTarget>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'">
-    <IsPublishable>True</IsPublishable>
+    <IsPublishable>False</IsPublishable>
 	<RuntimeIdentifier>win-arm64</RuntimeIdentifier>
 	<PlatformTarget>ARM64</PlatformTarget>
   </PropertyGroup>

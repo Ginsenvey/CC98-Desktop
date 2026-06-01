@@ -58,7 +58,7 @@ public sealed partial class MainWindow : Window
     public Frame RootFrame => ContentFrame; //用于在嵌套的Frame中导航
     public NavigationView NavigationView => Navi;
     public int UnreadCount { get; set; }
-
+    public ApiService ApiService = App.Current.GetService<ApiService>();
     private DispatcherTimer? SyncTimer { get; set; }
 
     public MainWindow()
@@ -155,7 +155,7 @@ public sealed partial class MainWindow : Window
         if (string.IsNullOrEmpty(portraitUrl)) return;
 
         var profileUrl = ApiEndpoints.User.UserProfile(true, 0);
-        var profileResult = await RequestSender.Fetch<UserInfo>(profileUrl);
+        var profileResult = await ApiService.Fetch<UserInfo>(profileUrl);
         if (!profileResult.IsSuccess) return;
         var data = profileResult.Data;
         portraitUrl = data.PortraitUrl;
@@ -200,7 +200,7 @@ public sealed partial class MainWindow : Window
     {
         if ((sender as MenuFlyoutItem)?.Tag is not int boardId) return;
         var url = ApiEndpoints.Board.EditFocusBoards(boardId);
-        var result = await RequestSender.Delete(url);
+        var result = await ApiService.Delete(url);
         if (!result.IsSuccess)
         {
             //
@@ -226,7 +226,7 @@ public sealed partial class MainWindow : Window
             Set.Values["CustomBoards"] = "0";
         //初始化本地缓存
         var profileUrl = ApiEndpoints.User.UserProfile(true, 0);
-        var profileResult = await RequestSender.Fetch<UserInfo>(profileUrl);
+        var profileResult = await ApiService.Fetch<UserInfo>(profileUrl);
         if (!profileResult.IsSuccess || profileResult.Data == null)
         {
             if (Memory != null)
@@ -252,7 +252,7 @@ public sealed partial class MainWindow : Window
         if (!Memory.ContainsKey(boardId))
         {
             var boardDataUrl = ApiEndpoints.Board.BoardInfo(boardId);
-            var boardDataResult = await RequestSender.Fetch<BoardData>(boardDataUrl);
+            var boardDataResult = await ApiService.Fetch<BoardData>(boardDataUrl);
             if (!boardDataResult.IsSuccess || boardDataResult.Data == null) return;
             var data = boardDataResult.Data;
             Memory.Add(boardId, data.Name);
@@ -326,7 +326,7 @@ public sealed partial class MainWindow : Window
     private async Task<bool> FetchIndex()
     {
         var url = ApiEndpoints.Forum.Index;
-        return await IndexDataService.RefreshFromApiAsync(url);
+        return await IndexDataService.Instance.RefreshFromApiAsync(url);
     }
 
     
@@ -351,7 +351,7 @@ public sealed partial class MainWindow : Window
 
         //VpnService.HttpClient.DefaultRequestHeaders.Authorization = new("Bearer", access);
         var url = ApiEndpoints.User.UnreadMessage();
-        var result = await RequestSender.Fetch<UnreadMessageInfo>(url);
+        var result = await ApiService.Fetch<UnreadMessageInfo>(url);
         if (!result.IsSuccess || result.Data == null)
         {
             //
@@ -381,7 +381,7 @@ public sealed partial class MainWindow : Window
     private async void RefreshMessage()
     {
         var url = ApiEndpoints.User.UnreadMessage();
-        var result = await RequestSender.Fetch<UnreadMessageInfo>(url);
+        var result = await ApiService.Fetch<UnreadMessageInfo>(url);
         if (!result.IsSuccess || result.Data == null)
         {
             await App.Logger.WriteAsync("MainWindow", "刷新未读消息失败", $"{result.StatusCode}:{result.Message}");
@@ -401,7 +401,7 @@ public sealed partial class MainWindow : Window
     private async Task<bool> GetFavorites()
     {
         var favoritesInfoUrl = ApiEndpoints.User.FavoritesList();
-        var favoritesInfoResult = await RequestSender.Fetch<FavoritesInfo>(favoritesInfoUrl);
+        var favoritesInfoResult = await ApiService.Fetch<FavoritesInfo>(favoritesInfoUrl);
         if (!favoritesInfoResult.IsSuccess || favoritesInfoResult.Data == null)
             //
             return false;

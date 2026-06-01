@@ -17,6 +17,7 @@ namespace CC98.Services;
 public class IndexDataService
 {
     private const string CacheFileName = "index_data.json";
+    public ApiService ApiService = App.Current.GetService<ApiService>();
     public static string CacheFilePath
     {
         get
@@ -40,11 +41,11 @@ public class IndexDataService
     /// <summary>
     ///     从API获取数据并更新缓存
     /// </summary>
-    public static async Task<bool> RefreshFromApiAsync(string apiUrl, CancellationToken cancellationToken = default)
+    public async Task<bool> RefreshFromApiAsync(string apiUrl, CancellationToken cancellationToken = default)
     {
         try
         {
-            var res = await RequestSender.Fetch<IndexData>(apiUrl, cancellationToken);
+            var res = await ApiService.Fetch<IndexData>(apiUrl, cancellationToken);
             if (res.IsSuccess)
             {
                 await SaveToCacheAsync(res.Data, cancellationToken);

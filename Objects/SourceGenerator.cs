@@ -17,7 +17,6 @@ namespace CC98.Objects;
 [JsonSerializable(typeof(int))]
 [JsonSerializable(typeof(string))]
 [JsonSerializable(typeof(Dictionary<string, object>))]
-[JsonSerializable(typeof(AuthorizeResult))]
 [JsonSerializable(typeof(Favorites))]
 [JsonSerializable(typeof(FavoritesInfo))]
 [JsonSerializable(typeof(TopicInfo))]

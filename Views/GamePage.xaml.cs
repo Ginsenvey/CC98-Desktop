@@ -25,7 +25,7 @@ public sealed partial class GamePage
     public ObservableCollection<GachaInfo> GachaInfo1 = [];
     public ObservableCollection<GachaInfo> GachaInfo2 = [];
     public ApplicationDataContainer Set = ApplicationData.Current.LocalSettings;
-
+    public ApiService ApiService = App.Current.GetService<ApiService>();
     public GamePage()
     {
         InitializeComponent();
@@ -40,12 +40,12 @@ public sealed partial class GamePage
     private async void RefreshStat()
     {
         var profileUrl = ApiEndpoints.User.UserProfile(true, 0);
-        var profileResult = await RequestSender.Fetch<UserInfo>(profileUrl);
+        var profileResult = await ApiService.Fetch<UserInfo>(profileUrl);
         if (!profileResult.IsSuccess || profileResult.Data == null) return;
         var data = profileResult.Data;
         CardDrawStat.Wealth = data.Wealth;
         var statUrl = ApiEndpoints.Forum.CardStat;
-        var statResult = await RequestSender.Fetch<CardStat>(statUrl);
+        var statResult = await ApiService.Fetch<CardStat>(statUrl);
         if (!statResult.IsSuccess || statResult.Data == null)
             //
             return;
@@ -76,7 +76,7 @@ public sealed partial class GamePage
     {
         Cards.Clear();
         var drawUrl = ApiEndpoints.Forum.DrawCard(rule);
-        var drawResult = await RequestSender.Submit<List<Card>>(drawUrl, null);
+        var drawResult = await ApiService.Submit<List<Card>>(drawUrl, null);
         if (!drawResult.IsSuccess || drawResult.Data == null)
         {
             //
@@ -148,7 +148,7 @@ public sealed partial class GamePage
                 if (r == ContentDialogResult.Primary)
                 {
                     var url = "https://card.cc98.org/api/collection/all-rest";
-                    var result = await RequestSender.Delete(url);
+                    var result = await ApiService.Delete(url);
                     if (!result.IsSuccess)
                     {
                         //

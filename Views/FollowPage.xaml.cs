@@ -27,7 +27,7 @@ public sealed partial class FollowPage : Page
     public Increment Increment = new();
     public ApplicationDataContainer Set = ApplicationData.Current.LocalSettings;
     public string Type = "follower";
-
+    public ApiService ApiService = App.Current.GetService<ApiService>();
     public FollowPage()
     {
         InitializeComponent();
@@ -68,7 +68,7 @@ public sealed partial class FollowPage : Page
     {
         //获取好友ID列表
         var friendListUrl = ApiEndpoints.User.FreiendList(Type, Increment.StartIndex);
-        var friendIdsResult = await RequestSender.Fetch<List<int>>(friendListUrl);
+        var friendIdsResult = await ApiService.Fetch<List<int>>(friendListUrl);
         //处理第一层异常
         if (!friendIdsResult.IsSuccess || friendIdsResult.Data == null)
         {
@@ -85,7 +85,7 @@ public sealed partial class FollowPage : Page
         var userInfoUrl = ApiEndpoints.User.UserInfoList(param);
 
         // 获取好友详情
-        var friendsResult = await RequestSender.Fetch<List<Friend>>(userInfoUrl);
+        var friendsResult = await ApiService.Fetch<List<Friend>>(userInfoUrl);
         if (!friendsResult.IsSuccess || friendsResult.Data == null)
         {
             //

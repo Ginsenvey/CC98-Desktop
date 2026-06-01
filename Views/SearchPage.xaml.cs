@@ -22,6 +22,7 @@ public sealed partial class SearchPage : Page
 {
     public ApplicationDataContainer Set = ApplicationData.Current.LocalSettings;
     public ObservableCollection<TopicInfo> Topics = [];
+    public ApiService ApiService = App.Current.GetService<ApiService>();
     public SearchPage()
     {
         InitializeComponent();
@@ -65,7 +66,7 @@ public sealed partial class SearchPage : Page
     private async Task<bool> SearchTopic(string key, int start)
     {
         var searchUrl = ApiEndpoints.Topic.SearchTopic(key, start);
-        var searchResult = await RequestSender.Fetch<List<TopicInfo>>(searchUrl);
+        var searchResult = await ApiService.Fetch<List<TopicInfo>>(searchUrl);
         if (!searchResult.IsSuccess || searchResult.Data == null)
         {
             //

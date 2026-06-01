@@ -27,7 +27,7 @@ public sealed partial class ChatPage : Page
 {
     public Increment ChatHistoryIncrement = new();
     public ObservableCollection<ChatInfo> ChatInfoList = [];
-
+    public ApiService ApiService = App.Current.GetService<ApiService>();
     public int CurrentUserId;
 
     //是否来自Profile页面的私信跳转功能
@@ -89,7 +89,7 @@ public sealed partial class ChatPage : Page
     private async Task<bool> GetRecent()
     {
         var chatInfoUrl = ApiEndpoints.User.RecentChatUserList(UserIncrement.StartIndex);
-        var chatInfoResult = await RequestSender.Fetch<List<ChatInfo>>(chatInfoUrl);
+        var chatInfoResult = await ApiService.Fetch<List<ChatInfo>>(chatInfoUrl);
         if (!chatInfoResult.IsSuccess || chatInfoResult.Data == null)
             //
             return false;
@@ -97,7 +97,7 @@ public sealed partial class ChatPage : Page
 
         var param = string.Join("&", data.Select(x => $"id={x.UserId}").ToHashSet());
         var userInfoUrl = ApiEndpoints.User.BasicUserInfoList(param);
-        var userInfoResult = await RequestSender.Fetch<List<BasicUserInfo>>(userInfoUrl);
+        var userInfoResult = await ApiService.Fetch<List<BasicUserInfo>>(userInfoUrl);
         if (!userInfoResult.IsSuccess || userInfoResult.Data == null)
             //报错
             return false;
@@ -121,7 +121,7 @@ public sealed partial class ChatPage : Page
     private async Task<bool> GetMessageList()
     {
         var messageUrl = ApiEndpoints.User.ChatHistory(CurrentUserId, ChatHistoryIncrement.StartIndex);
-        var messageResult = await RequestSender.Fetch<List<ChatMessage>>(messageUrl);
+        var messageResult = await ApiService.Fetch<List<ChatMessage>>(messageUrl);
         if (!messageResult.IsSuccess)
             //
             return false;
@@ -165,7 +165,7 @@ public sealed partial class ChatPage : Page
         };
         var postText = SerializationHelper.TrySerialize(post);
         var requestBody = new StringContent(postText, Encoding.UTF8, "application/json");
-        var res = await RequestSender.Submit<object>(url, requestBody);
+        var res = await ApiService.Submit<object>(url, requestBody);
         if (res.IsSuccess)
             await RefreshMessageList();
         else

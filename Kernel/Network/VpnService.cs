@@ -36,6 +36,7 @@ public sealed partial class VpnService(IHttpClientFactory httpClientFactory) : I
     private const string TicketCookieName = "wengine_vpn_ticketwebvpn_zju_edu_cn";
     #endregion
     public HttpClient HttpClient { get; } = httpClientFactory.CreateClient("VpnClient");
+
     private readonly List<string> _cookies = [];
     public bool IsLoggedIn { get; set; }
     public bool IsEnabled { get; set; }

@@ -26,17 +26,9 @@ public interface ILoginService
     /// <summary>
     /// OAuth登录
     /// </summary>
-    /// <param name="verify"></param>
+    /// <param name="verifer"></param>
     /// <param name="code"></param>
     /// <returns></returns>
-    public  Task<TokenResponse?> LoginWithOpenIdAsync(string verify, string code, CancellationToken cancellationToken = default);
+    public  Task<TokenResponse?> LoginWithCodeAsync(string verifer, string code, CancellationToken cancellationToken = default);
 
-    /// <summary>
-    /// 刷新令牌
-    /// </summary>
-    /// <returns></returns>
-    public Task<TokenResponse?> GetNewTokenAsync(CancellationToken cancellationToken = default);
-
-    public string GetAccessToken();
-    public string GetRefreshToken();
 }

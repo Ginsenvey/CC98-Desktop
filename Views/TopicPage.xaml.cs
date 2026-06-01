@@ -46,6 +46,7 @@ public sealed partial class TopicPage : Page
     public int CurrentPage = 0;
     public int PageSize = 10;
     public GlobalService GlobalService = GlobalService.Instance;
+    public ApiService ApiService = App.Current.GetService<ApiService>();
     public TopicPage()
     {
         InitializeComponent();
@@ -247,7 +248,7 @@ public sealed partial class TopicPage : Page
     private async Task LoadTopicInfo()
     {
         var topicInfoUrl = ApiEndpoints.Topic.TopicInfo(TopicId);
-        var topicInfoResult = await RequestSender.Fetch<TopicInfo>(topicInfoUrl);
+        var topicInfoResult = await ApiService.Fetch<TopicInfo>(topicInfoUrl);
         if (!topicInfoResult.IsSuccess || topicInfoResult.Data == null)
         {
             return;
@@ -259,7 +260,7 @@ public sealed partial class TopicPage : Page
         TopicInfo.HitCount = data.HitCount;
         TopicInfo.ReplyCount = data.ReplyCount;
         var isFavoriteUrl = ApiEndpoints.Topic.IsFavorite(TopicId);
-        var isFavoriteResult = await RequestSender.Fetch<bool>(isFavoriteUrl);
+        var isFavoriteResult = await ApiService.Fetch<bool>(isFavoriteUrl);
         if (isFavoriteResult.IsNotValid)
         {
             //
@@ -283,7 +284,7 @@ public sealed partial class TopicPage : Page
         //清空
         Replies.Clear();
         var replyUrl = ApiEndpoints.Topic.ReplyList(TopicId, CurrentPage * PageSize);
-        var replyResult = await RequestSender.Fetch<List<Reply>>(replyUrl);
+        var replyResult = await ApiService.Fetch<List<Reply>>(replyUrl);
         if (!replyResult.IsSuccess || replyResult.Data == null)
         {
             //
@@ -294,7 +295,7 @@ public sealed partial class TopicPage : Page
 
         var param = string.Join("&", data.Where(x => !x.IsAnonymous && x.UserId.HasValue).Select(x => $"id={x.UserId}").ToHashSet());
         var userInfoUrl = ApiEndpoints.User.BasicUserInfoList(param);
-        var userInfoResult = await RequestSender.Fetch<List<BasicUserInfo>>(userInfoUrl);
+        var userInfoResult = await ApiService.Fetch<List<BasicUserInfo>>(userInfoUrl);
         if (!userInfoResult.IsSuccess || userInfoResult.Data == null)
         {
             //报错
@@ -417,7 +418,7 @@ public sealed partial class TopicPage : Page
     private async Task SearchForUser(string userName)
     {
         var url = ApiEndpoints.User.SearchUserByName(userName);
-        var result = await RequestSender.Fetch<UserInfo>(url);
+        var result = await ApiService.Fetch<UserInfo>(url);
         if (!result.IsSuccess || result.Data == null)
         {
             //
@@ -613,7 +614,7 @@ public sealed partial class TopicPage : Page
         if (m?.Tag is not int groupId) return;
         var url = ApiEndpoints.Topic.AddIntoFavorites(TopicId, groupId);
         var content = new StringContent("", Encoding.UTF8, "application/json");
-        var result = await RequestSender.Put(url, content);
+        var result = await ApiService.Put(url, content);
         if (!result.IsSuccess)
         {
             //
@@ -724,7 +725,7 @@ public sealed partial class TopicPage : Page
         var postId = reply.Id;
         var url = ApiEndpoints.Post.React(postId);
         var content = new StringContent(mode, Encoding.UTF8, "application/json");
-        var result = await RequestSender.Put(url, content);
+        var result = await ApiService.Put(url, content);
         if (!result.IsSuccess)
         {
             //
@@ -732,7 +733,7 @@ public sealed partial class TopicPage : Page
             return;
         }
         var newStateUrl = ApiEndpoints.Post.ReactionState(postId);
-        var newStateResult = await RequestSender.Fetch<ReactionState>(newStateUrl);
+        var newStateResult = await ApiService.Fetch<ReactionState>(newStateUrl);
         if (!newStateResult.IsSuccess || newStateResult.Data == null)
         {
             //
@@ -769,7 +770,7 @@ public sealed partial class TopicPage : Page
         {
 
             var voteUrl = ApiEndpoints.Topic.Vote(TopicId);
-            var voteResult = await RequestSender.Fetch<VoteInfo>(voteUrl);
+            var voteResult = await ApiService.Fetch<VoteInfo>(voteUrl);
             if (!voteResult.IsSuccess || voteResult.Data == null)
             {
                 //
@@ -856,7 +857,7 @@ public sealed partial class TopicPage : Page
         }
     }
     //TODO:需要改成返回一个bool值，表示是否成功。现在的字符串返回值不够语义化。
-    public static async Task<string> SendVoteResult(int id, List<int> list)
+    public  async Task<string> SendVoteResult(int id, List<int> list)
     {
         var url = ApiEndpoints.Topic.Vote(id);
         var post = new Dictionary<string, object>
@@ -865,7 +866,7 @@ public sealed partial class TopicPage : Page
         };
         var postText = SerializationHelper.TrySerialize(post);
         var requestBody = new StringContent(postText, Encoding.UTF8, "application/json");
-        var r = await RequestSender.Submit<string>(url, requestBody);
+        var r = await ApiService.Submit<string>(url, requestBody);
         if (r.IsSuccess) return "1";
         return "0";
     }
@@ -877,7 +878,7 @@ public sealed partial class TopicPage : Page
             ProfileViewer.Target = h;
             if (h?.Tag is not Reply t || t.IsAnonymous) return;
             var profileUrl = ApiEndpoints.User.UserProfile(false, t.UserId ?? 0);
-            var profileResult = await RequestSender.Fetch<UserInfo>(profileUrl);
+            var profileResult = await ApiService.Fetch<UserInfo>(profileUrl);
             if (!profileResult.IsSuccess || profileResult.Data == null)
             {
                 return;

@@ -28,6 +28,7 @@ public sealed partial class ProfilePage : Page
 {
     public ObservableCollection<SimpleTopicInfo> RecentTopics = [];
     public ApplicationDataContainer Set = ApplicationData.Current.LocalSettings;
+    public ApiService ApiService=App.Current.GetService<ApiService>();
     public UserInfo UserProfile { get; } = new()
     {
         Id = 0,
@@ -61,7 +62,7 @@ public sealed partial class ProfilePage : Page
     {
         var url = ApiEndpoints.User.SignIn();
         var content = new StringContent("", Encoding.UTF8, "application/json");
-        var result = await RequestSender.Submit<string>(url, content);
+        var result = await ApiService.Submit<string>(url, content);
         if (result.IsSuccess)
         {
             SignStatus.Text = "签到中";
@@ -91,7 +92,7 @@ public sealed partial class ProfilePage : Page
     private async Task LoadUserProfile()
     {
         var UserProfileUrl = ApiEndpoints.User.UserProfile(IsMe, UserId);
-        var UserProfileResult = await RequestSender.Fetch<UserInfo>(UserProfileUrl);
+        var UserProfileResult = await ApiService.Fetch<UserInfo>(UserProfileUrl);
         if (!UserProfileResult.IsSuccess || UserProfileResult.Data == null)
         {
             return;
@@ -130,7 +131,7 @@ public sealed partial class ProfilePage : Page
     private async Task<bool> LoadRecentTopic()
     {
         var recentTopicUrl = ApiEndpoints.Topic.RecentTopic(IsMe, UserId, Increment.StartIndex);
-        var recentTopicResult = await RequestSender.Fetch<List<SimpleTopicInfo>>(recentTopicUrl);
+        var recentTopicResult = await ApiService.Fetch<List<SimpleTopicInfo>>(recentTopicUrl);
         if (!recentTopicResult.IsSuccess || recentTopicResult.Data == null)
         {
             Flower.Play(FlowStatus.Fail, recentTopicResult.Message);
