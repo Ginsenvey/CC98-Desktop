@@ -8,8 +8,11 @@
 
 > CC98 Desktop是一个基于Windows App SDK开发的论坛客户端，采用FluentDesign绘制UI,旨在桌面端提供更加易于交互、触控友好、流畅快速的论坛浏览体验。  
 >   
-> 本应用适用于搭载Windows10/11、X64和ARM64架构的计算机。Android/IOS/Mac/Linux的跨平台版本正在早期开发阶段，将会使用新的UI风格。  
- 
+> 本应用适用于搭载Windows10/11、X64和ARM64架构的计算机。
+
+**致谢**
+[@Avatar343](https://github.com/Verrickt)GG为应用重构了UBB核心解析器，[@Auser](https://github.com/Sakura-Iris)MM优化了源代码并提供了大量支持。
+
 **此版本中的新功能**  
 - 全新的UBB渲染器，涵盖绝大多数标签的呈现。
   
