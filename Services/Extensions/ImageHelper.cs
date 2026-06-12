@@ -1,4 +1,5 @@
-﻿using CC98.Kernel.Authorize;
+﻿using CC98.Kernel;
+using CC98.Kernel.Authorize;
 using System;
 using System.Diagnostics;
 using System.IO;
@@ -11,7 +12,7 @@ using Windows.Storage.Streams;
 
 namespace CC98.Services.Extensions;
 
-public class ImageExtension
+public class ImageHelper
 {
     /// <summary>
     ///     复制在线图片到剪贴板
@@ -22,19 +23,17 @@ public class ImageExtension
     {
         try
         {
+            var apiService = App.Current.GetService<ApiService>();
+            var imageBytes = await apiService.GetBytesAsync(imageUrl);
 
-            //var imageBytes = await HttpClient.GetByteArrayAsync(imageUrl);
-
-            // 创建内存流
-            //using var stream = new MemoryStream(imageBytes);
-            //var randomAccessStream = new InMemoryRandomAccessStream();
-            //await randomAccessStream.WriteAsync(imageBytes.AsBuffer());
-            //randomAccessStream.Seek(0);
+            using var stream = new MemoryStream(imageBytes);
+            var randomAccessStream = new InMemoryRandomAccessStream();
+            await randomAccessStream.WriteAsync(imageBytes.AsBuffer());
+            randomAccessStream.Seek(0);
 
             // 创建数据包
             var dataPackage = new DataPackage();
-            //dataPackage.SetBitmap(RandomAccessStreamReference.CreateFromStream(randomAccessStream));
-            dataPackage.SetText(imageUrl); // 同时保存URL文本
+            dataPackage.SetBitmap(RandomAccessStreamReference.CreateFromStream(randomAccessStream));
 
             // 设置描述信息
             dataPackage.Properties.Title = "CC98图片";
@@ -78,10 +77,10 @@ public class ImageExtension
 
             // 创建文件
             var file = await downloadsFolder.CreateFileAsync(fileName, CreationCollisionOption.ReplaceExisting);
-            //var imageBytes = await LoginService.Vpn.GetByteArrayAsync(imageUrl);
-            //await using var stream = await file.OpenStreamForWriteAsync();
-            //await stream.WriteAsync(imageBytes);
-            //WriteLine($"图片已保存到: {file.Path}");
+            var apiService = App.Current.GetService<ApiService>();
+            var imageBytes = await apiService.GetBytesAsync(imageUrl);
+            await using var stream = await file.OpenStreamForWriteAsync();
+            await stream.WriteAsync(imageBytes);
             return file.Path;
         }
         catch (Exception ex)

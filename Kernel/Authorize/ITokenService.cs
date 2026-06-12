@@ -16,6 +16,8 @@ public interface ITokenService
     public Task<TokenResponse?> GetNewTokenAsync(CancellationToken cancellationToken = default);
     public bool SetTokens(TokenResponse? tokenResponse);
 
-    public string AccessToken { get; set; }
-    public string RefreshToken { get; set; }
+    event EventHandler<AuthenticationFailedEventArgs>? AuthenticationFailed;
+    bool IsTokenExpired();
+    public string AccessToken { get; }
+    public string RefreshToken { get;}
 }

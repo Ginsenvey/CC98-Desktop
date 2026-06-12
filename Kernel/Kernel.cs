@@ -17,6 +17,8 @@ using CC98.Objects;
 using CC98.Services.Extensions;
 using CC98.Kernel.Network;
 using Microsoft.Extensions.DependencyInjection;
+using System.ComponentModel;
+using Windows.Media.Core;
 
 namespace CC98.Kernel;
 
@@ -168,10 +170,37 @@ public class ApiService(IHttpClientFactory httpClientFactory)
         }
     }
 
-}
-//需要逐步迁移
-public static class ValidationHelper
-{
+    public async Task<Byte[]?> GetBytesAsync(string endpoint,CancellationToken cancellationToken=default)
+    {
+        try
+        {
+            var res = await httpClient.GetAsync(endpoint,cancellationToken);
+            return await res.Content.ReadAsByteArrayAsync(cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            await App.Logger.WriteAsync("Kernel", "其他错误", ex.Message);
+            return null;
+        }
+    }
+    public async Task<MediaSource?> GetSourceAsync(string endpoint,CancellationToken cancellationToken=default)
+    {
+        try
+        {
+            using var res = await httpClient.GetAsync(endpoint, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
+            var memoryStream = new InMemoryRandomAccessStream();
+            using var contentStream = await res.Content.ReadAsStreamAsync(cancellationToken);
+            await CopyStreamToRandomAccessStream(contentStream, memoryStream);
+            var source = MediaSource.CreateFromStream(memoryStream, res.Content.Headers.ContentType?.MediaType);
+            return source;
+        }
+        catch(Exception ex)
+        {
+            await App.Logger.WriteAsync("Kernel", "其他错误", ex.Message);
+            return null;
+        }
+    }
+
     public static async Task CopyStreamToRandomAccessStream(Stream input, IRandomAccessStream output)
     {
         var buffer = new byte[16 * 1024];
@@ -189,6 +218,11 @@ public static class ValidationHelper
 
         await writer.FlushAsync();
     }
+}
+//需要逐步迁移
+public static class ValidationHelper
+{
+    
 
 
     public static string GetValue(ApplicationDataContainer container, string key)

@@ -1,9 +1,9 @@
 ﻿using CC98.Kernel.Network;
 using CC98.Services;
 using ColorCode.Compilation.Languages;
-using Duende.AccessTokenManagement;
 using Duende.IdentityModel.Client;
 using System;
+using System.Diagnostics;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
@@ -37,6 +37,8 @@ public class LoginService(IHttpClientFactory httpClientFactory,ITokenService tok
         }, cancellationToken);
         
         if(!response.IsError) tokenService.SetTokens(response);
+        Debug.WriteLine("登录成功");
+        Debug.WriteLine(response.RefreshToken);
         return response;
     }
 

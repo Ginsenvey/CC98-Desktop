@@ -233,8 +233,7 @@ public sealed partial class SettingPage : Page
 
     private void SwitchUser_Click(object sender, RoutedEventArgs e)
     {
-        //登出：清理设置，清理密码，退出应用
-        Set.Values.Clear();
+        AppSettings.Current.IsActive = false;
         PasswordManager.Logout();
         //重启应用
         AppInstance.Restart("");

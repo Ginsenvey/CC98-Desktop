@@ -10,6 +10,7 @@
     xmlns:dev="using:DevWinUI"
     xmlns:tool="using:CommunityToolkit.WinUI.Controls"
     xmlns:infoFlower="using:CC98.Controls.InfoFlower"
+    Title="CC98 登录"
     mc:Ignorable="d">
     <Window.SystemBackdrop>
         <MicaBackdrop />
@@ -41,7 +42,7 @@
                 <ImageIcon Source="/Assets/github.png" Width="25" Height="25" />
             </HyperlinkButton>
             <AppBarSeparator  BorderThickness="4"/>
-            <HyperlinkButton Width="42" Height="42">
+            <HyperlinkButton Width="42" Height="42" Click="GuideButton_Click">
                 <ic:SymbolIcon Symbol="Document" IconVariant="Color" />
             </HyperlinkButton>
             <AppBarSeparator  BorderThickness="4" />

@@ -23,24 +23,7 @@ namespace CC98.Views;
 /// </summary>
 public sealed partial class BoardPage
 {
-    /// <summary>
-    /// 标识 <see cref="Topics"/> 依赖属性。
-    /// </summary>
-    public static readonly DependencyProperty TopicsProperty = DependencyProperty.Register(nameof(Topics),
-        typeof(ObservableCollection<SimpleTopicInfo>), typeof(BoardPage), new(null));
-
-    /// <summary>
-    /// 获取或设置页面中要展示的帖子的集合。
-    /// </summary>
-    public ObservableCollection<SimpleTopicInfo> Topics
-    {
-        get => (ObservableCollection<SimpleTopicInfo>)GetValue(TopicsProperty);
-        set => SetValue(TopicsProperty, value);
-    }
-
-    /// <summary>
-    /// 应用程序数据。
-    /// </summary>
+    public ObservableCollection<SimpleTopicInfo> Topics = [];
     private ApplicationDataContainer DataContainer { get; } = ApplicationData.Current.LocalSettings;
     public ApiService ApiService = App.Current.GetService<ApiService>();
 

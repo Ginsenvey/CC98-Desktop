@@ -59,8 +59,8 @@ public class SmartImageLoader : IImageLoader
 
         try
         {
-            if (UrlEx.IsLocalPath(src))result = await UrlEx.LoadLocalImage(src);
-            else if (UrlEx.IsWebUrl(src)) result = await UrlEx.LoadWebImageAsync(src, LowRes);
+            if (UrlEx.IsLocalPath(src))result = await ImageHelper.LoadLocalImage(src);
+            else if (UrlEx.IsWebUrl(src)) result = await ImageHelper.LoadWebImageAsync(src, LowRes);
         }
         catch
         {

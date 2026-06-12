@@ -33,9 +33,6 @@ public sealed partial class LoginWindow : Window
 {
     //TODO：改xaml
     private const string TipText= "如果尚未连接浙江大学内网，请在此处登录WebVPN,或者使用[ZJU Connect](https://github.com/Mythologyli/ZJU-Connect-for-Windows/releases).";
-    private const string GuideText= "**在校外登录** \r\n\r\n先配置应用的内建WebVPN,再使用密码登录。\r\n\r\n**忘记密码/无账号？**\r\n\r\n进入[CC98](https://www.cc98.org/logon)官网操作。\r\n\r\n**遇到问题/想要新功能?**\r\n\r\n你可以在微软商店或[开发进度记录楼](https://www.cc98.org/topic/6173309)反馈此问题。\r\n\r\n你也可以克隆本应用仓库，自由修改和编译新的分支。不过，在分发时，应当告知所有的改动。\r\n\r\n**成为开发者**\r\n\r\n本应用使用`WinUI3`,`C#`,`XAML`构建。欢迎所有对.NET生态感兴趣的uu加入本应用的开发，欢迎所有使用者对本应用UI、功能和代码提供建议。";
-    
-    
    
     public LoginWindow()
     {
@@ -87,12 +84,17 @@ public sealed partial class LoginWindow : Window
     {
         try
         {
-LoginFrame.Navigate(typeof(ForumLoginPage));
+            LoginFrame.Navigate(typeof(OpenIdLoginPage));
         }
         catch(Exception ex)
         {
             Debug.WriteLine(ex.Message);
         }
         
+    }
+
+    private void GuideButton_Click(object sender, RoutedEventArgs e)
+    {
+        LoginFrame.Navigate(typeof(GuidePage));
     }
 }

@@ -85,72 +85,7 @@ public static partial class UrlEx
         }
     }
 
-    /// <summary>
-    ///     加载基于 Web 地址的图像。
-    /// </summary>
-    /// <param name="url">图像资源的 URL。</param>
-    /// <param name="lowRes">是否使用低分辨率模式加载。</param>
-    /// <param name="cancellationToken">用于取消操作的令牌。</param>
-    /// <returns>表示异步操作的任务。操作结果为加载后的图片对象。</returns>
-    public static async Task<BitmapSource> LoadWebImageAsync(string url, bool lowRes = false,
-        CancellationToken cancellationToken = default)
-    {
-        using var client=new HttpClient();
-        var res=await client.GetAsync(url, cancellationToken);
-        var imageBytes = await res.Content.ReadAsByteArrayAsync();
-        return await LoadFromBytesAsync(imageBytes, lowRes, cancellationToken);
-    }
-
-    public static async Task<BitmapSource> LoadLocalImage(string path, CancellationToken cancellationToken = default)
-    {
-        if (path.StartsWith("ms-appx:///") || path.StartsWith("ms-appdata:///"))
-            // 应用资源路径
-            return new BitmapImage(new(await LocateEmojiAsync(path, cancellationToken)));
-
-        if (File.Exists(path))
-        {
-            // 本地文件路径
-            var file = await StorageFile.GetFileFromPathAsync(path);
-            using var stream = await file.OpenReadAsync();
-            return await LoadFromStreamAsync(stream.AsStream(), cancellationToken);
-        }
-
-        // 尝试作为资源加载
-        var uri = new Uri($"ms-appx:///Assets/{path}");
-        return new BitmapImage(uri);
-    }
-
-    public static async Task<BitmapSource> LoadFromStreamAsync(Stream stream,
-        CancellationToken cancellationToken = default)
-    {
-        using var ras = new InMemoryRandomAccessStream();
-        await stream.CopyToAsync(ras.AsStream(), cancellationToken);
-        ras.Seek(0);
-
-        var bitmapImage = new BitmapImage();
-        await bitmapImage.SetSourceAsync(ras);
-        bitmapImage.DecodePixelHeight = 48;
-        bitmapImage.DecodePixelWidth = 48;
-        return bitmapImage;
-    }
-
-    public static async Task<BitmapSource> LoadFromBytesAsync(byte[] bytes, bool lowRes = false,
-        CancellationToken cancellationToken = default)
-    {
-        using var ras = new InMemoryRandomAccessStream();
-        await ras.WriteAsync(bytes.AsBuffer()).AsTask(cancellationToken);
-        ras.Seek(0);
-        var bitmapImage = new BitmapImage();
-        if (lowRes)
-        {
-            bitmapImage.DecodePixelHeight = 64;
-            bitmapImage.DecodePixelWidth = 64;
-        }
-
-        await bitmapImage.SetSourceAsync(ras);
-
-        return bitmapImage;
-    }
+    
 
     extension(Uri uri)
     {

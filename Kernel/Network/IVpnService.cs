@@ -13,13 +13,12 @@ public interface IVpnService
     /// 获取或设置 VPN 是否启用。
     /// </summary>
     public bool IsEnabled { get; set; }
+    public string Domain { get; set; }
+
     /// <summary>
     /// 获取或设置当前是否已登录。
     /// </summary>
     public bool IsLoggedIn { get; set; }
-    public HttpClient HttpClient { get; }
-    IEnumerable<string> GetCookies();
-    void SetCookies(params string[] cookies);
 
     public string ConvertUrl(string originalUrl);
 

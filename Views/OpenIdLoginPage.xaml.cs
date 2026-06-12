@@ -19,13 +19,18 @@ using Windows.Foundation.Collections;
 namespace CC98.Views
 {
     /// <summary>
-    /// An empty window that can be used on its own or navigated to within a Frame.
+    /// An empty page that can be used on its own or navigated to within a Frame.
     /// </summary>
-    public sealed partial class Splash : Window
+    public sealed partial class OpenIdLoginPage : Page
     {
-        public Splash()
+        public OpenIdLoginPage()
         {
             InitializeComponent();
+        }
+
+        private void PasswordLoginButton_Click(object sender, RoutedEventArgs e)
+        {
+            Frame.Navigate(typeof(ForumLoginPage));
         }
     }
 }

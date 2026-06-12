@@ -66,21 +66,13 @@ public sealed partial class MainWindow : Window
         InitializeComponent();
         AppWindow.Changed += AppWindow_Changed;
         App.ThemeChanged += OnAppThemeChanged;
-        Test();
+        //设置窗口状态
+        SetWindowState();
+        //加载自定义设置
+        LoadSettings();
     }
     
-    private async void Test()
-    {
-        try
-        {
-            
-        }
-        catch (Exception ex)
-        {
-            // Handle the exception
-            await App.Logger.WriteAsync("Login", "获取LoginService出错", ex.Message);
-        }
-    }
+
 
     private void AppWindow_Changed(AppWindow sender, AppWindowChangedEventArgs args)
     {
@@ -90,10 +82,6 @@ public sealed partial class MainWindow : Window
     }
     private void RootGrid_Loaded(object sender, RoutedEventArgs e)
     {
-        //设置窗口状态
-        SetWindowState();
-        //加载自定义设置
-        LoadSettings();
         //加载内容
         PrepareContent();
     }
@@ -152,15 +140,15 @@ public sealed partial class MainWindow : Window
     private async void LoadPortrait()
     {
         var portraitUrl = AppSettings.Current.Portrait;
-        if (string.IsNullOrEmpty(portraitUrl)) return;
-
-        var profileUrl = ApiEndpoints.User.UserProfile(true, 0);
-        var profileResult = await ApiService.Fetch<UserInfo>(profileUrl);
-        if (!profileResult.IsSuccess) return;
-        var data = profileResult.Data;
-        portraitUrl = data.PortraitUrl;
-        AppSettings.Current.Portrait = data.PortraitUrl;
-
+        if (string.IsNullOrEmpty(portraitUrl))
+        {
+            var profileUrl = ApiEndpoints.User.UserProfile(true, 0);
+            var profileResult = await ApiService.Fetch<UserInfo>(profileUrl);
+            if (!profileResult.IsSuccess) return;
+            var data = profileResult.Data;
+            portraitUrl = data.PortraitUrl;
+            AppSettings.Current.Portrait = data.PortraitUrl;
+        }
         MyPicture.Src = portraitUrl;
     }
 
@@ -340,28 +328,10 @@ public sealed partial class MainWindow : Window
 
     private async void CheckLoginStatus()
     {
-        var access = PasswordManager.RetrievePassword("Access");
-        if (string.IsNullOrEmpty(access))
-        {
-            ShowTips("登录凭据未保存", "请重新登录");
-            //应该只清除CC98相关的凭据
-            Logout();
-            return;
-        }
-
-        //VpnService.HttpClient.DefaultRequestHeaders.Authorization = new("Bearer", access);
         var url = ApiEndpoints.User.UnreadMessage();
         var result = await ApiService.Fetch<UnreadMessageInfo>(url);
         if (!result.IsSuccess || result.Data == null)
         {
-            //
-            if (result.StatusCode == (int)HttpStatusCode.Unauthorized)
-            {
-                //登录失效
-                ShowTips("登录状态已过期", "请重新登录");
-                Logout();
-            }
-
             return;
         }
 

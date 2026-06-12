@@ -46,5 +46,10 @@ public sealed partial class SectionPage : Page
         {
             Frame.Navigate(typeof(BoardPage), boardId);
         }
+        else
+        {
+            Flower.Play(FlowStatus.Warning, button?.Tag.ToString()??"空");
+        }
+        
     }
 }

@@ -89,7 +89,6 @@ public enum BoardTopicFilterType
 
 public enum ActiveMode
 {
-    InActive=0,//未登录
-    ByOpenId=1,//通过OpenId登录
-    ByPassword = 2//通过用户名密码登录
+    OpenId=0,//通过OpenId登录
+    Password = 1//通过用户名密码登录
 }

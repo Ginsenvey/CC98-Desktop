@@ -18,13 +18,14 @@ using Windows.ApplicationModel.Activation;
 using Windows.Storage;
 using CC98.Services.Helpers;
 using Microsoft.Extensions.Caching.Memory;
-using NativeMethods = CC98.Services.Helpers.NativeMethods;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.DependencyInjection;
-using Duende.AccessTokenManagement;
 using CC98.Objects;
 using CC98.Views;
 using Duende.IdentityModel.OidcClient;
+using System.Threading;
+using System.Net.Http;
+using Microsoft.UI.Dispatching;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -41,7 +42,7 @@ public partial class App : Application
     /// </summary>
     public new static App Current => (App)Application.Current;
     public Window AppMainWindow { get; set; }
-    public Window LoginWindow { get; private set; }
+    public Window LoginWindow { get; set; }
 
     public ApplicationDataContainer Set = ApplicationData.Current.LocalSettings;
 
@@ -68,22 +69,38 @@ public partial class App : Application
     {
         InitializeComponent();
         RegisterServices();
+        
     }
+    
+
 
 
     #region 应用启动
     protected override async void OnLaunched(Microsoft.UI.Xaml.LaunchActivatedEventArgs args)
     {
         base.OnLaunched(args);
-        var m = new LoginWindow();
-        m.Activate();
         await InitializeAppLog();
+
         var e = AppInstance.GetActivatedEventArgs();
         if (e.Kind == ActivationKind.Protocol)
         {
             AuthFromOpenId(e);
             return;
         }
+
+        bool isActive = AppSettings.Current.IsActive;
+        if(!isActive)
+        {
+            LoginWindow = new LoginWindow();
+            LoginWindow.Activate();
+        }
+        else
+        {
+            AppMainWindow = new MainWindow();
+            AppMainWindow.Activate();
+            DisplayTrayIcon();
+        }
+        
     }
 
     private async Task InitializeAppLog()
@@ -102,7 +119,7 @@ public partial class App : Application
         }
         AppDomain.CurrentDomain.UnhandledException += async (s, e) =>
         {
-            //await Logger.WriteAsync("App", "发生未处理的异常", e.ExceptionObject.ToString());
+            Debug.WriteLine("App", "发生未处理的异常", e.ExceptionObject.ToString());
         };
 
 
@@ -124,14 +141,35 @@ public partial class App : Application
 
     }
 
-  
+    private void TokenService_AuthenticationFailed(object? sender, AuthenticationFailedEventArgs e)
+    {
+        AppSettings.Current.IsActive = false;
+        ShowAppNotification("需要重新登录", UserFriendlyExceptionMessage(e.Reason), e.Exception?.Message ?? "");
+        try
+        {
+            AppMainWindow.Close();
+            LoginWindow = new LoginWindow();
+            LoginWindow.Activate();
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine(ex.Message);
+        }
+    }
+    private static string UserFriendlyExceptionMessage(string reason)
+    {
+        return reason switch
+        {
+            "invalid_grant" => "令牌已过期",
+            "invalid_client" => "客户端凭证错误,客户端配置可能被98官方改动",
+            _ => "未知原因"
+        };
+    }
 
     #endregion
 
     #region 依赖注入
-    private const string WebClientId = "9a1fd200-8687-44b1-4c20-08d50a96e5cd";
-    private const string DesktopClientId = "d47a2448-779f-42f3-164f-08dd8896bbe5";
-    private const string WebClientSecret = "8b53f727-08e2-4509-8857-e34bf92b27f2";
+   
     //必须是实例成员。
     private IHost Host;
     private void RegisterServices()
@@ -142,24 +180,50 @@ public partial class App : Application
                 //配置文件
                 //services.Configure<>;
                 services.AddSingleton<AppConfig>();
+                //Cookie容器
+                var cookieContainer = new CookieContainer();
+                services.AddSingleton(cookieContainer);
                 //VPN服务和委托处理器
+                services.AddSingleton<ICookieService, CookieService>();
                 services.AddSingleton<IVpnService, VpnService>();
                 services.AddTransient<VpnMessageHandler>();
                 //Token服务
                 services.AddSingleton<ITokenService, TokenService>();
                 //HTTP
-                services.AddHttpClient("VpnClient");
-                services.AddHttpClient("ForumClient").AddHttpMessageHandler<VpnMessageHandler>();
+                services.AddHttpClient("VpnClient",client=>
+                {
+                    client.Timeout = TimeSpan.FromSeconds(15);
+                })
+                .ConfigurePrimaryHttpMessageHandler(() => 
+                {
+                    return new HttpClientHandler
+                    {
+                        CookieContainer = cookieContainer,
+                    };
+                })
+                .AddStandardResilienceHandler();
+
+                services.AddHttpClient("ForumClient", client =>
+                {
+                    client.Timeout = TimeSpan.FromSeconds(15);
+                })
+                .AddHttpMessageHandler<VpnMessageHandler>()
+                .AddStandardResilienceHandler();
+
                 services.AddHttpClient("IdentityServer", client =>
                 {
-                    client.Timeout = TimeSpan.FromSeconds(30);
-                });
+                    client.Timeout = TimeSpan.FromSeconds(15);
+                })
+                .AddStandardResilienceHandler();
+
                 //论坛登录服务
                 services.AddSingleton<LoginService>();
                 //主业务服务
                 services.AddSingleton<ApiService>();
             })
             .Build();
+        var tokenService = GetService<ITokenService>();
+        tokenService.AuthenticationFailed += TokenService_AuthenticationFailed;
     }
 
     /// <summary>
@@ -185,7 +249,7 @@ public partial class App : Application
         var sessionState = ValidationHelper.GetValue(query, "session_state");
         if (code == "0" || iss == "0" || state == "0" || sessionState == "0")
         {
-            ShowError("登录失败", "回调参数不完整", "请报告开发者");
+            ShowAppNotification("登录失败", "回调参数不完整", "请报告开发者");
             
             return;
         }
@@ -193,7 +257,7 @@ public partial class App : Application
         PasswordManager.RemovePassword("State");
         if (stateToVerify != state)
         {
-            ShowError("警告", "返回验证参数不正确", "你可能重复点击了登录按钮，或当前网络环境有风险。");
+            ShowAppNotification("警告", "返回验证参数不正确", "你可能重复点击了登录按钮，或当前网络环境有风险。");
         }
         var veri = PasswordManager.RetrievePassword("Verifier");
         PasswordManager.ClearAllPasswords("Verifier");
@@ -232,14 +296,15 @@ public partial class App : Application
             {
                 //报错
                 await Logger.WriteAsync("App", "初始化网络", "VPN凭据中，有至少一个没有保存");
-                ShowError("VPN凭据不完整");
+                ShowAppNotification("VPN凭据不完整");
                 return;
             }
-            if (!InjectTokenFromVault())
+            //Todo
+            if (false)
             {
                 //报错
                 await Logger.WriteAsync("App", "初始化网络", "已保存的凭据中，有至少一个内容是空文本");
-                ShowError("VPN凭据不完整");
+                ShowAppNotification("VPN凭据不完整");
                 return;
             }
             await Logger.WriteAsync("App", "初始化网络", "注入已有Cookie成功,启用VPN模式检查网络");
@@ -267,40 +332,25 @@ public partial class App : Application
             {
                 //此处存在bug，经此入口重新登录VPN，重启应用，显示VPN未配置
                 Set.Values["IsVpnUsable"] = "0";
-                ShowError("无法连接WebVPN", "账户欠费或者密码不正确", "请重新配置凭据");
+                ShowAppNotification("无法连接WebVPN", "账户欠费或者密码不正确", "请重新配置凭据");
             }
         }
         if (networkStatus == NetworkStatus.MirrorError)
         {
-            ShowError("出错", "连接镜像站失败", "日志已记录");
+            ShowAppNotification("出错", "连接镜像站失败", "日志已记录");
         }
         if (networkStatus == NetworkStatus.UnknownError)
         {
-            ShowError("出错", "IP可能被镜像站拦截", "日志已记录");
+            ShowAppNotification("出错", "IP可能被镜像站拦截", "日志已记录");
         }
         if (networkStatus == NetworkStatus.NoConnection)
         {
-            ShowError("出错", "无互联网连接", "日志已记录");
+            ShowAppNotification("出错", "无互联网连接", "日志已记录");
         }
         return;
     }
 
-    private bool InjectTokenFromVault()
-    {
-        //提取环节
-        var ticketValue = PasswordManager.RetrievePassword("Ticket");
-        var routeValue = PasswordManager.RetrievePassword("Route");
-        var ticket = new Cookie("wengine_vpn_ticketwebvpn_zju_edu_cn", ticketValue, "/", "webvpn.zju.edu.cn");
-        var route = new Cookie("route", routeValue, "/", "webvpn.zju.edu.cn");
-        ticket.HttpOnly = true;
-        //注入环节
-        if (string.IsNullOrEmpty(ticketValue) || string.IsNullOrEmpty(routeValue))
-        {
-            return false;
-        }
-        Vpn.SetCookies(ticket.ToString(), route.ToString());
-        return true;
-    }
+ 
 
     private async Task<bool> ReloginVpn()
     {
@@ -323,7 +373,7 @@ public partial class App : Application
             else
             {
                 //报错
-                ShowError("顶号失败");
+                ShowAppNotification("顶号失败");
                 return false;
             }
         }
@@ -424,7 +474,7 @@ public partial class App : Application
 
 
     }
-    private void ShowError(string title, string subtitle = "", string message = "")
+    private void ShowAppNotification(string title, string subtitle = "", string message = "")
     {
         var notification = new AppNotificationBuilder()
             .AddText(title)

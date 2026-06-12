@@ -12,14 +12,13 @@ using System.Threading.Tasks;
 
 using CC98.Objects;
 using HtmlAgilityPack;
-//HttpClient可使用工厂函数提供，也应该是单例
-//使用delegate handler来实现VPN请求的转发和URL转换，以及cookie全局注入
+
 namespace CC98.Kernel.Network;
 
 /// <summary>
 /// WebVPN服务类,Http请求的封装。
 /// </summary>
-public sealed partial class VpnService(IHttpClientFactory httpClientFactory) : IVpnService,IDisposable
+public sealed partial class VpnService(IHttpClientFactory httpClientFactory,ICookieService cookieService) : IVpnService,IDisposable
 {
 
     #region 常量
@@ -29,25 +28,22 @@ public sealed partial class VpnService(IHttpClientFactory httpClientFactory) : I
     private const string PasswordEncryptKey = "wrdvpnisawesome!";
 
     /// <summary>
-    ///     加密域名所用的密钥。
+    /// 加密域名所用的密钥。
     /// </summary>
     private const string HostEncryptKey = "wrdvpnisthebest!";
-    private const string RouteCookieName = "route";
-    private const string TicketCookieName = "wengine_vpn_ticketwebvpn_zju_edu_cn";
+    //private const string RouteCookieName = "route";
+    //private const string TicketCookieName = "wengine_vpn_ticketwebvpn_zju_edu_cn";
     #endregion
-    public HttpClient HttpClient { get; } = httpClientFactory.CreateClient("VpnClient");
+    public HttpClient HttpClient = httpClientFactory.CreateClient("VpnClient");
+    public string Domain { get; set; } = "webvpn.zju.edu.cn";
 
-    private readonly List<string> _cookies = [];
     public bool IsLoggedIn { get; set; }
     public bool IsEnabled { get; set; }
 
     public string CaptchaValue { get; set; } = "";
     private string LastRandCode { get; set; } = "";
     public string LastCaptchaId { get; set; } = "";
-    private bool IsDisposed { get; set; }
 
-    //public Cookie Ticket => CookieContainer.GetCookies(new(BaseUrl))[TicketCookieName] ?? new Cookie();
-    //public Cookie Route => CookieContainer.GetCookies(new(BaseUrl))[RouteCookieName] ?? new Cookie();
 
     public async Task<VpnLoginResult> LoginAsync(string userName, string password,CancellationToken cancellationToken = default)
     {
@@ -130,7 +126,7 @@ public sealed partial class VpnService(IHttpClientFactory httpClientFactory) : I
             result.Status = VpnLoginStatus.NeedCaptcha;
             return result;
         }
-
+        cookieService.SaveCookieHeader($"https://{Domain}");
         IsLoggedIn = true;
         return VpnLoginResult.Success();
     }
@@ -166,7 +162,7 @@ public sealed partial class VpnService(IHttpClientFactory httpClientFactory) : I
             return VpnLoginResult.Failure($"登录出错:{ex.Message}");
         }
     }
-
+   
     /// <summary>
     /// 注销会话
     /// </summary>
@@ -324,20 +320,6 @@ public sealed partial class VpnService(IHttpClientFactory httpClientFactory) : I
         var prefixHex = Convert.ToHexStringLower(keyData);
         var bodyHex = Convert.ToHexStringLower(encryptedData).Cut(text.Length * 2);
         return $"{prefixHex}{bodyHex}";
-    }
-    /// <summary>
-    /// 获取所有Cookie.
-    /// </summary>
-    /// <returns></returns>
-    /// <remarks>应该由CookieContainer提供</remarks>
-    public IEnumerable<string> GetCookies() => _cookies;
-    /// <summary>
-    /// 向VPN服务添加Cookie。VPN请求转发器会在每次发送请求时注入这些Cookie。
-    /// </summary>
-    /// <param name="cookies"></param>
-    public void SetCookies(params string[] cookies)
-    {
-        _cookies.AddRange(cookies);
     }
 
     #region URL 地址

@@ -11,6 +11,8 @@ using CC98.Services.Extensions;
 using System.Text.Json.Serialization;
 using System.Threading;
 using CC98.Kernel;
+using System.Diagnostics;
+using CC98.Services.Helpers;
 
 namespace CC98.Services;
 
@@ -18,6 +20,7 @@ public class IndexDataService
 {
     private const string CacheFileName = "index_data.json";
     public ApiService ApiService = App.Current.GetService<ApiService>();
+
     public static string CacheFilePath
     {
         get
@@ -38,6 +41,17 @@ public class IndexDataService
     /// </summary>
     public static IndexDataService Instance { get; } = new();
 
+    public readonly static (string Key, string DisplayName)[] sections =
+[
+    ("HotTopic", "十大话题"),
+    ("SchoolEvent", "校园活动"),
+    ("Academics", "学术通知"),
+    ("Study", "学习天地"),
+    ("Emotion", "感性·情感"),
+    ("FleaMarket", "跳蚤市场"),
+    ("FullTimeJob", "求职广场"),
+    ("PartTimeJob", "实习兼职")
+];
     /// <summary>
     ///     从API获取数据并更新缓存
     /// </summary>
@@ -80,24 +94,28 @@ public class IndexDataService
     /// <summary>
     ///     获取指定分区的帖子列表
     /// </summary>
-    public static async Task<List<IndexTopic>> GetTopicPartitionAsync(string partitionName, int? maxCount = null, CancellationToken cancellationToken = default)
+    public static async Task<IEnumerable<SectionCard>> GetSectionsAsync(CancellationToken cancellationToken = default)
     {
-        var cachedData = await LoadFromCacheAsync(cancellationToken);
-
-        if (cachedData != null && cachedData.GetPartitions().TryGetValue(partitionName, out var partitionTopics))
+        var data = await LoadFromCacheAsync(cancellationToken);
+        var cards = new List<SectionCard>(8);
+        if (data == null) return [];
+        var parts = data.GetPartitions();
+        foreach(var (Key, DisplayName) in sections)
         {
-            var topics = partitionTopics ?? [];
-            if (maxCount.HasValue) return [.. topics.Take(maxCount.Value)];
-            return topics;
+            cards.Add(new SectionCard
+            {
+                SectionName=DisplayName,
+                HexColor=ColorEx.GenerateMorandiColorHex(),
+                IndexTopics = parts[Key] ?? []  
+            });
         }
-
-        return [];
+        return cards;
     }
-
+    
     /// <summary>
     ///     获取推荐阅读列表
     /// </summary>
-    public static async Task<List<FlipTopic>> GetRecommendationReadingAsync(int? maxCount = null, CancellationToken cancellationToken = default)
+    public static async Task<IEnumerable<FlipTopic>> GetRecommendationReadingAsync(int? maxCount = null, CancellationToken cancellationToken = default)
     {
         var cachedData = await LoadFromCacheAsync(cancellationToken);
         if (cachedData != null)
@@ -132,7 +150,7 @@ public class IndexDataService
 
 
     /// <summary>
-    ///     保存到缓存
+    /// 保存到缓存
     /// </summary>
     private static async Task SaveToCacheAsync(IndexData data, CancellationToken cancellationToken = default)
     {

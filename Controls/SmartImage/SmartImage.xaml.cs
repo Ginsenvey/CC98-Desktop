@@ -84,22 +84,22 @@ public sealed partial class SmartImage : UserControl
             switch (Source)
             {
                 case string url when UrlEx.IsWebUrl(url):
-                    InnerImage.Source = await UrlEx.LoadWebImageAsync(url);
+                    InnerImage.Source = await ImageHelper.LoadWebImageAsync(url);
                     ImageSource = InnerImage.Source;
                     break;
 
                 case string path when UrlEx.IsLocalPath(path):
-                    InnerImage.Source = await UrlEx.LoadLocalImage(path);
+                    InnerImage.Source = await ImageHelper.LoadLocalImage(path);
                     ImageSource = InnerImage.Source;
                     break;
 
                 case Uri uri when uri.IsWebUri:
-                    InnerImage.Source = await UrlEx.LoadWebImageAsync(uri.ToString());
+                    InnerImage.Source = await ImageHelper.LoadWebImageAsync(uri.ToString());
                     ImageSource = InnerImage.Source;
                     break;
 
                 case Uri uri when uri.IsLocalUri:
-                    InnerImage.Source = await UrlEx.LoadLocalImage(uri.ToString());
+                    InnerImage.Source = await ImageHelper.LoadLocalImage(uri.ToString());
                     ImageSource = InnerImage.Source;
                     break;
 

@@ -119,7 +119,7 @@ public sealed partial class MediaViewer : Window
 
     private async void CopyPic_Click(object sender, RoutedEventArgs e)
     {
-        var r=await ImageExtension.CopyImageToClipboardAsync(CurrentUrl);
+        var r=await ImageHelper.CopyImageToClipboardAsync(CurrentUrl);
         if (r)
         {
             Flower.Play(FlowStatus.Success, "已复制图片到剪贴板");
@@ -150,7 +150,7 @@ public sealed partial class MediaViewer : Window
 
     private async void SavePic_Click(object sender, RoutedEventArgs e)
     {
-        var r=await ImageExtension.DownloadImagesAsync(CurrentUrl);
+        var r=await ImageHelper.DownloadImagesAsync(CurrentUrl);
         if (r == null)
         {
             ShowTip("保存图片出错", "未知原因");

@@ -26,7 +26,7 @@ namespace CC98.Services;
 /// </summary>
 public class BoardSectionManager
 {
-    public static HttpClient HttpClient=>App.Current.GetService<IVpnService>().HttpClient;
+    public ApiService ApiService=App.Current.GetService<ApiService>();
     /// <summary>
     /// 本地缓存文件名。
     /// </summary>
@@ -84,11 +84,9 @@ public class BoardSectionManager
     {
         try
         {
-            var res = await HttpClient.GetAsync(ApiEndpoints.Forum.AllBoards);
+            var res = await ApiService.Fetch<SectionInfo[]>(ApiEndpoints.Forum.AllBoards,cancellationToken);
 
-            var data =
-                await res.Content.ReadFromJsonAsync<SectionInfo[]>(CC98JsonContext.Default.SectionInfos, cancellationToken)
-                       ?? throw new InvalidOperationException("无法从 API 中提取数据。");
+            var data =res.Data?? throw new InvalidOperationException("无法从 API 中提取数据。");
 
             await SaveToLocalCacheAsync(data, cancellationToken);
             return data;

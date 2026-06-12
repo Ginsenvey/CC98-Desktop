@@ -17,8 +17,8 @@ public class SmartMarkdownImageProvider : IImageProvider
         try
         {
             if (UrlEx.IsLocalPath(url))
-                result = await UrlEx.LoadLocalImage(url);
-            else if (UrlEx.IsWebUrl(url)) result = await UrlEx.LoadWebImageAsync(url);
+                result = await ImageHelper.LoadLocalImage(url);
+            else if (UrlEx.IsWebUrl(url)) result = await ImageHelper.LoadWebImageAsync(url);
         }
         catch
         {

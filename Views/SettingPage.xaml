@@ -155,7 +155,7 @@
                     <tool:SettingsCard.HeaderIcon>
                         <ic:SymbolIcon Symbol="Image" />
                     </tool:SettingsCard.HeaderIcon>
-                    <ToggleSwitch x:Name="IsImageVisible" IsOn="{x:Bind sv:AppSettings.Current.HideImage,Mode=OneWay}" />
+                    <ToggleSwitch x:Name="IsImageVisible" IsOn="{x:Bind sv:AppSettings.Current.HideImage,Mode=TwoWay}" />
                 </tool:SettingsCard>
                 <tool:SettingsCard Header="显示版面通告">
                     <tool:SettingsCard.HeaderIcon>

@@ -1,4 +1,5 @@
-﻿using System.ComponentModel;
+﻿using System;
+using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using Windows.Storage;
 
@@ -60,11 +61,15 @@ public sealed partial class AppSettings : INotifyPropertyChanged
             
         }
     }
-
     public bool ShowBigPaper
     {
         get => GetValue<bool>(nameof(ShowBigPaper));
         set=> SetValue(nameof(ShowBigPaper), value);
+    }
+    public bool IsActive
+    {
+        get => GetValue<bool>(nameof(IsActive));
+        set => SetValue(nameof(IsActive), value);
     }
     public int ActiveMode
     {
@@ -117,7 +122,11 @@ public sealed partial class AppSettings : INotifyPropertyChanged
         get => GetValue<string>(nameof(DevelopMode)) ?? string.Empty;
         set => SetValue(nameof(DevelopMode), value);
     }
-
+    public DateTime TokenExpireAt
+    {
+        get => GetValue<DateTime>(nameof(TokenExpireAt));
+        set => SetValue(nameof(TokenExpireAt), value);
+    }
 
     public event PropertyChangedEventHandler? PropertyChanged;
 

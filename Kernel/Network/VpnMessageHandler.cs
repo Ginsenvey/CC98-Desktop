@@ -1,5 +1,4 @@
 ﻿using CC98.Kernel.Authorize;
-using Duende.AccessTokenManagement;
 using System;
 using System.IO;
 using System.Linq;
@@ -15,7 +14,7 @@ namespace CC98.Kernel.Network;
 /// <summary>
 /// 提供基于 VPN 服务的 HTTP 请求转发工具。
 /// </summary>
-public partial class VpnMessageHandler(IVpnService vpnService,ITokenService tokenService) : DelegatingHandler
+public partial class VpnMessageHandler(IVpnService vpnService,ITokenService tokenService,ICookieService cookieService) : DelegatingHandler
 {
     private readonly SemaphoreSlim refreshLock = new(1, 1);
     protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request,CancellationToken cancellationToken)
@@ -25,11 +24,10 @@ public partial class VpnMessageHandler(IVpnService vpnService,ITokenService toke
             var targetUrl = vpnService.ConvertUrl(request.RequestUri!.ToString());
             request.RequestUri = new Uri(targetUrl);
 
-            var cookies=vpnService.GetCookies();
-            if (cookies.Any())
+            var cookieHeader=cookieService.GetCookieHeader($"https://{vpnService.Domain}");
+            if (!string.IsNullOrEmpty(cookieHeader))
             {
-                var cookieHeader = string.Join("; ", cookies);
-                request.Headers.Add("Cookie", cookieHeader);
+                request.Headers.TryAddWithoutValidation("Cookie", cookieHeader);
             }
         }
         //添加Bearer Token
@@ -38,32 +36,38 @@ public partial class VpnMessageHandler(IVpnService vpnService,ITokenService toke
         var response=await base.SendAsync(request, cancellationToken);
         if (response.StatusCode == HttpStatusCode.Unauthorized)
         {
-            var clonedRequest = await CloneHttpRequestMessageAsync(request);
+            var clonedRequest = await CloneHttpRequestMessageAsync(request,cancellationToken);
             await refreshLock.WaitAsync(cancellationToken);
             try
             {
-                var tokenResponse = await tokenService.GetNewTokenAsync(cancellationToken);
-                if (tokenResponse == null || tokenResponse.IsError)
+                //检查令牌是否已经被其他线程刷新成功（即不再过期）        
+                if (tokenService.IsTokenExpired())
                 {
-                    throw new UnauthorizedAccessException("令牌刷新失败，无法完成请求。", tokenResponse?.Exception);
+                    // 令牌仍过期，需要当前线程负责刷新            
+                    var tokenResponse = await tokenService.GetNewTokenAsync(cancellationToken);
+                    if (tokenResponse == null || tokenResponse.IsError)
+                        throw new UnauthorizedAccessException($"令牌刷新失败: {tokenResponse?.Error}", tokenResponse?.Exception);
                 }
+                //使用当前令牌设置 Authorization 头（已被刷新或由其他线程刷新）
                 clonedRequest.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", tokenService.AccessToken);
+                //重新发送请求
                 response = await base.SendAsync(clonedRequest, cancellationToken);
             }
             //不要捕捉我们自己抛出的 UnauthorizedAccessException
             catch (Exception ex) when (ex is not UnauthorizedAccessException)
             {
-                throw new UnauthorizedAccessException("令牌刷新失败，无法完成请求。", ex);
+                throw;
             }
             finally
             {
                 refreshLock.Release();
             }
         }
+        
         return response;
     }
 
-    private static async Task<HttpRequestMessage> CloneHttpRequestMessageAsync(HttpRequestMessage request)
+    private static async Task<HttpRequestMessage> CloneHttpRequestMessageAsync(HttpRequestMessage request,CancellationToken cancellationToken=default)
     {
         var clone = new HttpRequestMessage(request.Method, request.RequestUri);
 

@@ -17,6 +17,7 @@ using Microsoft.UI.Xaml.Media.Imaging;
 using CC98.Services.Extensions;
 using CC98.Services.Helpers;
 using Microsoft.UI.Xaml.Navigation;
+using System.Linq;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -61,28 +62,10 @@ public sealed partial class IndexPage
     private async Task LoadFromCacheAsync()
     {
         //只从缓存中读取。
-        (string Key, string DisplayName)[] sections =
-[
-    ("hotTopic", "十大话题"),
-    ("schoolEvent", "校园活动"),
-    ("academics", "学术通知"),
-    ("study", "学习天地"),
-    ("emotion", "感性·情感"),
-    ("fleaMarket", "跳蚤市场"),
-    ("fullTimeJob", "求职广场"),
-    ("partTimeJob", "实习兼职")
-];
+        
         Sections.Clear();
         FlipTopics.Clear();
-        for (var i = 0; i < sections.Length; i++)
-        {
-            var propertyName = sections[i].Key;
-            var name = sections[i].DisplayName;
-            var topics = await IndexDataService.GetTopicPartitionAsync(propertyName);
-            var section = new SectionCard
-                { SectionName = name, IndexTopics = topics, HexColor = ColorEx.GenerateMorandiColorHex() };
-            Sections.Add(section);
-        }
+        Sections.AddRange(await IndexDataService.GetSectionsAsync());
 
         var recommendations = await IndexDataService.GetRecommendationReadingAsync();
         if (recommendations == null)
@@ -93,7 +76,7 @@ public sealed partial class IndexPage
 
         foreach (var item in recommendations) item.Url = $"cc98:/{item.Url}";
         FlipTopics.AddRange(recommendations);
-        Pips.NumberOfPages = recommendations.Count;
+        Pips.NumberOfPages = recommendations.Count();
     }
 
 
@@ -155,7 +138,7 @@ public sealed partial class IndexPage
                 break;
             case "lottery":
                 //网页端OpenID未注册权限，不支持抽卡
-                if (AppSettings.Current.ActiveMode== (int)ActiveMode.ByPassword)
+                if (AppSettings.Current.ActiveMode == (int)ActiveMode.Password)
                 {
                     Flower.Play(FlowStatus.Info, "当前登录方式不支持抽卡");
                     return;
