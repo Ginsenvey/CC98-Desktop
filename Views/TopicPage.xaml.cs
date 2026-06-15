@@ -126,30 +126,27 @@ public sealed partial class TopicPage : Page
     /// </summary>
     private void LoadFavorites()
     {
-        var favoritesJson = ValidationHelper.GetValue(Set, "Favorites");
-        if (favoritesJson == "0")
+        var favoritesJson = AppSettings.Current.FavoriteGroups;
+        try
         {
-            Flower.Play(FlowStatus.Fail, "收藏夹未缓存");
-        }
-        var favoritesList = SerializationHelper.TryDeserialize<List<Favorites>>(favoritesJson);
-        if (favoritesList == null)
-        {
-            Flower.Play(FlowStatus.Fail, "解析收藏夹缓存出错");
-            return;
-        }
-        foreach (var favorites in favoritesList)
-        {
-            try
+            var favoritesList = SerializationHelper.TryDeserialize<List<Favorites>>(favoritesJson);
+            if (favoritesList == null)
+            {
+                Flower.Play(FlowStatus.Fail, "解析收藏夹缓存出错");
+                return;
+            }
+            foreach (var favorites in favoritesList)
             {
                 var item = new MenuFlyoutItem { Text = favorites.Name, Tag = favorites.Id, Icon = new FluentIcons.WinUI.SymbolIcon { Symbol = FluentIcons.Common.Symbol.Tag } };
                 item.Click += CollectionItem_Click;
                 CollectionMenu.Items.Add(item);
             }
-            catch (Exception ex)
-            {
-                Flower.Play(FlowStatus.Fail, ex.Message);
-            }
         }
+        catch(Exception ex)
+        {
+            Flower.Play(FlowStatus.Fail,ex.Message);
+        }
+        
     }
     //当jumping mode=true时响应。响应包括两种，来自外部页面导航的跳转和用户点击帖子内链接的跳转。
     //floor如17824L，则page为1782，sort为4，此时目标楼层的index是3.sort=1时目标index为0。如果sort=0,则目标页码在上一页。
@@ -293,7 +290,7 @@ public sealed partial class TopicPage : Page
         }
         var data = replyResult.Data;
 
-        var param = string.Join("&", data.Where(x => !x.IsAnonymous && x.UserId.HasValue).Select(x => $"id={x.UserId}").ToHashSet());
+        var param = string.Join("&", data.Where(x => !x.IsAnonymous && x.UserId.HasValue).Select(x => $"id={x.UserId}").Distinct());
         var userInfoUrl = ApiEndpoints.User.BasicUserInfoList(param);
         var userInfoResult = await ApiService.Fetch<List<BasicUserInfo>>(userInfoUrl);
         if (!userInfoResult.IsSuccess || userInfoResult.Data == null)

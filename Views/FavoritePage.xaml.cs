@@ -11,6 +11,7 @@ using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Navigation;
 using FluentIcons.Common;
 using Symbol = FluentIcons.Common.Symbol;
+using CC98.Services;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -48,16 +49,17 @@ public sealed partial class FavoritePage : Page
 
     private void LoadFavorites()
     {
-        var f = ValidationHelper.GetValue(Set, "Favorites");
-        if (f != "0")
+        var favoriteJson = AppSettings.Current.FavoriteGroups;
+        try
         {
-            //likecollection.MenuItems.Clear();
-            var data = SerializationHelper.TryDeserialize<List<Favorites>>(f);
-            if (data != null)
-            {
-                FavoritesList.Clear();
-                FavoritesList.AddRange(data);
-            }
+            var data = SerializationHelper.TryDeserialize<List<Favorites>>(favoriteJson);
+            if (data == null) return;
+            FavoritesList.Clear();
+            FavoritesList.AddRange(data);
+        }
+        catch
+        {
+            Flower.Play(FlowStatus.Fail, "加载收藏分组失败");
         }
     }
 

@@ -24,7 +24,7 @@ public interface IVpnService
 
     public Task<NetworkStatus> CheckNetworkAsync(bool useVpn,CancellationToken cancellation=default);
 
-    public Task<VpnLoginResult> LoginAsync(string userName, string password,CancellationToken cancellation=default);
+    public Task<VpnLoginResult?> LoginAsync(string userName, string password,CancellationToken cancellation=default);
 
-    public Task<VpnLoginResult> ConfirmAsync(CancellationToken cancellation=default);
+    public Task<VpnLoginResult?> ConfirmAsync(CancellationToken cancellation=default);
 }

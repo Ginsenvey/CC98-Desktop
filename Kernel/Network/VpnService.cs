@@ -35,6 +35,7 @@ public sealed partial class VpnService(IHttpClientFactory httpClientFactory,ICoo
     //private const string TicketCookieName = "wengine_vpn_ticketwebvpn_zju_edu_cn";
     #endregion
     public HttpClient HttpClient = httpClientFactory.CreateClient("VpnClient");
+    
     public string Domain { get; set; } = "webvpn.zju.edu.cn";
 
     public bool IsLoggedIn { get; set; }
@@ -45,59 +46,11 @@ public sealed partial class VpnService(IHttpClientFactory httpClientFactory,ICoo
     public string LastCaptchaId { get; set; } = "";
 
 
-    public async Task<VpnLoginResult> LoginAsync(string userName, string password,CancellationToken cancellationToken = default)
+    public async Task<VpnLoginResult?> LoginAsync(string userName, string password,CancellationToken cancellationToken = default)
     {
-        try
-        {
-            return await LoginCoreAsync(userName, password, cancellationToken);
-        }
+        //TODO：
+        //异常传播到调用方
 
-        catch (InvalidOperationException ex)
-        {
-            return VpnLoginResult.Failure(ex.Message);
-        }
-
-        catch (HttpRequestException ex)
-        {
-            return VpnLoginResult.Failure($"网络问题:{ex.Message}");
-        }
-        catch (JsonException ex)
-        {
-            return VpnLoginResult.Failure($"解析登录结果失败:{ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return VpnLoginResult.Failure($"登录出错:{ex.Message}");
-        }
-    }
-
-    /// <summary>
-    /// 更新随机代码和验证码ID的核心方法。
-    /// </summary>
-    /// <param name="cancellationToken">用于取消操作的令牌。</param>
-    /// <returns>表示异步操作的任务。</returns>
-    /// <exception cref="InvalidOperationException"></exception>
-    private async Task UpdateCodeCoreAsync(CancellationToken cancellationToken = default)
-    {
-        var res = await HttpClient.GetAsync(LoginAuthUrl, cancellationToken);
-        if (res.StatusCode != HttpStatusCode.OK) throw new InvalidOperationException($"网络请求失败:{res.StatusCode}");
-        var html = await res.Content.ReadAsStringAsync(cancellationToken);
-        var (csrfToken, captcha, _) = GetRandCode(html);
-        if (csrfToken == "" || captcha == "") throw new InvalidOperationException("获取登录参数失败");
-        LastRandCode = csrfToken;
-        LastCaptchaId = captcha;
-    }
-
-    /// <summary>
-    /// 执行 VPN 登录的核心方法。
-    /// </summary>
-    /// <param name="userName">登录的用户名。</param>
-    /// <param name="password">登录的密码。</param>
-    /// <param name="cancellationToken">用于取消操作的令牌。</param>
-    /// <returns>表示异步操作的任务。任务结果为登录结果。</returns>
-    /// <exception cref="InvalidOperationException"></exception>
-    private async Task<VpnLoginResult> LoginCoreAsync(string userName, string password,CancellationToken cancellationToken = default)
-    {
         if (CaptchaValue == "") await UpdateCodeCoreAsync(cancellationToken);
         var csrf = LastRandCode;
         var captchaId = LastCaptchaId;
@@ -119,48 +72,37 @@ public sealed partial class VpnService(IHttpClientFactory httpClientFactory,ICoo
             throw new InvalidOperationException($"网络请求失败:{loginRes.StatusCode}");
         var result = await loginRes.Content.ReadFromJsonAsync(CC98JsonContext.Default.VpnLoginResult, cancellationToken);
         if (result == null) throw new InvalidOperationException("登录结果为空");
-        if (!result.IsSuccess)
+        if (result.Success)
         {
-            if (result.NeedConfirm) return VpnLoginResult.ConfirmRequired();
-            result.Description = LastCaptchaId;
-            result.Status = VpnLoginStatus.NeedCaptcha;
-            return result;
+            cookieService.SaveCookieHeader($"https://{Domain}");
         }
-        cookieService.SaveCookieHeader($"https://{Domain}");
-        IsLoggedIn = true;
-        return VpnLoginResult.Success();
+        return result;
     }
 
-    public async Task<VpnLoginResult> ConfirmAsync(CancellationToken cancellationToken = default)
+    /// <summary>
+    /// 更新随机代码和验证码ID的核心方法。
+    /// </summary>
+    /// <param name="cancellationToken">用于取消操作的令牌。</param>
+    /// <returns>表示异步操作的任务。</returns>
+    /// <exception cref="InvalidOperationException"></exception>
+    private async Task UpdateCodeCoreAsync(CancellationToken cancellationToken = default)
     {
-        try
-        {
-            var res = await HttpClient.PostAsync(ConfirmUrl, null, cancellationToken);
-            if (res.StatusCode != HttpStatusCode.OK) return VpnLoginResult.Failure($"网络请求失败:{res.StatusCode}");
+        var res = await HttpClient.GetAsync(LoginAuthUrl, cancellationToken);
+        if (res.StatusCode != HttpStatusCode.OK) throw new InvalidOperationException($"网络请求失败:{res.StatusCode}");
+        var html = await res.Content.ReadAsStringAsync(cancellationToken);
+        var (csrfToken, captcha, _) = GetRandCode(html);
+        if (csrfToken == "" || captcha == "") throw new InvalidOperationException("获取登录参数失败");
+        LastRandCode = csrfToken;
+        LastCaptchaId = captcha;
+    }
 
-            var result = await res.Content.ReadFromJsonAsync(CC98JsonContext.Default.VpnLoginResult, cancellationToken);
+ 
 
-            if (result == null) return VpnLoginResult.Failure("登录结果为空");
-            if (result.IsSuccess)
-            {
-                IsLoggedIn = true;
-                return VpnLoginResult.Success();
-            }
-
-            return VpnLoginResult.Failure(result.Error ?? "确认登录失败");
-        }
-        catch (HttpRequestException ex)
-        {
-            return VpnLoginResult.Failure($"网络问题:{ex.Message}");
-        }
-        catch (JsonException ex)
-        {
-            return VpnLoginResult.Failure($"解析登录结果失败:{ex.Message}");
-        }
-        catch (Exception ex)
-        {
-            return VpnLoginResult.Failure($"登录出错:{ex.Message}");
-        }
+    public async Task<VpnLoginResult?> ConfirmAsync(CancellationToken cancellationToken = default)
+    {
+        var res = await HttpClient.PostAsync(ConfirmUrl, null, cancellationToken);
+        var result = await res.Content.ReadFromJsonAsync(CC98JsonContext.Default.VpnLoginResult, cancellationToken);
+        return result;
     }
    
     /// <summary>

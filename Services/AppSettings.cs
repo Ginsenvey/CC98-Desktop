@@ -13,7 +13,7 @@ public sealed partial class AppSettings : INotifyPropertyChanged
 {
     //需要迁移的设置项
 
-    private static ApplicationDataContainer LocalSettings => ApplicationData.Current.LocalSettings;
+    private ApplicationDataContainer LocalSettings => ApplicationData.Current.LocalSettings;
     public static AppSettings Current { get; } = new();
 
     private T? GetValue<T>(string key)
@@ -31,35 +31,29 @@ public sealed partial class AppSettings : INotifyPropertyChanged
     {
         try
         {
+            if (LocalSettings.Values.TryGetValue(key, out var existing))
+            {
+                if (object.Equals(existing, value))
+                {
+                    return true; // 值未变化，不触发通知
+                }
+            }
+            
             LocalSettings.Values[key] = value;
-            OnPropertyChanged();
+            //传入属性名
+            OnPropertyChanged(key);
             return true;
         }
         catch
         {
-            // 忽略存储异常（例如权限等）
-            OnPropertyChanged();
+            // 忽略存储异常（例如权限等），不触发通知
             return false;
         }
     }
-    /// <summary>
-    ///     是否隐藏图片。设置时会保存到 ApplicationData 并触发 PropertyChanged。
-    /// </summary>
     public bool HideImage
     {
         get => GetValue<bool>(nameof(HideImage));
-        set
-        {
-            try
-            {
-                LocalSettings.Values[nameof(HideImage)] = value;
-            }
-            catch
-            {
-                // 忽略存储异常（例如权限等），仍然触发通知
-            }
-            
-        }
+        set => SetValue(nameof(HideImage), value);
     }
     public bool ShowBigPaper
     {
@@ -106,6 +100,11 @@ public sealed partial class AppSettings : INotifyPropertyChanged
         get => GetValue<string>(nameof(CustomBoards)) ?? string.Empty;
         set => SetValue(nameof(CustomBoards), value);
     }
+    public string FavoriteGroups
+    {
+        get => GetValue<string>(nameof(FavoriteGroups)) ?? string.Empty;
+        set => SetValue(nameof(FavoriteGroups), value);
+    }
     public string ThemePicture
     {
         get => GetValue<string>(nameof(ThemePicture)) ?? string.Empty;
@@ -130,6 +129,7 @@ public sealed partial class AppSettings : INotifyPropertyChanged
 
     public event PropertyChangedEventHandler? PropertyChanged;
 
+    //[调用成员名]属性只有在get;set中起作用。如果在SetValue中使用，UI将不会正常刷新
     private void OnPropertyChanged([CallerMemberName] string? propertyName = null)
     {
         PropertyChanged?.Invoke(this, new(propertyName));

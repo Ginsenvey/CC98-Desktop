@@ -9,6 +9,7 @@
     mc:Ignorable="d"
     xmlns:ic="using:FluentIcons.WinUI"
     xmlns:obj="using:CC98.Objects"
+    xmlns:dev="using:DevWinUI"
     xmlns:infoFlower="using:CC98.Controls.InfoFlower"
     Background="{ThemeResource DesktopAcrylicTransparentBrush}">
 

@@ -5,6 +5,7 @@ using CC98.Objects;
 using CC98.Services;
 using CC98.Services.Extensions;
 using CC98.Services.Helpers;
+using CSharpMath;
 using DevWinUI;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Composition.SystemBackdrops;
@@ -70,6 +71,7 @@ public sealed partial class MainWindow : Window
         SetWindowState();
         //加载自定义设置
         LoadSettings();
+        PrepareContent();
     }
     
 
@@ -83,7 +85,7 @@ public sealed partial class MainWindow : Window
     private void RootGrid_Loaded(object sender, RoutedEventArgs e)
     {
         //加载内容
-        PrepareContent();
+       
     }
 
 
@@ -129,15 +131,18 @@ public sealed partial class MainWindow : Window
         //加载到FlipView
     }
 
-    private void PrepareContent()
+    private async void PrepareContent()
     {
-        CheckLoginStatus();
-        LoadPortrait();
         LoadMenuItem();
+        await LoadIndex();
+        await GetFocusBoards();
+        await RefreshMessage();
+        await LoadPortrait();
+        await GetFavorites();
         InitializeTimer();
     }
 
-    private async void LoadPortrait()
+    private async Task LoadPortrait()
     {
         var portraitUrl = AppSettings.Current.Portrait;
         if (string.IsNullOrEmpty(portraitUrl))
@@ -154,13 +159,9 @@ public sealed partial class MainWindow : Window
 
     private void OnNavigationItemAdded(NavigationItem item)
     {
-        var flag = true;
-        foreach (var menu in MenuItems)
-            if (menu is NavigationItem i)
-                if (i.Tag == item.Tag)
-                    flag = false;
-
-        if (flag) MenuItems.Add(item);
+        //检查导航栏中是否已经存在相同Tag的项，如果存在则不添加
+        if (MenuItems.OfType<NavigationItem>().Select(i => i.Tag).Contains(item.Tag))return;
+        MenuItems.Add(item);
     }
 
     private void LoadMenuItem()
@@ -205,35 +206,39 @@ public sealed partial class MainWindow : Window
         MenuItems.Remove(item);
     }
 
-    private async void GetFocusBoards() //同步客户端和在线关注版块的信息
+    private async Task GetFocusBoards() //同步客户端和在线关注版块的信息
     {
-        var customBoards = ValidationHelper.GetValue(Set, "CustomBoards");
-        if (customBoards != "0")
-            Memory = SerializationHelper.TryDeserialize<Dictionary<int, string>>(customBoards) ?? [];
+        var customBoards = AppSettings.Current.CustomBoards;
+        if (string.IsNullOrEmpty(customBoards))
+        {
+            Memory = [];
+        }
         else
-            Set.Values["CustomBoards"] = "0";
+        {
+            Memory = SerializationHelper.TryDeserialize<Dictionary<int, string>>(customBoards) ?? [];
+        }
         //初始化本地缓存
         var profileUrl = ApiEndpoints.User.UserProfile(true, 0);
         var profileResult = await ApiService.Fetch<UserInfo>(profileUrl);
         if (!profileResult.IsSuccess || profileResult.Data == null)
         {
-            if (Memory != null)
-                foreach (var b in Memory)
-                    MenuItems.Add(new NavigationItem
-                    {
-                        Name = b.Value, IconSymbol = BoardIconHelper.GetSymbol(b.Key, b.Value), Tag = b.Key.ToString(),
-                        IsEditable = true
-                    });
-
+            MenuItems.AddRange(Memory.Select(board => new NavigationItem
+            {
+                Name = board.Value,
+                IconSymbol = BoardIconHelper.GetSymbol(board.Key, board.Value),
+                Tag = board.Key.ToString(),
+                IsEditable = true
+            }));
+            
             return;
         }
 
         var data = profileResult.Data;
         var boards = data.CustomBoards;
-        foreach (var board in boards) AddBoards(board);
+        foreach (var board in boards) await AddBoards(board);
     }
 
-    private async void AddBoards(int boardId)
+    private async Task AddBoards(int boardId)
     {
         //此方法将检测本地是否已存储板块，没有则添加。无论本地是否已经存在，都会加载到导航栏。
         //先判断本地存储是否有此板块
@@ -263,35 +268,24 @@ public sealed partial class MainWindow : Window
         }
     }
 
-    private async void LoadIndex()
+    private async Task LoadIndex()
     {
-        var tag = ValidationHelper.GetValue(Set, "TitlePage");
-        if (tag != "0")
+        var index = AppSettings.Current.TitlePage;
+        switch (index)
         {
-            switch (tag)
-            {
-                case "1":
-
-                    var index = await FetchIndex();
-                    if (!index) Flower.Play(FlowStatus.Fail, "刷新首页失败");
-                    ContentFrame.Navigate(typeof(IndexPage));
-                    break;
-
-                case "2":
-                    var param = new ProfileNavigationInfo { IsMe = true };
-                    ContentFrame.Navigate(typeof(ProfilePage), param);
-                    break;
-                case "3":
-                    ContentFrame.Navigate(typeof(DiscoverPage));
-                    break;
-            }
+            case 1:
+                var param = new ProfileNavigationInfo { IsMe = true };
+                ContentFrame.Navigate(typeof(ProfilePage), param);
+                break;
+            case 2:
+                ContentFrame.Navigate(typeof(DiscoverPage));
+                break;
+            default:
+                var success = await FetchIndex();
+                if (success) ContentFrame.Navigate(typeof(IndexPage));
+                break;
         }
-        else
-        {
-            Set.Values["TitlePage"] = "1";
-            var index = await FetchIndex();
-            if (index) ContentFrame.Navigate(typeof(IndexPage));
-        }
+      
     }
 
     private void InitializeTimer()
@@ -300,18 +294,16 @@ public sealed partial class MainWindow : Window
         {
             Interval = TimeSpan.FromSeconds(240)
         };
-        SyncTimer.Tick += DispatcherTimer_Tick;
+        SyncTimer.Tick += async (s, e) => 
+        {
+            await FetchIndex();
+            await RefreshMessage();
+        };
         SyncTimer.Start();
     }
 
 
-    private async void DispatcherTimer_Tick(object? sender, object e)
-    {
-        await FetchIndex();
-        RefreshMessage();
-    }
-
-    private async Task<bool> FetchIndex()
+    private static async Task<bool> FetchIndex()
     {
         var url = ApiEndpoints.Forum.Index;
         return await IndexDataService.Instance.RefreshFromApiAsync(url);
@@ -326,29 +318,8 @@ public sealed partial class MainWindow : Window
     }
 
 
-    private async void CheckLoginStatus()
-    {
-        var url = ApiEndpoints.User.UnreadMessage();
-        var result = await ApiService.Fetch<UnreadMessageInfo>(url);
-        if (!result.IsSuccess || result.Data == null)
-        {
-            return;
-        }
 
-        var data = result.Data;
-        GlobalService.AtCount = data.AtCount;
-        GlobalService.ReplyCount = data.ReplyCount;
-        GlobalService.SystemCount = data.SystemCount;
-        GlobalService.MessageCount = data.MessageCount;
-        UnreadCount = data.MessageCount + data.AtCount + data.ReplyCount + data.SystemCount;
-        BadgeNotificationManager.Current.SetBadgeAsCount((uint)UnreadCount);
-        GetFocusBoards();
-        await GetFavorites();
-        LoadIndex();
-    }
-
-
-    private async void RefreshMessage()
+    private async Task RefreshMessage()
     {
         var url = ApiEndpoints.User.UnreadMessage();
         var result = await ApiService.Fetch<UnreadMessageInfo>(url);
@@ -377,11 +348,11 @@ public sealed partial class MainWindow : Window
             return false;
         var data = favoritesInfoResult.Data;
         var groups = data.FavoriteTopicGroups;
-        if (groups.Count > 0)
+        if (groups.IsNonEmpty())
         {
-            //临时存储收藏夹列表
+            //存储收藏夹列表
             var favoJson = SerializationHelper.TrySerialize(groups);
-            Set.Values["Favorites"] = favoJson;
+            AppSettings.Current.FavoriteGroups = favoJson ?? "";
             return true;
         }
 
@@ -407,45 +378,45 @@ public sealed partial class MainWindow : Window
 
     private void Navi_ItemInvoked(NavigationView sender, NavigationViewItemInvokedEventArgs args)
     {
-        if (args.InvokedItemContainer?.Tag is string tag)
+        if (args.InvokedItemContainer?.Tag is not string tag) return;
+        var item = args.InvokedItem as NavigationViewItem;
+        switch (tag)
         {
-            var item = args.InvokedItem as NavigationViewItem;
-            switch (tag)
-            {
-                case "Index":
-                    ContentFrame.Navigate(typeof(IndexPage));
-                    break;
-                case "Section":
-                    ContentFrame.Navigate(typeof(SectionPage));
-                    break;
-                case "Discover":
-                    ContentFrame.Navigate(typeof(DiscoverPage));
-                    break;
-                case "Favorite":
-                    ContentFrame.Navigate(typeof(FavoritePage));
-                    break;
-                case "Setting":
-                    ContentFrame.Navigate(typeof(SettingPage));
-                    break;
-                case "Message":
-                    var param = new MessageNavigationInfo { HasTarget = false };
-                    ContentFrame.Navigate(typeof(MessagePage), param);
-                    break;
-                case "Focus":
-                    ContentFrame.Navigate(typeof(FocusPage));
-                    break;
-                default:
-                    if (tag.All(char.IsDigit))
-                        try
-                        {
-                            ContentFrame.Navigate(typeof(BoardPage), int.Parse(tag));
-                        }
-                        catch
-                        {
-                        }
-
-                    break;
-            }
+            case "Index":
+                ContentFrame.Navigate(typeof(IndexPage));
+                break;
+            case "Section":
+                ContentFrame.Navigate(typeof(SectionPage));
+                break;
+            case "Discover":
+                ContentFrame.Navigate(typeof(DiscoverPage));
+                break;
+            case "Favorite":
+                ContentFrame.Navigate(typeof(FavoritePage));
+                break;
+            case "Setting":
+                ContentFrame.Navigate(typeof(SettingPage));
+                break;
+            case "Message":
+                var param = new MessageNavigationInfo { HasTarget = false };
+                ContentFrame.Navigate(typeof(MessagePage), param);
+                break;
+            case "Focus":
+                ContentFrame.Navigate(typeof(FocusPage));
+                break;
+            default:
+                if (tag.All(char.IsDigit))
+                {
+                    try
+                    {
+                        ContentFrame.Navigate(typeof(BoardPage), int.Parse(tag));
+                    }
+                    catch
+                    {
+                        Flower.Play(FlowStatus.Fail, "无效的版块ID");
+                    }
+                }
+                break;
         }
     }
 
@@ -530,8 +501,7 @@ public sealed partial class MainWindow : Window
         if (ContentFrame.Content is not Page currentPage) return;
         var fromPage = currentPage.GetType();
         var toPage = e.SourcePageType;
-        GlobalService.ShouldReplaceNavigationArgs =
-            e.NavigationMode == NavigationMode.Back && _rules.Contains((fromPage, toPage));
+        GlobalService.ShouldReplaceNavigationArgs = e.NavigationMode == NavigationMode.Back && _rules.Contains((fromPage, toPage));
     }
 
 
@@ -546,16 +516,6 @@ public sealed partial class MainWindow : Window
         Set.Values["IsActive"] = "0";
         //退出，重启
         AppInstance.Restart("");
-    }
-
-    private void ShowTips(string title, string description)
-    {
-        var notification = new AppNotificationBuilder()
-            .AddText(title)
-            .AddText(description)
-            .BuildNotification();
-
-        AppNotificationManager.Default.Show(notification);
     }
 
     #endregion

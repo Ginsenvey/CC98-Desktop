@@ -64,7 +64,7 @@ namespace CC98.Views
             {
                 var vpnService = App.Current.GetService<IVpnService>();
                 var res = await vpnService.LoginAsync(userName, password);
-                if (res == null || !res.IsSuccess)
+                if (res == null || !res.Success)
                 {
                     //
                     ErrorBox.Subtitle = res?.Message;

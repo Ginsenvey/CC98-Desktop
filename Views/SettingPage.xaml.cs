@@ -222,7 +222,7 @@ public sealed partial class SettingPage : Page
         foreach (var item in Set.Values)
         {
             //不显示收藏夹，美化打印太长
-            if (item.Key == "Favorites") continue;
+            if (item.Key == "FavoriteGroups") continue;
             settings += $"{item.Key}:{item.Value}\n";
         }
 

@@ -95,7 +95,7 @@ public sealed partial class ChatPage : Page
             return false;
         var data = chatInfoResult.Data;
 
-        var param = string.Join("&", data.Select(x => $"id={x.UserId}").ToHashSet());
+        var param = string.Join("&", data.Select(x => $"id={x.UserId}").Distinct());
         var userInfoUrl = ApiEndpoints.User.BasicUserInfoList(param);
         var userInfoResult = await ApiService.Fetch<List<BasicUserInfo>>(userInfoUrl);
         if (!userInfoResult.IsSuccess || userInfoResult.Data == null)

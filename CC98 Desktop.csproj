@@ -184,7 +184,7 @@
     <PackageReference Include="DevWinUI" Version="9.9.4" />
     <PackageReference Include="DevWinUI.Controls" Version="9.9.4" />
     <PackageReference Include="Duende.IdentityModel.OidcClient" Version="7.1.0" />
-    <PackageReference Include="FluentIcons.WinUI" Version="2.1.326" />
+    <PackageReference Include="FluentIcons.WinUI" Version="2.1.329" />
     <PackageReference Include="HtmlAgilityPack" Version="1.12.4" />
     <PackageReference Include="JetBrains.Annotations" Version="2025.2.4" />
     <PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="10.0.7" />
@@ -193,7 +193,7 @@
     <PackageReference Include="Microsoft.Extensions.Http.Resilience" Version="10.5.0" />
     <PackageReference Include="Microsoft.Windows.CsWinRT" Version="2.2.0" />
     <PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.28000.1839" />
-    <PackageReference Include="Microsoft.WindowsAppSDK" Version="2.0.1" />
+    <PackageReference Include="Microsoft.WindowsAppSDK" Version="2.2.0" />
     <PackageReference Include="RestSharp" Version="114.0.0" />
     <PackageReference Include="SkiaSharp.Views.WinUI" Version="3.119.2" />
   </ItemGroup>
@@ -364,8 +364,8 @@
     <AppxPackageDir>D:\MSIX\</AppxPackageDir>
     <GenerateTemporaryStoreCertificate>True</GenerateTemporaryStoreCertificate>
     <AppxBundlePlatforms>x64</AppxBundlePlatforms>
-    <PublishAot>False</PublishAot>
-	<PublishTrimmed>False</PublishTrimmed>
+    <PublishAot>True</PublishAot>
+	<PublishTrimmed>True</PublishTrimmed>
 	<TrimMode>full</TrimMode>
     <ApplicationIcon>Assets\cc98.ico</ApplicationIcon>
     <AllowUnsafeBlocks>False</AllowUnsafeBlocks>

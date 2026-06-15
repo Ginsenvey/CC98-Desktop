@@ -192,7 +192,10 @@ public partial class App : Application
                 //HTTP
                 services.AddHttpClient("VpnClient",client=>
                 {
-                    client.Timeout = TimeSpan.FromSeconds(15);
+                    client.Timeout = TimeSpan.FromSeconds(10);
+                    client.BaseAddress = new Uri("https://webvpn.zju.edu.cn");
+                    client.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36");
+                    client.DefaultRequestHeaders.Connection.ParseAdd("keep-alive");
                 })
                 .ConfigurePrimaryHttpMessageHandler(() => 
                 {
@@ -205,14 +208,14 @@ public partial class App : Application
 
                 services.AddHttpClient("ForumClient", client =>
                 {
-                    client.Timeout = TimeSpan.FromSeconds(15);
+                    client.Timeout = TimeSpan.FromSeconds(10);
                 })
                 .AddHttpMessageHandler<VpnMessageHandler>()
                 .AddStandardResilienceHandler();
 
                 services.AddHttpClient("IdentityServer", client =>
                 {
-                    client.Timeout = TimeSpan.FromSeconds(15);
+                    client.Timeout = TimeSpan.FromSeconds(10);
                 })
                 .AddStandardResilienceHandler();
 
@@ -377,7 +380,7 @@ public partial class App : Application
                 return false;
             }
         }
-        if (res.Status == VpnLoginStatus.NeedCaptcha || res.Status == VpnLoginStatus.Error)
+        if (res.Status == VpnLoginStatus.NeedCaptcha || res.Status == VpnLoginStatus.Fail)
         {
             //报错
             return false;
