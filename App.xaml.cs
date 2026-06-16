@@ -1,31 +1,30 @@
 ﻿using CC98.Kernel;
 using CC98.Kernel.Authorize;
 using CC98.Kernel.Network;
+using CC98.Objects;
 using CC98.Services;
+using CC98.Services.Helpers;
+using CC98.Views;
 using DevWinUI;
-
+using Duende.IdentityModel.OidcClient;
+using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Microsoft.UI.Dispatching;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.Windows.AppNotifications;
 using Microsoft.Windows.AppNotifications.Builder;
-
 using System;
+using System.Collections.Specialized;
 using System.Diagnostics;
 using System.Net;
+using System.Net.Http;
+using System.Threading;
 using System.Threading.Tasks;
 using Windows.ApplicationModel;
 using Windows.ApplicationModel.Activation;
 using Windows.Storage;
-using CC98.Services.Helpers;
-using Microsoft.Extensions.Caching.Memory;
-using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.DependencyInjection;
-using CC98.Objects;
-using CC98.Views;
-using Duende.IdentityModel.OidcClient;
-using System.Threading;
-using System.Net.Http;
-using Microsoft.UI.Dispatching;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -57,7 +56,6 @@ public partial class App : Application
 
     private static AppLog? _logger;
     public static AppLog Logger => _logger ?? throw new InvalidOperationException("Logger未初始化");
-    private SystemTrayIcon? _trayIcon;
 
     public static event Action<ElementTheme>? ThemeChanged;
 
@@ -82,9 +80,17 @@ public partial class App : Application
         await InitializeAppLog();
 
         var e = AppInstance.GetActivatedEventArgs();
-        if (e.Kind == ActivationKind.Protocol)
+        if (e is ProtocolActivatedEventArgs protocol)
         {
-            AuthFromOpenId(e);
+            var redirectUrl= protocol.Uri.ToString();
+            bool success= await AuthFromProtocol(redirectUrl);
+            if (success)
+            {
+                AppSettings.Current.IsActive = true;
+                AppSettings.Current.ActiveMode = (int)ActiveMode.OpenId;
+                AppMainWindow = new MainWindow();
+                AppMainWindow.Activate();
+            }
             return;
         }
 
@@ -98,7 +104,6 @@ public partial class App : Application
         {
             AppMainWindow = new MainWindow();
             AppMainWindow.Activate();
-            DisplayTrayIcon();
         }
         
     }
@@ -119,7 +124,7 @@ public partial class App : Application
         }
         AppDomain.CurrentDomain.UnhandledException += async (s, e) =>
         {
-            Debug.WriteLine("App", "发生未处理的异常", e.ExceptionObject.ToString());
+            Debug.WriteLine("App", e.ExceptionObject.ToString());
         };
 
 
@@ -130,9 +135,8 @@ public partial class App : Application
         {
             //必须在构造函数前加上异常处理
             AppMainWindow = new Views.MainWindow();
-            AppMainWindow.Closed += Window_Closed;
             AppMainWindow.Activate();
-            DisplayTrayIcon();
+
         }
         catch (Exception ex)
         {
@@ -242,31 +246,45 @@ public partial class App : Application
     #endregion
 
     #region 认证
-    private async void AuthFromOpenId(IActivatedEventArgs e)
-    {
-        var protocol = (ProtocolActivatedEventArgs)e;
-        var query = System.Web.HttpUtility.ParseQueryString(protocol.Uri.Query);
-        var code = ValidationHelper.GetValue(query, "code");
-        var iss = ValidationHelper.GetValue(query, "iss");
-        var state = ValidationHelper.GetValue(query, "state");
-        var sessionState = ValidationHelper.GetValue(query, "session_state");
-        if (code == "0" || iss == "0" || state == "0" || sessionState == "0")
-        {
-            ShowAppNotification("登录失败", "回调参数不完整", "请报告开发者");
-            
-            return;
-        }
-        var stateToVerify = PasswordManager.RetrievePassword("State");
-        PasswordManager.RemovePassword("State");
-        if (stateToVerify != state)
-        {
-            ShowAppNotification("警告", "返回验证参数不正确", "你可能重复点击了登录按钮，或当前网络环境有风险。");
-        }
-        var veri = PasswordManager.RetrievePassword("Verifier");
-        PasswordManager.ClearAllPasswords("Verifier");
-        if (veri != null)
-        {
 
+    /// <summary>
+    /// 完成回调过程
+    /// </summary>
+    /// <param name="e"></param>
+    /// <returns></returns>
+    private async Task<bool> AuthFromProtocol(string callback)
+    {
+        var clientState = PasswordManager.RetrievePassword("OpenIdState");
+        PasswordManager.RemovePassword("OpenIdState");
+    
+        var verifier = PasswordManager.RetrievePassword("OpenIdCodeVerifier");
+        PasswordManager.RemovePassword("OpenIdCodeVerifier");
+
+        if(string.IsNullOrEmpty(clientState)||string.IsNullOrEmpty(verifier))
+        {
+            throw new Exception("缺少必要的认证参数");
+        }
+
+        try
+        {
+            var res = await LoginService.LoginWithCodeAsync(callback, verifier, clientState);
+            if (res == null)
+            {
+                ShowAppNotification("登录失败", "请检查网络后重试");
+                return false;
+            }
+            if (res.IsError)
+            {
+                ShowAppNotification("登录失败", res.ErrorDescription ?? res.Error?? "未知错误");
+                return false;
+            }
+            ShowAppNotification("登录成功", $"欢迎回家~{res.User.Identity?.Name}前辈");
+            return true;
+        }
+        catch (Exception ex)
+        {
+            ShowAppNotification("登录失败", "发生异常", ex.Message); 
+            return false;
         }
     }
 
@@ -287,7 +305,7 @@ public partial class App : Application
         if (networkStatus == NetworkStatus.NotInCampus)//在校外
         {
             await Logger.WriteAsync("App", "初始化网络", "检测VPN可用性");
-            if (ValidationHelper.GetValue(Set, "IsVpnUsable") != "1")
+            if (false)
             {
                 //打开VPN配置设置
                 await Logger.WriteAsync("App", "初始化网络", "未配置VPN,跳转登录");
@@ -397,87 +415,21 @@ public partial class App : Application
     #region 其他
 
 
-    private void Window_Closed(object sender, WindowEventArgs args)
+    public static string GetValue(NameValueCollection collection, string key)
     {
-        if (_trayIcon != null)
+        if (collection.AllKeys.Contains(key))
         {
-            _trayIcon.IsVisible = false;
-            _trayIcon.Dispose();
-            _trayIcon = null;
+            var value = collection[key];
+            if (value is string str) return str;
         }
+
+        return "0";
     }
 
 
 
-    private void DisplayTrayIcon()
-    {
-        var icon = WindowHelper.GetWindowIcon(AppMainWindow);
-        uint iconId = 9898;
 
-        // 保留引用，避免被 GC 回收
-        _trayIcon = new(iconId, icon, "CC98论坛");
-        _trayIcon.LeftClick += (s, e) =>
-        {
-            AppMainWindow.DispatcherQueue.TryEnqueue(() =>
-            {
-                if (!AppMainWindow.Visible) AppMainWindow.AppWindow.Show();
-                AppMainWindow.Activate();
-                var appWindow = Microsoft.UI.Windowing.AppWindow.GetFromWindowId(AppMainWindow.AppWindow.Id);
-                if (appWindow.Presenter is Microsoft.UI.Windowing.OverlappedPresenter overlappedPresenter)
-                {
-                    if (overlappedPresenter.State == Microsoft.UI.Windowing.OverlappedPresenterState.Minimized)
-                    {
-                        overlappedPresenter.Restore();
-                    }
-                }
-            });
-        };
-        _trayIcon.RightClick += (s, e) =>
-        {
-            // 使用 WinUI 的 MenuFlyout 并将其赋值给事件参数的 Flyout 属性
-            var flyout = new MenuFlyout();
-            var titleItem = new MenuFlyoutItem { Text = "CC98", IsEnabled = false, Width = 180 };
-            var openItem = new MenuFlyoutItem { Text = "进入论坛", Width = 180, Icon = new FluentIcons.WinUI.SymbolIcon { Symbol = FluentIcons.Common.Symbol.Home } };
-            openItem.Click += (_, __) =>
-            {
-                AppMainWindow.DispatcherQueue.TryEnqueue(() => AppMainWindow.Activate());
-            };
-
-            var exitItem = new MenuFlyoutItem { Text = "退出", Width = 180, Icon = new FluentIcons.WinUI.SymbolIcon { Symbol = FluentIcons.Common.Symbol.ArrowExit } };
-            exitItem.Click += (_, __) =>
-            {
-                AppMainWindow.DispatcherQueue.TryEnqueue(() =>
-                {
-                    AppMainWindow.Close();
-                    LoginWindow?.Close();
-                });
-
-                // 隐藏并释放托盘对象
-                if (_trayIcon != null)
-                {
-                    _trayIcon.IsVisible = false;
-                    _trayIcon.Dispose();
-                    _trayIcon = null;
-                }
-
-                Application.Current.Exit();
-            };
-            flyout.Items.Add(titleItem);
-            flyout.Items.Add(new MenuFlyoutSeparator());
-            flyout.Items.Add(openItem);
-            flyout.Items.Add(exitItem);
-
-            // 将 Flyout 交给 DevWinUI 的 SystemTrayIcon 处理显示
-            e.Flyout = flyout;
-        };
-
-        _trayIcon.IsVisible = true;
-
-
-
-
-    }
-    private void ShowAppNotification(string title, string subtitle = "", string message = "")
+    private static void ShowAppNotification(string title, string subtitle = "", string message = "")
     {
         var notification = new AppNotificationBuilder()
             .AddText(title)

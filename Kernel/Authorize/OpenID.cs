@@ -4,18 +4,19 @@ using System.Security.Cryptography;
 using System.Text;
 using Duende.IdentityModel.Client;
 
-namespace CC98.Kernel;
+namespace CC98.Kernel.Authorize;
 
 /// <summary>
 ///     用于PKCE的OpenID认证流程生成
 /// </summary>
 public class OpenId
 {
-    public (string url, string veri, string state) GenerateAuthLoop()
+
+    public static (string url, string verifier, string state) GenerateAuthLoop()
     {
         var (verifier, challenge) = GeneratePkce();
         var state = GenerateState();
-        var endpoint = ApiEndpoints.OpenId.GetAuthorizeUrl();
+        var endpoint = ApiEndpoints.OpenId.AuthorizeUrl();
         var request = new RequestUrl(endpoint); //终结点
         var url = request.CreateAuthorizeUrl(
             responseType: "code", //授权码模式
@@ -24,7 +25,7 @@ public class OpenId
             nonce: GenerateNonce(),
             state: state,
             responseMode: "query", //回环信息位于查询参数
-            clientId: "d47a2448-779f-42f3-164f-08dd8896bbe5",
+            clientId: AppConfig.DesktopClientId,
             codeChallenge: challenge,
             codeChallengeMethod: "S256"
         );
@@ -103,15 +104,12 @@ public class OpenId
         return result;
     }
 
-    private (string Verifier, string Challenge) GeneratePkce()
+    private static (string Verifier, string Challenge) GeneratePkce()
     {
         const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~";
         var random = new Random();
-        var verifier = new string(Enumerable.Repeat(chars, 128)
-            .Select(s => s[random.Next(s.Length)]).ToArray());
-
-        using var sha256 = SHA256.Create();
-        var challengeBytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(verifier));
+        var verifier = new string([.. Enumerable.Repeat(chars, 128).Select(s => s[random.Next(s.Length)])]);
+        var challengeBytes = SHA256.HashData(Encoding.UTF8.GetBytes(verifier));
         var challenge = UrlSafeBase64(challengeBytes);
 
         return (verifier, challenge);

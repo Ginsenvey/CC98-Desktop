@@ -219,38 +219,6 @@ public class ApiService(IHttpClientFactory httpClientFactory)
         await writer.FlushAsync();
     }
 }
-//需要逐步迁移
-public static class ValidationHelper
-{
-    
-
-
-    public static string GetValue(ApplicationDataContainer container, string key)
-    {
-        if (container.Values.TryGetValue(key, out var token))
-            if (token != null)
-            {
-                var tokenString = token.ToString();
-                if (!string.IsNullOrEmpty(tokenString)) return tokenString;
-            }
-
-        return "0";
-    }
-
-
-   
-
-    public static string GetValue(NameValueCollection collection, string key)
-    {
-        if (collection.AllKeys.Contains(key))
-        {
-            var value = collection[key];
-            if (value is string str) return str;
-        }
-
-        return "0";
-    }
-}
 
 
 //需要逐步迁移

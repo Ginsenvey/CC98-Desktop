@@ -71,8 +71,8 @@ namespace CC98.Views
                     VisualStateManager.GoToState(this, "Fail", true);
                     return;
                 }
-                //登录成功
-                ;
+                ErrorBox.Subtitle = "登录成功";
+
 
             }
             catch (Exception ex)

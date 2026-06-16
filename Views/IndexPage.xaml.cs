@@ -37,13 +37,11 @@ public sealed partial class IndexPage
     public string NaviCode = "";
     public ObservableCollection<SectionCard> Sections = [];
     public ApplicationDataContainer Set = ApplicationData.Current.LocalSettings;
-    public ImageSource? ThemePic;
 
     public IndexPage()
     {
         InitializeComponent();
         _indexService = IndexDataService.Instance;
-        LoadSet();
     }
 
 
@@ -53,11 +51,6 @@ public sealed partial class IndexPage
         await LoadFromCacheAsync();
     }
 
-    private void LoadSet()
-    {
-        var theme = ValidationHelper.GetValue(Set, "ThemePic");
-        if (theme != "0") ThemePresenter.ImageSource = new BitmapImage(new(theme));
-    }
 
     private async Task LoadFromCacheAsync()
     {

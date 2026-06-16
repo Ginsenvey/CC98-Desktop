@@ -83,7 +83,7 @@ public sealed partial class SketchPage : Page
     //将编辑器模式应用到UI
     private void ApplyEditorEnv()
     {
-        if (ValidationHelper.GetValue(Set, "IsTailVisible") == "1") IsTailVisible = true;
+        IsTailVisible = AppSettings.Current.IsTailVisible;
         ContentType = NavigationInfo.ContentType;
         if (ContentType == (int)Objects.ContentType.Markdown)
         {

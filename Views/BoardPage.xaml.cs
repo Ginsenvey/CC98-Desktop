@@ -41,7 +41,6 @@ public sealed partial class BoardPage
     public BoardPage()
     {
         InitializeComponent();
-        LoadSet();
     }
 
     protected override async void OnNavigatedTo(NavigationEventArgs e)
@@ -54,14 +53,7 @@ public sealed partial class BoardPage
         await LoadTopics();
     }
 
-    private void LoadSet()
-    {
-        var showBigPaper = ValidationHelper.GetValue(DataContainer, "ShowBigPaper");
-        if (showBigPaper == "0")
-            //赋予默认值：打开
-            DataContainer.Values["ShowBigPaper"] = "1";
-        if (showBigPaper == "2") BannerBox.Visibility = Visibility.Collapsed;
-    }
+
 
     private async Task GetData()
     {

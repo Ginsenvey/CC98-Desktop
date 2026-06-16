@@ -93,42 +93,9 @@ public sealed partial class SettingPage : Page
             Follow.IsChecked = true;
         }
 
-        var pic = ValidationHelper.GetValue(Set, "Themepic");
-        if (pic != "0")
-        {
-            var bitmap = new BitmapImage(new(pic));
-            PicPreview.ImageSource = bitmap;
-        }
+       
 
-        //这种情况不存在。
-        if (ValidationHelper.GetValue(Set, "TitlePage") != "0")
-            TitlePage.SelectedIndex = Convert.ToInt32(Set.Values["TitlePage"]) - 1;
-        else
-            Set.Values["TitlePage"] = "1";
-
-        var isTailVisible = ValidationHelper.GetValue(Set, "IsTailVisible");
-        if (isTailVisible == "0")
-        {
-            Set.Values["IsTailVisible"] = "2"; //初始化为不显示
-            TailVisibility.IsOn = false;
-        }
-        else
-        {
-            if (isTailVisible == "1")
-                TailVisibility.IsOn = true; //1
-            else
-                TailVisibility.IsOn = false; //2
-        }
-
-        var showBigPaper = ValidationHelper.GetValue(Set, "ShowBigPaper");
-        if (showBigPaper == "0")
-        {
-            //赋予默认值：打开
-            showBigPaper = "1";
-            Set.Values["ShowBigPaper"] = "1";
-        }
-
-        ShowBigPaper.IsOn = showBigPaper == "1";
+        
     }
 
     private void ToFeedBack_Click(object sender, RoutedEventArgs e)

@@ -315,7 +315,7 @@ public static class ApiEndpoints
         /// <summary>
         ///     鉴权服务起点,用于产生跳转URL
         /// </summary>
-        public static string GetAuthorizeUrl()
+        public static string AuthorizeUrl()
         {
             return $"{Oidc}/connect/authorize";
         }

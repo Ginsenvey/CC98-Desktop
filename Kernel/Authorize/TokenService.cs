@@ -1,5 +1,6 @@
 ﻿using CC98.Services;
 using Duende.IdentityModel.Client;
+using Duende.IdentityModel.OidcClient;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -14,8 +15,8 @@ public class TokenService(IHttpClientFactory httpClientFactory,AppConfig appConf
 {
     #region 属性
     private readonly Lock _lock = new ();
-    private string _accessToken = PasswordManager.RetrievePassword("Access");
-    private string _refreshToken = PasswordManager.RetrievePassword("Refresh");
+    private string _accessToken = PasswordManager.RetrievePassword("AccessToken");
+    private string _refreshToken = PasswordManager.RetrievePassword("RefreshToken");
     private DateTime _expireAt = AppSettings.Current.TokenExpireAt;
 
 
@@ -50,8 +51,7 @@ public class TokenService(IHttpClientFactory httpClientFactory,AppConfig appConf
 
     public async Task<TokenResponse?> GetNewTokenAsync(CancellationToken cancellationToken = default)
     {
-        var tag = Random.Shared.Next();
-        Debug.WriteLine($"{tag}正在进行一次刷新。模式是{((appConfig.IsPasswordMode)?"密码模式":"桌面模式")}, 刷新令牌是{RefreshToken}");
+
         var httpClient = httpClientFactory.CreateClient("IdentityServer");
         var response= await httpClient.RequestRefreshTokenAsync(new RefreshTokenRequest
         {
@@ -61,18 +61,15 @@ public class TokenService(IHttpClientFactory httpClientFactory,AppConfig appConf
             RefreshToken = RefreshToken,
             GrantType= "refresh_token"
         }, cancellationToken: cancellationToken);
-        Debug.WriteLine("正在检验有效性。");
         try
         {
             if (response.IsError)
             {
                 OnAuthenticationFailed($"刷新令牌失败: {response.Error}", response.Exception);
-                Debug.WriteLine($"标记为{tag}的刷新失败");
             }
             else
             {
                 SetTokens(response);
-                Debug.WriteLine($"标记为{tag}的刷新成功");
             }
         }
         catch(Exception ex)
@@ -94,12 +91,14 @@ public class TokenService(IHttpClientFactory httpClientFactory,AppConfig appConf
             _refreshToken = tokenResponse.RefreshToken!;
             //这里的时间是UTC时间。提供1分钟的保留时间
             _expireAt = DateTime.UtcNow.AddSeconds(tokenResponse.ExpiresIn - 60);
-            PasswordManager.SavePassword(_accessToken, "Access");
-            PasswordManager.SavePassword(_refreshToken, "Refresh");
+            PasswordManager.SavePassword(_accessToken, "AccessToken");
+            PasswordManager.SavePassword(_refreshToken, "RefreshToken");
             AppSettings.Current.TokenExpireAt = _expireAt;
         }
         return true;
     }
+
+    
     public bool IsTokenExpired()
     {
         lock (_lock)

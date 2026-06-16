@@ -195,11 +195,11 @@ public sealed partial class MainWindow : Window
             //
             return;
         }
-        var customBoards = ValidationHelper.GetValue(Set, "CustomBoards");
-        if (customBoards != "0")
+        var customBoards = AppSettings.Current.CustomBoards;
+        if (customBoards != "")
         {
-            var boardinfo = SerializationHelper.TryDeserialize<Dictionary<int, string>>(customBoards);
-            boardinfo?.Remove(boardId);
+            var boardInfo = SerializationHelper.TryDeserialize<Dictionary<int, string>>(customBoards);
+            boardInfo?.Remove(boardId);
         }
 
         var item = MenuItems.OfType<NavigationItem>().First(g => g.Tag == boardId.ToString());

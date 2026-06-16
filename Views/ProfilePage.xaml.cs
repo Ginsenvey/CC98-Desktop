@@ -110,10 +110,10 @@ public sealed partial class ProfilePage : Page
         UserProfile.Wealth = data.Wealth;
         UserProfile.RegisterTime = data.RegisterTime;
         UserProfile.IsFollowing = data.IsFollowing;
-        if (IsMe && ValidationHelper.GetValue(Set, "Uid") == "0")
+        if (IsMe && AppSettings.Current.UserId == 0)
         {
-            Set.Values["Uid"] = data.Id.ToString();
-            Set.Values["Portrait"] = data.PortraitUrl;
+            AppSettings.Current.UserId = data.Id;
+            AppSettings.Current.Portrait = data.PortraitUrl;
         }
         UserProfile.IsOthers = !IsMe;
         try

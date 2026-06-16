@@ -1,3 +1,7 @@
+using CC98.Kernel;
+using CC98.Kernel.Authorize;
+using CC98.Services;
+using Duende.IdentityModel.OidcClient;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Controls.Primitives;
@@ -10,8 +14,10 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices.WindowsRuntime;
+using System.Threading.Tasks;
 using Windows.Foundation;
 using Windows.Foundation.Collections;
+using Windows.System;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -31,6 +37,28 @@ namespace CC98.Views
         private void PasswordLoginButton_Click(object sender, RoutedEventArgs e)
         {
             Frame.Navigate(typeof(ForumLoginPage));
+        }
+
+        private async void OpenIdLoginButton_Click(object sender, RoutedEventArgs e)
+        {
+            (sender as HyperlinkButton)?.IsEnabled = false;
+
+            var oidcClient = new OidcClient(new OidcClientOptions
+            {
+                Authority = ApiEndpoints.OpenId.Endpoint,
+                ClientId = AppConfig.DesktopClientId,
+                RedirectUri = "cc98://callback",
+                Scope = "openid profile cc98-api cc98-card.all offline_access",
+            });
+
+            var loginState = await oidcClient.PrepareLoginAsync();
+            var authorizeUrl = loginState.StartUrl;
+            PasswordManager.SavePassword(loginState.State, "OpenIdState");
+            PasswordManager.SavePassword(loginState.CodeVerifier, "OpenIdCodeVerifier");
+            await Launcher.LaunchUriAsync(new Uri(authorizeUrl));
+
+            await Task.Delay(200);
+            App.Current.Exit();
         }
     }
 }

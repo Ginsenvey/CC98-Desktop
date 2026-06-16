@@ -15,7 +15,7 @@
             <ColumnDefinition Width="2"></ColumnDefinition>
             <ColumnDefinition Width="*"></ColumnDefinition>
         </Grid.ColumnDefinitions>
-        <HyperlinkButton Grid.Column="0"  Content="一键登录" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" FontWeight="Bold" FontSize="18" Foreground="LightSeaGreen"  FontFamily="{StaticResource HarmonySansBold}"></HyperlinkButton>
+        <HyperlinkButton Grid.Column="0"  Content="一键登录" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" FontWeight="Bold" FontSize="18" Foreground="LightSeaGreen"  FontFamily="{StaticResource HarmonySansBold}" Click="OpenIdLoginButton_Click"></HyperlinkButton>
         <Border Grid.Column="1" BorderThickness="2" BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}" Width="2"></Border>
         <HyperlinkButton Grid.Column="2" Content="使用密码" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" FontWeight="Bold" FontSize="18" Foreground="LightSeaGreen" FontFamily="{StaticResource HarmonySansBold}" Click="PasswordLoginButton_Click"></HyperlinkButton>
 
