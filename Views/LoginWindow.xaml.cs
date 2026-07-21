@@ -33,9 +33,10 @@ public sealed partial class LoginWindow : Window
 {
     
     private const string TipText= "如果尚未连接浙江大学内网，请在此处登录WebVPN,或者使用[ZJU Connect](https://github.com/Mythologyli/ZJU-Connect-for-Windows/releases).";
-   
-    public LoginWindow()
+    private bool _needLoginVpn = false;
+    public LoginWindow(bool needLoginVpn=false)
     {
+        _needLoginVpn = needLoginVpn;
         InitializeComponent();
         ExtendsContentIntoTitleBar = true;
         SetTitleBar(GridTitleBar);
@@ -45,7 +46,6 @@ public sealed partial class LoginWindow : Window
         AppWindow.SetIcon(iconPath);
         AppWindow.SetTaskbarIcon(iconPath);
         SetWindowState();
-
     }
     /// <summary>
     /// 适应高分屏，设置窗口大小为基于2560分辨率的缩放值，并居中显示。
@@ -84,7 +84,14 @@ public sealed partial class LoginWindow : Window
     {
         try
         {
-            LoginFrame.Navigate(typeof(OpenIdLoginPage));
+            if(_needLoginVpn)
+            {
+                LoginFrame.Navigate(typeof(VpnLoginPage));
+            }
+            else
+            {
+                LoginFrame.Navigate(typeof(OpenIdLoginPage));
+            }
         }
         catch(Exception ex)
         {

@@ -38,9 +38,8 @@ public sealed partial class VpnService(IHttpClientFactory httpClientFactory,ICoo
     
     public string Domain { get; set; } = "webvpn.zju.edu.cn";
 
-    public bool IsLoggedIn { get; set; }
     //是否启用VPN应由启动应用时的网络状态决定
-    public bool IsEnabled { get; set; }=false;
+    public bool IsEnabled { get; set; } = false;
 
     public string CaptchaValue { get; set; } = "";
     private string LastRandCode { get; set; } = "";
@@ -168,53 +167,6 @@ public sealed partial class VpnService(IHttpClientFactory httpClientFactory,ICoo
         return prefix + newPathAndQuery;
     }
 
-    /// <summary>
-    ///     检查是否内网环境。
-    /// </summary>
-    /// <param name="useVpn"></param>
-    /// <param name="cancellationToken"></param>
-    /// <returns></returns>
-    public async Task<NetworkStatus> CheckNetworkAsync(bool useVpn, CancellationToken cancellationToken = default)
-    {
-        var targetUri = useVpn ? ConvertUrl(MirrorUrl) : MirrorUrl;
-
-        try
-        {
-            var response = await HttpClient.GetAsync(targetUri, cancellationToken);
-            var resText = await response.Content.ReadAsStringAsync(cancellationToken);
-            if (response.IsSuccessStatusCode)
-            {
-                switch (resText)
-                {
-                    case "0":
-                        return NetworkStatus.NotInCampus;
-                    case "1" or "2":
-                        return useVpn ? NetworkStatus.ByVpn : NetworkStatus.InCampus;
-                }
-
-                //vpn过期时会返回非常长的html
-                if (resText.Length > 256)
-                {
-                    Debug.WriteLine("VPN凭据过期", $"{resText[..32]}");
-                    return NetworkStatus.VpnDisabled;
-                }
-
-                Debug.WriteLine("镜像站返回了意外的内容。请查看正文", $"{resText}");
-                return NetworkStatus.UnknownError;
-            }
-
-           Debug.WriteLine("访问镜像站失败",
-                $"{response.StatusCode}:{response.ReasonPhrase ?? ""},响应正文{resText}");
-            return NetworkStatus.MirrorError;
-        }
-        catch (Exception ex)
-        {
-            Debug.WriteLine("错误", $"{ex.Message}");
-            return NetworkStatus.NoConnection;
-        }
-    }
-
-
     private static (string CsrfToken, string Captcha, string AuthType) GetRandCode(string html)
     {
         var doc = new HtmlDocument();
@@ -272,7 +224,7 @@ public sealed partial class VpnService(IHttpClientFactory httpClientFactory,ICoo
     private const string LoginPswUrl = "/do-login";
     private const string LogoutUrl = "/logout";
     private const string ConfirmUrl = "/do-confirm-login";
-    private const string MirrorUrl = "https://mirrors.zju.edu.cn/api/is_campus_network";
+    
 
     #endregion
 

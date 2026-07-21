@@ -14,15 +14,8 @@ public interface IVpnService
     /// </summary>
     public bool IsEnabled { get; set; }
     public string Domain { get; set; }
-
-    /// <summary>
-    /// 获取或设置当前是否已登录。
-    /// </summary>
-    public bool IsLoggedIn { get; set; }
-
     public string ConvertUrl(string originalUrl);
 
-    public Task<NetworkStatus> CheckNetworkAsync(bool useVpn,CancellationToken cancellation=default);
 
     public Task<VpnLoginResult?> LoginAsync(string userName, string password,CancellationToken cancellation=default);
 

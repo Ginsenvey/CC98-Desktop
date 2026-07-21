@@ -87,6 +87,8 @@ namespace CC98.Views
                     }
                     return;
                 }
+                PasswordManager.SavePassword(userName, "VpnUserName");
+                PasswordManager.SavePassword(password, "VpnPassWord");
                 ErrorBox.Subtitle = "登录成功";
                 ErrorBox.IsOpen = true;
                 Goback();
@@ -103,19 +105,20 @@ namespace CC98.Views
         private async Task VpnConfirmAsync()
         {
             var confirmResult = await vpnService.ConfirmAsync();
-            if (confirmResult == null)
+            if (confirmResult == null||!confirmResult.Success)
             {
-                return;
-            }
-            if (!confirmResult.Success)
-            {
-                //顶号失败应直接重新登录
+                //可以肯定此时账户密码均正确
+                ErrorBox.Subtitle = "顶号失败，请再尝试一次";
+                ErrorBox.IsOpen= true;
                 return;
             }
             else
             {
                 //返回密码登录页面
                 //判断是否活跃
+                ErrorBox.Subtitle = "顶号成功，即将跳转";
+                ErrorBox.IsOpen = true;
+                await Task.Delay(800);
                 Goback();
             }
         }
@@ -126,6 +129,7 @@ namespace CC98.Views
                 //关闭此窗口，打开主窗口
                 App.Current.LoginWindow.Close();
                 App.Current.AppMainWindow = new MainWindow();
+                App.Current.AppMainWindow.Activate();
             }
             else
             {
