@@ -11,6 +11,7 @@
 > 本应用适用于搭载Windows10/11、X64和ARM64架构的计算机。
 
 **致谢**
+
 [@Avatar343](https://github.com/Verrickt) GG为应用重构了UBB核心解析器，[@Auser](https://github.com/sgjsakura) MM优化了源代码并提供了大量支持。
 
 **此版本中的新功能**  
