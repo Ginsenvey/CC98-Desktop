@@ -15,7 +15,6 @@ using Windows.Storage.Streams;
 using CC98.Kernel.Authorize;
 using CC98.Objects;
 using CC98.Services.Extensions;
-using CC98.Kernel.Network;
 using Microsoft.Extensions.DependencyInjection;
 using System.ComponentModel;
 using Windows.Media.Core;
@@ -171,7 +170,7 @@ public class ApiService(IHttpClientFactory httpClientFactory)
         }
     }
 
-    public async Task<Byte[]?> GetBytesAsync(string endpoint,CancellationToken cancellationToken=default)
+    public async Task<byte[]?> GetBytesAsync(string endpoint,CancellationToken cancellationToken=default)
     {
         try
         {
@@ -196,6 +195,19 @@ public class ApiService(IHttpClientFactory httpClientFactory)
             return source;
         }
         catch(Exception ex)
+        {
+            Debug.WriteLine("Kernel", $"其他错误{ex.Message}");
+            return null;
+        }
+    }
+    public async Task<Stream?> GetStreamAsync(string endpoint, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var res = await httpClient.GetAsync(endpoint, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
+            return await res.Content.ReadAsStreamAsync(cancellationToken);
+        }
+        catch (Exception ex)
         {
             Debug.WriteLine("Kernel", $"其他错误{ex.Message}");
             return null;

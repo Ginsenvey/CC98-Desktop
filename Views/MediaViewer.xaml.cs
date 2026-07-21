@@ -5,6 +5,7 @@ using CC98.Controls.Primitives;
 using CC98.Kernel.Authorize;
 using CC98.Objects;
 using CC98.Services.Extensions;
+using CC98.Services.Helpers;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
@@ -119,7 +120,7 @@ public sealed partial class MediaViewer : Window
 
     private async void CopyPic_Click(object sender, RoutedEventArgs e)
     {
-        var r=await ImageHelper.CopyImageToClipboardAsync(CurrentUrl);
+        var r=await Downloader.CopyImageToClipboardAsync(CurrentUrl);
         if (r)
         {
             Flower.Play(FlowStatus.Success, "已复制图片到剪贴板");
@@ -150,7 +151,7 @@ public sealed partial class MediaViewer : Window
 
     private async void SavePic_Click(object sender, RoutedEventArgs e)
     {
-        var r=await ImageHelper.DownloadImagesAsync(CurrentUrl);
+        var r=await Downloader.DownloadFileAsync(CurrentUrl);
         if (r == null)
         {
             ShowTip("保存图片出错", "未知原因");

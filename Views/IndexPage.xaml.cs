@@ -76,14 +76,14 @@ public sealed partial class IndexPage
     {
         var h = sender as HyperlinkButton;
         var translate = h?.RenderTransform as TranslateTransform;
-        UiEx.AnimateCard(translate, 0, -5); // 向上方移动
+        AnimationHelper.AnimateCard(translate, 0, -5); // 向上方移动
     }
 
     private void ContentCard_PointerExited(object sender, PointerRoutedEventArgs e)
     {
         var h = sender as HyperlinkButton;
         var translate = h?.RenderTransform as TranslateTransform;
-        UiEx.AnimateCard(translate, 0, 0); // 恢复原位
+        AnimationHelper.AnimateCard(translate, 0, 0); // 恢复原位
     }
 
     private void TopicItem_Click(object sender, RoutedEventArgs e)

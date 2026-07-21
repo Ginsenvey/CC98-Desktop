@@ -1,5 +1,4 @@
-﻿using CC98.Kernel.Authorize;
-using System;
+﻿using System;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -9,34 +8,23 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace CC98.Kernel.Network;
-
+namespace CC98.Kernel.Authorize;
 /// <summary>
 /// 提供基于 VPN 服务的 HTTP 请求转发工具。
 /// </summary>
-public partial class VpnMessageHandler(IVpnService vpnService,ITokenService tokenService,ICookieService cookieService) : DelegatingHandler
+public partial class TokenHandler(ITokenService tokenService) : DelegatingHandler
 {
     private readonly SemaphoreSlim refreshLock = new(1, 1);
-    protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request,CancellationToken cancellationToken)
+    protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
     {
-        if (vpnService.IsEnabled)
-        {
-            var targetUrl = vpnService.ConvertUrl(request.RequestUri!.ToString());
-            request.RequestUri = new Uri(targetUrl);
-
-            var cookieHeader=cookieService.GetCookieHeader($"https://{vpnService.Domain}");
-            if (!string.IsNullOrEmpty(cookieHeader))
-            {
-                request.Headers.TryAddWithoutValidation("Cookie", cookieHeader);
-            }
-        }
+        
         //添加Bearer Token
         request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", tokenService.AccessToken);
 
-        var response=await base.SendAsync(request, cancellationToken);
+        var response = await base.SendAsync(request, cancellationToken);
         if (response.StatusCode == HttpStatusCode.Unauthorized)
         {
-            var clonedRequest = await CloneHttpRequestMessageAsync(request,cancellationToken);
+            var clonedRequest = await CloneHttpRequestMessageAsync(request, cancellationToken);
             await refreshLock.WaitAsync(cancellationToken);
             try
             {
@@ -63,11 +51,11 @@ public partial class VpnMessageHandler(IVpnService vpnService,ITokenService toke
                 refreshLock.Release();
             }
         }
-        
+
         return response;
     }
 
-    private static async Task<HttpRequestMessage> CloneHttpRequestMessageAsync(HttpRequestMessage request,CancellationToken cancellationToken=default)
+    private static async Task<HttpRequestMessage> CloneHttpRequestMessageAsync(HttpRequestMessage request, CancellationToken cancellationToken = default)
     {
         var clone = new HttpRequestMessage(request.Method, request.RequestUri);
 

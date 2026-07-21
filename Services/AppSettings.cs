@@ -70,6 +70,11 @@ public sealed partial class AppSettings : INotifyPropertyChanged
         get => GetValue<int>(nameof(ActiveMode));
         set => SetValue(nameof(ActiveMode), value);
     }
+    public string UserName
+    {
+        get => GetValue<string>(nameof(UserName)) ?? string.Empty;
+        set => SetValue(nameof(UserName), value);
+    }
     public int UserId
     {
         get => GetValue<int>(nameof(UserId));

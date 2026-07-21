@@ -92,3 +92,12 @@ public enum ActiveMode
     OpenId=0,//通过OpenId登录
     Password = 1//通过用户名密码登录
 }
+
+public enum NetworkStatus
+{
+    InCampus = 0, //在校园网内
+    NotInCampus = 1,//不在校园网小内
+    NoConnection = 2, //无网络
+    ConnectionFail=3,//连接失败
+    MirrorError = 4, //IP被镜像站拦截访问
+}

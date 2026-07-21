@@ -1,21 +1,21 @@
 ﻿using CC98.Kernel;
-using CC98.Kernel.Authorize;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.Net.Http;
 using System.Runtime.InteropServices.WindowsRuntime;
+using System.Text;
 using System.Threading.Tasks;
 using Windows.ApplicationModel.DataTransfer;
 using Windows.Storage;
 using Windows.Storage.Streams;
 
-namespace CC98.Services.Extensions;
+namespace CC98.Services.Helpers;
 
-public class ImageHelper
+public class Downloader
 {
     /// <summary>
-    ///     复制在线图片到剪贴板
+    /// 复制在线图片到剪贴板
     /// </summary>
     /// <param name="imageUrl">图片URL</param>
     /// <returns>是否成功</returns>
@@ -25,7 +25,7 @@ public class ImageHelper
         {
             var apiService = App.Current.GetService<ApiService>();
             var imageBytes = await apiService.GetBytesAsync(imageUrl);
-
+            if(imageBytes == null) return false;
             using var stream = new MemoryStream(imageBytes);
             var randomAccessStream = new InMemoryRandomAccessStream();
             await randomAccessStream.WriteAsync(imageBytes.AsBuffer());
@@ -50,14 +50,12 @@ public class ImageHelper
             return false;
         }
     }
-    //TODO:rewrite
     /// <summary>
-    ///     下载图片到用户下载文件夹
+    /// 下载文件到用户下载文件夹
     /// </summary>
-    /// <param name="imageUrl">图片URL</param>
     /// <param name="fileName">文件名（可选，不指定则从URL自动提取）</param>
     /// <returns>下载成功返回文件路径，失败返回null</returns>
-    public static async Task<string?> DownloadImagesAsync(string imageUrl, string fileName = null)
+    public static async Task<string?> DownloadFileAsync(string src, string fileName = null)
     {
         try
         {
@@ -70,7 +68,7 @@ public class ImageHelper
             }
 
             // 如果没有指定文件名，从URL中提取
-            if (string.IsNullOrEmpty(fileName)) fileName = ExtractFileNameFromUrl(imageUrl);
+            if (string.IsNullOrEmpty(fileName)) fileName = ExtractFileNameFromUrl(src);
 
             // 处理文件名冲突
             fileName = await GetUniqueFileNameAsync(downloadsFolder, fileName);
@@ -78,7 +76,8 @@ public class ImageHelper
             // 创建文件
             var file = await downloadsFolder.CreateFileAsync(fileName, CreationCollisionOption.ReplaceExisting);
             var apiService = App.Current.GetService<ApiService>();
-            var imageBytes = await apiService.GetBytesAsync(imageUrl);
+            var imageBytes = await apiService.GetBytesAsync(src);
+            if (imageBytes == null) return null;
             await using var stream = await file.OpenStreamForWriteAsync();
             await stream.WriteAsync(imageBytes);
             return file.Path;
@@ -93,25 +92,17 @@ public class ImageHelper
     /// <summary>
     ///     获取用户的下载文件夹
     /// </summary>
-    private static async Task<StorageFolder> GetDownloadsFolderAsync()
+    private static async Task<StorageFolder?> GetDownloadsFolderAsync()
     {
         try
         {
-            return KnownFolders.SavedPictures;
+            var userProfile = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+            var downloadsPath = Path.Combine(userProfile, "Downloads");
+            return await StorageFolder.GetFolderFromPathAsync(downloadsPath);
         }
         catch
         {
-            // 如果 KnownFolders 不可用
-            try
-            {
-                var userProfile = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
-                var downloadsPath = Path.Combine(userProfile, "Downloads");
-                return await StorageFolder.GetFolderFromPathAsync(downloadsPath);
-            }
-            catch
-            {
-                return null;
-            }
+            return null;
         }
     }
 
@@ -127,18 +118,18 @@ public class ImageHelper
 
             // 如果文件名无效，生成默认文件名
             if (string.IsNullOrEmpty(fileName) || !fileName.Contains('.'))
-                fileName = $"CC98_{DateTime.Now:yyyyMMdd_HHmmss}.jpg";
+                fileName = $"CC98_{DateTime.Now:yyyyMMdd_HHmmss}";
 
             return fileName;
         }
         catch
         {
-            return $"CC98_{DateTime.Now:yyyyMMdd_HHmmss}.jpg";
+            return $"CC98_{DateTime.Now:yyyyMMdd_HHmmss}";
         }
     }
 
     /// <summary>
-    ///     确保文件名唯一（如果文件已存在，添加数字后缀）
+    /// 确保文件名唯一（如果文件已存在，添加数字后缀）
     /// </summary>
     private static async Task<string> GetUniqueFileNameAsync(StorageFolder folder, string fileName)
     {

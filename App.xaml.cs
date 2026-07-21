@@ -1,6 +1,5 @@
 ﻿using CC98.Kernel;
 using CC98.Kernel.Authorize;
-using CC98.Kernel.Network;
 using CC98.Objects;
 using CC98.Services;
 using CC98.Services.Helpers;
@@ -45,8 +44,6 @@ public partial class App : Application
     public Window LoginWindow { get; set; }
 
     public LoginService LoginService =>Current.GetService<LoginService>();
-    public IVpnService Vpn =>Current.GetService<IVpnService>();
-    public MirrorService mirrorService => Current.GetService<MirrorService>();
 
     /// <summary>
     /// 内存缓存服务。
@@ -96,14 +93,11 @@ public partial class App : Application
         }
         else
         {
-            InitializeAndLaunch();
+            AppMainWindow = new MainWindow();
+            AppMainWindow.Activate();
         }
     }
-    private void LaunchAppMainWindow()
-    {
-        AppMainWindow = new MainWindow();
-        AppMainWindow.Activate();
-    }
+
 
     private void TokenService_AuthenticationFailed(object? sender, AuthenticationFailedEventArgs e)
     {
@@ -141,41 +135,21 @@ public partial class App : Application
         Host = Microsoft.Extensions.Hosting.Host.CreateDefaultBuilder()
             .ConfigureServices((context, services) =>
             {
-                //配置文件
-                //services.Configure<>;
                 services.AddSingleton<AppConfig>();
                 //Cookie容器
                 var cookieContainer = new CookieContainer();
                 services.AddSingleton(cookieContainer);
-                //VPN服务和委托处理器
-                services.AddSingleton<ICookieService, CookieService>();
-                services.AddSingleton<IVpnService, VpnService>();
-                services.AddTransient<VpnMessageHandler>();
+                
+                services.AddTransient<TokenHandler>();
                 //Token服务
                 services.AddSingleton<ITokenService, TokenService>();
-                //HTTP
-                services.AddHttpClient("VpnClient",client=>
-                {
-                    client.Timeout = TimeSpan.FromSeconds(10);
-                    client.BaseAddress = new Uri("https://webvpn.zju.edu.cn");
-                    client.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36");
-                    client.DefaultRequestHeaders.Connection.ParseAdd("keep-alive");
-                })
-                .ConfigurePrimaryHttpMessageHandler(() => 
-                {
-                    return new HttpClientHandler
-                    {
-                        Proxy=new WebProxy("127.0.0.1:9000"),
-                        CookieContainer = cookieContainer,
-                    };
-                })
-                .AddStandardResilienceHandler();
+               
 
                 services.AddHttpClient("ForumClient", client =>
                 {
                     client.Timeout = TimeSpan.FromSeconds(10);
                 })
-                .AddHttpMessageHandler<VpnMessageHandler>()
+                .AddHttpMessageHandler<TokenHandler>()
                 .AddStandardResilienceHandler();
 
                 services.AddHttpClient("IdentityServer", client =>
@@ -184,19 +158,10 @@ public partial class App : Application
                 })
                 .AddStandardResilienceHandler();
 
-                services.AddHttpClient("MirrorClient", client =>
-                {
-                    client.Timeout = TimeSpan.FromSeconds(10);
-                })
-                .AddHttpMessageHandler<VpnMessageHandler>()
-                .AddStandardResilienceHandler();
-
                 //论坛登录服务
                 services.AddSingleton<LoginService>();
                 //主业务服务
                 services.AddSingleton<ApiService>();
-                //镜像站服务
-                services.AddSingleton<MirrorService>();
             })
             .Build();
         var tokenService = GetService<ITokenService>();
@@ -248,6 +213,7 @@ public partial class App : Application
                 ShowAppNotification("登录失败", res.ErrorDescription ?? res.Error?? "未知错误");
                 return false;
             }
+            AppSettings.Current.UserName = res.User.Identity?.Name ?? "";
             ShowAppNotification("登录成功", $"欢迎回家~{res.User.Identity?.Name}前辈");
             return true;
         }
@@ -262,109 +228,7 @@ public partial class App : Application
 
     #endregion
 
-    #region 网络
-    /// <summary>
-    /// 必须有如下结果中的一种：启动某个窗口，或者显示通知并退出应用。
-    /// </summary>
-    private async void InitializeAndLaunch()
-    {
-        var networkStatus = await mirrorService.CheckNetworkAsync();
-        switch (networkStatus) 
-        { 
-            case NetworkStatus.InCampus:
-                LaunchAppMainWindow();
-                break;
-            case NetworkStatus.NotInCampus:
-                var isVpnUsable = PasswordManager.PasswordExists("VpnUserName") && PasswordManager.PasswordExists("VpnPassWord");
-                if (isVpnUsable)
-                {
-                    //尝试检验有效性
-                    Vpn.IsEnabled = true;
-                    var newStatus = await mirrorService.CheckNetworkAsync();
-                    //这时候启用了VPN，如果无法连接内网，有可能是套餐到期，也有可能是凭据过期
-                    if (newStatus == NetworkStatus.InCampus)
-                    {
-                        LaunchAppMainWindow();
-                    }
-                    //处理cookie过期的情况
-                    else if (newStatus == NetworkStatus.VpnExpired)
-                    {
-                        await ReloginVpn();
-                    }
-                    else
-                    {
-                        ShowAppNotification("出错", newStatus.ToString());
-                        Exit();
-                    }
-                }
-                else
-                {
-                    ShowAppNotification("出错", "VPN凭据不完整", "请重新登录");
-                    LoginWindow = new LoginWindow(needLoginVpn: true);
-                    LoginWindow.Activate();
-                }
-                break;
-            case NetworkStatus.MirrorError:
-                ShowAppNotification("出错", "连接镜像站失败");
-                Exit();
-                break;
-            case NetworkStatus.UnknownError:
-                ShowAppNotification("出错", "IP可能被镜像站拦截");
-                Exit();
-                break;
-            case NetworkStatus.NoConnection:
-                ShowAppNotification("出错", "无互联网连接");
-                Exit();
-                break;
-        }
-        
-    }
-
     
-
-    private async Task ReloginVpn()
-    {
-        var userName = PasswordManager.RetrievePassword("VpnUserName");
-        var password = PasswordManager.RetrievePassword("VpnPassWord");
-        var res = await Vpn.LoginAsync(userName, password);   
-        if(res==null)
-        {
-            ShowAppNotification("VPN登录失败", "请检查网络后重启应用");
-            return;
-        }
-        if (res.Status == VpnLoginStatus.Success) return;
-        if (res.Status == VpnLoginStatus.NeedConfirm)
-        {
-            await VpnConfirmAsync();
-        }
-        if (res.Status == VpnLoginStatus.NeedCaptcha || res.Status == VpnLoginStatus.Fail)
-        {
-            //密码有问题，清理旧密码，要求重新登录
-            PasswordManager.RemovePassword("VpnUserName");
-            PasswordManager.RemovePassword("VpnPassWord");
-            ShowAppNotification("VPN登录失败", "需要重新登录","VPN凭据错误或者套餐到期");
-            LoginWindow = new LoginWindow(needLoginVpn: true);
-            LoginWindow.Activate();
-            return;
-        }
-    }
-    private async Task VpnConfirmAsync()
-    {
-        var confirmResult = await Vpn.ConfirmAsync();
-        if (confirmResult == null || !confirmResult.Success)
-        {
-            //关闭应用，让用户重启
-            ShowAppNotification("VPN顶号失败", "请重新启动应用");
-            Current.Exit();
-            return;
-        }
-        else
-        {
-            LaunchAppMainWindow();
-        }
-    }
-
-    #endregion
 
     #region 其他
 

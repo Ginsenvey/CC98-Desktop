@@ -17,7 +17,6 @@ using System.Threading.Tasks;
 using Windows.Storage;
 using CC98.Kernel;
 using System.Net.Http;
-using CC98.Kernel.Network;
 
 namespace CC98.Services;
 

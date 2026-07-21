@@ -13,6 +13,7 @@ using System.Net.Http;
 
 namespace CC98.Services.Helpers;
 
+
 public static partial class UrlEx
 {
     /// <summary>
@@ -22,16 +23,69 @@ public static partial class UrlEx
     private static partial Regex WebUriRegex { get; }
 
     /// <summary>
-    ///     判断是否是 Appx 资源 URL 的正则表达式。
+    /// 判断是否是 Appx 资源 URL 的正则表达式。
     /// </summary>
     [GeneratedRegex(@"^ms-app(x|data)\:///", RegexOptions.IgnoreCase | RegexOptions.Singleline)]
     private static partial Regex AppUriRegex { get; }
 
+    [GeneratedRegex(@"^(?:https?://(?:www\.)?cc98\.org)?/topic/(\d+)(?:/(\d+)(?:#(\d+))?)?$")]
+    public static partial Regex CC98TopicRegex { get; }
+
+    [GeneratedRegex(@"\/board\/(\d{2,3})$")]
+    public static partial Regex BoardRegex { get; }
+    [GeneratedRegex(@"^https://www\.cc98\.org(/[a-zA-Z0-9\-._~:/?#[\]@!$&'()*+,;=]*)?$")]
+    public static partial Regex CC98UrlRegex { get; }
+
+    [GeneratedRegex(@"^https://file\.cc98\.org(/[a-zA-Z0-9\-._~:/?#[\]@!$&'()*+,;=]*)?$")]
+    public static partial Regex CC98FileUrlRegex { get; }
+
+    [GeneratedRegex(@"^https://file\.cc98\.org/.*\.webp$")]
+    public static partial Regex CC98ImageUrlRegex { get; }
+
+    [GeneratedRegex(@"^https://www\.cc98\.org/user/id/(\d+)$")]
+    public static partial Regex CC98UserIdUrlRegex { get; }
+
+
+    extension(string url)
+    {
+        public bool IsCC98Url => CC98UrlRegex.IsMatch(url)||CC98FileUrlRegex.IsMatch(url);
+        public bool IsCC98FileUrl => CC98FileUrlRegex.IsMatch(url);
+        public bool IsCC98BoardUrl => BoardRegex.IsMatch(url);
+        public bool IsCC98ImageUrl => CC98ImageUrlRegex.IsMatch(url);
+        public bool IsCC98UserIdUrl => CC98UserIdUrlRegex.IsMatch(url);
+    }
+
     /// <summary>
-    ///     判断一个 URL 地址是否为 Web 字段。
+    /// 提取主题信息：ID、页码（可选）、序号（可选）
     /// </summary>
-    /// <param name="url">要判断的 URL 地址。</param>
-    /// <returns>如果<paramref name="url" />是 Web 资源地址，返回 <see langword="true" />；否则返回 <see langword="false" />。</returns>
+    public static (int TopicId, int? Page, int? Anchor)? ExtractTopicInfo(this string url)
+    {
+        var match = CC98TopicRegex.Match(url);
+        if (!match.Success) return null;
+
+        int topicId = int.Parse(match.Groups[1].Value);
+
+        int? page = null;
+        int? anchor = null;
+
+        if (match.Groups[2].Success)
+        {
+            page = int.Parse(match.Groups[2].Value);
+        }
+
+        if (match.Groups[3].Success)
+        {
+            anchor = int.Parse(match.Groups[3].Value);
+        }
+
+        // 额外验证约束（虽然正则已经保证，但双重保险）
+        if (anchor.HasValue && !page.HasValue)
+        {
+            return null;
+        }
+
+        return (topicId, page, anchor);
+    }
     public static bool IsWebUrl(string url)
     {
         return WebUriRegex.IsMatch(url);

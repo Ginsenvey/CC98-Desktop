@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text.Json.Serialization;
-using CC98.Kernel.Network;
 
 namespace CC98.Objects;
 
@@ -38,7 +37,6 @@ namespace CC98.Objects;
 [JsonSerializable(typeof(SectionCard))]
 [JsonSerializable(typeof(SectionInfo))]
 [JsonSerializable(typeof(IndexTopic))]
-[JsonSerializable(typeof(VpnLoginResult))]
 [JsonSerializable(typeof(BoardBest))]
 [JsonSerializable(typeof(BasicTopicInfo))]
 [JsonSerializable(typeof(BoardInfo))]

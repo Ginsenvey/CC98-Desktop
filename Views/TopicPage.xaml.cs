@@ -1,4 +1,20 @@
-﻿using System;
+﻿using CC98.Controls.Extensions;
+using CC98.Controls.Primitives;
+using CC98.Controls.UbbTextBlock;
+using CC98.Controls.UbbTextBlock.Common.Events;
+using CC98.Controls.UbbTextBlock.Parser;
+using CC98.Kernel;
+using CC98.Kernel.Authorize;
+using CC98.Objects;
+using CC98.Services;
+using CC98.Services.Extensions;
+using CC98.Services.Helpers;
+using DevWinUI;
+using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Input;
+using Microsoft.UI.Xaml.Navigation;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
@@ -10,23 +26,8 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Windows.ApplicationModel.DataTransfer;
 using Windows.Storage;
-using CC98.Controls.Primitives;
-using CC98.Controls.UbbTextBlock;
-using CC98.Controls.UbbTextBlock.Common.Events;
-using CC98.Controls.UbbTextBlock.Parser;
-using CC98.Kernel;
-using CC98.Kernel.Network;
-using CC98.Objects;
-using CC98.Services;
-using DevWinUI;
-using Microsoft.UI.Xaml;
-using Microsoft.UI.Xaml.Controls;
-using Microsoft.UI.Xaml.Input;
-using Microsoft.UI.Xaml.Navigation;
-using CC98.Services.Extensions;
-using CC98.Kernel.Authorize;
-using CC98.Services.Helpers;
-using CC98.Controls.Extensions;
+using static CC98.Kernel.ApiEndpoints;
+using static CSharpMath.Rendering.Text.TextAtom;
 
 namespace CC98.Views;
 
@@ -366,7 +367,6 @@ public sealed partial class TopicPage : Page
 
     private async void UbbTextBlock_MediaClicked(object sender, MediaClickEventArgs e)
     {
-        de.Text = $"链接：{e.Source}，类型：{e.MediaType}";
         switch (e.MediaType)
         {
             case MediaType.Image:
@@ -404,14 +404,23 @@ public sealed partial class TopicPage : Page
                 break;
             case MediaType.AtUser:
                 await SearchForUser(e.Source);
-                break;
-            case MediaType.Audio:
-                break;
-            case MediaType.File:
+                break;       
+            case MediaType.File or MediaType.Audio:
+                var fileRes = await Downloader.DownloadFileAsync(e.Source);
+                if (fileRes == null)
+                {
+                    Flower.Play(FlowStatus.Fail, "下载失败");
+                }
+                else
+                {
+                    Flower.Play(FlowStatus.Success, $"已下载到{fileRes}");
+                }
                 break;
 
         }
     }
+  
+    
     private async Task SearchForUser(string userName)
     {
         var url = ApiEndpoints.User.SearchUserByName(userName);
@@ -428,28 +437,93 @@ public sealed partial class TopicPage : Page
         }
         else
         {
-            //这里需要为Auth类加一个ID的静态属性，以便在其他页面进行对比，判断是否为当前用户。
-            //var info = new ProfileNavigationInfo { IsMe = user.Id == LoginService.CurrentUserId, UserId = user.Id };
-            //Frame.Navigate(typeof(Profile), info);
+            var info = new ProfileNavigationInfo { IsMe = userName == AppSettings.Current.UserName, UserId = user.Id };
+            Frame.Navigate(typeof(ProfilePage), info);
         }
 
     }
 
-    [GeneratedRegex(@"/topic/(\d{7})/(\d+)#(\d+)")]
-    private static partial Regex FloorAnchorRegex();
+    
 
     private async Task HandleLink(string url)
     {
-        var match = FloorAnchorRegex().Match(url);
-        if (match.Success)
+        //锚点
+        var topicAnchor = url.ExtractTopicInfo();
+        //如果整个元组为null,则下面的HasValue为false,否则为true。
+        if (topicAnchor.HasValue)
         {
-            var before = int.Parse(match.Groups[2].ValueSpan);
-            var after = int.Parse((match.Groups[3].ValueSpan));
-            var floor = 10 * (before - 1) + after;
-            IsJumping = true;
-            await Tp(floor);
+            int targetFloor = 0;
+            if (topicAnchor.Value.Page.HasValue && topicAnchor.Value.Anchor.HasValue)
+            {
+                targetFloor = (topicAnchor.Value.Page.Value - 1) * 10 + topicAnchor.Value.Anchor.Value;
+            }
+            if (topicAnchor.Value.Page.HasValue && !topicAnchor.Value.Anchor.HasValue)
+            {
+                targetFloor = (topicAnchor.Value.Page.Value - 1) * 10 + 0;
+            }
+            //topicId一致：
+            if (topicAnchor.Value.TopicId == TopicId)
+            {
+                IsJumping = true;
+                await Tp(targetFloor);
+            }
+            else
+            {
+                TopicId = topicAnchor.Value.TopicId;
+                await LoadTopicInfo();
+                IsJumping = true;
+                await Tp(targetFloor);
+            }
+            return;
         }
+        //外链
+        if (!url.IsCC98Url)
+        {
+            var package = new DataPackage();
+            package.SetText(url);
+            Clipboard.SetContent(package);
+            Flower.Play(FlowStatus.Success, "已复制外部链接");
+            return;
+        }
+        
+        //文件
+        if (url.IsCC98FileUrl)
+        {
+            if (url.IsCC98ImageUrl)
+            {
+                var info = new ViewerNavigationInfo
+                {
+                    Type = MediaType.Image,
+                    Urls = [url],
+                    CurrentIndex = 0
+                };
+                var viewer = new MediaViewer(info);
+                viewer.Activate();
+                return;
+            }
+            var fileRes = await Downloader.DownloadFileAsync(url);
+            if (fileRes == null)
+            {
+                Flower.Play(FlowStatus.Fail, "下载失败");
+            }
+            else
+            {
+                Flower.Play(FlowStatus.Success, $"已下载到{fileRes}");
+            }
+            return;
+        }
+        //版面
+        var match2 = UrlEx.BoardRegex.Match(url);
+        if (match2.Success)
+        {
+            int boardId = int.Parse(match2.Groups[1].ValueSpan);
+            Frame.Navigate(typeof(BoardPage), boardId);
+            return;
+        }
+        
     }
+
+    
     private async void MarkdownTextBlock_LinkClicked(object sender)
     {
         var url = "";
@@ -726,7 +800,7 @@ public sealed partial class TopicPage : Page
         if (!result.IsSuccess)
         {
             //
-            Flower.Play("\uEA39", "操作失败");
+            Flower.Play(FlowStatus.Fail, "操作失败");
             return;
         }
         var newStateUrl = ApiEndpoints.Post.ReactionState(postId);
@@ -734,7 +808,7 @@ public sealed partial class TopicPage : Page
         if (!newStateResult.IsSuccess || newStateResult.Data == null)
         {
             //
-            Flower.Play("\uEA39", "获取赞踩数据失败");
+            Flower.Play(FlowStatus.Fail, "获取赞踩数据失败");
             return;
         }
         var newState = newStateResult.Data;
@@ -750,7 +824,7 @@ public sealed partial class TopicPage : Page
     {
         var p = sender as PersonPicture;
         if (p?.Tag is not string tag) return;
-        var bitmap = await Services.Helpers.ImageHelper.LoadWebImageAsync(tag);
+        var bitmap = await ImageHelper.LoadWebImageAsync(tag);
         p.ProfilePicture = bitmap;
     }
 
@@ -850,7 +924,7 @@ public sealed partial class TopicPage : Page
         }
         else
         {
-            Flower.Play("\uEA39", "选择至少一项");
+            Flower.Play(FlowStatus.Info, "选择至少一项");
         }
     }
     //TODO:需要改成返回一个bool值，表示是否成功。现在的字符串返回值不够语义化。

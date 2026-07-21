@@ -13,6 +13,7 @@ using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 using CC98.Services.Extensions;
 using Microsoft.UI.Xaml.Navigation;
+using CC98.Services.Helpers;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -126,14 +127,14 @@ public sealed partial class FocusPage : Page
     {
         var h = sender as Grid;
         var translate = h?.RenderTransform as TranslateTransform;
-        UiEx.AnimateCard(translate!, 0, -5); // 向上方移动
+        AnimationHelper.AnimateCard(translate!, 0, -5); // 向上方移动
     }
 
     private void ContentCard_PointerExited(object sender, PointerRoutedEventArgs e)
     {
         var h = sender as Grid;
         var translate = h?.RenderTransform as TranslateTransform;
-        UiEx.AnimateCard(translate!, 0, 0); // 恢复原位
+        AnimationHelper.AnimateCard(translate!, 0, 0); // 恢复原位
     }
 
     private void ContentCard_Tapped(object sender, TappedRoutedEventArgs e)

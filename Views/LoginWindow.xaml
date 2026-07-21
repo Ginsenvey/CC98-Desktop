@@ -42,11 +42,11 @@
                 <ImageIcon Source="/Assets/github.png" Width="25" Height="25" />
             </HyperlinkButton>
             <AppBarSeparator  BorderThickness="4"/>
-            <HyperlinkButton Width="42" Height="42" Click="GuideButton_Click">
+            <HyperlinkButton Width="42" Height="42" Click="GuideButton_Click" ToolTipService.ToolTip="查看指引">
                 <ic:SymbolIcon Symbol="Document" IconVariant="Color" />
             </HyperlinkButton>
             <AppBarSeparator  BorderThickness="4" />
-            <HyperlinkButton Width="42" Height="42" Padding="0" NavigateUri="https://www.cc98.org">
+            <HyperlinkButton Width="42" Height="42" Padding="0" NavigateUri="https://www.cc98.org" ToolTipService.ToolTip="98官方">
                 <ic:SymbolIcon Symbol="Home" IconVariant="Color" />
             </HyperlinkButton>
         </StackPanel>

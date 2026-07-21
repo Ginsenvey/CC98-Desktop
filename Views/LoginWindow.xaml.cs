@@ -1,6 +1,5 @@
 ﻿using CC98.Kernel;
 using CC98.Kernel.Authorize;
-using CC98.Kernel.Network;
 using CC98.Objects;
 using CC98.Services;
 using Microsoft.Extensions.DependencyInjection;
@@ -31,12 +30,8 @@ namespace CC98.Views;
 /// </summary>
 public sealed partial class LoginWindow : Window
 {
-    
-    private const string TipText= "如果尚未连接浙江大学内网，请在此处登录WebVPN,或者使用[ZJU Connect](https://github.com/Mythologyli/ZJU-Connect-for-Windows/releases).";
-    private bool _needLoginVpn = false;
-    public LoginWindow(bool needLoginVpn=false)
+    public LoginWindow()
     {
-        _needLoginVpn = needLoginVpn;
         InitializeComponent();
         ExtendsContentIntoTitleBar = true;
         SetTitleBar(GridTitleBar);
@@ -72,7 +67,7 @@ public sealed partial class LoginWindow : Window
         // 计算最终想要的内容区大小（逻辑像素）
         int desiredClientWidth = (int)(baseWidth * scale);
         int desiredClientHeight = (int)(baseHeight * scale);
-        //AppWindow.ResizeClient(new SizeInt32(desiredClientWidth, desiredClientHeight));
+        AppWindow.ResizeClient(new SizeInt32(desiredClientWidth, desiredClientHeight));
 
         //居中
         var area = DisplayArea.GetFromWindowId(AppWindow.Id, DisplayAreaFallback.Nearest)?.WorkArea;
@@ -84,14 +79,7 @@ public sealed partial class LoginWindow : Window
     {
         try
         {
-            if(_needLoginVpn)
-            {
-                LoginFrame.Navigate(typeof(VpnLoginPage));
-            }
-            else
-            {
-                LoginFrame.Navigate(typeof(OpenIdLoginPage));
-            }
+            LoginFrame.Navigate(typeof(OpenIdLoginPage));
         }
         catch(Exception ex)
         {

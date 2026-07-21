@@ -269,7 +269,7 @@
                 <ColumnDefinition Width="3*" MinWidth="300"></ColumnDefinition>
                 <ColumnDefinition Width="*"></ColumnDefinition>
             </Grid.ColumnDefinitions>
-            <TextBlock x:Name="de" Grid.Column="0" HorizontalAlignment="Left" TextWrapping="Wrap"></TextBlock>
+            <TextBlock x:Name="de" Grid.Column="0" IsTextSelectionEnabled="True" HorizontalAlignment="Left" TextWrapping="Wrap"></TextBlock>
             <dev:PagerControl Grid.Column="1" DisplayMode="ButtonPanel" NumberOfPages="1"  HorizontalAlignment="Center" x:Name="Pager" SelectedPageIndex="0"  VerticalAlignment="Center"  SelectedIndexChanged="Pager_SelectedIndexChanged" ></dev:PagerControl>
             <StackPanel Orientation="Horizontal" Margin="0,0,20,0" Spacing="10" Grid.Column="2" HorizontalAlignment="Right" >
                 <Button CornerRadius="9999" Width="50" Height="50" ToolTipService.ToolTip="查看投票" x:Name="StartVote" Click="StartVote_Click" Visibility="Collapsed"  >

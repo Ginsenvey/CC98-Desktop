@@ -1,4 +1,17 @@
-﻿using System;
+﻿using CC98.Controls.Primitives;
+using CC98.Controls.UbbTextBlock;
+using CC98.Controls.UbbTextBlock.Common.Events;
+using CC98.Controls.UbbTextBlock.Parser;
+using CC98.Kernel;
+using CC98.Objects;
+using CC98.Services;
+using CC98.Services.Extensions;
+using CC98.Services.Helpers;
+using DevWinUI;
+using FluentIcons.Common;
+using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Net;
@@ -6,15 +19,6 @@ using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 using Windows.Storage;
-using CC98.Kernel;
-using CC98.Objects;
-using CC98.Services;
-using DevWinUI;
-using FluentIcons.Common;
-using Microsoft.UI.Xaml;
-using Microsoft.UI.Xaml.Controls;
-using CC98.Services.Extensions;
-using CC98.Services.Helpers;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -187,5 +191,51 @@ public sealed partial class ProfilePage : Page
     private async void RecentTopicRepeater_ElementPrepared(ItemsRepeater sender, ItemsRepeaterElementPreparedEventArgs args)
     {
         await Increment.LoadMore(args.Index, LoadRecentTopic);
+    }
+
+    private async void UbbTextBlock_MediaClicked(object sender, MediaClickEventArgs e)
+    {
+        switch (e.MediaType)
+        {
+            case MediaType.Link:
+                //await HandleLink(e.Source);
+                break;
+            case MediaType.AtUser:
+                await SearchForUser(e.Source);
+                break;
+            case MediaType.File or MediaType.Audio:
+                var fileRes = await Downloader.DownloadFileAsync(e.Source);
+                if (fileRes == null)
+                {
+                    Flower.Play(FlowStatus.Fail, "下载失败");
+                }
+                else
+                {
+                    Flower.Play(FlowStatus.Success, $"已下载到{fileRes}");
+                }
+                break;
+        }
+    }
+
+    private async Task SearchForUser(string userName)
+    {
+        var url = ApiEndpoints.User.SearchUserByName(userName);
+        var result = await ApiService.Fetch<UserInfo>(url);
+        if (!result.IsSuccess || result.Data == null)
+        {
+            //
+            return;
+        }
+        var user = result.Data;
+        if (user == null)
+        {
+            Flower.Play(FlowStatus.Fail, "未找到用户");
+        }
+        else
+        {
+            var info = new ProfileNavigationInfo { IsMe = userName == AppSettings.Current.UserName, UserId = user.Id };
+            Frame.Navigate(typeof(ProfilePage), info);
+        }
+
     }
 }

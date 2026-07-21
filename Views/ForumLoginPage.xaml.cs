@@ -74,7 +74,7 @@ namespace CC98.Views
                 if (res != null && res.IsError)
                 {
                     //
-                    ErrorBox.Subtitle = res.Error ?? res.ErrorDescription;
+                    ErrorBox.Content = res.Error ?? res.ErrorDescription;
                     VisualStateManager.GoToState(this, "Fail", true);
                     return;
                 }
@@ -86,7 +86,7 @@ namespace CC98.Views
             }
             catch (Exception ex)
             {
-                ErrorBox.Subtitle = ex.Message;
+                ErrorBox.Content = ex.Message;
                 VisualStateManager.GoToState(this, "Fail", true);
                 //记录异常
             }
@@ -108,7 +108,7 @@ namespace CC98.Views
 
         private void ErrorBox_Closed(TeachingTip sender, TeachingTipClosedEventArgs args)
         {
-            ErrorBox.Subtitle = "";
+            ErrorBox.Content = "";
         }
 
         private void OpenIdLoginButton_Click(object sender, RoutedEventArgs e)
@@ -116,9 +116,11 @@ namespace CC98.Views
             Frame.Navigate(typeof(OpenIdLoginPage));
         }
 
-        private void WebVpnLoginButton_Click(object sender, RoutedEventArgs e)
+        private async void CheckNetworkButton_Click(object sender, RoutedEventArgs e)
         {
-            Frame.Navigate(typeof(VpnLoginPage));
+            var status = await MirrorService.CheckNetworkAsync();
+            ErrorBox.Content= MirrorService.FriendlyStatus(status);
+            ErrorBox.IsOpen = true;
         }
     }
 }

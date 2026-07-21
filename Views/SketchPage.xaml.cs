@@ -30,7 +30,7 @@ public sealed partial class SketchPage : Page
     public const string Tail =
         "[align=right][size=3][color=gray]——来自「[b][color=purple]CC98 For Windows[/color][/b]」[/color][/size][/align]";
 
-    public string Content = "";
+    public string TextContent = "";
 
     //约定:可以在本页更改的环境量由以下字段表示，
     //而不可变参数由NavigationInfo传入。
@@ -42,7 +42,6 @@ public sealed partial class SketchPage : Page
     public bool NotifyAllReplier = false;
     public bool NotifyPoster = true;
     public int PostTypeValue; //普通帖子
-    public ApplicationDataContainer Set = ApplicationData.Current.LocalSettings;
     public ApiService ApiService = App.Current.GetService<ApiService>();
     public SketchPage()
     {
@@ -138,7 +137,7 @@ public sealed partial class SketchPage : Page
         }
 
         //初始化内容,以免由于xaml加载顺序content为空。有时候textchanged事件不会立即触发。
-        Content = Editor.Text.Replace("\r\n", "\n").Replace("\r", "\n");
+        TextContent = Editor.Text.Replace("\r\n", "\n").Replace("\r", "\n");
         ApplyContentToViewer();
     }
 
@@ -148,9 +147,9 @@ public sealed partial class SketchPage : Page
         //关闭预览窗格可以避免卡顿，尤其是在内容较长时
         if (!EditArea.IsPaneOpen) return;
         if (ContentType == (int)Objects.ContentType.Ubb)
-            UbbViewer.UbbText = Content;
+            UbbViewer.UbbText = TextContent;
         else
-            MdViewer.Text = Content;
+            MdViewer.Text = TextContent;
     }
 
     #endregion
@@ -265,7 +264,7 @@ public sealed partial class SketchPage : Page
 
     private void Editor_TextChanged(object sender, TextChangedEventArgs e)
     {
-        Content = Editor.Text.Replace("\r\n", "\n").Replace("\r", "\n");
+        TextContent = Editor.Text.Replace("\r\n", "\n").Replace("\r", "\n");
         ApplyContentToViewer();
     }
 
@@ -379,7 +378,7 @@ public sealed partial class SketchPage : Page
         var reply = new Dictionary<string, object>
         {
             { "type", 0 },
-            { "content", Content },
+            { "content", TextContent },
             { "contentType", ContentType },
             { "notifyPoster", NotifyPoster }, //常为true
             { "title", SetTitle.Text }
@@ -474,12 +473,12 @@ public sealed partial class SketchPage : Page
     {
         var url = ApiEndpoints.Topic.SendReply(NavigationInfo.TopicId);
         Dictionary<string, object> reply;
-        if (IsTailVisible) Content = Content + "\n" + Tail;
+        if (IsTailVisible) TextContent = TextContent + "\n" + Tail;
         if (NavigationInfo.EditorMode == EditorMode.ReplyToPost)
             reply = new()
             {
                 { "clientType", 1 },
-                { "content", Content },
+                { "content", TextContent },
                 { "contentType", ContentType },
                 { "isAnonymous", IsAnonymous },
                 { "notifyAllReplier", NotifyAllReplier },
@@ -490,7 +489,7 @@ public sealed partial class SketchPage : Page
             reply = new()
             {
                 { "clientType", 1 },
-                { "content", Content },
+                { "content", TextContent },
                 { "contentType", ContentType },
                 { "isAnonymous", IsAnonymous },
                 { "notifyAllReplier", NotifyAllReplier },
@@ -525,7 +524,7 @@ public sealed partial class SketchPage : Page
         var post = new Dictionary<string, object>
         {
             { "clientType", 1 },
-            { "content", Content },
+            { "content", TextContent },
             { "contentType", ContentType },
             { "isAnonymous", IsAnonymous },
             { "notifyPoster", NotifyPoster },

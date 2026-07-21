@@ -196,11 +196,6 @@
     <PackageReference Include="SkiaSharp.Views.WinUI" Version="4.148.0" />
   </ItemGroup>
   <ItemGroup>
-    <Page Update="Views\VpnLoginPage.xaml">
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
-  </ItemGroup>
-  <ItemGroup>
     <Page Update="Views\GuidePage.xaml">
       <Generator>MSBuild:Compile</Generator>
     </Page>
