@@ -51,7 +51,7 @@ public sealed partial class NoticePage : Page
         {
             //
             Flower.Play(FlowStatus.Fail, "加载通知失败");
-            await App.Logger.WriteAsync("NoticeMsg", "加载通知失败", result.Message);
+            //await App.Logger.WriteAsync("NoticeMsg", "加载通知失败", result.Message);
             return false;
         }
 
@@ -88,7 +88,7 @@ public sealed partial class NoticePage : Page
         {
             //
             Flower.Play(FlowStatus.Fail, "获取帖子基本信息失败");
-            await App.Logger.WriteAsync("NoticeMsg", "获取帖子基本信息失败", result.Message);
+            //await App.Logger.WriteAsync("NoticeMsg", "获取帖子基本信息失败", result.Message);
             return [];
         }
 

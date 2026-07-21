@@ -86,7 +86,6 @@ public class ImageHelper
         catch (Exception ex)
         {
             Debug.WriteLine($"下载图片失败: {ex.Message}");
-            await App.Logger.WriteAsync("ImageDownloader", "图片下载出错", ex.Message);
             return null;
         }
     }

@@ -69,7 +69,7 @@ public class IndexDataService
         }
         catch (Exception ex)
         {
-            await App.Logger.WriteAsync("IndexDataService", "获取首页失败", ex.Message);
+            //await App.Logger.WriteAsync("IndexDataService", "获取首页失败", ex.Message);
             return false;
         }
     }
@@ -86,7 +86,7 @@ public class IndexDataService
         }
         catch (Exception ex)
         {
-            await App.Logger.WriteAsync("IndexCacheService", "加载首页缓存失败", ex.Message);
+            //await App.Logger.WriteAsync("IndexCacheService", "加载首页缓存失败", ex.Message);
         }
         return null;
     }
@@ -141,7 +141,7 @@ public class IndexDataService
         }
         catch (Exception ex)
         {
-            await App.Logger.WriteAsync("IndexCacheService", "清理首页缓存失败", ex.Message);
+            //await App.Logger.WriteAsync("IndexCacheService", "清理首页缓存失败", ex.Message);
         }
     }
 
@@ -161,7 +161,7 @@ public class IndexDataService
         }
         catch (Exception ex)
         {
-            await App.Logger.WriteAsync("IndexCacheService", "保存首页缓存失败", ex.Message);
+            //await App.Logger.WriteAsync("IndexCacheService", "保存首页缓存失败", ex.Message);
         }
     }
 

@@ -65,7 +65,6 @@ public sealed partial class MainWindow : Window
     public MainWindow()
     {
         InitializeComponent();
-        AppWindow.Changed += AppWindow_Changed;
         App.ThemeChanged += OnAppThemeChanged;
         //设置窗口状态
         SetWindowState();
@@ -74,20 +73,6 @@ public sealed partial class MainWindow : Window
         PrepareContent();
     }
     
-
-
-    private void AppWindow_Changed(AppWindow sender, AppWindowChangedEventArgs args)
-    {
-        //在最小化时隐藏到托盘
-        if (args.DidPresenterChange && AppWindow.Presenter is OverlappedPresenter presenter && presenter.State == OverlappedPresenterState.Minimized)
-            AppWindow.Hide();
-    }
-    private void RootGrid_Loaded(object sender, RoutedEventArgs e)
-    {
-        //加载内容
-       
-    }
-
 
     private void SetWindowState()
     {
@@ -101,7 +86,6 @@ public sealed partial class MainWindow : Window
     }
     
 
-    
     private void LoadSettings()
     {
         int effect = AppSettings.Current.Effect;
@@ -325,7 +309,7 @@ public sealed partial class MainWindow : Window
         var result = await ApiService.Fetch<UnreadMessageInfo>(url);
         if (!result.IsSuccess || result.Data == null)
         {
-            await App.Logger.WriteAsync("MainWindow", "刷新未读消息失败", $"{result.StatusCode}:{result.Message}");
+            //await App.Logger.WriteAsync("MainWindow", "刷新未读消息失败", $"{result.StatusCode}:{result.Message}");
             return;
         }
 

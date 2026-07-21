@@ -33,7 +33,7 @@ namespace CC98.Views
         {
             InitializeComponent();
         }
-
+        private IVpnService vpnService = App.Current.GetService<IVpnService>();
         private void ErrorBox_Closed(TeachingTip sender, TeachingTipClosedEventArgs args)
         {
             ErrorBox.Subtitle = "";
@@ -62,24 +62,75 @@ namespace CC98.Views
         {
             try
             {
-                var vpnService = App.Current.GetService<IVpnService>();
+
                 var res = await vpnService.LoginAsync(userName, password);
-                if (res == null || !res.Success)
+                if (res == null)
                 {
                     //
-                    ErrorBox.Subtitle = res?.Message;
-                    VisualStateManager.GoToState(this, "Fail", true);
+                    ErrorBox.Subtitle = "登录失败，请重试";
+                    ErrorBox.IsOpen = true;
+                    //VisualStateManager.GoToState(this, "Fail", true);
+                    return;
+                }
+                if (!res.Success)
+                {
+                    if (res.Status == VpnLoginStatus.NeedCaptcha)
+                    {
+                        //验证码
+                        return;
+                    }
+                    else if (res.Status == VpnLoginStatus.NeedConfirm)
+                    {
+                        //确认
+                        await VpnConfirmAsync();
+                        return;
+                    }
                     return;
                 }
                 ErrorBox.Subtitle = "登录成功";
-
-
+                ErrorBox.IsOpen = true;
+                Goback();
+                //
             }
             catch (Exception ex)
             {
                 ErrorBox.Subtitle = ex.Message;
-                VisualStateManager.GoToState(this, "Fail", true);
+                ErrorBox.IsOpen = true;
+                //VisualStateManager.GoToState(this, "Fail", true);
                 //记录异常
+            }
+        }
+        private async Task VpnConfirmAsync()
+        {
+            var confirmResult = await vpnService.ConfirmAsync();
+            if (confirmResult == null)
+            {
+                return;
+            }
+            if (!confirmResult.Success)
+            {
+                //顶号失败应直接重新登录
+                return;
+            }
+            else
+            {
+                //返回密码登录页面
+                //判断是否活跃
+                Goback();
+            }
+        }
+        private void Goback()
+        {
+            if (AppSettings.Current.IsActive)
+            {
+                //关闭此窗口，打开主窗口
+                App.Current.LoginWindow.Close();
+                App.Current.AppMainWindow = new MainWindow();
+            }
+            else
+            {
+                //返回登录页面
+                Frame.Navigate(typeof(ForumLoginPage));
             }
         }
     }

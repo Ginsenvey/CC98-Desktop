@@ -15,7 +15,7 @@
     xmlns:infoFlower="using:CC98.Controls.InfoFlower"
     SystemBackdrop="{ThemeResource AcrylicBackgroundFillColorDefaultBackdrop}">
 
-    <Grid x:Name="RootGrid" UseLayoutRounding="True" Loaded="RootGrid_Loaded">
+    <Grid x:Name="RootGrid" UseLayoutRounding="True">
         <Grid.RowDefinitions>
             <RowDefinition Height="48" />
             <RowDefinition Height="*" />

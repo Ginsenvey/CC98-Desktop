@@ -202,11 +202,9 @@ public sealed partial class LatexBlock : UserControl
                 var textPaint = new SKPaint
                 {
                     Color = SKColors.Gray,
-                    TextSize = 14,
                     IsAntialias = true,
-                    Typeface = SKTypeface.FromFamilyName("Consolas")
                 };
-                canvas.DrawText("无公式", 10, 30, textPaint);
+                canvas.DrawText(SKTextBlob.Create("无公式", new SKFont()), 10, 30, textPaint);
             }
 
             return;
@@ -214,90 +212,6 @@ public sealed partial class LatexBlock : UserControl
 
         try
         {
-            // ============ 1. 绘制控件整体边界（红色） ============
-            if (ShowDebugBounds)
-            {
-                var controlBoundsPaint = new SKPaint
-                {
-                    Color = SKColors.Red,
-                    Style = SKPaintStyle.Stroke,
-                    StrokeWidth = 2,
-                    IsAntialias = true
-                };
-                canvas.DrawRect(0, 0, canvasWidth, canvasHeight, controlBoundsPaint);
-
-                var textPaint = new SKPaint
-                {
-                    Color = SKColors.Red,
-                    TextSize = 12,
-                    IsAntialias = true,
-                    Typeface = SKTypeface.FromFamilyName("Consolas")
-                };
-                canvas.DrawText($"控件边界 ({canvasWidth:F0}x{canvasHeight:F0})",
-                    5, 15, textPaint);
-            }
-
-            // ============ 2. 绘制 Padding 区域（蓝色虚线） ============
-            if (ShowDebugBounds)
-            {
-                var paddingBoundsPaint = new SKPaint
-                {
-                    Color = SKColors.Blue,
-                    Style = SKPaintStyle.Stroke,
-                    StrokeWidth = 1.5f,
-                    PathEffect = SKPathEffect.CreateDash([5, 5], 0),
-                    IsAntialias = true
-                };
-
-                canvas.DrawRect(
-                    (float)Padding.Left,
-                    (float)Padding.Top,
-                    canvasWidth - (float)(Padding.Left + Padding.Right),
-                    canvasHeight - (float)(Padding.Top + Padding.Bottom),
-                    paddingBoundsPaint
-                );
-
-                var textPaint = new SKPaint
-                {
-                    Color = SKColors.Blue,
-                    TextSize = 12,
-                    IsAntialias = true,
-                    Typeface = SKTypeface.FromFamilyName("Consolas")
-                };
-                canvas.DrawText("Padding",
-                    (float)Padding.Left, (float)Padding.Top - 5, textPaint);
-            }
-
-            // ============ 3. 绘制内容区域边界（绿色） ============
-            if (ShowDebugBounds)
-            {
-                var contentBoundsPaint = new SKPaint
-                {
-                    Color = SKColors.Green,
-                    Style = SKPaintStyle.Stroke,
-                    StrokeWidth = 1.5f,
-                    IsAntialias = true
-                };
-
-                canvas.DrawRect(
-                    (float)Padding.Left,
-                    (float)Padding.Top,
-                    _contentWidth,
-                    _contentHeight,
-                    contentBoundsPaint
-                );
-
-                var textPaint = new SKPaint
-                {
-                    Color = SKColors.Green,
-                    TextSize = 12,
-                    IsAntialias = true,
-                    Typeface = SKTypeface.FromFamilyName("Consolas")
-                };
-                canvas.DrawText($"内容区域 ({_contentWidth:F0}x{_contentHeight:F0})",
-                    (float)Padding.Left, (float)Padding.Top + _contentHeight + 15, textPaint);
-            }
-
             // ============ 4. 绘制公式内容 ============
             var lines = _latex.Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries);
             var currentY = (float)Padding.Top;
@@ -323,39 +237,6 @@ public sealed partial class LatexBlock : UserControl
                         break;
                 }
 
-                // ============ 5. 绘制每行公式的边界框（橙色） ============
-                if (ShowDebugBounds)
-                {
-                    var lineBoundsPaint = new SKPaint
-                    {
-                        Color = SKColors.Orange,
-                        Style = SKPaintStyle.Stroke,
-                        StrokeWidth = 1,
-                        IsAntialias = true
-                    };
-
-                    canvas.DrawRect(
-                        x,
-                        currentY + rect.Y,
-                        rect.Width,
-                        rect.Height,
-                        lineBoundsPaint
-                    );
-
-                    var lineNumberPaint = new SKPaint
-                    {
-                        Color = SKColors.Orange,
-                        TextSize = 11,
-                        IsAntialias = true,
-                        Typeface = SKTypeface.FromFamilyName("Consolas")
-                    };
-                    canvas.DrawText($"行{i + 1}",
-                        x + rect.Width + 5,
-                        currentY + rect.Y + rect.Height / 2,
-                        lineNumberPaint);
-                }
-
-
                 // 绘制公式 - 给底部增加额外空间
                 var baselineOffset = Math.Abs(rect.Y); // rect.Y 是负值，表示基线以上的高度
                 var extraBottomSpace = rect.Height * 0.2f; // 增加20%的底部空间
@@ -369,18 +250,6 @@ public sealed partial class LatexBlock : UserControl
         catch (Exception ex)
         {
             Debug.WriteLine($"绘制失败: {ex.Message}");
-
-            if (ShowDebugBounds)
-            {
-                var errorPaint = new SKPaint
-                {
-                    Color = SKColors.Red,
-                    TextSize = 14,
-                    IsAntialias = true,
-                    Typeface = SKTypeface.FromFamilyName("Consolas")
-                };
-                canvas.DrawText($"错误: {ex.Message}", 10, 50, errorPaint);
-            }
         }
     }
 }

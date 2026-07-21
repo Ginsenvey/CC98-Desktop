@@ -74,7 +74,7 @@ public sealed partial class FollowPage : Page
         {
             //
             Flower.Play(FlowStatus.Fail, "加载好友Id列表失败");
-            await App.Logger.WriteAsync("Follow", "加载好友Id列表失败", friendIdsResult.Message);
+            //await App.Logger.WriteAsync("Follow", "加载好友Id列表失败", friendIdsResult.Message);
             return false;
         }
 
@@ -90,7 +90,7 @@ public sealed partial class FollowPage : Page
         {
             //
             Flower.Play(FlowStatus.Fail, "加载好友信息失败");
-            await App.Logger.WriteAsync("NoticeMsg", "加载好友信息失败", friendsResult.Message);
+            //await App.Logger.WriteAsync("NoticeMsg", "加载好友信息失败", friendsResult.Message);
             return false;
         }
 

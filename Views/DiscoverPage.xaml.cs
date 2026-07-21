@@ -68,7 +68,7 @@ public sealed partial class DiscoverPage : Page
             //忽略加载过快报错
             if (newTopicResult.StatusCode == (int)HttpStatusCode.Forbidden) return false;
             Flower.Play(FlowStatus.Fail, newTopicResult.Message);
-            await App.Logger.WriteAsync("Discover", "加载新帖失败", newTopicResult.Message);
+            //await App.Logger.WriteAsync("Discover", "加载新帖失败", newTopicResult.Message);
             return false;
         }
 

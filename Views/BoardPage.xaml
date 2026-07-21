@@ -60,7 +60,7 @@
                 </Border>
 
                 <SelectorBar x:Name="TypeSelectorBar" SelectionChanged="TypeSelectorBar_SelectionChanged">
-                    <SelectorBarItem Text="最新" IsSelected="True" Tag="latest"></SelectorBarItem>
+                    <SelectorBarItem Text="最新"  Tag="latest"></SelectorBarItem>
                     <SelectorBarItem Text="置顶" Tag="top"></SelectorBarItem>
                     <SelectorBarItem  Text="精华" Tag="best"></SelectorBarItem>
                 </SelectorBar>

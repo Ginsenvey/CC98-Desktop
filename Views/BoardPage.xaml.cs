@@ -24,7 +24,7 @@ namespace CC98.Views;
 public sealed partial class BoardPage
 {
     public ObservableCollection<SimpleTopicInfo> Topics = [];
-    private ApplicationDataContainer DataContainer { get; } = ApplicationData.Current.LocalSettings;
+    
     public ApiService ApiService = App.Current.GetService<ApiService>();
 
     //是否精华帖
@@ -171,7 +171,7 @@ public sealed partial class BoardPage
         {
             //
             Flower.Play(FlowStatus.Fail, result.Message);
-            await App.Logger.WriteAsync("Board", "关注版面失败", result.Message);
+            //await App.Logger.WriteAsync("Board", "关注版面失败", result.Message);
             return;
         }
 
@@ -188,6 +188,7 @@ public sealed partial class BoardPage
 
     private async void TypeSelectorBar_SelectionChanged(SelectorBar sender, SelectorBarSelectionChangedEventArgs args)
     {
+        //在不恰当的时间触发此事件会重复加载两次帖子。
         var item = sender as SelectorBar;
         if (item?.SelectedItem.Tag is not string tag) return;
         Increment.Clear();

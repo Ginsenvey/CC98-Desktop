@@ -132,6 +132,7 @@
                 </StackPanel>
             </Grid>
         </DataTemplate>
+        <obj:TopicTemplateSelector x:Key="PostTemplateSelector" ImageTemplate="{StaticResource ImagePost}" TextTemplate="{StaticResource TextPost}"/>
     </Page.Resources>
 
 
@@ -152,7 +153,7 @@
         </Button>
 
         <ScrollViewer Grid.Row="1" Grid.Column="0" x:Name="NewTopicViewer">
-            <ItemsRepeater ItemTemplate="{StaticResource TextPost}" ItemsSource="{x:Bind Topics}"
+            <ItemsRepeater ItemTemplate="{StaticResource PostTemplateSelector}" ItemsSource="{x:Bind Topics}"
                            ElementPrepared="ItemsRepeater_ElementPrepared" VerticalCacheLength="1">
                 <ItemsRepeater.Layout>
                     <StackLayout Orientation="Vertical" Spacing="15" />

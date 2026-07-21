@@ -1,13 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text.Json.Serialization;
-using System.Text.Json.Serialization.Metadata;
-
-using CC98.Kernel.Authorize;
 using CC98.Kernel.Network;
-
-using static CC98.Services.AppLog;
-using static CC98.Services.IndexDataService;
 
 namespace CC98.Objects;
 
@@ -38,7 +32,6 @@ namespace CC98.Objects;
 [JsonSerializable(typeof(CardStat))]
 [JsonSerializable(typeof(Card))]
 [JsonSerializable(typeof(IndexData))]
-[JsonSerializable(typeof(LogEntry))]
 [JsonSerializable(typeof(CardStatInfoPair))]
 [JsonSerializable(typeof(GachaInfo))]
 [JsonSerializable(typeof(FlipTopic))]
@@ -50,7 +43,6 @@ namespace CC98.Objects;
 [JsonSerializable(typeof(BasicTopicInfo))]
 [JsonSerializable(typeof(BoardInfo))]
 [JsonSerializable(typeof(SectionInfo))]
-[JsonSerializable(typeof(ExportLog))]
 [JsonSerializable(typeof(Rating))]
 [JsonSerializable(typeof(RatingReason))]
 [JsonSerializable(typeof(WealthTransferMessage))]
@@ -64,7 +56,6 @@ namespace CC98.Objects;
 [JsonSerializable(typeof(List<SectionInfo>))]
 [JsonSerializable(typeof(List<BasicUserInfo>))]
 [JsonSerializable(typeof(List<ChatInfo>))]
-[JsonSerializable(typeof(List<LogEntry>))]
 [JsonSerializable(typeof(List<Friend>))]
 [JsonSerializable(typeof(List<SimpleTopicInfo>))]
 [JsonSerializable(typeof(List<IndexTopic>))]
@@ -77,7 +68,6 @@ namespace CC98.Objects;
 [JsonSerializable(typeof(List<Notice>))]
 [JsonSerializable(typeof(List<BasicTopicInfo>))]
 [JsonSerializable(typeof(List<Card>))]
-[JsonSerializable(typeof(List<ExportLog>))]
 [JsonSerializable(typeof(List<RatingReason>))]
 [JsonSerializable(typeof(SectionInfo[]), TypeInfoPropertyName = "SectionInfos")]
 

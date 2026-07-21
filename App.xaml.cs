@@ -53,10 +53,6 @@ public partial class App : Application
     /// </summary>
     public IMemoryCache MemoryCache { get; } = new MemoryCache(new MemoryCacheOptions());
 
-
-    private static AppLog? _logger;
-    public static AppLog Logger => _logger ?? throw new InvalidOperationException("Logger未初始化");
-
     public static event Action<ElementTheme>? ThemeChanged;
 
     public static void RaiseThemeChanged(ElementTheme theme)
@@ -67,9 +63,8 @@ public partial class App : Application
     {
         InitializeComponent();
         RegisterServices();
-        
     }
-    
+
 
 
 
@@ -77,13 +72,12 @@ public partial class App : Application
     protected override async void OnLaunched(Microsoft.UI.Xaml.LaunchActivatedEventArgs args)
     {
         base.OnLaunched(args);
-        await InitializeAppLog();
 
         var e = AppInstance.GetActivatedEventArgs();
         if (e is ProtocolActivatedEventArgs protocol)
         {
-            var redirectUrl= protocol.Uri.ToString();
-            bool success= await AuthFromProtocol(redirectUrl);
+            var redirectUrl = protocol.Uri.ToString();
+            bool success = await AuthFromProtocol(redirectUrl);
             if (success)
             {
                 AppSettings.Current.IsActive = true;
@@ -95,7 +89,7 @@ public partial class App : Application
         }
 
         bool isActive = AppSettings.Current.IsActive;
-        if(!isActive)
+        if (!isActive)
         {
             LoginWindow = new LoginWindow();
             LoginWindow.Activate();
@@ -105,45 +99,8 @@ public partial class App : Application
             AppMainWindow = new MainWindow();
             AppMainWindow.Activate();
         }
-        
     }
 
-    private async Task InitializeAppLog()
-    {
-        try
-        {
-            //初始化日志
-            _logger = new("CC98");
-            await Logger.InitializeAsync();
-        }
-        catch (Exception ex)
-        {
-            //弹出
-            Debug.WriteLine(ex.Message);
-            throw;
-        }
-        AppDomain.CurrentDomain.UnhandledException += async (s, e) =>
-        {
-            Debug.WriteLine("App", e.ExceptionObject.ToString());
-        };
-
-
-    }
-    private async Task StartUp()
-    {
-        try
-        {
-            //必须在构造函数前加上异常处理
-            AppMainWindow = new Views.MainWindow();
-            AppMainWindow.Activate();
-
-        }
-        catch (Exception ex)
-        {
-            await Logger.WriteAsync("App", "主窗口启动出错", ex.Message);
-        }
-
-    }
 
     private void TokenService_AuthenticationFailed(object? sender, AuthenticationFailedEventArgs e)
     {
@@ -166,7 +123,7 @@ public partial class App : Application
         {
             "invalid_grant" => "令牌已过期",
             "invalid_client" => "客户端凭证错误,客户端配置可能被98官方改动",
-            _ => "未知原因"
+            _ => reason
         };
     }
 
@@ -205,6 +162,7 @@ public partial class App : Application
                 {
                     return new HttpClientHandler
                     {
+                        Proxy=new WebProxy("127.0.0.1:9000"),
                         CookieContainer = cookieContainer,
                     };
                 })
@@ -304,11 +262,11 @@ public partial class App : Application
         }
         if (networkStatus == NetworkStatus.NotInCampus)//在校外
         {
-            await Logger.WriteAsync("App", "初始化网络", "检测VPN可用性");
+            
             if (false)
             {
                 //打开VPN配置设置
-                await Logger.WriteAsync("App", "初始化网络", "未配置VPN,跳转登录");
+              
                 
                 return;
             }
@@ -316,7 +274,7 @@ public partial class App : Application
             if (!PasswordManager.PasswordExists("Ticket") || !PasswordManager.PasswordExists("Route"))
             {
                 //报错
-                await Logger.WriteAsync("App", "初始化网络", "VPN凭据中，有至少一个没有保存");
+               
                 ShowAppNotification("VPN凭据不完整");
                 return;
             }
@@ -324,13 +282,13 @@ public partial class App : Application
             if (false)
             {
                 //报错
-                await Logger.WriteAsync("App", "初始化网络", "已保存的凭据中，有至少一个内容是空文本");
+              
                 ShowAppNotification("VPN凭据不完整");
                 return;
             }
-            await Logger.WriteAsync("App", "初始化网络", "注入已有Cookie成功,启用VPN模式检查网络");
+    
             var newStatus = await Vpn.CheckNetworkAsync(true);
-            await Logger.WriteAsync("App", "初始化网络", $"新的网络状态为：{newStatus}");
+        
             if (newStatus == NetworkStatus.ByVpn)
             {
                 Vpn.IsLoggedIn = true;
@@ -340,7 +298,7 @@ public partial class App : Application
                 return;
             }
             var success = await ReloginVpn();
-            await Logger.WriteAsync("App", "初始化网络", success ? "重连成功" : "重连失败");
+
             if (success)
             {
                 Vpn.IsLoggedIn = true;

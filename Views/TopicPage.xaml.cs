@@ -285,7 +285,7 @@ public sealed partial class TopicPage : Page
         if (!replyResult.IsSuccess || replyResult.Data == null)
         {
             //
-            await App.Logger.WriteAsync("Topic", "加载回帖失败", replyResult.Message);
+            //await App.Logger.WriteAsync("Topic", "加载回帖失败", replyResult.Message);
             return;
         }
         var data = replyResult.Data;
@@ -892,7 +892,7 @@ public sealed partial class TopicPage : Page
         }
         catch (Exception ex)
         {
-            await App.Logger.WriteAsync("Topic", "加载用户信息预览失败", ex.Message);
+            //await App.Logger.WriteAsync("Topic", "加载用户信息预览失败", ex.Message);
         }
     }
 

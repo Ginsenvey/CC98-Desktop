@@ -17,32 +17,12 @@
 
     <Grid x:Name="RootGrid">
         <Grid.RowDefinitions>
-            <RowDefinition Height="*" MinHeight="60" />
-            <RowDefinition Height="12*" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
-
-        <ContentDialog Title="配置WebVPN" x:Name="AuthDialog" PrimaryButtonText="确认" CloseButtonText="取消">
-            <ContentDialog.PrimaryButtonStyle>
-                <Style TargetType="Button">
-                    <Setter Property="Background" Value="{ThemeResource AccentAAFillColorDefaultBrush}" />
-                    <Setter Property="CornerRadius" Value="3" />
-                    <Setter Property="Foreground" Value="{ThemeResource StandardBrush}" />
-                </Style>
-            </ContentDialog.PrimaryButtonStyle>
-            <ContentDialog.Content>
-                <StackPanel Orientation="Vertical" Spacing="10">
-                    <TextBlock FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                               Text="WebVPN的凭据与浙大通行证一致。" />
-                    <TextBox x:Name="IdBox" Header="VPN账号" />
-                    <PasswordBox x:Name="PassBox" Header="密码" />
-                </StackPanel>
-            </ContentDialog.Content>
-
-        </ContentDialog>
-
         <TextBlock FontSize="24" Text="设定" FontWeight="Bold" FontFamily="{StaticResource HarmonySansBold}"
-                   Foreground="LightSeaGreen" Grid.Row="0" HorizontalAlignment="Left" Margin="15,10,10,10" x:Name="de" />
+                   Foreground="LightSeaGreen" Grid.Row="0" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="15,10,10,10" x:Name="de" />
         <Border BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}" BorderThickness="1" Height="1"
                 Grid.Row="0" VerticalAlignment="Bottom" />
         <ScrollViewer Grid.Row="1" Padding="20" Margin="0,0,0,15">
@@ -70,8 +50,7 @@
                     <tool:SettingsCard.HeaderIcon>
                         <ic:SymbolIcon Symbol="Apps" />
                     </tool:SettingsCard.HeaderIcon>
-                    <ComboBox Background="Transparent" PlaceholderText="选择扉页" Width="Auto" x:Name="TitlePage"
-                              SelectionChanged="TitlePage_SelectionChanged">
+                    <ComboBox Background="Transparent" Width="Auto" x:Name="TitlePage" SelectedIndex="{x:Bind sv:AppSettings.Current.TitlePage,Mode=TwoWay}">
                         <ComboBoxItem Content="首页" />
                         <ComboBoxItem Content="个人主页" />
                         <ComboBoxItem Content="新帖" />
@@ -161,13 +140,13 @@
                     <tool:SettingsCard.HeaderIcon>
                         <ic:SymbolIcon Symbol="News" />
                     </tool:SettingsCard.HeaderIcon>
-                    <ToggleSwitch x:Name="ShowBigPaper" Toggled="ShowBigPaper_Toggled" />
+                    <ToggleSwitch x:Name="ShowBigPaper" IsOn="{x:Bind sv:AppSettings.Current.ShowBigPaper,Mode=TwoWay}" />
                 </tool:SettingsCard>
                 <tool:SettingsCard Header="发帖展示小尾巴" Description="展示客户端平台标识">
                     <tool:SettingsCard.HeaderIcon>
                         <ic:SymbolIcon Symbol="DesktopCheckmark" />
                     </tool:SettingsCard.HeaderIcon>
-                    <ToggleSwitch x:Name="TailVisibility" Toggled="TailVisibility_Toggled" />
+                    <ToggleSwitch x:Name="TailVisibility" IsOn="{x:Bind sv:AppSettings.Current.IsTailVisible,Mode=TwoWay}" />
                 </tool:SettingsCard>
                 <TextBlock Text="关于" FontSize="16" Margin="5,2,0,5" />
                 <tool:SettingsExpander Header="CC98 Desktop" Description="2026.发布构建">

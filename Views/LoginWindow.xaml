@@ -27,7 +27,7 @@
         </Grid.RowDefinitions>
 
         <Grid Grid.Row="0"  Height="32" x:Name="GridTitleBar" />
-        <Frame Grid.Row="1" Width="360" Padding="20" Background="Transparent" BorderThickness="0" x:Name="LoginFrame" />
+        <Frame Grid.Row="1" Width="360" Padding="20" VerticalAlignment="Center" Background="Transparent" BorderThickness="0" x:Name="LoginFrame" />
         <Border Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="3"
                 BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}" BorderThickness="1" Height="1"
                 VerticalAlignment="Top" />

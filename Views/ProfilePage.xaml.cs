@@ -123,7 +123,7 @@ public sealed partial class ProfilePage : Page
         }
         catch (Exception ex)
         {
-            await App.Logger.WriteAsync("UserProfile", "加载头像失败", ex.Message);
+            //await App.Logger.WriteAsync("UserProfile", "加载头像失败", ex.Message);
         }
         InfoContent.DataContext = UserProfile;
         SignBoard.DataContext = UserProfile;

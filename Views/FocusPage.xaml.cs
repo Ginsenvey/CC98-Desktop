@@ -62,7 +62,7 @@ public sealed partial class FocusPage : Page
         {
             //
             Flower.Play(FlowStatus.Fail, "加载动态失败");
-            await App.Logger.WriteAsync("Focus", "加载动态失败", result.Message);
+            //await App.Logger.WriteAsync("Focus", "加载动态失败", result.Message);
             return false;
         }
 

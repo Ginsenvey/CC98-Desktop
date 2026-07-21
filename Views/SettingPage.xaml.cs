@@ -178,7 +178,7 @@ public sealed partial class SettingPage : Page
             var selected = Pics[ThemesGrid.SelectedIndex];
             var bitmap = new BitmapImage(new(selected.FilePath));
             PicPreview.ImageSource = bitmap;
-            Set.Values["ThemePic"] = selected.FilePath;
+            AppSettings.Current.ThemePicture = selected.FilePath;
         }
     }
 
@@ -207,31 +207,14 @@ public sealed partial class SettingPage : Page
     }
 
 
-    private void TitlePage_SelectionChanged(object sender, SelectionChangedEventArgs e)
-    {
-        var c = TitlePage.SelectedIndex;
-        if (c != -1) Set.Values["TitlePage"] = (c + 1).ToString();
-    }
 
-
-    private void TailVisibility_Toggled(object sender, RoutedEventArgs e)
-    {
-        Set.Values["IsTailVisible"] = TailVisibility.IsOn ? 1 : 2;
-    }
 
     private async void ExportLog_Click(object sender, RoutedEventArgs e)
     {
-        var r = await App.Logger.SaveToDesktopAsync();
-        if (r.Success)
-            Flower.Play(FlowStatus.Success, "导出日志成功");
-        else
-            Flower.Play(FlowStatus.Fail, "导出失败");
+        
     }
 
-    private void ShowBigPaper_Toggled(object sender, RoutedEventArgs e)
-    {
-        Set.Values["ShowBigPaper"] = ShowBigPaper.IsOn ? 1 : 2;
-    }
+    
 }
 
 public class ThemePicture

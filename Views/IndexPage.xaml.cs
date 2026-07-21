@@ -29,7 +29,7 @@ namespace CC98.Views;
 /// </summary>
 public sealed partial class IndexPage
 {
-    private readonly IndexDataService _indexService;
+    private readonly IndexDataService _indexService = IndexDataService.Instance;
     public ObservableCollection<FlipTopic> FlipTopics = [];
 
 
@@ -41,7 +41,6 @@ public sealed partial class IndexPage
     public IndexPage()
     {
         InitializeComponent();
-        _indexService = IndexDataService.Instance;
     }
 
 
@@ -63,7 +62,7 @@ public sealed partial class IndexPage
         var recommendations = await IndexDataService.GetRecommendationReadingAsync();
         if (recommendations == null)
         {
-            await App.Logger.WriteAsync("Index", "获取推荐阅读列表失败");
+            //await App.Logger.WriteAsync("Index", "获取推荐阅读列表失败");
             return;
         }
 

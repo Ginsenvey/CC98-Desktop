@@ -41,14 +41,10 @@ public sealed partial class SectionPage : Page
 
     private void BoardButton_Click(object sender, RoutedEventArgs e)
     {
-        var button = sender as Button;
+        var button = sender as HyperlinkButton;
         if(button?.Tag is int boardId)
         {
             Frame.Navigate(typeof(BoardPage), boardId);
-        }
-        else
-        {
-            Flower.Play(FlowStatus.Warning, button?.Tag.ToString()??"空");
         }
         
     }

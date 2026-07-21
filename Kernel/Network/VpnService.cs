@@ -39,7 +39,8 @@ public sealed partial class VpnService(IHttpClientFactory httpClientFactory,ICoo
     public string Domain { get; set; } = "webvpn.zju.edu.cn";
 
     public bool IsLoggedIn { get; set; }
-    public bool IsEnabled { get; set; }
+    //是否启用VPN应由启动应用时的网络状态决定
+    public bool IsEnabled { get; set; }=false;
 
     public string CaptchaValue { get; set; } = "";
     private string LastRandCode { get; set; } = "";
@@ -72,7 +73,7 @@ public sealed partial class VpnService(IHttpClientFactory httpClientFactory,ICoo
             throw new InvalidOperationException($"网络请求失败:{loginRes.StatusCode}");
         var result = await loginRes.Content.ReadFromJsonAsync(CC98JsonContext.Default.VpnLoginResult, cancellationToken);
         if (result == null) throw new InvalidOperationException("登录结果为空");
-        if (result.Success)
+        if (result.Success&& result.Status!=VpnLoginStatus.NeedConfirm)
         {
             cookieService.SaveCookieHeader($"https://{Domain}");
         }
@@ -194,21 +195,21 @@ public sealed partial class VpnService(IHttpClientFactory httpClientFactory,ICoo
                 //vpn过期时会返回非常长的html
                 if (resText.Length > 256)
                 {
-                    await App.Logger.WriteAsync("网络检查", "VPN凭据过期", $"{resText[..32]}");
+                    Debug.WriteLine("VPN凭据过期", $"{resText[..32]}");
                     return NetworkStatus.VpnDisabled;
                 }
 
-                await App.Logger.WriteAsync("网络检查", "镜像站返回了意外的内容。请查看正文", $"{resText}");
+                Debug.WriteLine("镜像站返回了意外的内容。请查看正文", $"{resText}");
                 return NetworkStatus.UnknownError;
             }
 
-            await App.Logger.WriteAsync("网络检查", "访问镜像站失败",
+           Debug.WriteLine("访问镜像站失败",
                 $"{response.StatusCode}:{response.ReasonPhrase ?? ""},响应正文{resText}");
             return NetworkStatus.MirrorError;
         }
         catch (Exception ex)
         {
-            await App.Logger.WriteAsync("网络检查", "错误", $"{ex.Message}");
+            Debug.WriteLine("错误", $"{ex.Message}");
             return NetworkStatus.NoConnection;
         }
     }

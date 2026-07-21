@@ -19,6 +19,7 @@ using CC98.Kernel.Network;
 using Microsoft.Extensions.DependencyInjection;
 using System.ComponentModel;
 using Windows.Media.Core;
+using System.Diagnostics;
 
 namespace CC98.Kernel;
 
@@ -53,7 +54,7 @@ public class ApiService(IHttpClientFactory httpClientFactory)
         }
         catch (Exception ex)
         {
-            await App.Logger.WriteAsync("Kernel", "其他错误", ex.Message);
+            Debug.WriteLine("Kernel", $"其他错误{ex.Message}");
             return ApiResponse<T>.Fail($"系统错误: {ex.Message}");
         }
     }
@@ -116,7 +117,7 @@ public class ApiService(IHttpClientFactory httpClientFactory)
         }
         catch (Exception ex)
         {
-            await App.Logger.WriteAsync("Kernel", "其他错误", ex.Message);
+            Debug.WriteLine("Kernel", $"其他错误{ex.Message}");
             return ApiResponse.Fail($"系统错误: {ex.Message}");
         }
     }
@@ -149,7 +150,7 @@ public class ApiService(IHttpClientFactory httpClientFactory)
         }
         catch (Exception ex)
         {
-            await App.Logger.WriteAsync("Kernel", "其他错误", ex.Message);
+            Debug.WriteLine("Kernel", $"其他错误{ex.Message}");
             return ApiResponse<T>.Fail($"系统错误: {ex.Message}");
         }
     }
@@ -179,7 +180,7 @@ public class ApiService(IHttpClientFactory httpClientFactory)
         }
         catch (Exception ex)
         {
-            await App.Logger.WriteAsync("Kernel", "其他错误", ex.Message);
+            Debug.WriteLine("Kernel", $"其他错误{ex.Message}");
             return null;
         }
     }
@@ -196,7 +197,7 @@ public class ApiService(IHttpClientFactory httpClientFactory)
         }
         catch(Exception ex)
         {
-            await App.Logger.WriteAsync("Kernel", "其他错误", ex.Message);
+            Debug.WriteLine("Kernel", $"其他错误{ex.Message}");
             return null;
         }
     }

@@ -390,7 +390,7 @@ public sealed partial class SketchPage : Page
         if (!res.IsSuccess)
         {
             status.Text = $"编辑失败:{res.Message}";
-            await App.Logger.WriteAsync("UBBEditor", "编辑帖子出错", res.Message);
+            //await App.Logger.WriteAsync("UBBEditor", "编辑帖子出错", res.Message);
         }
         else
         {
@@ -417,14 +417,14 @@ public sealed partial class SketchPage : Page
         {
             //
             status.Text = $"上传失败:{res.Message}";
-            await App.Logger.WriteAsync("UBBEditor", "上传文件失败", res.Message);
+            //await App.Logger.WriteAsync("UBBEditor", "上传文件失败", res.Message);
             return "";
         }
 
         var data = res.Data;
         if (data.Count > 0) return data[0];
 
-        await App.Logger.WriteAsync("UBBEditor", "上传文件出错", "服务器未返回文件地址");
+        //await App.Logger.WriteAsync("UBBEditor", "上传文件出错", "服务器未返回文件地址");
         return "";
     }
 
@@ -463,7 +463,7 @@ public sealed partial class SketchPage : Page
         }
         catch (Exception ex)
         {
-            await App.Logger.WriteAsync("UBBEditor", "文件上传出错", ex.Message);
+            //await App.Logger.WriteAsync("UBBEditor", "文件上传出错", ex.Message);
             status.Text = "上传失败:" + ex.Message;
         }
 
@@ -503,7 +503,7 @@ public sealed partial class SketchPage : Page
         {
             //
             status.Text = $"发送失败:{res.Message}";
-            await App.Logger.WriteAsync("UBBEditor", "发送回复出错", res.Message);
+            //await App.Logger.WriteAsync("UBBEditor", "发送回复出错", res.Message);
         }
         else
         {
@@ -539,7 +539,7 @@ public sealed partial class SketchPage : Page
         {
             //
             status.Text = $"发送新主题失败:{res.Message}";
-            await App.Logger.WriteAsync("UBBEditor", "发送新主题失败", res.Message);
+            //await App.Logger.WriteAsync("UBBEditor", "发送新主题失败", res.Message);
         }
         else
         {

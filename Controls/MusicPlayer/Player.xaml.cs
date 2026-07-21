@@ -131,7 +131,7 @@ public sealed partial class MusicPlayer : UserControl, IDisposable
         }
         catch (Exception ex)
         {
-            await App.Logger.WriteAsync("MusicPlayer", "初始化媒体出错", ex.Message);
+            Debug.WriteLine("MusicPlayer", $"初始化媒体出错{ex.Message}");
             ShowErrorMessage("播放失败");
         }
     }
