@@ -13,22 +13,26 @@
     Background="{ThemeResource DesktopAcrylicTransparentBrush}">
     <Page.Resources>
         <DataTemplate x:Key="BoardCase" x:DataType="obj:BoardInfo">
-            <HyperlinkButton Content="{x:Bind Name}" Padding="8" Tag="{x:Bind Id}" Click="BoardButton_Click"
-                             x:Name="BoardButton" BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}"
-                             BorderThickness="1" Margin="10,0,10,10" />
+            <HyperlinkButton Content="{x:Bind Name}" Padding="8" Tag="{x:Bind Id}" Click="BoardButton_Click" ToolTipService.ToolTip="{x:Bind Description}"
+                             x:Name="BoardButton"  Margin="10,0,10,10" />
         </DataTemplate>
         <DataTemplate x:Key="SectionCase" x:DataType="obj:SectionInfo">
-            <StackPanel Orientation="Vertical" CornerRadius="5"
-                        Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-                        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1"
-                        Margin="10,10,10,10" Padding="10">
-                <TextBlock Text="{x:Bind Name}" FontWeight="Bold" FontSize="16" Margin="12,0,12,12" />
-                <ItemsRepeater ItemTemplate="{StaticResource  BoardCase}" ItemsSource="{x:Bind Boards}">
-                    <ItemsRepeater.Layout>
-                        <UniformGridLayout ItemsJustification="Start" ItemsStretch="Fill" />
-                    </ItemsRepeater.Layout>
-                </ItemsRepeater>
-            </StackPanel>
+            <Expander HorizontalAlignment="Stretch" VerticalContentAlignment="Center">
+                <Expander.Header>
+                    <StackPanel Orientation="Horizontal" Spacing="15">
+                        <TextBlock Text="{x:Bind Name}" FontWeight="Bold" FontFamily="{StaticResource HarmonySansBold}"/>
+                        <TextBlock Text="{x:Bind SectionMasters}" Foreground="{StaticResource TextFillColorSecondaryBrush}" FontSize="12" VerticalAlignment="Center"/>
+                    </StackPanel>
+                    
+                </Expander.Header>
+                <Expander.Content>
+                    <ItemsRepeater ItemTemplate="{StaticResource  BoardCase}" ItemsSource="{x:Bind Boards}">
+                        <ItemsRepeater.Layout>
+                            <UniformGridLayout ItemsJustification="Start" ItemsStretch="Fill" />
+                        </ItemsRepeater.Layout>
+                    </ItemsRepeater>
+                </Expander.Content>
+            </Expander>
         </DataTemplate>
     </Page.Resources>
 
@@ -40,11 +44,11 @@
                 <RowDefinition Height="*" />
             </Grid.RowDefinitions>
             <TextBlock Grid.Row="0" Text="版面" FontWeight="Bold" FontSize="22" Margin="10" />
-            <ScrollViewer Grid.Row="1">
+            <ScrollViewer Grid.Row="1" Padding="10">
                 <ItemsRepeater x:Name="SectionPresenter" ItemsSource="{x:Bind AllSections}"
                                ItemTemplate="{StaticResource SectionCase}">
                     <ItemsRepeater.Layout>
-                        <StackLayout Orientation="Vertical" />
+                        <StackLayout Orientation="Vertical" Spacing="10"/>
                     </ItemsRepeater.Layout>
                 </ItemsRepeater>
             </ScrollViewer>

@@ -207,13 +207,6 @@ public sealed partial class SettingPage : Page
     }
 
 
-
-
-    private async void ExportLog_Click(object sender, RoutedEventArgs e)
-    {
-        
-    }
-
     
 }
 

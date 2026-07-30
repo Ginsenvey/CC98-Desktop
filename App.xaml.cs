@@ -1,5 +1,6 @@
 ﻿using CC98.Kernel;
 using CC98.Kernel.Authorize;
+using CC98.Kernel.Network;
 using CC98.Objects;
 using CC98.Services;
 using CC98.Services.Helpers;
@@ -59,7 +60,14 @@ public partial class App : Application
     public App()
     {
         InitializeComponent();
-        RegisterServices();
+        try
+        {
+            RegisterServices();
+        }
+        catch(Exception ex)
+        {
+            Debug.WriteLine(ex.Message);
+        }
     }
 
 
@@ -139,11 +147,29 @@ public partial class App : Application
                 //Cookie容器
                 var cookieContainer = new CookieContainer();
                 services.AddSingleton(cookieContainer);
-                
+                //VPN服务和委托处理器
+                services.AddSingleton<ICookieService, CookieService>();
+                services.AddSingleton<IVpnService, VpnService>();
                 services.AddTransient<TokenHandler>();
                 //Token服务
                 services.AddSingleton<ITokenService, TokenService>();
-               
+                //HTTP
+                services.AddHttpClient("VpnClient", client =>
+                {
+                    client.Timeout = TimeSpan.FromSeconds(10);
+                    client.BaseAddress = new Uri("https://webvpn.zju.edu.cn");
+                    client.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36");
+                    client.DefaultRequestHeaders.Connection.ParseAdd("keep-alive");
+                })
+                .ConfigurePrimaryHttpMessageHandler(() =>
+                {
+                    return new HttpClientHandler
+                    {
+                        Proxy = new WebProxy("127.0.0.1:9000"),
+                        CookieContainer = cookieContainer,
+                    };
+                })
+                .AddStandardResilienceHandler();
 
                 services.AddHttpClient("ForumClient", client =>
                 {
@@ -157,11 +183,13 @@ public partial class App : Application
                     client.Timeout = TimeSpan.FromSeconds(10);
                 })
                 .AddStandardResilienceHandler();
-
+                
                 //论坛登录服务
                 services.AddSingleton<LoginService>();
                 //主业务服务
                 services.AddSingleton<ApiService>();
+                //镜像站服务
+                services.AddSingleton<MirrorService>();
             })
             .Build();
         var tokenService = GetService<ITokenService>();

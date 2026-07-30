@@ -96,7 +96,7 @@ public enum ActiveMode
 public enum NetworkStatus
 {
     InCampus = 0, //在校园网内
-    NotInCampus = 1,//不在校园网小内
+    NotInCampus = 1,//不在校园网内
     NoConnection = 2, //无网络
     ConnectionFail=3,//连接失败
     MirrorError = 4, //IP被镜像站拦截访问

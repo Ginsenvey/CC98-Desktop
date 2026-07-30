@@ -76,7 +76,7 @@ public partial class BoardData : ObservableObject
     }
 
     // 计算属性
-    public string BoardMastersString => $"版主:{string.Join(",", BoardMasters)}";
+    public string BoardMastersString => $"版主:{string.Join(',', BoardMasters)}";
     public string TodayCountString => $"今日帖数：{TodayCount}";
     public string TopicCountString => $"总话题数：{TopicCount}";
 }

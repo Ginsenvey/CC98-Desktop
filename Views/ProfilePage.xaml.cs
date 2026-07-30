@@ -75,13 +75,7 @@ public sealed partial class ProfilePage : Page
         }
         if (result.StatusCode == (int)HttpStatusCode.BadRequest)
         {
-            var info = result.Data;
-            if (info == null)
-            {
-                SignStatus.Text = "签到失败";
-                SignStatusIcon.IconVariant = IconVariant.Regular;
-                return;
-            }
+            var info = result.Message;
             if (info == "has_signed_in_today")
             {
                 SignStatus.Text = "已签到";

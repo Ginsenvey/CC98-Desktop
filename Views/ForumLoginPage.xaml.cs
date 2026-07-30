@@ -118,7 +118,8 @@ namespace CC98.Views
 
         private async void CheckNetworkButton_Click(object sender, RoutedEventArgs e)
         {
-            var status = await MirrorService.CheckNetworkAsync();
+            var mirrorService = App.Current.GetService<MirrorService>();
+            var status = await mirrorService.CheckNetworkAsync();
             ErrorBox.Content= MirrorService.FriendlyStatus(status);
             ErrorBox.IsOpen = true;
         }

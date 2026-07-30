@@ -90,15 +90,16 @@ public sealed partial class FileCard : UserControl
         try
         {
             var uri = new Uri(url);
-            var fileName = Path.GetFileName(uri.LocalPath);
+            var fileName = Path.GetFileNameWithoutExtension(uri.LocalPath);
+   
             // 如果文件名无效，生成默认文件名
-            if (string.IsNullOrEmpty(fileName) || !fileName.Contains('.')) fileName = $"CC{DateTime.Now:MMdd_HHmm}.pdf";
+            if (string.IsNullOrEmpty(fileName)) fileName = $"CC{DateTime.Now:MMdd_HHmm}";
 
             return fileName;
         }
         catch
         {
-            return $"CC{DateTime.Now:MMdd_HHmm}.pdf";
+            return $"CC{DateTime.Now:MMdd_HHmm}";
         }
     }
 

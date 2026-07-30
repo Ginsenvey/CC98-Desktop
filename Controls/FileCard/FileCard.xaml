@@ -9,7 +9,7 @@
     xmlns:ic="using:FluentIcons.WinUI"
     mc:Ignorable="d">
 
-    <HyperlinkButton x:Name="Root" MaxWidth="270" Height="84" Padding="15,6,15,6"
+    <HyperlinkButton x:Name="Root" MaxWidth="270" Height="84" Padding="15,6,15,6" BorderBrush="{StaticResource DividerStrokeColorDefaultBrush}"
                      Background="{ThemeResource CardGradient1Brush}" Click="Root_Click" ToolTipService.ToolTip="点击下载附件">
         <Grid RowSpacing="16" ColumnSpacing="16" HorizontalAlignment="Stretch">
             <Grid.ColumnDefinitions>

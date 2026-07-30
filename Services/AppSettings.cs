@@ -16,7 +16,7 @@ public sealed partial class AppSettings : INotifyPropertyChanged
     private ApplicationDataContainer LocalSettings => ApplicationData.Current.LocalSettings;
     public static AppSettings Current { get; } = new();
 
-    private T? GetValue<T>(string key)
+    private T? GetValue<T>(string key, T? defaultValue = default)
     {
         if (LocalSettings.Values.TryGetValue(key, out var value) && value is T propertyValue)
         {
@@ -24,7 +24,8 @@ public sealed partial class AppSettings : INotifyPropertyChanged
         }
         else
         {
-            return default;
+            
+            return defaultValue;
         }
     }
     private bool SetValue(string key, object value)
@@ -57,7 +58,7 @@ public sealed partial class AppSettings : INotifyPropertyChanged
     }
     public bool ShowBigPaper
     {
-        get => GetValue<bool>(nameof(ShowBigPaper));
+        get => GetValue<bool>(nameof(ShowBigPaper), true);
         set=> SetValue(nameof(ShowBigPaper), value);
     }
     public bool IsActive
@@ -120,11 +121,10 @@ public sealed partial class AppSettings : INotifyPropertyChanged
         get => GetValue<string>(nameof(Portrait)) ?? string.Empty;
         set => SetValue(nameof(Portrait), value);
     }
-    //开发者模式，禁用网络检查
-    public string DevelopMode
+    public bool IsVpnEnabled
     {
-        get => GetValue<string>(nameof(DevelopMode)) ?? string.Empty;
-        set => SetValue(nameof(DevelopMode), value);
+        get => GetValue<bool>(nameof(IsVpnEnabled));
+        set => SetValue(nameof(IsVpnEnabled), value);
     }
     public DateTime TokenExpireAt
     {

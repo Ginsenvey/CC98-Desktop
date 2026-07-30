@@ -1,4 +1,6 @@
-﻿using System;
+﻿using CC98.Kernel.Network;
+using CC98.Services;
+using System;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -12,12 +14,22 @@ namespace CC98.Kernel.Authorize;
 /// <summary>
 /// 提供基于 VPN 服务的 HTTP 请求转发工具。
 /// </summary>
-public partial class TokenHandler(ITokenService tokenService) : DelegatingHandler
+public partial class TokenHandler(IVpnService vpnService, ITokenService tokenService, ICookieService cookieService) : DelegatingHandler
 {
     private readonly SemaphoreSlim refreshLock = new(1, 1);
     protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
     {
-        
+        if (AppSettings.Current.IsVpnEnabled)
+        {
+            var targetUrl = vpnService.ConvertUrl(request.RequestUri!.ToString());
+            request.RequestUri = new Uri(targetUrl);
+
+            var cookieHeader = cookieService.GetCookieHeader($"https://{vpnService.Domain}");
+            if (!string.IsNullOrEmpty(cookieHeader))
+            {
+                request.Headers.TryAddWithoutValidation("Cookie", cookieHeader);
+            }
+        }
         //添加Bearer Token
         request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", tokenService.AccessToken);
 

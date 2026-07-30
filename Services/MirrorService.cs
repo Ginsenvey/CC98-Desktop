@@ -11,20 +11,17 @@ namespace CC98.Services;
 /// <summary>
 /// 与浙江大学镜像站通信，判断当前是否需要使用VPN服务的类
 /// </summary>
-public class MirrorService()
+public class MirrorService(IHttpClientFactory httpClientFactory)
 {
     private const string MirrorUrl = "https://mirrors.zju.edu.cn/api/is_campus_network";
     /// <summary>
     /// 检查是否内网环境。
     /// </summary>
-    /// <param name="useVpn"></param>
-    /// <param name="cancellationToken"></param>
-    /// <returns></returns>
-    public static async Task<NetworkStatus> CheckNetworkAsync(CancellationToken cancellationToken = default)
+    public async Task<NetworkStatus> CheckNetworkAsync(CancellationToken cancellationToken = default)
     {
         try
         {
-            using var httpClient = new HttpClient();
+            var httpClient = httpClientFactory.CreateClient("ForumClient");
             var response = await httpClient.GetAsync(MirrorUrl, cancellationToken);
             var resText = await response.Content.ReadAsStringAsync(cancellationToken);
             if (response.IsSuccessStatusCode)

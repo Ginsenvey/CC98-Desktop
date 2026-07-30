@@ -1,4 +1,5 @@
-﻿using System;
+﻿using CC98.Kernel.Network;
+using System;
 using System.Collections.Generic;
 using System.Text.Json.Serialization;
 
@@ -44,6 +45,7 @@ namespace CC98.Objects;
 [JsonSerializable(typeof(Rating))]
 [JsonSerializable(typeof(RatingReason))]
 [JsonSerializable(typeof(WealthTransferMessage))]
+[JsonSerializable(typeof(VpnLoginResult))]
 [JsonSerializable(typeof(BrowsingRecord))]
 [JsonSerializable(typeof(PrivateMessage))]
 [JsonSerializable(typeof(Dictionary<int,string>))]

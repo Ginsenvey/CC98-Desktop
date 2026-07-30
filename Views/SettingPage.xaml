@@ -169,7 +169,6 @@
                                 <HyperlinkButton Content="FluentIcons" />
                                 <HyperlinkButton Content="Windows App SDK" />
                                 <HyperlinkButton Content="HtmlAgilityPack" />
-                                <HyperlinkButton Content="ZJU-WebVPN" />
                                 <HyperlinkButton Content="IdentityModel" />
                             </tool:WrapPanel>
                         </tool:SettingsCard>
@@ -198,18 +197,6 @@
                         <tool:SettingsCard Padding="20" HorizontalContentAlignment="Left">
                             <TextBlock TextWrapping="Wrap" IsTextSelectionEnabled="True" x:Name="LocalSet" />
                         </tool:SettingsCard>
-                    </tool:SettingsExpander.Items>
-                </tool:SettingsExpander>
-
-                <tool:SettingsExpander Header="管理程序日志">
-                    <tool:SettingsExpander.HeaderIcon>
-                        <ic:SymbolIcon Symbol="Bug" />
-                    </tool:SettingsExpander.HeaderIcon>
-                    <tool:SettingsExpander.Items>
-                        <tool:SettingsCard Header="导出日志到桌面">
-                            <HyperlinkButton Content="开始" x:Name="ExportLog" Click="ExportLog_Click" />
-                        </tool:SettingsCard>
-                        <tool:SettingsCard Header="清理日志" />
                     </tool:SettingsExpander.Items>
                 </tool:SettingsExpander>
             </StackPanel>

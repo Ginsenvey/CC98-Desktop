@@ -13,11 +13,13 @@ using System.Net.Http;
 
 namespace CC98.Services.Helpers;
 
-
+/// <summary>
+/// 提供与 URL 相关的扩展方法、正则表达式。
+/// </summary>
 public static partial class UrlEx
 {
     /// <summary>
-    ///     判断是否是 Web URL 的正则表达式。
+    /// 判断是否是 Web URL 的正则表达式。
     /// </summary>
     [GeneratedRegex(@"^http(s)?\://", RegexOptions.IgnoreCase | RegexOptions.Singleline)]
     private static partial Regex WebUriRegex { get; }

@@ -23,7 +23,8 @@ public class LoginService(IHttpClientFactory httpClientFactory,ITokenService tok
     /// <returns></returns>
     public async Task<TokenResponse?> LoginWithPasswordAsync(string userName, string password, CancellationToken cancellationToken=default)
     {
-        var httpClient = httpClientFactory.CreateClient("IdentityServer");
+        //密码登录可能需要VPN，使用TokenHandler
+        var httpClient = httpClientFactory.CreateClient("ForumClient");
         var response = await httpClient.RequestPasswordTokenAsync(new PasswordTokenRequest
         {
             Address = ApiEndpoints.OpenId.TokenEndpoint(),

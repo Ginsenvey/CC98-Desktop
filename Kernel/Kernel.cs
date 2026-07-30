@@ -66,7 +66,7 @@ public class ApiService(IHttpClientFactory httpClientFactory)
         try
         {
             var res = await httpClient.PutAsync(endpoint, content, cancellationToken);
-            var json = await res.Content.ReadAsStringAsync();
+            var json = await res.Content.ReadAsStringAsync(cancellationToken);
             return res.IsSuccessStatusCode
                 ? ApiResponse.Success(json)
                 : ApiResponse.Fail((res.ReasonPhrase ?? "响应失败") + ":" + json, (int)res.StatusCode);
@@ -97,7 +97,7 @@ public class ApiService(IHttpClientFactory httpClientFactory)
         try
         {
             var res = await httpClient.DeleteAsync(endpoint, cancellationToken);
-            var json = await res.Content.ReadAsStringAsync();
+            var json = await res.Content.ReadAsStringAsync(cancellationToken);
             return res.IsSuccessStatusCode
                 ? ApiResponse.Success(json)
                 : ApiResponse.Fail((res.ReasonPhrase ?? "响应失败") + ":" + json, (int)res.StatusCode);
@@ -157,16 +157,19 @@ public class ApiService(IHttpClientFactory httpClientFactory)
     public static async Task<ApiResponse<T>> Deserialize<T>(HttpResponseMessage res,
         CancellationToken cancellationToken = default)
     {
-        if (!res.IsSuccessStatusCode) return ApiResponse<T>.Fail(res.ReasonPhrase ?? "响应失败", (int)res.StatusCode);
-
         try
         {
+            if (!res.IsSuccessStatusCode)
+            {
+                var errorContent = await res.Content.ReadAsStringAsync(cancellationToken);
+                return ApiResponse<T>.Fail(errorContent??"响应失败", (int)res.StatusCode);
+            }
             var obj = await res.Content.ReadFromJsonAsync(typeof(T), CC98JsonContext.Default, cancellationToken);
             return ApiResponse<T>.Success((T?)obj!);
         }
         catch (JsonException ex)
         {
-            return ApiResponse<T>.Fail(ex.Message);
+            return ApiResponse<T>.Fail(ex.Message, (int)res.StatusCode);
         }
     }
 

@@ -13,8 +13,10 @@
     xmlns:obj="using:CC98.Objects"
     xmlns:picture="using:CC98.Controls.Picture"
     xmlns:infoFlower="using:CC98.Controls.InfoFlower"
+    xmlns:sv="using:CC98.Services"
     SystemBackdrop="{ThemeResource AcrylicBackgroundFillColorDefaultBackdrop}">
-
+    
+    
     <Grid x:Name="RootGrid" UseLayoutRounding="True">
         <Grid.RowDefinitions>
             <RowDefinition Height="48" />
@@ -33,13 +35,25 @@
                 <ColumnDefinition Width="155" />
 
             </Grid.ColumnDefinitions>
+            <ContentDialog x:Name="VPNConfigDialog" Title="配置VPN" Closed="VPNConfigDialog_Closed">
+                <StackPanel Orientation="Vertical" Spacing="10">
+                    <TextBlock x:Name="ErrorBox" FontSize="12" Foreground="Red" />
+                    <TextBox x:Name="VPNUsername" Header="用户名" PlaceholderText="请输入用户名"></TextBox>
+                    <PasswordBox x:Name="VPNPassword" Header="密码" PlaceholderText="请输入密码"/>
+                    <Grid>
+                        <Button Content="连接" Click="VPNConfigSave_Click" HorizontalAlignment="Left"/>
+                        <Button Content="取消" x:Name="VPNCancel" Click="VPNConfigCancel_Click" HorizontalAlignment="Right"/>
+                    </Grid>
+                    
+                </StackPanel>
+            </ContentDialog>
             <Image Grid.Column="0" Source="/Assets/back.png" Width="28" VerticalAlignment="Center" Margin="5,0,0,3" />
             <Button Grid.Column="1" Width="41" Height="37" Background="Transparent" BorderThickness="0"
                     Margin="3,0,0,0" x:Name="Back" Click="Back_Click" PointerEntered="Back_PointerEntered"
                     PointerExited="Back_PointerExited">
                 <AnimatedIcon x:Name="BackIcon">
                     <AnimatedIcon.Source>
-                        <animatedvisuals:AnimatedBackVisualSource />
+                        <animatedvisuals:AnimatedBackVisualSource/>
                     </AnimatedIcon.Source>
                     <AnimatedIcon.FallbackIconSource>
                         <SymbolIconSource Symbol="Back" />
@@ -58,6 +72,11 @@
                     </AnimatedIcon.FallbackIconSource>
                 </AnimatedIcon>
             </Button>
+            <Grid x:Name="UserArea" Grid.Column="4"/>
+            <ToggleButton x:Name="VPNButton" Grid.Column="3" Width="41" Height="37"  BorderThickness="0" Margin="3,0,0,0"  Checked="ToggleButton_Checked" IsChecked="{x:Bind sv:AppSettings.Current.IsVpnEnabled,Mode=TwoWay}">
+                <ic:SymbolIcon Symbol="Remote" FontSize="14"></ic:SymbolIcon>
+            </ToggleButton>
+            <TextBlock Grid.Column="4" Text="CC98 Desktop" x:Name="de" Margin="10,0,5,0" HorizontalAlignment="Left" VerticalAlignment="Center" FontSize="15" />
             <Button Grid.Column="5" HorizontalAlignment="Right" Width="30" Height="30" BorderThickness="0"
                     Background="Transparent" VerticalAlignment="Center" x:Name="Me" CornerRadius="9999" Padding="0"
                     RenderTransformOrigin="0.5,0.5" PointerEntered="Me_PointerEntered" PointerExited="Me_PointerExited"
@@ -68,9 +87,7 @@
                     <ScaleTransform ScaleX="1" ScaleY="1" x:Name="PortScaleTransform" />
                 </Button.RenderTransform>
             </Button>
-            <TextBlock Grid.Column="4" Text="CC98 Desktop" x:Name="de" Margin="10,0,5,0" HorizontalAlignment="Left"
-                       VerticalAlignment="Center" FontSize="15" />
-            <Grid x:Name="UserArea" Grid.Column="3" Grid.ColumnSpan="2" />
+            
         </Grid>
 
 
