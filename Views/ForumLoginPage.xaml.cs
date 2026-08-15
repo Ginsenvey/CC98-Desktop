@@ -41,10 +41,7 @@ namespace CC98.Views
         }
       
 
-        private async void Page_Loaded(object sender, RoutedEventArgs e)
-        {
-             
-        }
+
 
         private async void LoginButton_Click(object sender, RoutedEventArgs e)
         {
@@ -61,6 +58,7 @@ namespace CC98.Views
                 PasswordBox.PlaceholderText = "用户名和密码不可为空";
                 return;
             }
+            
             VisualStateManager.GoToState(this, "Logging", true);
             await LoginAsync(userName, password);
         }
@@ -74,24 +72,24 @@ namespace CC98.Views
                 if (res != null && res.IsError)
                 {
                     //
-                    ErrorBox.Content = res.Error ?? res.ErrorDescription;
+                    ErrorBox.Title = res.Error ?? res.ErrorDescription;
                     VisualStateManager.GoToState(this, "Fail", true);
                     return;
                 }
                 //登录成功
                 AppSettings.Current.ActiveMode = (int)ActiveMode.Password;
                 AppSettings.Current.IsActive = true;
-                await LaunchApp();
+                LaunchApp();
 
             }
             catch (Exception ex)
             {
-                ErrorBox.Content = ex.Message;
+                ErrorBox.Title = ex.Message;
                 VisualStateManager.GoToState(this, "Fail", true);
                 //记录异常
             }
         }
-        private async Task LaunchApp()
+        private static void LaunchApp()
         {
             try
             {
@@ -108,7 +106,7 @@ namespace CC98.Views
 
         private void ErrorBox_Closed(TeachingTip sender, TeachingTipClosedEventArgs args)
         {
-            ErrorBox.Content = "";
+            ErrorBox.Title = "";
         }
 
         private void OpenIdLoginButton_Click(object sender, RoutedEventArgs e)
@@ -120,7 +118,7 @@ namespace CC98.Views
         {
             var mirrorService = App.Current.GetService<MirrorService>();
             var status = await mirrorService.CheckNetworkAsync();
-            ErrorBox.Content= MirrorService.FriendlyStatus(status);
+            ErrorBox.Title= MirrorService.FriendlyStatus(status);
             ErrorBox.IsOpen = true;
         }
     }

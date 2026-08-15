@@ -52,7 +52,7 @@ public class TokenService(IHttpClientFactory httpClientFactory,AppConfig appConf
     public async Task<TokenResponse?> GetNewTokenAsync(CancellationToken cancellationToken = default)
     {
 
-        var httpClient = httpClientFactory.CreateClient("IdentityServer");
+        var httpClient = httpClientFactory.CreateClient("IdentityClient");
         var response= await httpClient.RequestRefreshTokenAsync(new RefreshTokenRequest
         {
             Address = ApiEndpoints.OpenId.TokenEndpoint(),

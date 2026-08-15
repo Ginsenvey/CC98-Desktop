@@ -124,7 +124,7 @@ public sealed partial class FollowPage : Page
         var f = m?.DataContext as Friend;
         if (f == null) return;
         var c = new ChatInfo { UserId = f.Id, Name = f.Name, PortraitUrl = f.PortraitUrl };
-        var param = new MessageNavigationInfo { HasTarget = true, ChatUserInfo = c };
+        var param = new ChatNavigationInfo { HasTarget = true, ChatUserInfo = c };
         Frame.Navigate(typeof(MessagePage), param);
     }
 

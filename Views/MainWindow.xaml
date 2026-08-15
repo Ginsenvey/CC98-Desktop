@@ -18,6 +18,7 @@
     
     
     <Grid x:Name="RootGrid" UseLayoutRounding="True">
+       
         <Grid.RowDefinitions>
             <RowDefinition Height="48" />
             <RowDefinition Height="*" />
@@ -73,8 +74,8 @@
                 </AnimatedIcon>
             </Button>
             <Grid x:Name="UserArea" Grid.Column="4"/>
-            <ToggleButton x:Name="VPNButton" Grid.Column="3" Width="41" Height="37"  BorderThickness="0" Margin="3,0,0,0"  Checked="ToggleButton_Checked" IsChecked="{x:Bind sv:AppSettings.Current.IsVpnEnabled,Mode=TwoWay}">
-                <ic:SymbolIcon Symbol="Remote" FontSize="14"></ic:SymbolIcon>
+            <ToggleButton x:Name="VpnButton" Grid.Column="3" Width="41" Height="37"  BorderThickness="0" Background="Transparent" Margin="3,0,0,0" Click="VpnButton_Click">
+                <ic:SymbolIcon Symbol="Remote" FontSize="14" ></ic:SymbolIcon>
             </ToggleButton>
             <TextBlock Grid.Column="4" Text="CC98 Desktop" x:Name="de" Margin="10,0,5,0" HorizontalAlignment="Left" VerticalAlignment="Center" FontSize="15" />
             <Button Grid.Column="5" HorizontalAlignment="Right" Width="30" Height="30" BorderThickness="0"
@@ -82,7 +83,7 @@
                     RenderTransformOrigin="0.5,0.5" PointerEntered="Me_PointerEntered" PointerExited="Me_PointerExited"
                     PointerPressed="Me_PointerPressed" PointerReleased="Me_PointerReleased"
                     PointerCanceled="Me_PointerCanceled" Click="Me_Click">
-                <picture:Picture x:Name="MyPicture" LoadImageCallback="{StaticResource PortraitLoader}" />
+                <picture:Picture x:Name="MyPicture" Src="{x:Bind sv:AppSettings.Current.Portrait,Mode=TwoWay}" LoadImageCallback="{StaticResource PortraitLoader}" />
                 <Button.RenderTransform>
                     <ScaleTransform ScaleX="1" ScaleY="1" x:Name="PortScaleTransform" />
                 </Button.RenderTransform>

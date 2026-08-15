@@ -15,7 +15,7 @@ public partial class IndexTopic : ObservableObject
 {
     public string Title
     {
-        get => field ?? string.Empty;
+        get => field?.Trim() ?? string.Empty;
         set => SetProperty(ref field, value);
     }
 

@@ -149,14 +149,16 @@ public partial class App : Application
                 services.AddSingleton(cookieContainer);
                 //VPN服务和委托处理器
                 services.AddSingleton<ICookieService, CookieService>();
-                services.AddSingleton<IVpnService, VpnService>();
-                services.AddTransient<TokenHandler>();
                 //Token服务
                 services.AddSingleton<ITokenService, TokenService>();
-                //HTTP
+                services.AddSingleton<IVpnService, VpnService>();
+                services.AddTransient<VpnMessageHandler>();
+                services.AddTransient<TokenHandler>();
+                
+                //HttpClient,用于VPN连接
                 services.AddHttpClient("VpnClient", client =>
                 {
-                    client.Timeout = TimeSpan.FromSeconds(10);
+                    client.Timeout = TimeSpan.FromSeconds(5);
                     client.BaseAddress = new Uri("https://webvpn.zju.edu.cn");
                     client.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36");
                     client.DefaultRequestHeaders.Connection.ParseAdd("keep-alive");
@@ -165,25 +167,26 @@ public partial class App : Application
                 {
                     return new HttpClientHandler
                     {
-                        Proxy = new WebProxy("127.0.0.1:9000"),
                         CookieContainer = cookieContainer,
                     };
-                })
-                .AddStandardResilienceHandler();
+                });
 
+                //用于论坛业务
                 services.AddHttpClient("ForumClient", client =>
                 {
-                    client.Timeout = TimeSpan.FromSeconds(10);
+                    client.Timeout = TimeSpan.FromSeconds(5);
                 })
+                .AddHttpMessageHandler<VpnMessageHandler>()
                 .AddHttpMessageHandler<TokenHandler>()
                 .AddStandardResilienceHandler();
-
-                services.AddHttpClient("IdentityServer", client =>
+                //用于认证
+                services.AddHttpClient("IdentityClient", client =>
                 {
-                    client.Timeout = TimeSpan.FromSeconds(10);
+                    client.Timeout = TimeSpan.FromSeconds(5);
                 })
+                .AddHttpMessageHandler<VpnMessageHandler>()
                 .AddStandardResilienceHandler();
-                
+
                 //论坛登录服务
                 services.AddSingleton<LoginService>();
                 //主业务服务
@@ -241,7 +244,6 @@ public partial class App : Application
                 ShowAppNotification("登录失败", res.ErrorDescription ?? res.Error?? "未知错误");
                 return false;
             }
-            AppSettings.Current.UserName = res.User.Identity?.Name ?? "";
             ShowAppNotification("登录成功", $"欢迎回家~{res.User.Identity?.Name}前辈");
             return true;
         }

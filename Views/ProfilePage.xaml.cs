@@ -171,7 +171,7 @@ public sealed partial class ProfilePage : Page
     private void StartChat_Click(object sender, RoutedEventArgs e)
     {
         var c = new ChatInfo { UserId = UserProfile.Id, Name = UserProfile.Name, PortraitUrl = UserProfile.PortraitUrl };
-        var param = new MessageNavigationInfo { ChatUserInfo = c, HasTarget = true };
+        var param = new ChatNavigationInfo { ChatUserInfo = c, HasTarget = true };
         Frame.Navigate(typeof(MessagePage), param);
     }
 

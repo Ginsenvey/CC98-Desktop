@@ -45,9 +45,6 @@ public sealed partial class VpnService(IHttpClientFactory httpClientFactory, ICo
 
     public async Task<VpnLoginResult?> LoginAsync(string userName, string password, CancellationToken cancellationToken = default)
     {
-        //TODO：
-        //异常传播到调用方
-
         if (CaptchaValue == "") await UpdateCodeCoreAsync(cancellationToken);
         var csrf = LastRandCode;
         var captchaId = LastCaptchaId;

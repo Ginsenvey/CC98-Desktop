@@ -8,6 +8,7 @@ using CC98.Services.Helpers;
 using CSharpMath;
 using DevWinUI;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.UI;
 using Microsoft.UI.Composition.SystemBackdrops;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
@@ -54,7 +55,6 @@ public sealed partial class MainWindow : Window
     public GlobalService GlobalService = GlobalService.Instance;
     //需要迁移到新的存取关注版面的方式
     public Dictionary<int, string> Memory = [];
-    public ApplicationDataContainer Set = ApplicationData.Current.LocalSettings;
 
     public ObservableCollection<CategoryBase> MenuItems { get; } = [];
     public ObservableCollection<CategoryBase> FooterMenuItems { get; } = [];
@@ -115,6 +115,7 @@ public sealed partial class MainWindow : Window
         var files = Directory.GetFiles(themesPath, "*.jpg", SearchOption.AllDirectories);
         var file = files[0];
         //加载到FlipView
+        AppSettings.Current.IsVpnEnabled = false;
     }
 
     private async void PrepareContent()
@@ -131,18 +132,19 @@ public sealed partial class MainWindow : Window
     private async Task LoadPortrait()
     {
         var portraitUrl = AppSettings.Current.Portrait;
-        if (string.IsNullOrEmpty(portraitUrl))
+        var userId = AppSettings.Current.UserId;
+
+        if (string.IsNullOrEmpty(portraitUrl) || userId == 0)
         {
-            var profileUrl = ApiEndpoints.User.UserProfile(true, 0);
+            var profileUrl = ApiEndpoints.User.UserProfile(true);
             var profileResult = await ApiService.Fetch<UserInfo>(profileUrl);
             if (!profileResult.IsSuccess) return;
             var data = profileResult.Data;
-            portraitUrl = data.PortraitUrl;
             AppSettings.Current.Portrait = data.PortraitUrl;
+            AppSettings.Current.UserId = data.Id;
         }
-        MyPicture.Src = portraitUrl;
     }
-
+   
     private void OnNavigationItemAdded(NavigationItem item)
     {
         //检查导航栏中是否已经存在相同Tag的项，如果存在则不添加
@@ -241,7 +243,7 @@ public sealed partial class MainWindow : Window
                 IsEditable = true
             });
             var boardjsontext = SerializationHelper.TrySerialize(Memory);
-            Set.Values["CustomBoards"] = boardjsontext;
+            AppSettings.Current.CustomBoards = boardjsontext;
         }
         else
         {
@@ -384,7 +386,7 @@ public sealed partial class MainWindow : Window
                 ContentFrame.Navigate(typeof(SettingPage));
                 break;
             case "Message":
-                var param = new MessageNavigationInfo { HasTarget = false };
+                var param = new ChatNavigationInfo { HasTarget = false };
                 ContentFrame.Navigate(typeof(MessagePage), param);
                 break;
             case "Focus":
@@ -479,16 +481,7 @@ public sealed partial class MainWindow : Window
         var param = new ProfileNavigationInfo { IsMe = true };
         ContentFrame.Navigate(typeof(ProfilePage), param);
     }
-    private async void ToggleButton_Checked(object sender, RoutedEventArgs e)
-    {
-        
-        if (VPNButton.IsChecked == true)
-        {
-            //检查VPN状态，如果未保存过凭据，则触发登录流程
-            await CheckVpnStatus();
-        }
-        //如果是打算关闭VPN，无需做其他事情
-    }
+    
 
     //本方法只控制全局状态记忆类的参量，而不更改导航栈本身的导航参数
     private void ContentFrame_Navigating(object sender, NavigatingCancelEventArgs e)
@@ -497,6 +490,20 @@ public sealed partial class MainWindow : Window
         var fromPage = currentPage.GetType();
         var toPage = e.SourcePageType;
         GlobalService.ShouldReplaceNavigationArgs = e.NavigationMode == NavigationMode.Back && _rules.Contains((fromPage, toPage));
+    }
+
+    private async void VpnButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (VpnButton.IsChecked==false)
+        {
+            Flower.Play(FlowStatus.Info, "VPN已断开");
+        }
+        else
+        {
+            VpnButton.IsChecked = false;
+            await CheckVpnStatus();
+        }
+
     }
     private async void VPNConfigSave_Click(object sender, RoutedEventArgs e)
     {
@@ -512,6 +519,8 @@ public sealed partial class MainWindow : Window
         {
             PasswordManager.SavePassword(userName, "VpnUserName");
             PasswordManager.SavePassword(password, "VpnPassWord");
+            VpnButton.IsChecked=true;
+            AppSettings.Current.IsVpnEnabled=true;
             VPNConfigDialog.Hide();
             Flower.Play(FlowStatus.Success, "已保存凭据并启用VPN");
         }
@@ -592,6 +601,7 @@ public sealed partial class MainWindow : Window
         }
         else
         {
+            VpnButton.IsChecked = true;
             Flower.Play(FlowStatus.Success, "VPN连接成功");
             return true;
         }
@@ -616,12 +626,14 @@ public sealed partial class MainWindow : Window
         else
         {
             //尝试使用Cookie
+            AppSettings.Current.IsVpnEnabled = true;
             var mirrorService = App.Current.GetService<MirrorService>();
             var networkStatus = await mirrorService.CheckNetworkAsync();
             //如果有效，通知连接成功
             if (networkStatus == NetworkStatus.InCampus)
             {
                 //
+                VpnButton.IsChecked= true;
                 Flower.Play(FlowStatus.Success, "VPN连接成功");
             }
             else if (networkStatus == NetworkStatus.NotInCampus)
@@ -632,7 +644,7 @@ public sealed partial class MainWindow : Window
             {
                 //其他错误，提示用户
                 AppSettings.Current.IsVpnEnabled = false;
-                Flower.Play(FlowStatus.Fail, "VPN连接失败，请检查网络后重试");
+                Flower.Play(FlowStatus.Fail, $"VPN连接失败{networkStatus}");
             }
         }
         
@@ -651,8 +663,8 @@ public sealed partial class MainWindow : Window
         var res = await vpnService.LoginAsync(userName, password);
         if (res == null)
         {
-            //请用户重试，取消按钮的指示色
-            VPNButton.IsChecked = false;
+            //请用户重试
+            AppSettings.Current.IsVpnEnabled=false;
             Flower.Play(FlowStatus.Fail, "VPN连接失败，请检查网络后重试");
             return;
         }
@@ -660,6 +672,7 @@ public sealed partial class MainWindow : Window
         if (res.Status == VpnLoginStatus.Success)
         {
             //通知连接成功
+            VpnButton.IsChecked = true;
             Flower.Play(FlowStatus.Success, "VPN连接成功");
             return;
         }
@@ -676,25 +689,6 @@ public sealed partial class MainWindow : Window
             Flower.Play(FlowStatus.Fail, "VPN套餐过期或密码已错误，请重新登录");
         }
     }
-
-    #region 辅助方法
-
-    private void Logout()
-    {
-        //清除凭据
-        PasswordManager.ClearAllPasswords("Access");
-        PasswordManager.ClearAllPasswords("Refresh");
-        Set.Values["Portrait"] = "0";
-        Set.Values["IsActive"] = "0";
-        //退出，重启
-        AppInstance.Restart("");
-    }
-
-
-
-
-
-    #endregion
 
     
 }

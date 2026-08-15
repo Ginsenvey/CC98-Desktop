@@ -12,24 +12,13 @@ using System.Threading.Tasks;
 
 namespace CC98.Kernel.Authorize;
 /// <summary>
-/// 提供基于 VPN 服务的 HTTP 请求转发工具。
+/// 提供鉴权服务服务的 HTTP 请求转发工具。
 /// </summary>
-public partial class TokenHandler(IVpnService vpnService, ITokenService tokenService, ICookieService cookieService) : DelegatingHandler
+public partial class TokenHandler(ITokenService tokenService) : DelegatingHandler
 {
     private readonly SemaphoreSlim refreshLock = new(1, 1);
     protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
     {
-        if (AppSettings.Current.IsVpnEnabled)
-        {
-            var targetUrl = vpnService.ConvertUrl(request.RequestUri!.ToString());
-            request.RequestUri = new Uri(targetUrl);
-
-            var cookieHeader = cookieService.GetCookieHeader($"https://{vpnService.Domain}");
-            if (!string.IsNullOrEmpty(cookieHeader))
-            {
-                request.Headers.TryAddWithoutValidation("Cookie", cookieHeader);
-            }
-        }
         //添加Bearer Token
         request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", tokenService.AccessToken);
 
@@ -78,7 +67,7 @@ public partial class TokenHandler(IVpnService vpnService, ITokenService tokenSer
         // 复制 Content
         if (request.Content != null)
         {
-            var contentStream = await request.Content.ReadAsStreamAsync();
+            var contentStream = await request.Content.ReadAsStreamAsync(cancellationToken);
             var memoryStream = new MemoryStream();
             await contentStream.CopyToAsync(memoryStream);
             memoryStream.Position = 0;

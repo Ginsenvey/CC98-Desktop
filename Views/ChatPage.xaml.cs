@@ -30,8 +30,6 @@ public sealed partial class ChatPage : Page
     public ApiService ApiService = App.Current.GetService<ApiService>();
     public int CurrentUserId;
 
-    //是否来自Profile页面的私信跳转功能
-    public bool HasTarget;
     public ObservableCollection<ChatMessage> Messages = [];
     public ChatInfo TargetUserInfo = new();
     public Increment UserIncrement = new();
@@ -44,20 +42,19 @@ public sealed partial class ChatPage : Page
     protected override async void OnNavigatedTo(NavigationEventArgs e)
     {
         base.OnNavigatedTo(e);
-        var args = e.TryGetParameter<MessageNavigationInfo>();
-        if (args == null) return;
-        HasTarget = args.HasTarget;
-        if (HasTarget) //由私信功能跳转
+        var args = e.TryGetParameter<ChatNavigationInfo>();
+        await GetRecent();
+
+        if (args != null && args.HasTarget) //由私信功能跳转
         {
             var info = args.ChatUserInfo;
             if (info != null) TargetUserInfo = info; //获取要私信的对象
-        }
-
-        await GetRecent();
-        if (HasTarget)
             StartChat();
+        }
         else
+        {
             UserList.SelectedIndex = 0;
+        }
     }
 
     //用于添加目标用户到聊天列表，并执行选中
@@ -156,7 +153,7 @@ public sealed partial class ChatPage : Page
     private async void Send_Click(object sender, RoutedEventArgs e)
     {
         if (string.IsNullOrEmpty(ReplyBody.Text)) return;
-        Send.IsEnabled = false;
+        SendButton.IsEnabled = false;
         var url = ApiEndpoints.User.SendPrivateMessage;
         var post = new PrivateMessage
         {
@@ -170,7 +167,7 @@ public sealed partial class ChatPage : Page
             await RefreshMessageList();
         else
             Flower.Play(FlowStatus.Fail, "发送回复失败");
-        Send.IsEnabled = true;
+        SendButton.IsEnabled = true;
     }
 
 

@@ -100,13 +100,21 @@ public class IndexDataService
         var cards = new List<SectionCard>(8);
         if (data == null) return [];
         var parts = data.GetPartitions();
-        foreach(var (Key, DisplayName) in sections)
+        foreach(var (key, displayName) in sections)
         {
+            var topics = parts[key]??[];
+            if (key == "HotTopic")
+            {
+                foreach(var topic in topics)
+                {
+                    topic.IsHotTopic = true;
+                }
+            }
             cards.Add(new SectionCard
             {
-                SectionName=DisplayName,
+                SectionName=displayName,
                 HexColor=ColorEx.GenerateMorandiColorHex(),
-                IndexTopics = parts[Key] ?? []  
+                IndexTopics = topics  
             });
         }
         return cards;

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using CC98.Kernel;
+using System;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using Windows.Storage;
@@ -39,7 +40,7 @@ public sealed partial class AppSettings : INotifyPropertyChanged
                     return true; // 值未变化，不触发通知
                 }
             }
-            
+
             LocalSettings.Values[key] = value;
             //传入属性名
             OnPropertyChanged(key);
@@ -130,6 +131,11 @@ public sealed partial class AppSettings : INotifyPropertyChanged
     {
         get => GetValue<DateTime>(nameof(TokenExpireAt));
         set => SetValue(nameof(TokenExpireAt), value);
+    }
+    public string LittleTail
+    {
+        get => GetValue<string>(nameof(LittleTail), AppConfig.DefaultLittleTail)??"";
+        set => SetValue(nameof(LittleTail), value);
     }
 
     public event PropertyChangedEventHandler? PropertyChanged;

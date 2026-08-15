@@ -1,8 +1,15 @@
-﻿using Windows.Storage;
+﻿using CC98.Kernel;
 using CC98.Objects;
 using CC98.Services;
-using Microsoft.UI.Xaml.Controls;
 using CC98.Services.Extensions;
+using DevWinUI;
+using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Linq;
+using System.Threading.Tasks;
+using Windows.Storage;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -14,9 +21,11 @@ namespace CC98.Views;
 /// </summary>
 public sealed partial class MessagePage
 {
-    public MessageNavigationInfo NavigationInfo { get; set; } = new();
-    public ApplicationDataContainer Set = ApplicationData.Current.LocalSettings;
     public GlobalService GlobalService = GlobalService.Instance;
+    public Increment Increment = new();
+    public ObservableCollection<Notice> Notices = [];
+    public NoticeType noticeType = NoticeType.System;
+    public ApiService ApiService = App.Current.GetService<ApiService>();
     public MessagePage()
     {
         InitializeComponent();
@@ -37,39 +46,119 @@ public sealed partial class MessagePage
             }
             return;
         }
-        var args = e.TryGetParameter<MessageNavigationInfo>();
-        if (args == null) return;
-        NavigationInfo = args;
         NaviBar.SelectedItem = NaviBar.Items[0];
     }
 
-    private void NaviBar_SelectionChanged(SelectorBar sender, SelectorBarSelectionChangedEventArgs args)
+    private async void NaviBar_SelectionChanged(SelectorBar sender, SelectorBarSelectionChangedEventArgs args)
     {
-        var bar = NaviBar.SelectedItem as SelectorBarItem;
+        //记住本次选项，用于返回时直接选中
+        var bar = NaviBar.SelectedItem;
         var selected = NaviBar.Items.IndexOf(bar);
         GlobalService.Instance.NavigationAnchor = selected;
         if (bar?.Tag is not string tag) return;
         switch (tag)
         {
-            case "Chat":
-                MsgFrame.Navigate(typeof(ChatPage), NavigationInfo);
-                MsgCount.Text = $"{GlobalService.MessageCount}条未读信息";
-                break;
             case "System":
-                MsgFrame.Navigate(typeof(NoticePage), NoticeType.System);
+                noticeType = NoticeType.System;
                 MsgCount.Text = $"{GlobalService.SystemCount}条未读信息";
                 break;
             case "Reply":
-                MsgFrame.Navigate(typeof(NoticePage), NoticeType.Reply);
+                noticeType = NoticeType.Reply;
                 MsgCount.Text = $"{GlobalService.ReplyCount}条未读信息";
                 break;
             case "At":
-                MsgFrame.Navigate(typeof(NoticePage), NoticeType.At);
+                noticeType = NoticeType.At;
                 MsgCount.Text = $"{GlobalService.AtCount}条未读信息";
                 break;
+            case "Chat":
+                Frame.Navigate(typeof(ChatPage));
+                return;
+        }
+        Increment.Clear();
+        Notices.Clear();
+        await GetNotice();
+    }
+
+    public static string GetTypeName(NoticeType type)
+    {
+        return type switch
+        {
+            NoticeType.System => "system",
+            NoticeType.At => "at",
+            NoticeType.Reply => "reply",
+            _ => ""
+        };
+    }
+    private async Task<bool> GetNotice()
+    {
+        var url = ApiEndpoints.User.SystemNotice(GetTypeName(noticeType), Increment.StartIndex);
+        var result = await ApiService.Fetch<List<Notice>>(url);
+        if (!result.IsSuccess || result.Data == null)
+        {
+            //
+            Flower.Play(FlowStatus.Fail, "加载通知失败");
+            //await App.Logger.WriteAsync("NoticeMsg", "加载通知失败", result.Message);
+            return false;
         }
 
+        var data = result.Data;
+        Increment.HasMore = data.Count == Increment.PageSize;
+        if (!Increment.HasMore) Flower.Play(FlowStatus.Info, "没有更多通知了");
+        if (noticeType == NoticeType.Reply || noticeType == NoticeType.At)
+        {
+            var topicIds = data.Where(n => n.TopicId.HasValue).Select(n => n.TopicId!.Value).Distinct().ToList();
+            var topicInfos = await GetBasicTopicInfo(topicIds);
+            foreach (var notice in data)
+            {
+                var info = topicInfos.FirstOrDefault(t => t.Id == notice.TopicId);
+                if (info != null)
+                {
+                    var operation = noticeType == NoticeType.Reply ? "回复" : "@";
+                    var content = $"在帖子《{info.Title}》的{notice.PostBasicInfo?.Floor}L{operation}了你。";
+                    notice.Content = content;
+                }
+            }
+        }
+
+        Notices.AddRange(data);
+        return true;
     }
 
 
+    private async Task<List<BasicTopicInfo>> GetBasicTopicInfo(List<int> topicIds)
+    {
+        var param = string.Join("&", topicIds.Select(id => $"id={id}"));
+        var url = ApiEndpoints.Topic.BasicTopicInfoList(param);
+        var result = await ApiService.Fetch<List<BasicTopicInfo>>(url);
+        if (!result.IsSuccess || result.Data == null)
+        {
+            //
+            Flower.Play(FlowStatus.Fail, "获取帖子基本信息失败");
+            //await App.Logger.WriteAsync("NoticeMsg", "获取帖子基本信息失败", result.Message);
+            return [];
+        }
+
+        var data = result.Data;
+        return data;
+    }
+
+    private async void NoticeRepeater_ElementPrepared(ItemsRepeater sender, ItemsRepeaterElementPreparedEventArgs args)
+    {
+        await Increment.LoadMore(args.Index, GetNotice);
+    }
+
+    private void NoticeCard_Click(object sender, RoutedEventArgs e)
+    {
+        var h = sender as HyperlinkButton;
+        if (h?.DataContext is not Notice n) return;
+        if (n.TopicId is not int topicId || n.PostBasicInfo == null) return;
+        if (n.PostBasicInfo.IsDeleted) Flower.Play(FlowStatus.Info, "该帖子已被删除");
+        var param = new TopicNavigationInfo
+        {
+            IsJumpingMode = true,
+            TargetFloor = n.PostBasicInfo.Floor,
+            TopicId = topicId
+        };
+        Frame.Navigate(typeof(TopicPage), param);
+    }
 }

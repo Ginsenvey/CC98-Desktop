@@ -7,8 +7,57 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d"
+    xmlns:obj="using:CC98.Objects"
+    xmlns:infoFlower="using:CC98.Controls.InfoFlower"
     Background="{ThemeResource DesktopAcrylicTransparentBrush}">
 
+    <Page.Resources>
+        <DataTemplate x:Key="SystemNoticeTemplate" x:DataType="obj:Notice">
+            <HyperlinkButton HorizontalContentAlignment="Stretch" HorizontalAlignment="Stretch" CornerRadius="0"
+                         x:Name="NoticeCard" Click="NoticeCard_Click" DataContext="{x:Bind}">
+                <Grid Padding="3" RowSpacing="8">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="*" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+                    <TextBlock Text="{x:Bind Title}" Grid.Column="0" Grid.Row="0" Grid.RowSpan="2" FontWeight="Bold" />
+                    <TextBlock Text="{x:Bind Time}" FontSize="12" Grid.Column="1" Grid.Row="0"
+                           HorizontalAlignment="Right" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                    <TextBlock Text="{x:Bind Content}" TextWrapping="Wrap" MaxLines="2" FontSize="12" Grid.Column="0"
+                           Grid.ColumnSpan="2" Grid.Row="1"
+                           Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                </Grid>
+            </HyperlinkButton>
+        </DataTemplate>
+        <DataTemplate x:Key="ReplyOrAtNoticeTemplate" x:DataType="obj:Notice">
+            <HyperlinkButton HorizontalContentAlignment="Stretch" HorizontalAlignment="Stretch" CornerRadius="0"
+                         x:Name="NoticeCard" Click="NoticeCard_Click" DataContext="{x:Bind}">
+                <Grid Padding="3" RowSpacing="8">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="*" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+                    <TextBlock Text="{x:Bind PostBasicInfo.UserName}" Grid.Column="0" Grid.Row="0" Grid.RowSpan="2"
+                           FontWeight="Bold" />
+                    <TextBlock Text="{x:Bind Time}" FontSize="12" Grid.Column="1" Grid.Row="0"
+                           HorizontalAlignment="Right" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                    <TextBlock Text="{x:Bind Content}" TextWrapping="Wrap" MaxLines="2" FontSize="12" Grid.Column="0"
+                           Grid.ColumnSpan="2" Grid.Row="1"
+                           Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                </Grid>
+            </HyperlinkButton>
+        </DataTemplate>
+        <obj:NoticeTemplateSelector x:Key="Selector" SystemTemplate="{StaticResource SystemNoticeTemplate}"
+                                ReplyOrAtTemplate="{StaticResource ReplyOrAtNoticeTemplate}" />
+    </Page.Resources>
     <Grid Padding="15,5,15,15">
         <Grid.RowDefinitions>
             <RowDefinition Height="*" MinHeight="60" />
@@ -16,16 +65,20 @@
         </Grid.RowDefinitions>
         <SelectorBar Grid.Row="0" HorizontalAlignment="Left" SelectionChanged="NaviBar_SelectionChanged"
                      x:Name="NaviBar">
-            <SelectorBarItem Text="回复" Tag="Reply" />
+            <SelectorBarItem Text="回复" Tag="Reply"/>
             <SelectorBarItem Text="@我的" Tag="At" />
-            <SelectorBarItem Text="私信" x:Name="ChatMsg" Tag="Chat" />
             <SelectorBarItem Text="系统通知" x:Name="SystemNotice" Tag="System" />
+            <SelectorBarItem Text="私信" x:Name="ChatMsg" Tag="Chat" />
         </SelectorBar>
         <TextBlock x:Name="MsgCount" Grid.Row="0" HorizontalAlignment="Right" VerticalAlignment="Center"
                    Margin="0,0,3,0" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="0条未读信息" />
         <Grid Grid.Row="1" CornerRadius="6" BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}"
               BorderThickness="1">
-            <Frame x:Name="MsgFrame" />
+            <ScrollViewer x:Name="NoticeViewer">
+                <ItemsRepeater x:Name="NoticeRepeater" ItemsSource="{x:Bind Notices}"
+                   ItemTemplate="{StaticResource Selector}" ElementPrepared="NoticeRepeater_ElementPrepared" />
+            </ScrollViewer>
+            <infoFlower:InfoFlower x:Name="Flower" HorizontalAlignment="Center" VerticalAlignment="Bottom" />
         </Grid>
     </Grid>
 </Page>

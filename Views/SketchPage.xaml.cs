@@ -27,8 +27,7 @@ namespace CC98.Views;
 /// </summary>
 public sealed partial class SketchPage : Page
 {
-    public const string Tail =
-        "[align=right][size=3][color=gray]——来自「[b][color=purple]CC98 For Windows[/color][/b]」[/color][/size][/align]";
+    public string Tail => AppSettings.Current.LittleTail;
 
     public string TextContent = "";
 

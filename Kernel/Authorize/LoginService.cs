@@ -16,6 +16,10 @@ public class LoginService(IHttpClientFactory httpClientFactory,ITokenService tok
 {
     /// <summary>
     /// 参数不可为空，前端需检查
+    /// 注意，为了接入VPN,使用了TokenHandler,使用ForumClient来发送请求。
+    /// 这个client的bearer头会带着cc98的access token。
+    /// 而duende在登录的时候，又会把clientid默认放进bearer,从而发生冲突。
+    /// 因此，我们将VPN和Token的hander拆开。
     /// </summary>
     /// <param name="userName"></param>
     /// <param name="password"></param>
@@ -24,7 +28,7 @@ public class LoginService(IHttpClientFactory httpClientFactory,ITokenService tok
     public async Task<TokenResponse?> LoginWithPasswordAsync(string userName, string password, CancellationToken cancellationToken=default)
     {
         //密码登录可能需要VPN，使用TokenHandler
-        var httpClient = httpClientFactory.CreateClient("ForumClient");
+        var httpClient = httpClientFactory.CreateClient("IdentityClient");
         var response = await httpClient.RequestPasswordTokenAsync(new PasswordTokenRequest
         {
             Address = ApiEndpoints.OpenId.TokenEndpoint(),
@@ -36,8 +40,6 @@ public class LoginService(IHttpClientFactory httpClientFactory,ITokenService tok
         }, cancellationToken);
         
         if(!response.IsError) tokenService.SetTokens(response);
-        Debug.WriteLine("登录成功");
-        Debug.WriteLine(response.RefreshToken);
         return response;
     }
     /// <summary>
@@ -49,7 +51,7 @@ public class LoginService(IHttpClientFactory httpClientFactory,ITokenService tok
     /// <returns></returns>
     public async Task<TokenResponse?> LoginWithCodeAsync(string verifer, string code, CancellationToken cancellationToken=default)
     {
-        var httpClient = httpClientFactory.CreateClient("IdentityServer");
+        var httpClient = httpClientFactory.CreateClient("IdentityClient");
         var response = await httpClient.RequestAuthorizationCodeTokenAsync(new AuthorizationCodeTokenRequest
         {
             Address = ApiEndpoints.OpenId.TokenEndpoint(),

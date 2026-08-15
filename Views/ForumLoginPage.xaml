@@ -8,7 +8,7 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:ic="using:FluentIcons.WinUI"
     xmlns:dev="using:DevWinUI"
-    Loaded="Page_Loaded"
+    xmlns:sv="using:CC98.Services"
     mc:Ignorable="d">
 
     <Grid x:Name="RootGrid" Padding="20" Background="{ThemeResource AcrylicBackgroundFillColorDefaultBrush}" CornerRadius="8" Opacity="0.8">
@@ -22,16 +22,10 @@
                         <ObjectAnimationUsingKeyFrames Storyboard.TargetName="PasswordBox" Storyboard.TargetProperty="IsEnabled">
                             <DiscreteObjectKeyFrame KeyTime="0:0:0" Value="False" />
                         </ObjectAnimationUsingKeyFrames>
-                        <ObjectAnimationUsingKeyFrames Storyboard.TargetName="ErrorBox" Storyboard.TargetProperty="IsOpen" >
-                            <DiscreteObjectKeyFrame KeyTime="0:0:0" Value="False" />
-                        </ObjectAnimationUsingKeyFrames>
                         <ObjectAnimationUsingKeyFrames Storyboard.TargetName="LoginButton" Storyboard.TargetProperty="IsEnabled" >
                             <DiscreteObjectKeyFrame KeyTime="0:0:0" Value="False" />
                         </ObjectAnimationUsingKeyFrames>
                         <ObjectAnimationUsingKeyFrames Storyboard.TargetName="OpenIdLoginButton" Storyboard.TargetProperty="IsEnabled" >
-                            <DiscreteObjectKeyFrame KeyTime="0:0:0" Value="False" />
-                        </ObjectAnimationUsingKeyFrames>
-                        <ObjectAnimationUsingKeyFrames Storyboard.TargetName="WebVpnLoginButton" Storyboard.TargetProperty="IsEnabled" >
                             <DiscreteObjectKeyFrame KeyTime="0:0:0" Value="False" />
                         </ObjectAnimationUsingKeyFrames>
                         <ObjectAnimationUsingKeyFrames Storyboard.TargetName="LoadingIndicator" Storyboard.TargetProperty="IsActive" >
@@ -48,16 +42,10 @@
                         <ObjectAnimationUsingKeyFrames Storyboard.TargetName="PasswordBox" Storyboard.TargetProperty="IsEnabled">
                             <DiscreteObjectKeyFrame KeyTime="0:0:0" Value="True" />
                         </ObjectAnimationUsingKeyFrames>
-                        <ObjectAnimationUsingKeyFrames Storyboard.TargetName="ErrorBox" Storyboard.TargetProperty="IsOpen" >
-                            <DiscreteObjectKeyFrame KeyTime="0:0:0" Value="True" />
-                        </ObjectAnimationUsingKeyFrames>
                         <ObjectAnimationUsingKeyFrames Storyboard.TargetName="LoginButton" Storyboard.TargetProperty="IsEnabled" >
                             <DiscreteObjectKeyFrame KeyTime="0:0:0" Value="True" />
                         </ObjectAnimationUsingKeyFrames>
                         <ObjectAnimationUsingKeyFrames Storyboard.TargetName="OpenIdLoginButton" Storyboard.TargetProperty="IsEnabled" >
-                            <DiscreteObjectKeyFrame KeyTime="0:0:0" Value="True" />
-                        </ObjectAnimationUsingKeyFrames>
-                        <ObjectAnimationUsingKeyFrames Storyboard.TargetName="WebVpnLoginButton" Storyboard.TargetProperty="IsEnabled" >
                             <DiscreteObjectKeyFrame KeyTime="0:0:0" Value="True" />
                         </ObjectAnimationUsingKeyFrames>
                         <ObjectAnimationUsingKeyFrames Storyboard.TargetName="LoadingIndicator" Storyboard.TargetProperty="IsActive" >
@@ -68,13 +56,16 @@
             </VisualStateGroup>
         </VisualStateManager.VisualStateGroups>
         <StackPanel Spacing="10" x:Name="PasswordLoginPanel">
-            <TextBlock Text="登录CC98" FontWeight="Bold" FontSize="18" Foreground="LightSeaGreen"  FontFamily="{StaticResource HarmonySansBold}"></TextBlock>
+            <TextBlock Text="登录CC98" FontWeight="Bold" FontSize="18" Foreground="LightSeaGreen"  FontFamily="{StaticResource HarmonySansBold}"  VerticalAlignment="Center"></TextBlock>
             <TextBox Header="用户名" x:Name="UserNameBox"></TextBox>
             <PasswordBox Header="密码" x:Name="PasswordBox" ></PasswordBox>
-
-            <dev:BubbleButton x:Name="LoginButton" HorizontalAlignment="Center" BubbleForeground="LightBlue"  Padding="10" Margin="0,15,0,10" Click="LoginButton_Click" ToolTipService.ToolTip="登录">
-                <ic:SymbolIcon Symbol="Send" IconVariant="Color"></ic:SymbolIcon>
-            </dev:BubbleButton>
+            <Grid>
+                <dev:BubbleButton x:Name="LoginButton" HorizontalAlignment="Right" BubbleForeground="LightBlue"  Padding="10" Margin="0,15,0,10" Click="LoginButton_Click" ToolTipService.ToolTip="登录" >
+                    <ic:SymbolIcon Symbol="Send" IconVariant="Color"></ic:SymbolIcon>
+                </dev:BubbleButton>
+                <CheckBox Content="启用WebVPN" HorizontalAlignment="Left" IsChecked="{x:Bind sv:AppSettings.Current.IsVpnEnabled,Mode=TwoWay}" VerticalAlignment="Center"></CheckBox>
+            </Grid>
+           
             <Grid>
                 <HyperlinkButton x:Name="OpenIdLoginButton" Content="OpenID登录" HorizontalAlignment="Left" ToolTipService.ToolTip="提供更好的安全性" Click="OpenIdLoginButton_Click"></HyperlinkButton>
                 <Border Width="2" BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}" BorderThickness="2" HorizontalAlignment="Center" Height="20"></Border>

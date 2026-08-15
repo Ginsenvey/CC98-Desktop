@@ -21,7 +21,7 @@ public class ProfileNavigationInfo
     public bool IsMe { get; set; }
 }
 
-public class MessageNavigationInfo
+public class ChatNavigationInfo
 {
     /// <summary>
     ///     标注以何种方式跳转到私信页面，从而让Chat页面做出响应。
@@ -29,7 +29,7 @@ public class MessageNavigationInfo
     /// </summary>
     public bool HasTarget { get; set; } = false;
 
-    public ChatInfo ChatUserInfo { get; set; } = new();
+    public ChatInfo? ChatUserInfo { get; set; }
 }
 
 public class SearchNavigationInfo
