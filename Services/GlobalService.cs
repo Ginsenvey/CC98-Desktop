@@ -47,4 +47,5 @@ public class GlobalService
     /// 全局导航参数对象，可以在应用的不同部分使用和修改，以便在导航时传递数据。
     /// </summary>
     public object? NavigationAnchor { get; set; }
+    public static bool IsVpnConfigured => PasswordManager.PasswordExists("VpnUserName") && PasswordManager.PasswordExists("VpnPassWord");
 }

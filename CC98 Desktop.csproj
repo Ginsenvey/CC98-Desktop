@@ -133,6 +133,7 @@
     <None Remove="CC98 Desktop_1.0.5预览体验（x64）.zip" />
     <None Remove="CC98 Desktop_1.0.6.0_x64_Debug.cer" />
     <None Remove="Controls\FileCard\FileCard.xaml" />
+    <None Remove="Controls\StatusIndicator.xaml" />
     <None Remove="Discover.xaml" />
     <None Remove="Focus.xaml" />
     <None Remove="Friend.xaml" />
@@ -198,6 +199,11 @@
     <PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.28000.2270" />
     <PackageReference Include="Microsoft.WindowsAppSDK" Version="2.2.0" />
     <PackageReference Include="SkiaSharp.Views.WinUI" Version="4.148.0" />
+  </ItemGroup>
+  <ItemGroup>
+    <Page Update="Controls\StatusIndicator.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
   </ItemGroup>
   <ItemGroup>
     <Page Update="Views\GuidePage.xaml">

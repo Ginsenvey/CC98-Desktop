@@ -152,7 +152,8 @@ public partial class App : Application
         services.AddSingleton<IVpnService, VpnService>();
         services.AddTransient<VpnMessageHandler>();
         services.AddTransient<TokenHandler>();
-        
+        services.AddTransient<MirrorVpnMessageHandler>();
+
         //HttpClient,用于VPN连接
         services.AddHttpClient("VpnClient", client =>
         {
@@ -184,6 +185,19 @@ public partial class App : Application
         })
         .AddHttpMessageHandler<VpnMessageHandler>()
         .AddStandardResilienceHandler();
+
+        services.AddHttpClient("MirrorClient", client =>
+        {
+            client.Timeout = TimeSpan.FromSeconds(5);
+        })
+        .AddHttpMessageHandler<MirrorVpnMessageHandler>()
+        .ConfigurePrimaryHttpMessageHandler(() =>
+        {
+            return new HttpClientHandler
+            {
+                AllowAutoRedirect=false
+            };
+        });
 
         //论坛登录服务
         services.AddSingleton<LoginService>();

@@ -13,7 +13,7 @@ public class CookieService(CookieContainer cookieContainer) : ICookieService
     {
         PasswordManager.SavePassword(cookieContainer.GetCookieHeader(new Uri(url)), "VpnCookie", url);
     }
-    public string GetCookieHeader(string url)
+    public string? GetCookieHeader(string url)
     {
         return PasswordManager.RetrievePassword("VpnCookie", url);
     }

@@ -10,22 +10,22 @@ using CC98.Services.Helpers;
 
 namespace CC98.Services;
 
-public partial class UbbTextConverter : IValueConverter
+public partial class BoolToColorConverter : IValueConverter
 {
-    object IValueConverter.Convert(object value, Type targetType, object parameter, string language)
+    // 定义可配置的颜色，方便复用
+    public SolidColorBrush TrueColor { get; set; } = new SolidColorBrush(Colors.Green);
+    public SolidColorBrush FalseColor { get; set; } = new SolidColorBrush(Colors.Gray);
+
+    public object Convert(object value, Type targetType, object parameter, string language)
     {
-        if (value != null)
+        if (value is bool boolValue)
         {
-            var input = value as string ?? string.Empty;
-            if (!string.IsNullOrEmpty(input)) return UbbToMarkdown.Convert(input, !AppSettings.Current.HideImage);
-
-            return string.Empty;
+            return boolValue ? TrueColor : FalseColor;
         }
-
-        return string.Empty;
+        return FalseColor;
     }
 
-    object IValueConverter.ConvertBack(object value, Type targetType, object parameter, string language)
+    public object ConvertBack(object value, Type targetType, object parameter, string language)
     {
         throw new NotImplementedException();
     }

@@ -9,9 +9,10 @@
     xmlns:ic="using:FluentIcons.WinUI"
     xmlns:dev="using:DevWinUI"
     xmlns:sv="using:CC98.Services"
+    xmlns:infoFlower="using:CC98.Controls.InfoFlower"
     mc:Ignorable="d">
 
-    <Grid x:Name="RootGrid" Padding="20" Background="{ThemeResource AcrylicBackgroundFillColorDefaultBrush}" CornerRadius="8" Opacity="0.8">
+    <Grid x:Name="RootGrid" Padding="20" Background="{ThemeResource AcrylicBackgroundFillColorDefaultBrush}" CornerRadius="8" Opacity="0.8" Loaded="RootGrid_Loaded">
         <VisualStateManager.VisualStateGroups>
             <VisualStateGroup>
                 <VisualState x:Name="Logging">
@@ -26,6 +27,9 @@
                             <DiscreteObjectKeyFrame KeyTime="0:0:0" Value="False" />
                         </ObjectAnimationUsingKeyFrames>
                         <ObjectAnimationUsingKeyFrames Storyboard.TargetName="OpenIdLoginButton" Storyboard.TargetProperty="IsEnabled" >
+                            <DiscreteObjectKeyFrame KeyTime="0:0:0" Value="False" />
+                        </ObjectAnimationUsingKeyFrames>
+                        <ObjectAnimationUsingKeyFrames Storyboard.TargetName="EnableVpn" Storyboard.TargetProperty="IsEnabled" >
                             <DiscreteObjectKeyFrame KeyTime="0:0:0" Value="False" />
                         </ObjectAnimationUsingKeyFrames>
                         <ObjectAnimationUsingKeyFrames Storyboard.TargetName="LoadingIndicator" Storyboard.TargetProperty="IsActive" >
@@ -48,6 +52,9 @@
                         <ObjectAnimationUsingKeyFrames Storyboard.TargetName="OpenIdLoginButton" Storyboard.TargetProperty="IsEnabled" >
                             <DiscreteObjectKeyFrame KeyTime="0:0:0" Value="True" />
                         </ObjectAnimationUsingKeyFrames>
+                        <ObjectAnimationUsingKeyFrames Storyboard.TargetName="EnableVpn" Storyboard.TargetProperty="IsEnabled" >
+                            <DiscreteObjectKeyFrame KeyTime="0:0:0" Value="True" />
+                        </ObjectAnimationUsingKeyFrames>
                         <ObjectAnimationUsingKeyFrames Storyboard.TargetName="LoadingIndicator" Storyboard.TargetProperty="IsActive" >
                             <DiscreteObjectKeyFrame KeyTime="0:0:0" Value="False" />
                         </ObjectAnimationUsingKeyFrames>
@@ -55,6 +62,18 @@
                 </VisualState>
             </VisualStateGroup>
         </VisualStateManager.VisualStateGroups>
+        <ContentDialog x:Name="VPNConfigDialog" Title="配置VPN" Closed="VPNConfigDialog_Closed">
+            <StackPanel Orientation="Vertical" Spacing="10">
+                <TextBlock x:Name="ErrorText" FontSize="12" Foreground="Red" />
+                <TextBox x:Name="VPNUsername" Header="用户名" PlaceholderText="请输入用户名"></TextBox>
+                <PasswordBox x:Name="VPNPassword" Header="密码" PlaceholderText="请输入密码"/>
+                <Grid>
+                    <Button Content="连接" Click="VPNConfigSave_Click" HorizontalAlignment="Left"/>
+                    <Button Content="取消" x:Name="VPNCancel" Click="VPNConfigCancel_Click" HorizontalAlignment="Right"/>
+                </Grid>
+
+            </StackPanel>
+        </ContentDialog>
         <StackPanel Spacing="10" x:Name="PasswordLoginPanel">
             <TextBlock Text="登录CC98" FontWeight="Bold" FontSize="18" Foreground="LightSeaGreen"  FontFamily="{StaticResource HarmonySansBold}"  VerticalAlignment="Center"></TextBlock>
             <TextBox Header="用户名" x:Name="UserNameBox"></TextBox>
@@ -63,7 +82,7 @@
                 <dev:BubbleButton x:Name="LoginButton" HorizontalAlignment="Right" BubbleForeground="LightBlue"  Padding="10" Margin="0,15,0,10" Click="LoginButton_Click" ToolTipService.ToolTip="登录" >
                     <ic:SymbolIcon Symbol="Send" IconVariant="Color"></ic:SymbolIcon>
                 </dev:BubbleButton>
-                <CheckBox Content="启用WebVPN" HorizontalAlignment="Left" IsChecked="{x:Bind sv:AppSettings.Current.IsVpnEnabled,Mode=TwoWay}" VerticalAlignment="Center"></CheckBox>
+                <CheckBox x:Name="EnableVpn" Content="启用WebVPN" HorizontalAlignment="Left" Checked="EnableVpn_Checked" Unchecked="EnableVpn_Unchecked" VerticalAlignment="Center"></CheckBox>
             </Grid>
            
             <Grid>
@@ -75,6 +94,7 @@
         <TeachingTip Target="{Binding ElementName=RootGrid}" x:Name="ErrorBox"  PreferredPlacement="Center" TailVisibility="Collapsed" IsLightDismissEnabled="True" PlacementMargin="20" Closed="ErrorBox_Closed">
         </TeachingTip>
         <ProgressRing x:Name="LoadingIndicator" IsActive="False"></ProgressRing>
+        <infoFlower:InfoFlower x:Name="Flower" HorizontalAlignment="Center" VerticalAlignment="Bottom" />
     </Grid>
     
 </Page>

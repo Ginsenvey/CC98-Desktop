@@ -99,5 +99,6 @@ public enum NetworkStatus
     NotInCampus = 1,//不在校园网内
     NoConnection = 2, //无网络
     ConnectionFail=3,//连接失败
-    MirrorError = 4, //IP被镜像站拦截访问
+    VpnCookieExpired=4,//Cookie无效
+    MirrorError = 5, //IP被镜像站拦截访问
 }

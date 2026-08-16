@@ -85,7 +85,7 @@
             <services:BooltoVisibilityConverter x:Key="BoolToVisibility" />
             <services:ReBooltoVisibilityConverter x:Key="ReBoolToVisibility" />
             <services:BoolToAlignmentConverter x:Key="AlignmentConverter" />
-
+            <services:BoolToColorConverter x:Key="BoolToColorConverter" />
             
         </ResourceDictionary>
     </Application.Resources>

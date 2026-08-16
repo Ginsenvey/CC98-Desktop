@@ -10,7 +10,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace CC98.Kernel.Authorize;
+namespace CC98.Kernel.Network;
 /// <summary>
 /// 提供基于 VPN 服务的 HTTP 请求转发工具。
 /// </summary>

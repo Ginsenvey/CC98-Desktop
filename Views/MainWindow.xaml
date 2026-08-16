@@ -14,6 +14,8 @@
     xmlns:picture="using:CC98.Controls.Picture"
     xmlns:infoFlower="using:CC98.Controls.InfoFlower"
     xmlns:sv="using:CC98.Services"
+    xmlns:controls="using:CC98.Controls"
+    xmlns:dev="using:DevWinUI"
     SystemBackdrop="{ThemeResource AcrylicBackgroundFillColorDefaultBackdrop}">
     
     
@@ -74,9 +76,25 @@
                 </AnimatedIcon>
             </Button>
             <Grid x:Name="UserArea" Grid.Column="4"/>
-            <ToggleButton x:Name="VpnButton" Grid.Column="3" Width="41" Height="37"  BorderThickness="0" Background="Transparent" Margin="3,0,0,0" Click="VpnButton_Click">
-                <ic:SymbolIcon Symbol="Remote" FontSize="14" ></ic:SymbolIcon>
-            </ToggleButton>
+            <Button x:Name="VpnButton" Grid.Column="3" Width="41" Height="37"  BorderThickness="0" Background="Transparent" Margin="3,0,0,0">
+                <Button.Flyout>
+                    <Flyout x:Name="VpnPanel" Placement="Bottom" Opening="VpnPanel_Opening" dev:MaterialAttach.UseAcrylicBackground="True">
+                        <Grid MinWidth="120" RowSpacing="10" Padding="10">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+                            <TextBlock Grid.Row="0"  Text="VPN连接" HorizontalAlignment="Right"/>
+                            <controls:StatusIndicator Grid.Row="0" HorizontalAlignment="Left"  IsConnected="{x:Bind sv:AppSettings.Current.IsVpnEnabled,Mode=OneWay}"></controls:StatusIndicator>
+                            <TextBlock Grid.Row="1" x:Name="VpnStatusText" Text="VPN连接状态" HorizontalAlignment="Center" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}"/>
+                            <Button Grid.Row="2" Content="连接" HorizontalAlignment="Center" x:Name="VPNConfigButton" Visibility="Collapsed" Click="VPNConfig_Click"/>
+                            <Button Grid.Row="2" Content="断开连接" HorizontalAlignment="Center" x:Name="DisconnectButton" Visibility="Collapsed" Click="DisconnectButton_Click"/>
+                        </Grid>
+                    </Flyout>
+                </Button.Flyout>
+                <ic:SymbolIcon Symbol="Remote" FontSize="14"></ic:SymbolIcon>
+            </Button>
             <TextBlock Grid.Column="4" Text="CC98 Desktop" x:Name="de" Margin="10,0,5,0" HorizontalAlignment="Left" VerticalAlignment="Center" FontSize="15" />
             <Button Grid.Column="5" HorizontalAlignment="Right" Width="30" Height="30" BorderThickness="0"
                     Background="Transparent" VerticalAlignment="Center" x:Name="Me" CornerRadius="9999" Padding="0"

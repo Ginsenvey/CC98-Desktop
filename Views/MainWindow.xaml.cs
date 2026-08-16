@@ -129,7 +129,7 @@ public sealed partial class MainWindow : Window
     {
         RootGrid.Loaded -= RootGrid_Loaded;
         //低优先级排队,确保首帧渲染完成后再发起网络请求
-        DispatcherQueue.TryEnqueue(DispatcherQueuePriority.Low, () => LoadStartupDataAsync());
+        DispatcherQueue.TryEnqueue(DispatcherQueuePriority.Low, async () => await LoadStartupDataAsync());
     }
 
     /// <summary>
@@ -138,6 +138,7 @@ public sealed partial class MainWindow : Window
     private async Task LoadStartupDataAsync()
     {
         await Task.WhenAll(
+            CheckVpnStatus(isStartup: true),
             GetFocusBoards(),
             RefreshMessage(),
             LoadPortrait(),
@@ -504,19 +505,7 @@ public sealed partial class MainWindow : Window
         GlobalService.ShouldReplaceNavigationArgs = e.NavigationMode == NavigationMode.Back && _rules.Contains((fromPage, toPage));
     }
 
-    private async void VpnButton_Click(object sender, RoutedEventArgs e)
-    {
-        if (VpnButton.IsChecked==false)
-        {
-            Flower.Play(FlowStatus.Info, "VPN已断开");
-        }
-        else
-        {
-            VpnButton.IsChecked = false;
-            await CheckVpnStatus();
-        }
-
-    }
+    
     private async void VPNConfigSave_Click(object sender, RoutedEventArgs e)
     {
         var userName = VPNUsername.Text;
@@ -531,7 +520,6 @@ public sealed partial class MainWindow : Window
         {
             PasswordManager.SavePassword(userName, "VpnUserName");
             PasswordManager.SavePassword(password, "VpnPassWord");
-            VpnButton.IsChecked=true;
             AppSettings.Current.IsVpnEnabled=true;
             VPNConfigDialog.Hide();
             Flower.Play(FlowStatus.Success, "已保存凭据并启用VPN");
@@ -621,19 +609,28 @@ public sealed partial class MainWindow : Window
             //需要重试
             Flower.Play(FlowStatus.Fail, "VPN确认顶号失败，请重试");
             AppSettings.Current.IsVpnEnabled = false;
+
             return false;
         }
         else
         {
-            VpnButton.IsChecked = true;
             Flower.Play(FlowStatus.Success, "VPN连接成功");
             return true;
         }
     }
-    private async Task CheckVpnStatus()
+    /// <summary>
+    /// 如果是启动时调用，那么，如果VPN暂未启用，就不做任何操作。
+    /// </summary>
+    /// <param name="isStartup"></param>
+    /// <returns></returns>
+    private async Task CheckVpnStatus(bool isStartup = false)
     {
+        if(isStartup && !AppSettings.Current.IsVpnEnabled)
+        {
+            return;
+        }
         //没有配置过VPN，或者配置过但是凭据不完整，则需要登录
-        var isVpnUsable = PasswordManager.PasswordExists("VpnUserName") && PasswordManager.PasswordExists("VpnPassWord");
+        var isVpnUsable = GlobalService.IsVpnConfigured;
         if (!isVpnUsable)
         {
             VPNConfigDialog.XamlRoot = RootGrid.XamlRoot;
@@ -650,17 +647,18 @@ public sealed partial class MainWindow : Window
         else
         {
             //尝试使用Cookie
-            AppSettings.Current.IsVpnEnabled = true;
             var mirrorService = App.Current.GetService<MirrorService>();
-            var networkStatus = await mirrorService.CheckNetworkAsync();
+            var networkStatus = await mirrorService.CheckNetworkAsync(useVpn: true);
             //如果有效，通知连接成功
             if (networkStatus == NetworkStatus.InCampus)
             {
                 //
-                VpnButton.IsChecked= true;
+                AppSettings.Current.IsVpnEnabled = true;
+                VPNConfigButton.Visibility = Visibility.Collapsed;
+                DisconnectButton.Visibility = Visibility.Visible;
                 Flower.Play(FlowStatus.Success, "VPN连接成功");
             }
-            else if (networkStatus == NetworkStatus.NotInCampus)
+            else if (networkStatus == NetworkStatus.VpnCookieExpired)
             {
                 await ReloginVpn();
             }
@@ -668,6 +666,8 @@ public sealed partial class MainWindow : Window
             {
                 //其他错误，提示用户
                 AppSettings.Current.IsVpnEnabled = false;
+                VPNConfigButton.Visibility = Visibility.Visible;
+                DisconnectButton.Visibility = Visibility.Collapsed;
                 Flower.Play(FlowStatus.Fail, $"VPN连接失败{networkStatus}");
             }
         }
@@ -681,7 +681,6 @@ public sealed partial class MainWindow : Window
         var password = PasswordManager.RetrievePassword("VpnPassWord");
         if(string.IsNullOrEmpty(userName) || string.IsNullOrEmpty(password))
         {
-            AppSettings.Current.IsVpnEnabled = false;
             Flower.Play(FlowStatus.Fail, "VPN凭据不完整，请重新配置");
             return;
         }
@@ -696,6 +695,8 @@ public sealed partial class MainWindow : Window
             // 网络异常:避免异常逃逸出 async void 调用链导致进程崩溃
             Debug.WriteLine($"VPN重新登录失败: {ex.Message}");
             AppSettings.Current.IsVpnEnabled = false;
+            VPNConfigButton.Visibility = Visibility.Visible;
+            DisconnectButton.Visibility = Visibility.Collapsed;
             Flower.Play(FlowStatus.Fail, "VPN连接失败，请检查网络后重试");
             return;
         }
@@ -703,6 +704,8 @@ public sealed partial class MainWindow : Window
         {
             //请用户重试
             AppSettings.Current.IsVpnEnabled=false;
+            VPNConfigButton.Visibility = Visibility.Visible;
+            DisconnectButton.Visibility = Visibility.Collapsed;
             Flower.Play(FlowStatus.Fail, "VPN连接失败，请检查网络后重试");
             return;
         }
@@ -710,23 +713,63 @@ public sealed partial class MainWindow : Window
         if (res.Status == VpnLoginStatus.Success)
         {
             //通知连接成功
-            VpnButton.IsChecked = true;
+            AppSettings.Current.IsVpnEnabled = true;
+            VPNConfigButton.Visibility = Visibility.Collapsed;
+            DisconnectButton.Visibility = Visibility.Visible;
             Flower.Play(FlowStatus.Success, "VPN连接成功");
             return;
         }
         if (res.Status == VpnLoginStatus.NeedConfirm)
         {
-            await VpnConfirmAsync();
+            var success=await VpnConfirmAsync();
+            VPNConfigButton.Visibility = success ? Visibility.Collapsed : Visibility.Visible;
+            DisconnectButton.Visibility = success ? Visibility.Visible : Visibility.Collapsed;
         }
         if (res.Status == VpnLoginStatus.NeedCaptcha || res.Status == VpnLoginStatus.Fail)
         {
             //密码有问题，清理旧密码，要求重新登录
             PasswordManager.RemovePassword("VpnUserName");
             PasswordManager.RemovePassword("VpnPassWord");
+            VPNConfigButton.Visibility = Visibility.Collapsed;
+            DisconnectButton.Visibility = Visibility.Visible;
             AppSettings.Current.IsVpnEnabled=false;
             Flower.Play(FlowStatus.Fail, "VPN套餐过期或密码已错误，请重新登录");
         }
     }
 
-    
+    private async void VPNConfig_Click(object sender, RoutedEventArgs e)
+    {
+        VPNConfigButton.Visibility=Visibility.Collapsed;
+        await CheckVpnStatus();
+    }
+
+    private async void VpnPanel_Opening(object sender, object e)
+    {
+        string statusText;
+        var mirrorService = App.Current.GetService<MirrorService>();
+        if (AppSettings.Current.IsVpnEnabled)
+        {
+            var res = await mirrorService.CheckNetworkAsync(true);
+            statusText = MirrorService.FriendlyStatus(res);
+            if(res!=NetworkStatus.InCampus)
+            {
+                VPNConfigButton.Visibility = Visibility.Collapsed;
+                DisconnectButton.Visibility=Visibility.Visible;
+            }
+        }
+        else
+        {
+            statusText = "VPN未启用";
+            VPNConfigButton.Visibility = Visibility.Visible;  
+        }
+        VpnStatusText.Text = statusText;
+    }
+
+    private void DisconnectButton_Click(object sender, RoutedEventArgs e)
+    {
+        AppSettings.Current.IsVpnEnabled = false;
+        Flower.Play(FlowStatus.Success, "VPN连接已断开");
+        DisconnectButton.Visibility = Visibility.Collapsed;
+        VPNConfigButton.Visibility = Visibility.Visible;
+    }
 }

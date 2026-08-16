@@ -1,5 +1,6 @@
 using CC98.Kernel;
 using CC98.Kernel.Authorize;
+using CC98.Kernel.Network;
 using CC98.Objects;
 using CC98.Services;
 using Microsoft.UI.Xaml;
@@ -34,6 +35,8 @@ namespace CC98.Views
         {
             InitializeComponent();
         }
+        //用于标记checkbox的操作类型
+        private bool isUserOperated = true;
         public static ApiService ApiService => App.Current.GetService<ApiService>();
         protected override void OnNavigatedTo(NavigationEventArgs e)
         {
@@ -45,6 +48,19 @@ namespace CC98.Views
 
         private async void LoginButton_Click(object sender, RoutedEventArgs e)
         {
+            var mirrorService = App.Current.GetService<MirrorService>();
+            var status = await mirrorService.CheckNetworkAsync(AppSettings.Current.IsVpnEnabled);
+            if (status != NetworkStatus.InCampus)
+            {
+                AppSettings.Current.IsVpnEnabled = false;
+                isUserOperated = false;
+                EnableVpn.IsChecked = false;
+                ErrorBox.Title = MirrorService.FriendlyStatus(status);
+                ErrorBox.Content = "请尝试启用WebVPN或ZJU Connect";
+                ErrorBox.IsOpen = true;
+                return;
+            }
+            
             string userName = UserNameBox.Text;
             string password = PasswordBox.Password;
             if (string.IsNullOrEmpty(userName))
@@ -117,9 +133,274 @@ namespace CC98.Views
         private async void CheckNetworkButton_Click(object sender, RoutedEventArgs e)
         {
             var mirrorService = App.Current.GetService<MirrorService>();
-            var status = await mirrorService.CheckNetworkAsync();
+            var status = await mirrorService.CheckNetworkAsync(useVpn:false);
             ErrorBox.Title= MirrorService.FriendlyStatus(status);
             ErrorBox.IsOpen = true;
+        }
+        
+        private async void EnableVpn_Checked(object sender, RoutedEventArgs e)
+        {
+            if (!isUserOperated)
+            {
+                isUserOperated = true;
+                return;
+            }
+            EnableVpn.IsEnabled = false;
+            await CheckVpnStatus();
+            EnableVpn.IsEnabled = true;
+        }
+        private async void VPNConfigSave_Click(object sender, RoutedEventArgs e)
+        {
+            var userName = VPNUsername.Text;
+            var password = VPNPassword.Password;
+            if (string.IsNullOrEmpty(userName) || string.IsNullOrEmpty(password))
+            {
+                ErrorText.Text = "请输入完整的VPN凭据";
+                return;
+            }
+            var result = await LoginVpnAsync(userName, password);
+            if (result)
+            {
+                PasswordManager.SavePassword(userName, "VpnUserName");
+                PasswordManager.SavePassword(password, "VpnPassWord");
+                AppSettings.Current.IsVpnEnabled = true;
+                isUserOperated = false;
+                EnableVpn.IsChecked = true;
+                VPNConfigDialog.Hide();
+                Flower.Play(FlowStatus.Success, "已保存凭据并启用VPN");
+            }
+            else
+            {
+                ErrorText.Text = "登录失败";
+            }
+        }
+        private void VPNConfigCancel_Click(object sender, RoutedEventArgs e)
+        {
+            AppSettings.Current.IsVpnEnabled = false;
+            VPNConfigDialog.Hide();
+        }
+        private void VPNConfigDialog_Closed(ContentDialog sender, ContentDialogClosedEventArgs args)
+        {
+            ErrorText.Text = "";
+        }
+        /// <summary>
+        /// 只负责在VPN登录时调用VPN服务的登录方法，并处理返回结果。不会直接更改UI状态。
+        /// </summary>
+        /// <param name="userName"></param>
+        /// <param name="password"></param>
+        /// <returns></returns>
+        private async Task<bool> LoginVpnAsync(string userName, string password)
+        {
+            try
+            {
+                Debug.WriteLine("开始登录");
+                var vpnService = App.Current.GetService<IVpnService>();
+                var res = await vpnService.LoginAsync(userName, password);
+                if (res == null)
+                {
+                    Debug.WriteLine("返回空");
+                    return false;
+                }
+                if (res.Success)
+                {
+                    Debug.WriteLine("登录成功");
+                    return true;
+                }
+                else
+                {
+                    if (res.Status == VpnLoginStatus.NeedCaptcha)
+                    {
+                        //验证码
+                        Debug.WriteLine("需要验证码");
+                        return false;
+                    }
+                    else if (res.Status == VpnLoginStatus.NeedConfirm)
+                    {
+                        //确认
+                        Debug.WriteLine("正在进行确认");
+                        return await VpnConfirmAsync();
+                    }
+                    Debug.WriteLine($"状态：{res.Status}");
+                    return false;
+                }
+
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine(ex.Message);
+                return false;
+                //记录异常
+            }
+        }
+        private async Task<bool> VpnConfirmAsync()
+        {
+            var vpnService = App.Current.GetService<IVpnService>();
+            VpnLoginResult? confirmResult;
+            try
+            {
+                confirmResult = await vpnService.ConfirmAsync();
+            }
+            catch (Exception ex)
+            {
+                // 网络异常:避免异常逃逸出 async void 调用链导致进程崩溃
+                Debug.WriteLine($"VPN确认失败: {ex.Message}");
+                Flower.Play(FlowStatus.Fail, "VPN确认失败，请重试");
+                AppSettings.Current.IsVpnEnabled = false;
+                return false;
+            }
+            if (confirmResult == null || !confirmResult.Success)
+            {
+                //可以肯定此时账户密码均正确
+                //需要重试
+                Flower.Play(FlowStatus.Fail, "VPN确认顶号失败，请重试");
+                AppSettings.Current.IsVpnEnabled = false;
+
+                return false;
+            }
+            else
+            {
+                Flower.Play(FlowStatus.Success, "VPN连接成功");
+                return true;
+            }
+        }
+        /// <summary>
+        /// 如果是启动时调用，那么，如果VPN暂未启用，就不做任何操作。
+        /// </summary>
+        /// <param name="isStartup"></param>
+        /// <returns></returns>
+        private async Task CheckVpnStatus(bool isStartup = false)
+        {
+            if (isStartup && !AppSettings.Current.IsVpnEnabled)
+            {
+                return;
+            }
+            //没有配置过VPN，或者配置过但是凭据不完整，则需要登录
+            var isVpnUsable = GlobalService.IsVpnConfigured;
+            if (!isVpnUsable)
+            {
+                VPNConfigDialog.XamlRoot = RootGrid.XamlRoot;
+                try
+                {
+                    await VPNConfigDialog.ShowAsync();
+                }
+                catch (Exception ex)
+                {
+                    Flower.Play(FlowStatus.Warning, ex.Message);
+                }
+                //等待用户登录VPN
+            }
+            else
+            {
+                //尝试使用Cookie
+                var mirrorService = App.Current.GetService<MirrorService>();
+                var networkStatus = await mirrorService.CheckNetworkAsync(useVpn: true);
+                //如果有效，通知连接成功
+                if (networkStatus == NetworkStatus.InCampus)
+                {
+                    //
+                    AppSettings.Current.IsVpnEnabled = true;
+                    isUserOperated = false;
+                    EnableVpn.IsChecked = true;
+                    Flower.Play(FlowStatus.Success, "VPN连接成功");
+                }
+                else if (networkStatus == NetworkStatus.VpnCookieExpired)
+                {
+                    await ReloginVpn();
+                }
+                else
+                {
+                    //其他错误，提示用户
+                    AppSettings.Current.IsVpnEnabled = false;
+                    isUserOperated = false;
+                    EnableVpn.IsChecked = false;
+                    Flower.Play(FlowStatus.Fail, $"VPN连接失败{networkStatus}");
+                }
+            }
+
+        }
+        //VPN的登录分成两种情况，一种是首次登录，另一种是凭据过期后的重新登录。此方法处理凭据过期后的重新登录。
+        //重新登录是静默的，一旦弹出需要验证码，就认为凭据过期，清除凭据，要求用户重新登录。
+        private async Task ReloginVpn()
+        {
+            var userName = PasswordManager.RetrievePassword("VpnUserName");
+            var password = PasswordManager.RetrievePassword("VpnPassWord");
+            if (string.IsNullOrEmpty(userName) || string.IsNullOrEmpty(password))
+            {
+                Flower.Play(FlowStatus.Fail, "VPN凭据不完整，请重新配置");
+                return;
+            }
+            var vpnService = App.Current.GetService<IVpnService>();
+            VpnLoginResult? res;
+            try
+            {
+                res = await vpnService.LoginAsync(userName, password);
+            }
+            catch (Exception ex)
+            {
+                // 网络异常:避免异常逃逸出 async void 调用链导致进程崩溃
+                Debug.WriteLine($"VPN重新登录失败: {ex.Message}");
+                AppSettings.Current.IsVpnEnabled = false;
+                isUserOperated = false;
+                EnableVpn.IsChecked = false;
+                Flower.Play(FlowStatus.Fail, "VPN连接失败，请检查网络后重试");
+                return;
+            }
+            if (res == null)
+            {
+                //请用户重试
+                AppSettings.Current.IsVpnEnabled = false;
+                isUserOperated = false;
+                EnableVpn.IsChecked = false;
+                Flower.Play(FlowStatus.Fail, "VPN连接失败，请检查网络后重试");
+                return;
+            }
+
+            if (res.Status == VpnLoginStatus.Success)
+            {
+                //通知连接成功
+                AppSettings.Current.IsVpnEnabled = true;
+                isUserOperated = false;
+                EnableVpn.IsChecked = true;
+                Flower.Play(FlowStatus.Success, "VPN连接成功");
+                return;
+            }
+            if (res.Status == VpnLoginStatus.NeedConfirm)
+            {
+                isUserOperated = false;
+                EnableVpn.IsChecked = await VpnConfirmAsync();
+                
+            }
+            if (res.Status == VpnLoginStatus.NeedCaptcha || res.Status == VpnLoginStatus.Fail)
+            {
+                //密码有问题，清理旧密码，要求重新登录
+                PasswordManager.RemovePassword("VpnUserName");
+                PasswordManager.RemovePassword("VpnPassWord");
+                
+                AppSettings.Current.IsVpnEnabled = false;
+                isUserOperated = false;
+                EnableVpn.IsChecked = false;
+                Flower.Play(FlowStatus.Fail, "VPN套餐过期或密码已错误，请重新登录");
+            }
+        }
+
+        private void EnableVpn_Unchecked(object sender, RoutedEventArgs e)
+        {
+            if (!isUserOperated)
+            {
+                isUserOperated = true;
+                return;
+            }
+            AppSettings.Current.IsVpnEnabled = false;
+            Flower.Play(FlowStatus.Info, "WebVPN已禁用");
+        }
+
+        private void RootGrid_Loaded(object sender, RoutedEventArgs e)
+        {
+            if(AppSettings.Current.IsVpnEnabled)
+            {
+                isUserOperated = false;
+                EnableVpn.IsChecked = true;
+            }
         }
     }
 }

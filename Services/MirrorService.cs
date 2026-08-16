@@ -17,13 +17,14 @@ public class MirrorService(IHttpClientFactory httpClientFactory)
     /// <summary>
     /// 检查是否内网环境。
     /// </summary>
-    public async Task<NetworkStatus> CheckNetworkAsync(CancellationToken cancellationToken = default)
+    public async Task<NetworkStatus> CheckNetworkAsync(bool useVpn,CancellationToken cancellationToken = default)
     {
         try
         {
-            var httpClient = httpClientFactory.CreateClient("ForumClient");
+            var httpClient =useVpn ? httpClientFactory.CreateClient("MirrorClient") : httpClientFactory.CreateClient();
             var response = await httpClient.GetAsync(MirrorUrl, cancellationToken);
             var resText = await response.Content.ReadAsStringAsync(cancellationToken);
+            Debug.WriteLine(response.StatusCode);
             if (response.IsSuccessStatusCode)
             {
                 switch (resText)
@@ -36,6 +37,10 @@ public class MirrorService(IHttpClientFactory httpClientFactory)
                         Debug.WriteLine("访问镜像站失败",$"{response.StatusCode}:{response.ReasonPhrase ?? ""},响应正文{resText}");
                         return NetworkStatus.MirrorError;
                 }  
+            }
+            else if(useVpn && response.StatusCode == System.Net.HttpStatusCode.Found)
+            {
+                return NetworkStatus.VpnCookieExpired;
             }
             else
             {
@@ -55,9 +60,10 @@ public class MirrorService(IHttpClientFactory httpClientFactory)
         {
             NetworkStatus.InCampus => "处于内网环境",
             NetworkStatus.NotInCampus => "不在内网环境",
-            NetworkStatus.ConnectionFail => "无法连接到镜像站",
-            NetworkStatus.MirrorError => "当前IP被镜像站拦截",
-            NetworkStatus.NoConnection => "网络连接失败，请检查网络",
+            NetworkStatus.ConnectionFail => "无法连接镜像站",
+            NetworkStatus.MirrorError => "IP被镜像站拦截",
+            NetworkStatus.NoConnection => "无网络",
+            NetworkStatus.VpnCookieExpired => "VPN Cookie过期",
             _ => "未知状态"
         };
     }
