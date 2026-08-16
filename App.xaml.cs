@@ -9,7 +9,6 @@ using DevWinUI;
 using Duende.IdentityModel.OidcClient;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
 using Microsoft.UI.Dispatching;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -137,64 +136,63 @@ public partial class App : Application
     #region 依赖注入
    
     //必须是实例成员。
-    private IHost Host;
+    private IServiceProvider Services;
     private void RegisterServices()
     {
-        Host = Microsoft.Extensions.Hosting.Host.CreateDefaultBuilder()
-            .ConfigureServices((context, services) =>
+        //直接使用 ServiceCollection 构建容器,避免 Host 额外加载 Logging/Configuration 等程序集,加快冷启动。
+        var services = new ServiceCollection();
+        services.AddSingleton<AppConfig>();
+        //Cookie容器
+        var cookieContainer = new CookieContainer();
+        services.AddSingleton(cookieContainer);
+        //VPN服务和委托处理器
+        services.AddSingleton<ICookieService, CookieService>();
+        //Token服务
+        services.AddSingleton<ITokenService, TokenService>();
+        services.AddSingleton<IVpnService, VpnService>();
+        services.AddTransient<VpnMessageHandler>();
+        services.AddTransient<TokenHandler>();
+        
+        //HttpClient,用于VPN连接
+        services.AddHttpClient("VpnClient", client =>
+        {
+            client.Timeout = TimeSpan.FromSeconds(5);
+            client.BaseAddress = new Uri("https://webvpn.zju.edu.cn");
+            client.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36");
+            client.DefaultRequestHeaders.Connection.ParseAdd("keep-alive");
+        })
+        .ConfigurePrimaryHttpMessageHandler(() =>
+        {
+            return new HttpClientHandler
             {
-                services.AddSingleton<AppConfig>();
-                //Cookie容器
-                var cookieContainer = new CookieContainer();
-                services.AddSingleton(cookieContainer);
-                //VPN服务和委托处理器
-                services.AddSingleton<ICookieService, CookieService>();
-                //Token服务
-                services.AddSingleton<ITokenService, TokenService>();
-                services.AddSingleton<IVpnService, VpnService>();
-                services.AddTransient<VpnMessageHandler>();
-                services.AddTransient<TokenHandler>();
-                
-                //HttpClient,用于VPN连接
-                services.AddHttpClient("VpnClient", client =>
-                {
-                    client.Timeout = TimeSpan.FromSeconds(5);
-                    client.BaseAddress = new Uri("https://webvpn.zju.edu.cn");
-                    client.DefaultRequestHeaders.UserAgent.ParseAdd("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36");
-                    client.DefaultRequestHeaders.Connection.ParseAdd("keep-alive");
-                })
-                .ConfigurePrimaryHttpMessageHandler(() =>
-                {
-                    return new HttpClientHandler
-                    {
-                        CookieContainer = cookieContainer,
-                    };
-                });
+                CookieContainer = cookieContainer,
+            };
+        });
 
-                //用于论坛业务
-                services.AddHttpClient("ForumClient", client =>
-                {
-                    client.Timeout = TimeSpan.FromSeconds(5);
-                })
-                .AddHttpMessageHandler<VpnMessageHandler>()
-                .AddHttpMessageHandler<TokenHandler>()
-                .AddStandardResilienceHandler();
-                //用于认证
-                services.AddHttpClient("IdentityClient", client =>
-                {
-                    client.Timeout = TimeSpan.FromSeconds(5);
-                })
-                .AddHttpMessageHandler<VpnMessageHandler>()
-                .AddStandardResilienceHandler();
+        //用于论坛业务
+        services.AddHttpClient("ForumClient", client =>
+        {
+            client.Timeout = TimeSpan.FromSeconds(5);
+        })
+        .AddHttpMessageHandler<VpnMessageHandler>()
+        .AddHttpMessageHandler<TokenHandler>()
+        .AddStandardResilienceHandler();
+        //用于认证
+        services.AddHttpClient("IdentityClient", client =>
+        {
+            client.Timeout = TimeSpan.FromSeconds(5);
+        })
+        .AddHttpMessageHandler<VpnMessageHandler>()
+        .AddStandardResilienceHandler();
 
-                //论坛登录服务
-                services.AddSingleton<LoginService>();
-                //主业务服务
-                services.AddSingleton<ApiService>();
-                //镜像站服务
-                services.AddSingleton<MirrorService>();
-            })
-            .Build();
+        //论坛登录服务
+        services.AddSingleton<LoginService>();
+        //主业务服务
+        services.AddSingleton<ApiService>();
+        //镜像站服务
+        services.AddSingleton<MirrorService>();
+
+        Services = services.BuildServiceProvider();
         var tokenService = GetService<ITokenService>();
         tokenService.AuthenticationFailed += TokenService_AuthenticationFailed;
     }
@@ -206,7 +204,7 @@ public partial class App : Application
     /// <returns></returns>
     public T GetService<T>() where T : notnull
     {
-        return Host.Services.GetRequiredService<T>();
+        return Services.GetRequiredService<T>();
     }
 
     #endregion

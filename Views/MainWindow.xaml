@@ -17,7 +17,7 @@
     SystemBackdrop="{ThemeResource AcrylicBackgroundFillColorDefaultBackdrop}">
     
     
-    <Grid x:Name="RootGrid" UseLayoutRounding="True">
+    <Grid x:Name="RootGrid" UseLayoutRounding="True" Loaded="RootGrid_Loaded">
        
         <Grid.RowDefinitions>
             <RowDefinition Height="48" />

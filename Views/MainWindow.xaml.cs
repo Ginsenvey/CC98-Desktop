@@ -10,6 +10,7 @@ using DevWinUI;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI;
 using Microsoft.UI.Composition.SystemBackdrops;
+using Microsoft.UI.Dispatching;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -72,7 +73,11 @@ public sealed partial class MainWindow : Window
         SetWindowState();
         //加载自定义设置
         LoadSettings();
-        PrepareContent();
+        //同步部分:填充导航菜单并导航到初始页面。均无网络请求,不阻塞窗口显示。
+        LoadMenuItem();
+        LoadIndex();
+        //网络相关的初始化延迟到窗口显示(首帧渲染)之后再执行,避免阻塞主窗口显示。
+        //RootGrid_Loaded 已在 XAML 中挂接。
     }
     
 
@@ -118,14 +123,26 @@ public sealed partial class MainWindow : Window
         AppSettings.Current.IsVpnEnabled = false;
     }
 
-    private async void PrepareContent()
+    /// <summary>
+    /// 窗口首帧渲染完成后触发,在此启动网络相关的初始化。
+    /// </summary>
+    private void RootGrid_Loaded(object sender, RoutedEventArgs e)
     {
-        LoadMenuItem();
-        await LoadIndex();
-        await GetFocusBoards();
-        await RefreshMessage();
-        await LoadPortrait();
-        await GetFavorites();
+        RootGrid.Loaded -= RootGrid_Loaded;
+        //低优先级排队,确保首帧渲染完成后再发起网络请求
+        DispatcherQueue.TryEnqueue(DispatcherQueuePriority.Low, () => LoadStartupDataAsync());
+    }
+
+    /// <summary>
+    /// 启动阶段需要联网的任务。互不依赖,并行执行以缩短整体耗时。
+    /// </summary>
+    private async Task LoadStartupDataAsync()
+    {
+        await Task.WhenAll(
+            GetFocusBoards(),
+            RefreshMessage(),
+            LoadPortrait(),
+            GetFavorites());
         InitializeTimer();
     }
 
@@ -223,40 +240,42 @@ public sealed partial class MainWindow : Window
 
         var data = profileResult.Data;
         var boards = data.CustomBoards;
-        foreach (var board in boards) await AddBoards(board);
-    }
-
-    private async Task AddBoards(int boardId)
-    {
-        //此方法将检测本地是否已存储板块，没有则添加。无论本地是否已经存在，都会加载到导航栏。
-        //先判断本地存储是否有此板块
-        if (!Memory.ContainsKey(boardId))
+        //并行获取各版面的信息,再按原顺序添加到导航栏
+        var infos = await Task.WhenAll(boards.Select(GetBoardInfoAsync));
+        var changed = false;
+        foreach (var info in infos)
         {
-            var boardDataUrl = ApiEndpoints.Board.BoardInfo(boardId);
-            var boardDataResult = await ApiService.Fetch<BoardData>(boardDataUrl);
-            if (!boardDataResult.IsSuccess || boardDataResult.Data == null) return;
-            var data = boardDataResult.Data;
-            Memory.Add(boardId, data.Name);
+            if (info is not (var boardId, var name)) continue;
+            if (!Memory.ContainsKey(boardId))
+            {
+                Memory.Add(boardId, name);
+                changed = true;
+            }
             MenuItems.Add(new NavigationItem
             {
-                Name = data.Name, IconSymbol = BoardIconHelper.GetSymbol(boardId, data.Name), Tag = boardId.ToString(),
+                Name = name, IconSymbol = BoardIconHelper.GetSymbol(boardId, name), Tag = boardId.ToString(),
                 IsEditable = true
             });
-            var boardjsontext = SerializationHelper.TrySerialize(Memory);
-            AppSettings.Current.CustomBoards = boardjsontext;
         }
-        else
+        if (changed)
         {
-            //如果本地存储有此板块，则直接添加
-            MenuItems.Add(new NavigationItem
-            {
-                Name = Memory[boardId], IconSymbol = BoardIconHelper.GetSymbol(boardId, Memory[boardId]),
-                Tag = boardId.ToString(), IsEditable = true
-            });
+            AppSettings.Current.CustomBoards = SerializationHelper.TrySerialize(Memory) ?? "";
         }
     }
 
-    private async Task LoadIndex()
+    /// <summary>
+    /// 获取单个版面的信息。本地已缓存则直接返回,否则请求网络。返回null表示获取失败。
+    /// </summary>
+    private async Task<(int BoardId, string Name)?> GetBoardInfoAsync(int boardId)
+    {
+        if (Memory.TryGetValue(boardId, out var cachedName)) return (boardId, cachedName);
+        var boardDataUrl = ApiEndpoints.Board.BoardInfo(boardId);
+        var boardDataResult = await ApiService.Fetch<BoardData>(boardDataUrl);
+        if (!boardDataResult.IsSuccess || boardDataResult.Data == null) return null;
+        return (boardId, boardDataResult.Data.Name);
+    }
+
+    private void LoadIndex()
     {
         var index = AppSettings.Current.TitlePage;
         switch (index)
