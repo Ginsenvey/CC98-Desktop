@@ -37,6 +37,7 @@ public sealed partial class ChatPage : Page
     public ChatPage()
     {
         InitializeComponent();
+        if (App.Current.AppMainWindow is MainWindow mainwindow) mainwindow.NavigationView.IsPaneOpen = false;
     }
 
     protected override async void OnNavigatedTo(NavigationEventArgs e)

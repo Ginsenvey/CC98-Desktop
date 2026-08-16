@@ -270,7 +270,6 @@ public sealed partial class MainWindow : Window
                 break;
             default:
                 ContentFrame.Navigate(typeof(IndexPage));
-                await FetchIndex();
                 break;
         }
       

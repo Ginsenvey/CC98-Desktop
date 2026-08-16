@@ -31,12 +31,7 @@ public sealed partial class IndexPage
 {
     private readonly IndexDataService _indexService = IndexDataService.Instance;
     public ObservableCollection<FlipTopic> FlipTopics = [];
-
-
-    public bool IsOnlineMode = false;
-    public string NaviCode = "";
     public ObservableCollection<SectionCard> Sections = [];
-    public ApplicationDataContainer Set = ApplicationData.Current.LocalSettings;
 
     public IndexPage()
     {
@@ -50,25 +45,32 @@ public sealed partial class IndexPage
         await LoadFromCacheAsync();
     }
 
-
     private async Task LoadFromCacheAsync()
     {
         //只从缓存中读取。
-        
         Sections.Clear();
         FlipTopics.Clear();
-        Sections.AddRange(await IndexDataService.GetSectionsAsync());
-
+        var sections = await IndexDataService.GetSectionsAsync();
         var recommendations = await IndexDataService.GetRecommendationReadingAsync();
-        if (recommendations == null)
+        if (sections.Any() && recommendations.Any())
         {
-            //await App.Logger.WriteAsync("Index", "获取推荐阅读列表失败");
-            return;
+            Sections.AddRange(sections);
+            foreach (var item in recommendations) item.Url = $"cc98:/{item.Url}";
+            FlipTopics.AddRange(recommendations);
+            Pips.NumberOfPages = recommendations.Count();
+        }
+        else
+        {
+            var url = ApiEndpoints.Forum.Index;
+            var success= await IndexDataService.Instance.RefreshFromApiAsync(url);
+            if (success)
+            {
+                await LoadFromCacheAsync();
+            }
         }
 
-        foreach (var item in recommendations) item.Url = $"cc98:/{item.Url}";
-        FlipTopics.AddRange(recommendations);
-        Pips.NumberOfPages = recommendations.Count();
+        
+        
     }
 
 
