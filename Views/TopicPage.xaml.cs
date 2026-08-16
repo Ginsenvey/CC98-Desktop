@@ -544,6 +544,145 @@ public sealed partial class TopicPage : Page
         Frame.Navigate(typeof(SketchPage), param);
     }
 
+    #region 赠米(财富转账)
+
+    /// <summary>
+    /// 从帖子操作菜单(赠米)打开转账弹窗,收款人预填为被赠楼层作者。
+    /// </summary>
+    private async Task ShowWealthTransferAsync(Reply reply)
+    {
+        //不能向自己赠米:用 AppSettings 中的当前用户 id 校验
+        if (reply.UserId.HasValue && reply.UserId.Value == AppSettings.Current.UserId)
+        {
+            Flower.Play(FlowStatus.Warning, "不能给自己赠米");
+            return;
+        }
+        //已删除/匿名的楼层无法确定真实收款人,禁止赠米
+        if (reply.IsDeleted)
+        {
+            Flower.Play(FlowStatus.Warning, "该楼层已被删除，无法赠米");
+            return;
+        }
+        if (reply.IsAnonymous || string.IsNullOrEmpty(reply.UserName))
+        {
+            Flower.Play(FlowStatus.Warning, "不能给匿名用户赠米");
+            return;
+        }
+
+        //重置弹窗输入并预填收款人
+        WealthReceiver.Text = reply.UserName;
+        WealthAmount.Value = 0;
+        WealthReason.Text = "";
+        WealthError.Text = "";
+        UpdateWealthPreview();
+        WealthTransferDialog.XamlRoot = XamlRoot;
+        try
+        {
+            await WealthTransferDialog.ShowAsync();
+        }
+        catch (Exception ex)
+        {
+            // 页面被导航移除等场景下对话框可能无法显示
+            System.Diagnostics.Debug.WriteLine($"赠米弹窗打开失败: {ex.Message}");
+        }
+    }
+
+    private void WealthAmount_ValueChanged(NumberBox sender, NumberBoxValueChangedEventArgs args)
+    {
+        UpdateWealthPreview();
+    }
+
+    /// <summary>
+    /// 按"手续费 = max(金额*10%, 10)"实时计算并显示实际到账。
+    /// </summary>
+    private void UpdateWealthPreview()
+    {
+        var wealth = (int)System.Math.Round(WealthAmount.Value);
+        if (wealth < 10)
+        {
+            WealthPreview.Text = "";
+            return;
+        }
+
+        var fee = System.Math.Max((int)(wealth * 0.1), 10);
+        var received = wealth - fee;
+        WealthPreview.Text = $"手续费 {fee} 米，对方实际收到 {received} 米";
+    }
+
+    private async void WealthTransferOk_Click(object sender, RoutedEventArgs e)
+    {
+        //校验收款人
+        var userNames = WealthReceiver.Text
+            .Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Distinct()
+            .ToList();
+        if (userNames.Count == 0)
+        {
+            WealthError.Text = "请输入收款人用户名";
+            return;
+        }
+
+        //不能给自己赠米:收款人中不允许出现当前登录用户
+        if (userNames.Contains(AppSettings.Current.UserName, StringComparer.OrdinalIgnoreCase))
+        {
+            WealthError.Text = "不能给自己赠米";
+            return;
+        }
+
+        //校验金额
+        var wealth = (int)System.Math.Round(WealthAmount.Value);
+        if (wealth < 10)
+        {
+            WealthError.Text = "转账金额不能小于 10";
+            return;
+        }
+
+        var reason = WealthReason.Text.Trim();
+        WealthError.Text = "";
+        WealthTransferOk.IsEnabled = false;
+        try
+        {
+            var post = new Dictionary<string, object>
+            {
+                { "userNames", userNames },
+                { "wealth", wealth },
+                { "reason", reason }
+            };
+            var postText = SerializationHelper.TrySerialize(post);
+            var requestBody = new StringContent(postText, Encoding.UTF8, "application/json");
+            var res = await ApiService.Submit<List<string>>(ApiEndpoints.User.TransferWealth(), requestBody);
+            if (!res.IsSuccess || res.Data == null)
+            {
+                //网络问题或财富值不足等,展示服务器返回的错误信息
+                WealthError.Text = $"赠米失败：{res.Message}";
+                return;
+            }
+
+            Flower.Play(FlowStatus.Success, $"赠米成功：{string.Join("、", res.Data)}");
+            WealthTransferDialog.Hide();
+        }
+        catch (Exception ex)
+        {
+            WealthError.Text = $"赠米失败：{ex.Message}";
+        }
+        finally
+        {
+            WealthTransferOk.IsEnabled = true;
+        }
+    }
+
+    private void WealthTransferCancel_Click(object sender, RoutedEventArgs e)
+    {
+        WealthTransferDialog.Hide();
+    }
+
+    private void WealthTransferDialog_Closed(ContentDialog sender, ContentDialogClosedEventArgs args)
+    {
+        WealthError.Text = "";
+    }
+
+    #endregion
+
     private async void TileFlyout_Click(object sender, RoutedEventArgs e)
     {
         var m = sender as MenuFlyoutItem;
@@ -611,13 +750,16 @@ public sealed partial class TopicPage : Page
 
 
 
-    private void PostOperation_Click(object sender, RoutedEventArgs e)
+    private async void PostOperation_Click(object sender, RoutedEventArgs e)
     {
         var operation = sender as MenuFlyoutItem;
         DataPackage pack;
         if (operation?.DataContext is not Reply reply || operation?.Tag is not string tag) return;
         switch (tag)
         {
+            case "GIFT":
+                await ShowWealthTransferAsync(reply);
+                break;
             case "UBB":
                 pack = new DataPackage();
                 pack.SetText(reply.Content);

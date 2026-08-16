@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Page
     x:Class="CC98.Views.TopicPage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
@@ -348,6 +348,24 @@
                 <ubbTextBlock:UbbTextBlock UbbText="{x:Bind Profile.SignatureCode,Mode=OneWay}"  Grid.Column="0" Grid.ColumnSpan="4" Grid.Row="3" Foreground="{ThemeResource TextFillColorSecondaryBrush}" BoldFontFamily="{StaticResource HarmonySansBold}" Background="Transparent" QuoteBackground="{ThemeResource QuoteBackgroundBrush}"/>
             </Grid>
         </TeachingTip>
+
+        <ContentDialog x:Name="WealthTransferDialog" Title="赠米" Closed="WealthTransferDialog_Closed">
+            <StackPanel Width="380" Spacing="8">
+                <TextBlock Text="转账需要收取一定的手续费，手续费金额为 10% 或者 10 中的较大值。" TextWrapping="Wrap" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                <TextBlock Text="转账手续费从转账金额中收取，因此对方实际收到的金额会少于您输入的金额。" TextWrapping="Wrap" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                <TextBlock Text="转账的最小金额不能小于 10。" TextWrapping="Wrap" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                <TextBlock Text="可以对多人转账，请在收款人一栏用空格隔开每个用户。多人转账时每个用户都会收到您指定的金额并单独扣除手续费。" TextWrapping="Wrap" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                <TextBox x:Name="WealthReceiver" Header="收款人" PlaceholderText="用户名，多人用空格隔开" />
+                <NumberBox x:Name="WealthAmount" Header="金额（米）" Minimum="0" SpinButtonPlacementMode="Compact" ValueChanged="WealthAmount_ValueChanged" />
+                <TextBox x:Name="WealthReason" Header="理由" PlaceholderText="选填" />
+                <TextBlock x:Name="WealthPreview" FontSize="12" Foreground="LightSeaGreen" TextWrapping="Wrap" />
+                <TextBlock x:Name="WealthError" FontSize="12" Foreground="Red" TextWrapping="Wrap" />
+                <Grid>
+                    <Button Content="取消" Click="WealthTransferCancel_Click" HorizontalAlignment="Left" />
+                    <Button Content="赠米" x:Name="WealthTransferOk" Click="WealthTransferOk_Click" HorizontalAlignment="Right" Style="{StaticResource AccentButtonStyle}" />
+                </Grid>
+            </StackPanel>
+        </ContentDialog>
 
         <infoFlower:InfoFlower x:Name="Flower" Grid.Row="0" Grid.RowSpan="3" HorizontalAlignment="Center" VerticalAlignment="Bottom"></infoFlower:InfoFlower>
     </Grid>
