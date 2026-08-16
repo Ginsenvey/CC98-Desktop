@@ -862,11 +862,11 @@ public sealed partial class TopicPage : Page
         RatingOk.IsEnabled = false;
         try
         {
-            //请求体:{"reasonId":12,"type":1},风评为 PUT 请求
-            var post = new Dictionary<string, object>
+            //请求体:{"reasonId":12,"type":1},使用强类型,风评为 PUT 请求
+            var post = new Rating
             {
-                { "reasonId", _selectedReasonId },
-                { "type", _ratingType }
+                ReasonId = _selectedReasonId,
+                Type = _ratingType
             };
             var postText = SerializationHelper.TrySerialize(post);
             var requestBody = new StringContent(postText, Encoding.UTF8, "application/json");
