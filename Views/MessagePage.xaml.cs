@@ -1,4 +1,4 @@
-﻿using CC98.Kernel;
+using CC98.Kernel;
 using CC98.Objects;
 using CC98.Services;
 using CC98.Services.Extensions;
@@ -152,7 +152,12 @@ public sealed partial class MessagePage
         var h = sender as HyperlinkButton;
         if (h?.DataContext is not Notice n) return;
         if (n.TopicId is not int topicId || n.PostBasicInfo == null) return;
-        if (n.PostBasicInfo.IsDeleted) Flower.Play(FlowStatus.Info, "该帖子已被删除");
+        if (n.PostBasicInfo.IsDeleted)
+        {
+            // 已删除的帖子不再跳转
+            Flower.Play(FlowStatus.Info, "该帖子已被删除");
+            return;
+        }
         var param = new TopicNavigationInfo
         {
             IsJumpingMode = true,

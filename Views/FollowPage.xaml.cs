@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
@@ -79,7 +79,10 @@ public sealed partial class FollowPage : Page
         }
 
         var ids = friendIdsResult.Data;
-        Increment.HasMore = ids.Count == Increment.PageSize;
+        // 与全库分页约定一致:返回 PageSize+1 条表示还有更多,先判定再截断
+        var hasMore = ids.Count > Increment.PageSize;
+        if (hasMore) ids.RemoveAt(Increment.PageSize);
+        Increment.HasMore = hasMore;
         if (!Increment.HasMore) Flower.Play(FlowStatus.Info, "已全部加载");
         var param = string.Join("&", ids.Select(id => $"id={id}"));
         var userInfoUrl = ApiEndpoints.User.UserInfoList(param);

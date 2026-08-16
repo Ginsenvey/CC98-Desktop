@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Threading.Tasks;
 using Windows.Storage;
@@ -71,8 +71,10 @@ public sealed partial class FavoritePage : Page
             //
             return false;
         var data = favoriteTopicResult.Data;
-        if (data.Count == 11) data.RemoveAt(10);
-        Increment.HasMore = data.Count == Increment.PageSize;
+        // 接口约定:返回 PageSize+1 条表示还有更多。先按原始数量判定,再截断多余的第 PageSize+1 条
+        var hasMore = data.Count > Increment.PageSize;
+        if (hasMore) data.RemoveAt(Increment.PageSize);
+        Increment.HasMore = hasMore;
         Topics.AddRange(data);
         return true;
     }
@@ -130,24 +132,23 @@ public sealed partial class FavoritePage : Page
     private async void Remove_Click(object sender, RoutedEventArgs e)
     {
         var m = sender as MenuFlyoutItem;
-        if (m != null)
-            if (m?.DataContext is SimpleTopicInfo)
-            {
-                //bool res=await RequestSender.RemoveFavorite(t.Id);
-                var res = true; //待实现
-                if (res)
-                {
-                    Topics.Clear();
-                    Increment.Clear();
-                    SortId = 0;
-                    await GetFavoriteTopic();
-                    Flower.Play("\uE930", "已取消收藏");
-                }
-                else
-                {
-                    Flower.Play("\uEA39", "取消收藏失败");
-                }
-            }
+        if (m?.DataContext is not SimpleTopicInfo info) return;
+        var endpoint = ApiEndpoints.Topic.DeleteFavoriteTopic(info.Id);
+        var res = await ApiService.Delete(endpoint);
+        if (res == null || !res.IsSuccess)
+        {
+            Flower.Play(FlowStatus.Fail, $"取消收藏失败:{res?.Message}");
+        }
+        else
+        {
+            Topics.Clear();
+            Increment.Clear();
+            SortId = 0;
+            await GetFavoriteTopic();
+            Flower.Play(FlowStatus.Success, "已取消收藏");
+        }
+       
+
     }
 
     private async void FavoriteTopicRepeater_ElementPrepared(ItemsRepeater sender,
