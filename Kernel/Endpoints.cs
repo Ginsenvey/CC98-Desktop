@@ -307,6 +307,10 @@ public static class ApiEndpoints
         {
             return $"{Base}/topic/{topicId}/post";
         }
+        public static string DeleteFavoriteTopic(int topicId)
+        {
+            return $"{Base}/me/favorite/{topicId}";
+        }
     }
 
     public static class OpenId
