@@ -94,16 +94,15 @@ public sealed partial class GamePage
         var data = drawResult.Data;
         foreach (var card in data)
         {
-            // 防御空串,并正确补全图片地址:
-            // - "//path"(协议相对形式,API 实际返回):去掉一个前导斜杠拼资源域名(与原逻辑一致)
-            // - 完整 http(s) URL:原样使用
-            // - 其他相对路径:补全为资源域名下的地址
+            // 防御空串,并正确补全图片地址。
+            // API 返回的 imageUri 形如 "~/Image/xxx.webp"(以 ~ 开头),去掉 ~ 后拼资源域名(与原逻辑 Substring(1) 一致):
+            //   "~/Image/xxx.webp" -> "https://card.cc98.org/Image/xxx.webp"
             var uri = card.ImageUri;
             if (string.IsNullOrEmpty(uri)) continue;
-            if (uri.StartsWith("//"))
+            if (uri.StartsWith("http://") || uri.StartsWith("https://"))
+                card.ImageUri = uri; // 完整URL原样使用
+            else if (uri.StartsWith('~'))
                 card.ImageUri = "https://card.cc98.org" + uri[1..];
-            else if (uri.StartsWith("http://") || uri.StartsWith("https://"))
-                card.ImageUri = uri;
             else if (uri.StartsWith('/'))
                 card.ImageUri = "https://card.cc98.org" + uri;
             else
