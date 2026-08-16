@@ -369,10 +369,11 @@
 
         <ContentDialog x:Name="RatingDialog" Title="风评" Closed="RatingDialog_Closed">
             <StackPanel Width="360" Spacing="10">
-                <StackPanel Orientation="Horizontal" Spacing="8">
-                    <RadioButton x:Name="RatingPositive" Content="正面" GroupName="RatingType" Checked="RatingType_Checked" Tag="1" />
-                    <RadioButton x:Name="RatingNegative" Content="负面" GroupName="RatingType" Checked="RatingType_Checked" Tag="2" />
-                </StackPanel>
+                <SelectorBar x:Name="RatingTypeBar" HorizontalAlignment="Center"
+                             SelectionChanged="RatingTypeBar_SelectionChanged">
+                    <SelectorBarItem Text="正面" Tag="1" />
+                    <SelectorBarItem Text="负面" Tag="2" />
+                </SelectorBar>
                 <TextBlock Text="滚动选择理由，点击可快速选中。" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
                 <ScrollViewer x:Name="RatingScroll" Height="170" VerticalScrollBarVisibility="Auto"
                               ViewChanging="RatingScroll_ViewChanging">

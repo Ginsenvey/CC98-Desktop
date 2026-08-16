@@ -722,8 +722,15 @@ public sealed partial class TopicPage : Page
         RatingSelectedReason.Text = "";
         RatingOk.IsEnabled = false;
 
-        //默认正面;IsChecked 置位会触发 RatingType_Checked 加载理由
-        RatingPositive.IsChecked = true;
+        //默认选中"正面";若与当前选择相同则不触发 SelectionChanged,需显式加载
+        _isSettingRatingType = true;
+        RatingTypeBar.SelectedItem = RatingTypeBar.Items[0];
+        _isSettingRatingType = false;
+        if (RatingTypeBar.SelectedItem == RatingTypeBar.Items[0])
+        {
+            await LoadRatingReasonsAsync(1);
+        }
+
         RatingDialog.XamlRoot = XamlRoot;
         try
         {
@@ -735,9 +742,13 @@ public sealed partial class TopicPage : Page
         }
     }
 
-    private async void RatingType_Checked(object sender, RoutedEventArgs e)
+    //程序化设置类型时跳过事件处理,避免重复加载
+    private bool _isSettingRatingType;
+
+    private async void RatingTypeBar_SelectionChanged(SelectorBar sender, SelectorBarSelectionChangedEventArgs args)
     {
-        if (sender is not RadioButton rb || rb.Tag is not string s || !int.TryParse(s, out var type)) return;
+        if (_isSettingRatingType) return;
+        if (sender.SelectedItem?.Tag is not string s || !int.TryParse(s, out var type)) return;
         RatingError.Text = "";
         await LoadRatingReasonsAsync(type);
     }
