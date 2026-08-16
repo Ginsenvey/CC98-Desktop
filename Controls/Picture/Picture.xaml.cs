@@ -1,4 +1,4 @@
-﻿using System.Threading.Tasks;
+using System.Threading.Tasks;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
@@ -17,25 +17,34 @@ public sealed partial class Picture : UserControl
 
     #region 图片加载
 
+    // 加载代次:Source 快速变化时,旧请求完成不得覆盖新请求的结果
+    private int _loadGeneration;
+
     private async Task LoadImage()
     {
+        var generation = ++_loadGeneration;
         shimmer.IsActive = true;
         try
         {
             var src = Src;
             var callback = LoadImageCallback;
             var bitmap = await callback.LoadImage(src);
-            if (bitmap != null)
-            {
-                shimmer.IsActive = false;
-                shimmer.Visibility = Visibility.Collapsed;
-            }
-
+            // 仅当 Src 未再次变化时才应用结果,避免慢请求覆盖新图
+            if (generation != _loadGeneration) return;
             Viewer.Source = bitmap;
         }
         catch
         {
-            Viewer.Source = null;
+            if (generation == _loadGeneration) Viewer.Source = null;
+        }
+        finally
+        {
+            // 无论成功/失败都关闭 shimmer,避免破图位置永久显示加载动画
+            if (generation == _loadGeneration)
+            {
+                shimmer.IsActive = false;
+                shimmer.Visibility = Visibility.Collapsed;
+            }
         }
     }
 

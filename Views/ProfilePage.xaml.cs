@@ -1,4 +1,4 @@
-﻿using CC98.Controls.Primitives;
+using CC98.Controls.Primitives;
 using CC98.Controls.UbbTextBlock;
 using CC98.Controls.UbbTextBlock.Common.Events;
 using CC98.Controls.UbbTextBlock.Parser;
@@ -57,12 +57,12 @@ public sealed partial class ProfilePage : Page
         {
             UserId = args.UserId;
             IsMe = args.IsMe;
-            await LoadUserProfile();
-            await LoadRecentTopic();
-            if (IsMe) SignIn();
+            // 用户资料与最近主题互不依赖,并行加载
+            await Task.WhenAll(LoadUserProfile(), LoadRecentTopic());
+            if (IsMe) await SignIn();
         }
     }
-    private async void SignIn()
+    private async Task SignIn()
     {
         var url = ApiEndpoints.User.SignIn();
         var content = new StringContent("", Encoding.UTF8, "application/json");
@@ -172,7 +172,7 @@ public sealed partial class ProfilePage : Page
     {
         var c = new ChatInfo { UserId = UserProfile.Id, Name = UserProfile.Name, PortraitUrl = UserProfile.PortraitUrl };
         var param = new ChatNavigationInfo { ChatUserInfo = c, HasTarget = true };
-        Frame.Navigate(typeof(MessagePage), param);
+        Frame.Navigate(typeof(ChatPage), param);
     }
 
     private void Follow_Click(object sender, RoutedEventArgs e)

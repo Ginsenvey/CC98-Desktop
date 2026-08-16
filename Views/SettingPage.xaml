@@ -116,7 +116,7 @@
                                             </GridView.ItemsPanel>
                                             <GridView.ItemTemplate>
                                                 <DataTemplate x:DataType="views:ThemePicture">
-                                                    <Image Source="{x:Bind FilePath}" Width="60" Height="35"
+                                                    <Image Source="{x:Bind Thumb}" Width="60" Height="35"
                                                            Stretch="UniformToFill"
                                                            ToolTipService.ToolTip="{x:Bind FileName}" />
                                                 </DataTemplate>

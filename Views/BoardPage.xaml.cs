@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Net.Http;
@@ -49,8 +49,8 @@ public sealed partial class BoardPage
         var args = e.TryGetParameter<int>();
         BoardId = args;
         BoardSymbol.Symbol = BoardIconHelper.GetSymbol(BoardId, "");
-        await GetData();
-        await LoadTopics();
+        // 版面信息与主题列表互不依赖,并行加载
+        await Task.WhenAll(GetData(), LoadTopics());
     }
 
 
@@ -136,8 +136,7 @@ public sealed partial class BoardPage
             case "refresh":
                 Increment.Clear();
                 Topics.Clear();
-                await GetData();
-                await LoadTopics();
+                await RefreshAsync();
                 Flower.Play(FlowStatus.Success, "刷新成功");
                 break;
             case "pin":
@@ -188,9 +187,10 @@ public sealed partial class BoardPage
 
     private async void TypeSelectorBar_SelectionChanged(SelectorBar sender, SelectorBarSelectionChangedEventArgs args)
     {
-        //在不恰当的时间触发此事件会重复加载两次帖子。
+        // 防重入:加载期间忽略重复触发,避免"重复加载两次帖子"的问题
+        if (_isLoading) return;
         var item = sender as SelectorBar;
-        if (item?.SelectedItem.Tag is not string tag) return;
+        if (item?.SelectedItem?.Tag is not string tag) return;
         Increment.Clear();
         Topics.Clear();
         //切换时，清除已有列表，重置增量更新，修改当前筛选类型
@@ -200,6 +200,26 @@ public sealed partial class BoardPage
             "top" => BoardTopicFilterType.Top,
             _ => BoardTopicFilterType.Best,
         };
-        await LoadTopics();
+        await RefreshAsync();
+    }
+
+    // 版面数据加载防重入标志
+    private bool _isLoading;
+
+    /// <summary>
+    /// 版面信息与主题列表并行加载,并防止并发触发。
+    /// </summary>
+    private async Task RefreshAsync()
+    {
+        if (_isLoading) return;
+        _isLoading = true;
+        try
+        {
+            await Task.WhenAll(GetData(), LoadTopics());
+        }
+        finally
+        {
+            _isLoading = false;
+        }
     }
 }

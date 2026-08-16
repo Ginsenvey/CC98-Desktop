@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Threading.Tasks;
@@ -40,12 +40,16 @@ public sealed partial class GamePage
     private async void RefreshStat()
     {
         var profileUrl = ApiEndpoints.User.UserProfile(true, 0);
-        var profileResult = await ApiService.Fetch<UserInfo>(profileUrl);
+        var statUrl = ApiEndpoints.Forum.CardStat;
+        // 两个请求互不依赖,并行发起
+        var profileTask = ApiService.Fetch<UserInfo>(profileUrl);
+        var statTask = ApiService.Fetch<CardStat>(statUrl);
+
+        var profileResult = await profileTask;
         if (!profileResult.IsSuccess || profileResult.Data == null) return;
         var data = profileResult.Data;
         CardDrawStat.Wealth = data.Wealth;
-        var statUrl = ApiEndpoints.Forum.CardStat;
-        var statResult = await ApiService.Fetch<CardStat>(statUrl);
+        var statResult = await statTask;
         if (!statResult.IsSuccess || statResult.Data == null)
             //
             return;
@@ -72,7 +76,10 @@ public sealed partial class GamePage
         GachaInfo2.Add(new() { Rank = "N", Probability = "53.49%" });
     }
 
-    private async void StartDraw(int rule)
+    // 抽卡防重入:每次抽卡都是真实扣费的 API 请求,禁止连点并发
+    private bool _isDrawing;
+
+    private async Task StartDraw(int rule)
     {
         Cards.Clear();
         var drawUrl = ApiEndpoints.Forum.DrawCard(rule);
@@ -86,7 +93,14 @@ public sealed partial class GamePage
 
         var data = drawResult.Data;
         foreach (var card in data)
-            card.ImageUri = $"https://card.cc98.org{card.ImageUri.Substring(1, card.ImageUri.Length - 1)}";
+        {
+            // 防御:ImageUri 可能为空串或非相对路径,避免 Substring 越界或拼出坏链接
+            var uri = card.ImageUri;
+            if (string.IsNullOrEmpty(uri)) continue;
+            card.ImageUri = uri.StartsWith('/')
+                ? $"https://card.cc98.org{uri}"
+                : (uri.StartsWith("http") ? uri : $"https://card.cc98.org/{uri}");
+        }
         Cards.AddRange(data);
     }
 
@@ -99,22 +113,40 @@ public sealed partial class GamePage
 
     private async void Draw_Click(object sender, RoutedEventArgs e)
     {
+        if (_isDrawing) return;
+        _isDrawing = true;
         BusyIndicator.Visibility = Visibility.Visible;
         ResultViewer.Visibility = Visibility.Collapsed;
-        StartDraw(1);
-        await Task.Delay(1000);
-        BusyIndicator.Visibility = Visibility.Collapsed;
-        ResultViewer.Visibility = Visibility.Visible;
+        try
+        {
+            await StartDraw(1);
+            await Task.Delay(1000);
+        }
+        finally
+        {
+            _isDrawing = false;
+            BusyIndicator.Visibility = Visibility.Collapsed;
+            ResultViewer.Visibility = Visibility.Visible;
+        }
     }
 
     private async void Drawn_Click(object sender, RoutedEventArgs e)
     {
+        if (_isDrawing) return;
+        _isDrawing = true;
         BusyIndicator.Visibility = Visibility.Visible;
         ResultViewer.Visibility = Visibility.Collapsed;
-        StartDraw(2);
-        await Task.Delay(1500);
-        BusyIndicator.Visibility = Visibility.Collapsed;
-        ResultViewer.Visibility = Visibility.Visible;
+        try
+        {
+            await StartDraw(2);
+            await Task.Delay(1500);
+        }
+        finally
+        {
+            _isDrawing = false;
+            BusyIndicator.Visibility = Visibility.Collapsed;
+            ResultViewer.Visibility = Visibility.Visible;
+        }
     }
 
     private void Unfold_Click(object sender, RoutedEventArgs e)
@@ -137,8 +169,9 @@ public sealed partial class GamePage
                     SingleProperList.ItemsSource = null;
                 break;
             case "multi-more":
+                // 连抽(11张)使用连抽概率集合,而非单抽概率
                 if (MultiProperList.ItemsSource == null)
-                    MultiProperList.ItemsSource = GachaInfo1;
+                    MultiProperList.ItemsSource = GachaInfo2;
                 else
                     MultiProperList.ItemsSource = null;
                 break;

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.ObjectModel;
 using System.IO;
 
@@ -176,7 +176,8 @@ public sealed partial class SettingPage : Page
         if (ThemesGrid.SelectedItem != null)
         {
             var selected = Pics[ThemesGrid.SelectedIndex];
-            var bitmap = new BitmapImage(new(selected.FilePath));
+            //预览尺寸很小,按显示宽度 2 倍解码即可,避免整张 1080p/4K 原图解码
+            var bitmap = new BitmapImage(new(selected.FilePath)) { DecodePixelWidth = 120 };
             PicPreview.ImageSource = bitmap;
             AppSettings.Current.ThemePicture = selected.FilePath;
         }
@@ -214,4 +215,9 @@ public class ThemePicture
 {
     public string FileName { get; set; } = "";
     public string FilePath { get; set; } = "";
+
+    /// <summary>
+    /// 低分辨率缩略图:只按显示宽度 2 倍解码,避免把整张壁纸原图解码后缩放到 60x35。
+    /// </summary>
+    public BitmapImage Thumb => new(new Uri(FilePath)) { DecodePixelWidth = 120 };
 }

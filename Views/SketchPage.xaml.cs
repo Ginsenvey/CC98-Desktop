@@ -1,6 +1,8 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
@@ -36,6 +38,9 @@ public sealed partial class SketchPage : Page
     public int ContentType; //UBB
     public string CurrentLabel = ""; //记录实时指令
     public List<Emoji> Emojis = [];
+    // 表情分组缓存:悬停切换类型时避免重复扫描磁盘与重建整组 Image
+    private readonly Dictionary<string, List<Emoji>> _emojiCache = [];
+    private string _currentEmojiType = "";
     public bool IsAnonymous = false;
     public bool IsTailVisible;
     public bool NotifyAllReplier = false;
@@ -65,16 +70,35 @@ public sealed partial class SketchPage : Page
     private void LoadEmojiSet(string type)
     {
         //存在问题，如果使用xaml绑定,向下滚动时会崩溃。因此使用代码。
+        //类型未变化(如悬停回当前类型)时直接跳过,避免重复扫描与重建
+        if (_currentEmojiType == type && Emojis.Count > 0) return;
+        _currentEmojiType = type;
+
         EmojiContainer.ItemsSource = null;
         Emojis.Clear();
-        var emojiPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Emoji", type);
-        var files = Directory.GetFiles(emojiPath, "*", SearchOption.TopDirectoryOnly);
-        foreach (var file in files)
+
+        if (!_emojiCache.TryGetValue(type, out var cached))
         {
-            var filename = Path.GetFileName(file);
-            Emojis.Add(new() { EmojiName = filename.Split(".")[0].ToLower(), EmojiPath = file });
+            try
+            {
+                var emojiPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Emoji", type);
+                var files = Directory.GetFiles(emojiPath, "*", SearchOption.TopDirectoryOnly);
+                cached = files.Select(file =>
+                {
+                    var filename = Path.GetFileName(file);
+                    return new Emoji { EmojiName = filename.Split(".")[0].ToLower(), EmojiPath = file };
+                }).ToList();
+                _emojiCache[type] = cached;
+            }
+            catch (Exception ex)
+            {
+                // 目录缺失/被改名:避免悬停事件中抛未捕获异常崩溃
+                System.Diagnostics.Debug.WriteLine($"加载表情失败: {ex.Message}");
+                cached = [];
+            }
         }
 
+        Emojis.AddRange(cached);
         EmojiContainer.ItemsSource = Emojis;
     }
 
@@ -202,7 +226,7 @@ public sealed partial class SketchPage : Page
                 InsertTag("url", "url", "");
                 break;
             case "颜色":
-                var r = await ColorPanel.ShowAsync();
+                var r = await ShowDialogSafelyAsync(ColorPanel);
                 if (r == ContentDialogResult.Primary)
                 {
                     var colorwithalpha = Colors.Color.ToString().ToLower();
@@ -214,17 +238,17 @@ public sealed partial class SketchPage : Page
             case "图片":
                 CurrentLabel = "img";
                 FileHelper.XamlRoot = XamlRoot;
-                await FileHelper.ShowAsync();
+                await ShowDialogSafelyAsync(FileHelper);
                 break;
             case "视频":
                 CurrentLabel = "video";
                 FileHelper.XamlRoot = XamlRoot;
-                await FileHelper.ShowAsync();
+                await ShowDialogSafelyAsync(FileHelper);
                 break;
             case "音频":
                 CurrentLabel = "audio";
                 FileHelper.XamlRoot = XamlRoot;
-                await FileHelper.ShowAsync();
+                await ShowDialogSafelyAsync(FileHelper);
                 break;
             case "哔哩":
                 InsertTag("bili", "bili", "");
@@ -232,7 +256,7 @@ public sealed partial class SketchPage : Page
             case "文档":
                 CurrentLabel = "upload";
                 FileHelper.XamlRoot = XamlRoot;
-                await FileHelper.ShowAsync();
+                await ShowDialogSafelyAsync(FileHelper);
                 break;
             case "分割线":
                 var selectionStart = Editor.SelectionStart;
@@ -264,7 +288,31 @@ public sealed partial class SketchPage : Page
     private void Editor_TextChanged(object sender, TextChangedEventArgs e)
     {
         TextContent = Editor.Text.Replace("\r\n", "\n").Replace("\r", "\n");
-        ApplyContentToViewer();
+        // 防抖:连续输入期间 300ms 后才刷新一次预览,避免每次击键全量重渲染
+        _previewDebounceTimer ??= CreatePreviewDebounceTimer();
+        _previewDebounceTimer.Stop();
+        _previewDebounceTimer.Start();
+    }
+
+    // 预览刷新防抖计时器
+    private DispatcherTimer? _previewDebounceTimer;
+
+    private DispatcherTimer CreatePreviewDebounceTimer()
+    {
+        var timer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(300) };
+        timer.Tick += (_, _) =>
+        {
+            timer.Stop();
+            ApplyContentToViewer();
+        };
+        return timer;
+    }
+
+    protected override void OnNavigatedFrom(NavigationEventArgs e)
+    {
+        // 停止防抖计时器,避免计时器持有页面引用造成泄漏
+        _previewDebounceTimer?.Stop();
+        base.OnNavigatedFrom(e);
     }
 
     //以下方法用于创建Md的代码块,但是UBB编辑器不需要支持这个操作。
@@ -322,6 +370,9 @@ public sealed partial class SketchPage : Page
                     case "audio":
                         url = await PickAndUploadFile(filter, PickerLocationId.MusicLibrary);
                         break;
+                    case "upload":
+                        url = await PickAndUploadFile(filter, PickerLocationId.DocumentsLibrary);
+                        break;
                 }
 
                 FileHelper.Hide();
@@ -345,25 +396,46 @@ public sealed partial class SketchPage : Page
 
     private async void SendButton_Click(object sender, RoutedEventArgs e)
     {
-        var r = await SendDialog.ShowAsync();
-        if (r != ContentDialogResult.Primary) return;
-        switch (NavigationInfo.EditorMode)
+        try
         {
-            case EditorMode.ReplyToTopic:
-                await SendReply();
-                break;
-            case EditorMode.ReplyToPost:
-                await SendReply();
-                break;
-            case EditorMode.EditMyPost:
-                await EditPost();
-                break;
-            case EditorMode.EditMyTopic:
-                await EditPost();
-                break;
-            case EditorMode.DraftNewTopic:
-                await DraftNewTopic();
-                break;
+            var r = await SendDialog.ShowAsync();
+            if (r != ContentDialogResult.Primary) return;
+            switch (NavigationInfo.EditorMode)
+            {
+                case EditorMode.ReplyToTopic:
+                case EditorMode.ReplyToPost:
+                    await SendReply();
+                    break;
+                case EditorMode.EditMyPost:
+                case EditorMode.EditMyTopic:
+                    await EditPost();
+                    break;
+                case EditorMode.DraftNewTopic:
+                    await DraftNewTopic();
+                    break;
+            }
+        }
+        catch (Exception ex)
+        {
+            // 对话框宿主卸载/网络异常等:避免 async void 未捕获异常导致进程崩溃
+            Debug.WriteLine($"发送失败: {ex.Message}");
+            Flower.Play(FlowStatus.Fail, "发送失败，请重试");
+        }
+    }
+
+    /// <summary>
+    /// 安全地显示对话框:页面被导航移除等场景下 ShowAsync 会抛异常,在此兜底。
+    /// </summary>
+    private async Task<ContentDialogResult> ShowDialogSafelyAsync(ContentDialog dialog)
+    {
+        try
+        {
+            return await dialog.ShowAsync();
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"对话框打开失败: {ex.Message}");
+            return ContentDialogResult.None;
         }
     }
 
@@ -407,7 +479,9 @@ public sealed partial class SketchPage : Page
     {
         var url = ApiEndpoints.Forum.UploadFile;
         using var formData = new MultipartFormDataContent();
-        var fileContent = new ByteArrayContent(File.ReadAllBytes(filePath));
+        // 流式上传:避免 File.ReadAllBytes 在 UI 线程把整个文件(可能数百MB)读入内存
+        using var fileStream = File.OpenRead(filePath);
+        var fileContent = new StreamContent(fileStream);
         fileContent.Headers.ContentType = new("multipart/form-data");
         formData.Add(fileContent, "files", Path.GetFileName(filePath));
         var res = await ApiService.Submit<List<string>>(url, formData);
@@ -433,6 +507,7 @@ public sealed partial class SketchPage : Page
             "img" => [".png", ".jpg", ".jpeg", ".bmp", ".gif", ".webp"],
             "video" => [".mp4", ".mkv", ".avi", ".mov", ".wmv"],
             "audio" => [".mp3", ".wav", ".m4a", ".flac", ".aac"],
+            "upload" => [".pdf", ".doc", ".docx", ".xls", ".xlsx", ".ppt", ".pptx", ".txt", ".zip", ".rar", ".7z"],
             _ => []
         };
     }
@@ -452,7 +527,8 @@ public sealed partial class SketchPage : Page
             {
                 status.Text = "正在上传文件。请稍作等待";
                 var url = await UploadFileAsync(file.Path);
-                if (url != "0" && url.Contains("file"))
+                // 成功判定:去掉脆弱的 url.Contains("file") 子串校验,以非空且非失败标记为准
+                if (!string.IsNullOrEmpty(url) && url != "0")
                 {
                     status.Text = "上传成功:" + file.Path;
                     return url;

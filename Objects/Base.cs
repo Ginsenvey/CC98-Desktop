@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Net;
 using System.Threading.Tasks;
@@ -99,29 +99,59 @@ public class Increment
 
     public async Task LoadMore(int currentIndex, Func<Task<bool>> load)
     {
+        // 防重入:增量加载期间忽略重复触发(ItemsRepeater 回收/重复 Prepare 会重复调用)
+        if (_loading) return;
         if (HasMore && (currentIndex + 1) % PageSize == 0)
         {
+            _loading = true;
             CurrentPage++;
-            var success = await load();
-            //如果没有成功，则回退页码，等待下一次尝试
-            if (!success) CurrentPage--;
+            try
+            {
+                var success = await load();
+                //如果没有成功，则回退页码，等待下一次尝试
+                if (!success) CurrentPage--;
+            }
+            finally
+            {
+                _loading = false;
+            }
         }
     }
 
     //强制加载下一页
     public async Task LoadNextPage(Func<Task<bool>> load)
     {
+        if (_loading) return;
+        _loading = true;
         CurrentPage++;
-        var success = await load();
-        //如果没有成功，则回退页码，等待下一次尝试
-        if (!success) CurrentPage--;
+        try
+        {
+            var success = await load();
+            //如果没有成功，则回退页码，等待下一次尝试
+            if (!success) CurrentPage--;
+        }
+        finally
+        {
+            _loading = false;
+        }
     }
 
     public async Task LoadLastPage(Func<Task<bool>> load)
     {
+        if (_loading) return;
+        _loading = true;
         CurrentPage--;
-        var success = await load();
-        //如果没有成功，则回退页码，等待下一次尝试
-        if (!success) CurrentPage++;
+        try
+        {
+            var success = await load();
+            //如果没有成功，则回退页码，等待下一次尝试
+            if (!success) CurrentPage++;
+        }
+        finally
+        {
+            _loading = false;
+        }
     }
+
+    private bool _loading;
 }

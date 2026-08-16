@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Concurrent;
 using System.Threading;
 using System.Threading.Tasks;
@@ -18,6 +18,10 @@ public class SmartImageLoader : IImageLoader
     private static readonly ConcurrentDictionary<bool, SmartImageLoader> Instances = new();
 
     private static readonly ConcurrentDictionary<string, WeakReference<BitmapSource?>> Cache = new();
+
+    // 缓存访问计数:周期性清理已被 GC 的死条目,防止静态缓存无界增长
+    private static int _cacheAccessCount;
+    private const int PurgeInterval = 64;
 
     public SmartImageLoader()
     {
@@ -50,6 +54,12 @@ public class SmartImageLoader : IImageLoader
         if (string.IsNullOrEmpty(src))
             return null;
 
+        // 每 N 次访问清理一次死条目(目标已被 GC 的弱引用),避免字典条目无限堆积
+        if (Interlocked.Increment(ref _cacheAccessCount) % PurgeInterval == 0)
+        {
+            PurgeDeadEntries();
+        }
+
         var cacheKey = (LowRes ? "lr:" : "hr:") + src;
 
         if (Cache.TryGetValue(cacheKey, out var weak) && weak.TryGetTarget(out var cached) && cached != null)
@@ -77,6 +87,20 @@ public class SmartImageLoader : IImageLoader
         }
 
         return result;
+    }
+
+    /// <summary>
+    /// 移除目标已被 GC 回收的死缓存条目。
+    /// </summary>
+    private static void PurgeDeadEntries()
+    {
+        foreach (var kv in Cache)
+        {
+            if (!kv.Value.TryGetTarget(out var target) || target == null)
+            {
+                Cache.TryRemove(kv.Key, out _);
+            }
+        }
     }
 
     public static SmartImageLoader GetInstance(bool lowRes)
