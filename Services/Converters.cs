@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Windows.UI;
 using CC98.Kernel;
 using FluentIcons.Common;
@@ -17,7 +17,7 @@ public partial class UbbTextConverter : IValueConverter
         if (value != null)
         {
             var input = value as string ?? string.Empty;
-            if (!string.IsNullOrEmpty(input)) return UbbToMd.Convert(input, !AppSettings.Current.HideImage);
+            if (!string.IsNullOrEmpty(input)) return UbbToMarkdown.Convert(input, !AppSettings.Current.HideImage);
 
             return string.Empty;
         }

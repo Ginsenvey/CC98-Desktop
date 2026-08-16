@@ -1004,7 +1004,7 @@ public sealed partial class TopicPage : Page
                 pack = new DataPackage();
                 if (reply.ContentType == (int)ContentType.Ubb)
                 {
-                    pack.SetText(UbbToMd.Convert(reply.Content, true));
+                    pack.SetText(UbbToMarkdown.Convert(reply.Content, true));
                 }
                 else
                 {

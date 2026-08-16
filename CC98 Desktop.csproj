@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
     <TargetFramework>net10.0-windows10.0.26100.0</TargetFramework>
@@ -16,6 +16,10 @@
     <Nullable>enable</Nullable>
 	  <WindowsSdkPackageVersion>10.0.26100.81</WindowsSdkPackageVersion>
   </PropertyGroup>
+  <!-- 排除 tools/ 下的独立工具项目(如 ubb-md-verify),避免其 .cs 与 obj 生成文件被主项目默认 glob 编入 -->
+  <ItemGroup>
+    <Compile Remove="tools\**\*.cs" />
+  </ItemGroup>
   <ItemGroup>
     <Content Remove="Assets\cc98.altform-lightunplated_targetsize-16.png" />
     <Content Remove="Assets\cc98.altform-lightunplated_targetsize-24.png" />
