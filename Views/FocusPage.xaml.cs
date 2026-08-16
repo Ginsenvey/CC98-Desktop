@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
@@ -87,7 +87,7 @@ public sealed partial class FocusPage : Page
                 continue;
             }
 
-            var user = userInfoList?.First(x => x.Id == topic.UserId);
+            var user = userInfoList?.FirstOrDefault(x => x.Id == topic.UserId);
             if (user != null) topic.PortraitUrl = user.PortraitUrl;
         }
 

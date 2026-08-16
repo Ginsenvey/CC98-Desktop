@@ -1,4 +1,4 @@
-﻿using CC98.Controls.Extensions;
+using CC98.Controls.Extensions;
 using CC98.Controls.Primitives;
 using CC98.Controls.UbbTextBlock;
 using CC98.Controls.UbbTextBlock.Common.Events;
@@ -99,20 +99,22 @@ public sealed partial class TopicPage : Page
         }
         if (args == null) return;
         TopicId = args.TopicId;
-        await LoadTopicInfo();
-        if (args.GoToLatest)
+        if (args.GoToLatest || args.IsJumpingMode)
         {
-            Pager.SelectedPageIndex = Pager.NumberOfPages - 1;
-            return;
-        }
-        if (args.IsJumpingMode)
-        {
+            // 跳转路径依赖 LoadTopicInfo 先设置 Pager.NumberOfPages,保持串行
+            await LoadTopicInfo();
+            if (args.GoToLatest)
+            {
+                Pager.SelectedPageIndex = Pager.NumberOfPages - 1;
+                return;
+            }
             IsJumping = true;
             await Tp(args.TargetFloor);
             return;
         }
 
-        await LoadReply();
+        // 普通路径:主题信息与回复列表互不依赖,并行加载缩短首屏等待
+        await Task.WhenAll(LoadTopicInfo(), LoadReply());
 
 
     }
@@ -245,8 +247,13 @@ public sealed partial class TopicPage : Page
     }
     private async Task LoadTopicInfo()
     {
+        // 主题信息与收藏状态互不依赖,并行请求
         var topicInfoUrl = ApiEndpoints.Topic.TopicInfo(TopicId);
-        var topicInfoResult = await ApiService.Fetch<TopicInfo>(topicInfoUrl);
+        var isFavoriteUrl = ApiEndpoints.Topic.IsFavorite(TopicId);
+        var topicInfoTask = ApiService.Fetch<TopicInfo>(topicInfoUrl);
+        var isFavoriteTask = ApiService.Fetch<bool>(isFavoriteUrl);
+
+        var topicInfoResult = await topicInfoTask;
         if (!topicInfoResult.IsSuccess || topicInfoResult.Data == null)
         {
             return;
@@ -257,8 +264,7 @@ public sealed partial class TopicPage : Page
         TopicInfo.Time = data.Time;
         TopicInfo.HitCount = data.HitCount;
         TopicInfo.ReplyCount = data.ReplyCount;
-        var isFavoriteUrl = ApiEndpoints.Topic.IsFavorite(TopicId);
-        var isFavoriteResult = await ApiService.Fetch<bool>(isFavoriteUrl);
+        var isFavoriteResult = await isFavoriteTask;
         if (isFavoriteResult.IsNotValid)
         {
             //
@@ -277,8 +283,12 @@ public sealed partial class TopicPage : Page
     }
 
 
+    // LoadReply 的加载代次:翻页/跳页可能并发触发多次 LoadReply(如 SelectedIndexChanged 与显式调用同时发生),
+    // 用代次确保只有最新一次加载的结果被写入,避免楼层重复/串页。
+    private int _loadReplyGeneration;
     private async Task LoadReply()
     {
+        var generation = ++_loadReplyGeneration;
         //清空
         Replies.Clear();
         var replyUrl = ApiEndpoints.Topic.ReplyList(TopicId, CurrentPage * PageSize);
@@ -322,12 +332,14 @@ public sealed partial class TopicPage : Page
                 continue;
             }
 
-            var user = userInfoList.First(x => x.Id == reply.UserId);
+            var user = userInfoList.FirstOrDefault(x => x.Id == reply.UserId);
             if (user != null)
             {
                 reply.PortraitUrl = user.PortraitUrl;
             }
         }
+        //仅当仍是最新一次加载时才写入,防止旧请求覆盖新页数据
+        if (generation != _loadReplyGeneration) return;
         Replies.AddRange(data);
     }
 
@@ -391,21 +403,14 @@ public sealed partial class TopicPage : Page
                 var viewer = new MediaViewer(info);
                 viewer.Activate();
                 break;
-            case MediaType.Video:
-                var vinfo = new ViewerNavigationInfo
-                {
-                    Type = MediaType.Video,
-                    Urls = [e.Source]
-                };
-                Frame.Navigate(typeof(MediaViewer), vinfo);
-                break;
             case MediaType.Link:
                 await HandleLink(e.Source);
                 break;
             case MediaType.AtUser:
                 await SearchForUser(e.Source);
-                break;       
-            case MediaType.File or MediaType.Audio:
+                break;
+            case MediaType.File or MediaType.Audio or MediaType.Video:
+                // 视频预览功能已移除,视频/文件/音频链接统一走下载
                 var fileRes = await Downloader.DownloadFileAsync(e.Source);
                 if (fileRes == null)
                 {
@@ -524,120 +529,9 @@ public sealed partial class TopicPage : Page
     }
 
     
-    private async void MarkdownTextBlock_LinkClicked(object sender)
-    {
-        var url = "";
-        var result = LinkAnalyzer.Parse(url);
-        switch (result.Key)
-        {
-            case "topic":
-                Set.Values["CurrentTopicId"] = result.Value;
-                TopicId = int.Parse(result.Value);
-                await LoadTopicInfo();
-                await LoadReply();
-                break;
-            case "user":
-                {
-                    url = "https://api.cc98.org/user/name/" + result.Value;
-                    break;
-                }
-            //using语句不能在switch语句中直接出现。因此，使用大括号包围这个case.
-            case "anchor":
-                var pattern = @"/topic/(\d{7})/(\d+)#(\d+)";
-                //暂时不考虑跨页引用。如果考虑，我们需要改进跳转参数，让其包含一个跳转信息。
-                var regex = new Regex(pattern);
-
-                // 使用正则表达式进行匹配
-                var match = regex.Match(url);
-
-                if (match.Success)
-                {
-                    // 输出匹配的内容
-                    var before = match.Groups[2].Value;  // #页码
-                    var after = match.Groups[3].Value;   // #楼层
-                    var page = Convert.ToInt32(before);
-                    var floor = Convert.ToInt32(after);
-                    try
-                    {
-                        if (Pager.SelectedPageIndex + 1 == page && floor > 0)
-                        {
-                            ScrollTo(floor - 1);
-                        }
-                        else
-                        {
-                            Pager.SelectedPageIndex = page - 1;
-                            //应在页码变化函数中进行跳转，否则不等待。
-                            IsJumping = true;
-                            JumpToFloor = floor - 1;
-                        }
-                    }
-                    catch
-                    {
-
-                    }
-                }
-                break;
-            case "board":
-                Frame.Navigate(typeof(BoardPage), result.Value);
-                break;
-            case "file":
-                if (result.Value == "image")
-                {
-
-                }
-                else if (result.Value == "doc")//无法预览的媒体文件类
-                {
-                    //var Operation = await DownLoadDialog.ShowAsync();
-                    if (true)
-                    {
-
-                        var userProfile = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
-                        var downloadsFolder = Path.Combine(userProfile, "Downloads");
-                        var downloadLocation = "";
-                        var filepattern = @"(?<=https://file\.cc98\.org/v4-upload/d/\d{4}/\d{4}/)[^/]+";
-                        var fileregex = new Regex(filepattern);
-                        var filematch = fileregex.Match(url);
-                        if (filematch.Success)
-                        {
-                            downloadLocation = downloadsFolder + "\\" + filematch.Value;
-                        }
-                        else
-                        {
-                            downloadLocation = Path.Combine(downloadsFolder, "CC98_Download_" + DateTime.Now.ToString("yyyyMMdd_HHmmss") + ".pdf");
-                        }
-                        try
-                        {
-                            
-                        }
-                        catch (Exception ex)
-                        {
-                            Flower.Play("\uEA39", ex.Message);
-                        }
-                    }
-                }
-                break;
-            case "backlink":
-                if (result.Value == "bili")
-                {
-                    var dataPackage = new DataPackage();
-                    dataPackage.SetText(url);
-                    Clipboard.SetContent(dataPackage);
-                    Flower.Play(FlowStatus.Success, "已复制Bili外链");
-                }
-                break;
-            default: //自动复制到用户剪切板
-                {
-                    var dataPackage = new DataPackage();
-
-                    dataPackage.SetText(url);
-                    Clipboard.SetContent(dataPackage);
-                    Flower.Play(FlowStatus.Success, "已复制外部链接");
-                }
-                break;
-        }
-
-    }
-
+    // 注:Markdown 回复的链接点击当前无法处理——所用 CommunityToolkit.Labs MarkdownTextBlock 版本
+    // 不支持 LinkClicked 事件(见 Labs-Windows issue #584),原 MarkdownTextBlock_LinkClicked 为
+    // 从未绑定的死代码(url 恒为空),已删除。如需支持,需升级/更换 Markdown 控件。
 
     private void writereply_Click(object sender, RoutedEventArgs e)
     {
@@ -793,29 +687,39 @@ public sealed partial class TopicPage : Page
         var b = sender as Button;
         if (b == null) return;
         if (b.DataContext is not Reply reply || b.Tag is not string mode) return;
-        var postId = reply.Id;
-        var url = ApiEndpoints.Post.React(postId);
-        var content = new StringContent(mode, Encoding.UTF8, "application/json");
-        var result = await ApiService.Put(url, content);
-        if (!result.IsSuccess)
+        // 防重入:请求期间禁用按钮,避免连点并发提交导致状态错乱
+        b.IsEnabled = false;
+        try
         {
-            //
-            Flower.Play(FlowStatus.Fail, "操作失败");
-            return;
+            var postId = reply.Id;
+            var url = ApiEndpoints.Post.React(postId);
+            var content = new StringContent(mode, Encoding.UTF8, "application/json");
+            var result = await ApiService.Put(url, content);
+            if (!result.IsSuccess)
+            {
+                //
+                Flower.Play(FlowStatus.Fail, "操作失败");
+                return;
+            }
+            var newStateUrl = ApiEndpoints.Post.ReactionState(postId);
+            var newStateResult = await ApiService.Fetch<ReactionState>(newStateUrl);
+            if (!newStateResult.IsSuccess || newStateResult.Data == null)
+            {
+                //
+                Flower.Play(FlowStatus.Fail, "获取赞踩数据失败");
+                return;
+            }
+            var newState = newStateResult.Data;
+            reply.LikeState = newState.LikeState;
+            reply.LikeCount = newState.LikeCount;
+            reply.DislikeCount = newState.DislikeCount;
         }
-        var newStateUrl = ApiEndpoints.Post.ReactionState(postId);
-        var newStateResult = await ApiService.Fetch<ReactionState>(newStateUrl);
-        if (!newStateResult.IsSuccess || newStateResult.Data == null)
+        finally
         {
-            //
-            Flower.Play(FlowStatus.Fail, "获取赞踩数据失败");
-            return;
+            b.IsEnabled = true;
         }
-        var newState = newStateResult.Data;
-        reply.LikeState = newState.LikeState;
-        reply.LikeCount = newState.LikeCount;
-        reply.DislikeCount = newState.DislikeCount;
     }
+
 
 
 
@@ -824,8 +728,17 @@ public sealed partial class TopicPage : Page
     {
         var p = sender as PersonPicture;
         if (p?.Tag is not string tag) return;
-        var bitmap = await ImageHelper.LoadWebImageAsync(tag);
-        p.ProfilePicture = bitmap;
+        try
+        {
+            var bitmap = await ImageHelper.LoadWebImageAsync(tag);
+            // 加载期间 TeachingTip 可能已关闭,不再向已卸载控件赋值
+            if (p.IsLoaded) p.ProfilePicture = bitmap;
+        }
+        catch (Exception ex)
+        {
+            // 避免 async void 未捕获异常崩溃
+            System.Diagnostics.Debug.WriteLine($"加载用户头像失败: {ex.Message}");
+        }
     }
 
     private void SmallProfile_Unloaded(object sender, RoutedEventArgs e)
@@ -834,6 +747,9 @@ public sealed partial class TopicPage : Page
         p?.ProfilePicture = null;
     }
 
+
+    // 投票最多可选数(供 SelectionChanged 具名处理器使用)
+    private int _voteMaxCount;
 
     private async Task InitializeVote()
     {
@@ -849,14 +765,25 @@ public sealed partial class TopicPage : Page
             }
             var data = voteResult.Data;
             VoteList.ItemsSource = data.VoteItems;
+            VoteList.SelectedItems.Clear();
             var record = data.MyRecord;
-            if (record.Count > 0)
+            if (record != null)
             {
                 foreach (var i in record)
                 {
-                    VoteList.SelectedItems.Add(VoteList.Items[i - 1]);
+                    // 防御:API 返回的记录索引可能越界
+                    var index = i - 1;
+                    if (index >= 0 && index < VoteList.Items.Count)
+                    {
+                        VoteList.SelectedItems.Add(VoteList.Items[index]);
+                    }
                 }
             }
+
+            _voteMaxCount = data.MaxVoteCount;
+            // 具名处理器并先退订再订阅,避免每次初始化都累积匿名 handler
+            VoteList.SelectionChanged -= VoteList_SelectionChanged;
+            VoteList.SelectionChanged += VoteList_SelectionChanged;
 
             if (data.CanVote && data.IsAvailable)
             {
@@ -876,22 +803,16 @@ public sealed partial class TopicPage : Page
                     VoteTitle.Text = "投票(已过期)";
                 }
             }
-            VoteList.SelectionChanged += (s, e) =>
-            {
-                if (VoteList.SelectedItems.Count > data.MaxVoteCount)
-                {
-                    SendVote.IsEnabled = false;
-                }
-                else
-                {
-                    SendVote.IsEnabled = true;
-                }
-            };
             votetime.Text = $"过期时间:{data.ExpiredTime}";
             voteinfo.Text = $"参与人数:{data.VoteUserCount},票数限制:{data.MaxVoteCount}";
 
 
         }
+    }
+
+    private void VoteList_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        SendVote.IsEnabled = VoteList.SelectedItems.Count <= _voteMaxCount;
     }
     private async void StartVote_Click(object sender, RoutedEventArgs e)
     {

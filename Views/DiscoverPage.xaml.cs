@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Net;
@@ -49,8 +49,15 @@ public sealed partial class DiscoverPage : Page
     protected override async void OnNavigatedTo(NavigationEventArgs e)
     {
         base.OnNavigatedTo(e);
-        await GetNewTopic();
-        await GetRandomTile();
+        // 页面被缓存(NavigationCacheMode=Required),每次进入都重新订阅并刷新数据,
+        // 避免 RandomTopics/Topics 无界增长(随机接口还会返回重复项)。
+        SizeChanged -= Discover_SizeChanged;
+        SizeChanged += Discover_SizeChanged;
+        RandomTopics.Clear();
+        Topics.Clear();
+        TopicIds.Clear();
+        Increment.Clear();
+        await Task.WhenAll(GetNewTopic(), GetRandomTile());
     }
 
     protected override void OnNavigatedFrom(NavigationEventArgs e)
@@ -91,7 +98,7 @@ public sealed partial class DiscoverPage : Page
                 continue;
             }
 
-            var user = userInfoList?.First(x => x.Id == topic.UserId);
+            var user = userInfoList?.FirstOrDefault(x => x.Id == topic.UserId);
             if (user != null) topic.PortraitUrl = user.PortraitUrl;
         }
 

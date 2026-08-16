@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Net.Http;
@@ -103,7 +104,7 @@ public sealed partial class ChatPage : Page
         var userInfoList = userInfoResult.Data;
         foreach (var info in data)
         {
-            var user = userInfoList.First(x => x.Id == info.UserId);
+            var user = userInfoList.FirstOrDefault(x => x.Id == info.UserId);
             if (user != null)
             {
                 info.Name = user.Name;
@@ -111,7 +112,7 @@ public sealed partial class ChatPage : Page
             }
         }
 
-        UserIncrement.HasMore = data.Count == ChatHistoryIncrement.PageSize;
+        UserIncrement.HasMore = data.Count == UserIncrement.PageSize;
         ChatInfoList.AddRange(data);
         return true;
     }
@@ -132,8 +133,15 @@ public sealed partial class ChatPage : Page
         foreach (var message in data)
         {
             message.IsMe = message.ReceiverId == CurrentUserId;
-            Messages.Insert(0, message);
         }
+
+        // 一次性构造完整列表(更早的消息在前)再整体填充:
+        // 避免逐条 Insert(0) 导致的 O(n^2) 元素移动与多次布局,改为尾部 O(1) 追加
+        var combined = new List<ChatMessage>(data.Count + Messages.Count);
+        combined.AddRange(data);
+        combined.AddRange(Messages);
+        Messages.Clear();
+        foreach (var message in combined) Messages.Add(message);
 
         return true;
     }
@@ -155,20 +163,32 @@ public sealed partial class ChatPage : Page
     {
         if (string.IsNullOrEmpty(ReplyBody.Text)) return;
         SendButton.IsEnabled = false;
-        var url = ApiEndpoints.User.SendPrivateMessage;
-        var post = new PrivateMessage
+        try
         {
-            ReceiverId = CurrentUserId,
-            Content = ReplyBody.Text
-        };
-        var postText = SerializationHelper.TrySerialize(post);
-        var requestBody = new StringContent(postText, Encoding.UTF8, "application/json");
-        var res = await ApiService.Submit<object>(url, requestBody);
-        if (res.IsSuccess)
-            await RefreshMessageList();
-        else
-            Flower.Play(FlowStatus.Fail, "发送回复失败");
-        SendButton.IsEnabled = true;
+            var url = ApiEndpoints.User.SendPrivateMessage;
+            var post = new PrivateMessage
+            {
+                ReceiverId = CurrentUserId,
+                Content = ReplyBody.Text
+            };
+            var postText = SerializationHelper.TrySerialize(post);
+            var requestBody = new StringContent(postText, Encoding.UTF8, "application/json");
+            var res = await ApiService.Submit<object>(url, requestBody);
+            if (res.IsSuccess)
+                await RefreshMessageList();
+            else
+                Flower.Play(FlowStatus.Fail, "发送回复失败");
+        }
+        catch (Exception ex)
+        {
+            // 避免 async void 未捕获异常崩溃,并确保按钮恢复
+            System.Diagnostics.Debug.WriteLine($"发送失败: {ex.Message}");
+            Flower.Play(FlowStatus.Fail, "发送失败，请重试");
+        }
+        finally
+        {
+            SendButton.IsEnabled = true;
+        }
     }
 
 

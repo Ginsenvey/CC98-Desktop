@@ -1,4 +1,4 @@
-﻿using CC98.Kernel;
+using CC98.Kernel;
 using CC98.Kernel.Authorize;
 using CC98.Kernel.Network;
 using CC98.Objects;
@@ -68,6 +68,13 @@ public sealed partial class MainWindow : Window
     public MainWindow()
     {
         InitializeComponent();
+        // 初始化复用的头像缩放动画(XAML 解析完成后才能绑定 Target)
+        Storyboard.SetTarget(_portScaleX, PortScaleTransform);
+        Storyboard.SetTargetProperty(_portScaleX, "ScaleX");
+        Storyboard.SetTarget(_portScaleY, PortScaleTransform);
+        Storyboard.SetTargetProperty(_portScaleY, "ScaleY");
+        _portScaleStoryboard.Children.Add(_portScaleX);
+        _portScaleStoryboard.Children.Add(_portScaleY);
         App.ThemeChanged += OnAppThemeChanged;
         //设置窗口状态
         SetWindowState();
@@ -113,14 +120,6 @@ public sealed partial class MainWindow : Window
             2 => ElementTheme.Dark,
             _ => ElementTheme.Default
         };
-
-
-        if (string.IsNullOrEmpty(AppSettings.Current.ThemePicture)) return;
-        var themesPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Themes");
-        var files = Directory.GetFiles(themesPath, "*.jpg", SearchOption.AllDirectories);
-        var file = files[0];
-        //加载到FlipView
-        AppSettings.Current.IsVpnEnabled = false;
     }
 
     /// <summary>
@@ -207,8 +206,8 @@ public sealed partial class MainWindow : Window
             boardInfo?.Remove(boardId);
         }
 
-        var item = MenuItems.OfType<NavigationItem>().First(g => g.Tag == boardId.ToString());
-        MenuItems.Remove(item);
+        var item = MenuItems.OfType<NavigationItem>().FirstOrDefault(g => g.Tag == boardId.ToString());
+        if (item != null) MenuItems.Remove(item);
     }
 
     private async Task GetFocusBoards() //同步客户端和在线关注版块的信息
@@ -302,8 +301,8 @@ public sealed partial class MainWindow : Window
         };
         SyncTimer.Tick += async (s, e) => 
         {
-            await FetchIndex();
-            await RefreshMessage();
+            // 刷新首页缓存与刷新未读数互不依赖,并行执行
+            await Task.WhenAll(FetchIndex(), RefreshMessage());
         };
         SyncTimer.Start();
     }
@@ -452,31 +451,26 @@ public sealed partial class MainWindow : Window
         AnimateButton(PortScaleTransform, 1, 1);
     }
 
+    // 复用的头像缩放动画:避免每次指针事件都 new Storyboard/DoubleAnimation
+    private readonly Storyboard _portScaleStoryboard = new();
+    private readonly DoubleAnimation _portScaleX = new()
+    {
+        Duration = TimeSpan.FromSeconds(0.2),
+        EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
+    };
+    private readonly DoubleAnimation _portScaleY = new()
+    {
+        Duration = TimeSpan.FromSeconds(0.2),
+        EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
+    };
+
     private void AnimateButton(ScaleTransform transform, double x, double y)
     {
-        var storyboard = new Storyboard();
-
-        var animationX = new DoubleAnimation
-        {
-            To = x,
-            Duration = TimeSpan.FromSeconds(0.2),
-            EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
-        };
-        Storyboard.SetTarget(animationX, transform);
-        Storyboard.SetTargetProperty(animationX, "ScaleX");
-
-        var animationY = new DoubleAnimation
-        {
-            To = y,
-            Duration = TimeSpan.FromSeconds(0.2),
-            EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
-        };
-        Storyboard.SetTarget(animationY, transform);
-        Storyboard.SetTargetProperty(animationY, "ScaleY");
-
-        storyboard.Children.Add(animationX);
-        storyboard.Children.Add(animationY);
-        storyboard.Begin();
+        // 复用同一个 Storyboard,避免高频指针事件下持续分配动画对象
+        _portScaleStoryboard.Stop();
+        _portScaleX.To = x;
+        _portScaleY.To = y;
+        _portScaleStoryboard.Begin();
     }
 
     private void Me_PointerPressed(object sender, PointerRoutedEventArgs e)
@@ -608,7 +602,19 @@ public sealed partial class MainWindow : Window
     private async Task<bool> VpnConfirmAsync()
     {
         var vpnService = App.Current.GetService<IVpnService>();
-        var confirmResult = await vpnService.ConfirmAsync();
+        VpnLoginResult? confirmResult;
+        try
+        {
+            confirmResult = await vpnService.ConfirmAsync();
+        }
+        catch (Exception ex)
+        {
+            // 网络异常:避免异常逃逸出 async void 调用链导致进程崩溃
+            Debug.WriteLine($"VPN确认失败: {ex.Message}");
+            Flower.Play(FlowStatus.Fail, "VPN确认失败，请重试");
+            AppSettings.Current.IsVpnEnabled = false;
+            return false;
+        }
         if (confirmResult == null || !confirmResult.Success)
         {
             //可以肯定此时账户密码均正确
@@ -675,10 +681,24 @@ public sealed partial class MainWindow : Window
         var password = PasswordManager.RetrievePassword("VpnPassWord");
         if(string.IsNullOrEmpty(userName) || string.IsNullOrEmpty(password))
         {
-            throw new ArgumentNullException("VPNUserCredentials", "VPN用户名或密码为空，无法重新登录。");
+            AppSettings.Current.IsVpnEnabled = false;
+            Flower.Play(FlowStatus.Fail, "VPN凭据不完整，请重新配置");
+            return;
         }
         var vpnService = App.Current.GetService<IVpnService>();
-        var res = await vpnService.LoginAsync(userName, password);
+        VpnLoginResult? res;
+        try
+        {
+            res = await vpnService.LoginAsync(userName, password);
+        }
+        catch (Exception ex)
+        {
+            // 网络异常:避免异常逃逸出 async void 调用链导致进程崩溃
+            Debug.WriteLine($"VPN重新登录失败: {ex.Message}");
+            AppSettings.Current.IsVpnEnabled = false;
+            Flower.Play(FlowStatus.Fail, "VPN连接失败，请检查网络后重试");
+            return;
+        }
         if (res == null)
         {
             //请用户重试
