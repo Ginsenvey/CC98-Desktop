@@ -643,11 +643,12 @@ public sealed partial class TopicPage : Page
         WealthTransferOk.IsEnabled = false;
         try
         {
-            var post = new Dictionary<string, object>
+            //使用强类型请求体
+            var post = new WealthTransferMessage
             {
-                { "userNames", userNames },
-                { "wealth", wealth },
-                { "reason", reason }
+                UserNames = userNames,
+                Wealth = wealth,
+                Reason = reason
             };
             var postText = SerializationHelper.TrySerialize(post);
             var requestBody = new StringContent(postText, Encoding.UTF8, "application/json");
@@ -861,7 +862,7 @@ public sealed partial class TopicPage : Page
         RatingOk.IsEnabled = false;
         try
         {
-            //请求体:{"reasonId":12,"type":1}
+            //请求体:{"reasonId":12,"type":1},风评为 PUT 请求
             var post = new Dictionary<string, object>
             {
                 { "reasonId", _selectedReasonId },
@@ -869,7 +870,7 @@ public sealed partial class TopicPage : Page
             };
             var postText = SerializationHelper.TrySerialize(post);
             var requestBody = new StringContent(postText, Encoding.UTF8, "application/json");
-            var res = await ApiService.Submit<object>(ApiEndpoints.Post.Rate(_ratingPostId), requestBody);
+            var res = await ApiService.Put(ApiEndpoints.Post.Rate(_ratingPostId), requestBody);
             if (!res.IsSuccess)
             {
                 RatingError.Text = $"风评失败：{res.Message}";
