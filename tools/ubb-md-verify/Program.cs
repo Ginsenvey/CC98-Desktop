@@ -19,6 +19,7 @@ var samples = new List<(string Name, string Ubb)>
     ("图片", "[img]https://cc98.org/a.png[/img]"),
     ("图片隐藏", "[img]https://cc98.org/a.png[/img]"),
     ("代码块", "[code]\nvar x = 1;\n[/code]"),
+    ("代码块语言", "[code=csharp]\nvar x = 1;\n[/code]"),
     ("引用", "[quote]引用内容[/quote]"),
     ("嵌套引用", "[quote]外层[quote]内层[/quote]结尾[/quote]"),
     ("列表", "[list][*]项目一[*]项目二[/list]"),

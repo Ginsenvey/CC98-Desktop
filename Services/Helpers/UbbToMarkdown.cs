@@ -120,8 +120,9 @@ public static class UbbToMarkdown
                 return $"[@ {((AtNode)node).Username} ](https://api.cc98.org/user/name/{((AtNode)node).Username})";
             case UbbNodeType.Latex:
                 return ConvertLatex(node);
-            // [md]/[noubb] 逐字内容:保留原标签(对齐旧版"正则不匹配=原样保留")
+            // [md] 去掉标签,保留中间内容(逐字);[noubb] 保留原标签与内容
             case UbbNodeType.Markdown:
+                return CollectVerbatimText(node);
             case UbbNodeType.NoUbb:
                 return RebuildTag(node, isImageVisible, quoteDepth);
 
@@ -197,7 +198,11 @@ public static class UbbToMarkdown
     private static string ConvertCode(UbbNode node)
     {
         var content = CollectVerbatimText(node);
-        return $"```\n{content.Trim()}\n```";
+        // [code=csharp] 等语言类型
+        var language = node is TagNode tag ? tag.GetAttribute("language") : "";
+        return string.IsNullOrEmpty(language)
+            ? $"```\n{content.Trim()}\n```"
+            : $"```{language}\n{content.Trim()}\n```";
     }
 
     private static string ConvertQuote(UbbNode node, bool isImageVisible, int quoteDepth)
@@ -254,17 +259,17 @@ public static class UbbToMarkdown
 
     private static string ConvertLatex(UbbNode node)
     {
-        // $...$ / $$...$$ 行内公式:原样重建; [math]...[/math] 标签形式:原样保留
+        // $...$ / $$...$$ 行内公式:原样重建
         if (node is LatexNode latex)
         {
             var marker = latex.IsBlock ? "$$" : "$";
             return marker + latex.Latex + marker;
         }
 
-        if (node is TagNode mathTag)
+        // [math]...[/math] 标签形式:转为块级 latex 公式 $$...$$
+        if (node is TagNode)
         {
-            var content = CollectVerbatimText(node);
-            return $"[math]{content}[/math]";
+            return "$$" + CollectVerbatimText(node).Trim() + "$$";
         }
 
         return ConvertChildren(node, true, 0);
