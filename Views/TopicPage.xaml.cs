@@ -12,6 +12,7 @@ using CC98.Services.Helpers;
 using DevWinUI;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Hosting;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Navigation;
 using System;
@@ -683,6 +684,224 @@ public sealed partial class TopicPage : Page
 
     #endregion
 
+    #region 风评(加/扣风评)
+
+    private int _ratingPostId;
+    private int _ratingType = 1;
+    private int _selectedReasonId;
+    private string _selectedReason = "";
+
+    /// <summary>
+    /// 从帖子操作菜单(风评)打开风评弹窗,默认加载正面理由。
+    /// </summary>
+    private async Task ShowRatingAsync(Reply reply)
+    {
+        //匿名、已删除、自己的楼层不可风评
+        if (reply.IsDeleted)
+        {
+            Flower.Play(FlowStatus.Warning, "该楼层已被删除，无法风评");
+            return;
+        }
+        if (reply.IsAnonymous)
+        {
+            Flower.Play(FlowStatus.Warning, "不能给匿名用户风评");
+            return;
+        }
+        if (reply.UserId.HasValue && reply.UserId.Value == AppSettings.Current.UserId)
+        {
+            Flower.Play(FlowStatus.Warning, "不能给自己风评");
+            return;
+        }
+
+        _ratingPostId = reply.Id;
+        _selectedReasonId = 0;
+        _selectedReason = "";
+        RatingError.Text = "";
+        RatingColor.Background = null;
+        RatingSelectedReason.Text = "";
+        RatingOk.IsEnabled = false;
+
+        //默认正面;IsChecked 置位会触发 RatingType_Checked 加载理由
+        RatingPositive.IsChecked = true;
+        RatingDialog.XamlRoot = XamlRoot;
+        try
+        {
+            await RatingDialog.ShowAsync();
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"风评弹窗打开失败: {ex.Message}");
+        }
+    }
+
+    private async void RatingType_Checked(object sender, RoutedEventArgs e)
+    {
+        if (sender is not RadioButton rb || rb.Tag is not string s || !int.TryParse(s, out var type)) return;
+        RatingError.Text = "";
+        await LoadRatingReasonsAsync(type);
+    }
+
+    /// <summary>
+    /// 按类型(1正面/2负面)加载理由列表,并为每项随机生成莫兰迪色。
+    /// </summary>
+    private async Task LoadRatingReasonsAsync(int type)
+    {
+        _ratingType = type;
+        RatingOk.IsEnabled = false;
+        try
+        {
+            var url = ApiEndpoints.Post.RateReason(type);
+            var result = await ApiService.Fetch<List<RatingReason>>(url);
+            if (!result.IsSuccess || result.Data == null)
+            {
+                RatingError.Text = $"加载风评理由失败：{result.Message}";
+                return;
+            }
+
+            var reasons = result.Data.Where(r => r.Enabled).ToList();
+            foreach (var r in reasons) r.ColorHex = ColorEx.GenerateMorandiColorHex();
+            RatingRepeater.ItemsSource = reasons;
+
+            //默认选中第一项
+            if (reasons.Count > 0)
+            {
+                _selectedReasonId = reasons[0].Id;
+                _selectedReason = reasons[0].Reason;
+                if (RatingRepeater.TryGetElement(0) is Button first)
+                {
+                    RatingColor.Background = first.Background;
+                    RatingSelectedReason.Text = _selectedReason;
+                }
+                RatingOk.IsEnabled = true;
+            }
+            else
+            {
+                RatingSelectedReason.Text = "暂无可用理由";
+            }
+        }
+        catch (Exception ex)
+        {
+            RatingError.Text = $"加载风评理由失败：{ex.Message}";
+        }
+    }
+
+    private void RatingItem_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is not Button b || b.Tag is not int id) return;
+        _selectedReasonId = id;
+        _selectedReason = b.Content?.ToString() ?? "";
+        RatingColor.Background = b.Background;
+        RatingSelectedReason.Text = _selectedReason;
+        //滚动到该项并居中
+        b.StartBringIntoView(new BringIntoViewOptions
+        {
+            VerticalAlignmentRatio = 0.5,
+            AnimationDesired = true
+        });
+    }
+
+    //理由项固定尺寸,用于按视口中心计算当前项索引
+    private const double RatingItemHeight = 40;
+    private const double RatingItemStep = RatingItemHeight + 6; //高度 + 上下Margin(3+3)
+
+    private double CenterPointOfViewportInExtent()
+    {
+        return RatingScroll.VerticalOffset + RatingScroll.ViewportHeight / 2;
+    }
+
+    private int GetSelectedIndexFromViewport()
+    {
+        if (RatingRepeater.ItemsSourceView == null || RatingRepeater.ItemsSourceView.Count == 0) return -1;
+        var index = (int)System.Math.Floor(CenterPointOfViewportInExtent() / RatingItemStep);
+        index %= RatingRepeater.ItemsSourceView.Count;
+        return index;
+    }
+
+    private void RatingScroll_ViewChanging(object sender, ScrollViewerViewChangingEventArgs e)
+    {
+        var index = GetSelectedIndexFromViewport();
+        if (index < 0) return;
+        if (RatingRepeater.TryGetElement(index) is not Button selected) return;
+        _selectedReasonId = (int)selected.Tag;
+        _selectedReason = selected.Content?.ToString() ?? "";
+        RatingColor.Background = selected.Background;
+        RatingSelectedReason.Text = _selectedReason;
+    }
+
+    //参考微软 ItemsRepeater 滚动缩放示例:靠近视口中心的项放大
+    private void RatingRepeater_ElementPrepared(ItemsRepeater sender, ItemsRepeaterElementPreparedEventArgs args)
+    {
+        var item = ElementCompositionPreview.GetElementVisual(args.Element);
+        var svVisual = ElementCompositionPreview.GetElementVisual(RatingScroll);
+        var scrollProperties = ElementCompositionPreview.GetScrollViewerManipulationPropertySet(RatingScroll);
+
+        var scaleExpresion = scrollProperties.Compositor.CreateExpressionAnimation();
+        scaleExpresion.SetReferenceParameter("svVisual", svVisual);
+        scaleExpresion.SetReferenceParameter("scrollProperties", scrollProperties);
+        scaleExpresion.SetReferenceParameter("item", item);
+        scaleExpresion.Expression = "1 - abs((svVisual.Size.Y/2 - scrollProperties.Translation.Y) - (item.Offset.Y + item.Size.Y/2))*(.25/(svVisual.Size.Y/2))";
+        item.StartAnimation("Scale.X", scaleExpresion);
+        item.StartAnimation("Scale.Y", scaleExpresion);
+
+        var centerPointExpression = scrollProperties.Compositor.CreateExpressionAnimation();
+        centerPointExpression.SetReferenceParameter("item", item);
+        centerPointExpression.Expression = "Vector3(item.Size.X/2, item.Size.Y/2, 0)";
+        item.StartAnimation("CenterPoint", centerPointExpression);
+    }
+
+    private async void RatingOk_Click(object sender, RoutedEventArgs e)
+    {
+        if (_selectedReasonId == 0)
+        {
+            RatingError.Text = "请选择一个风评理由";
+            return;
+        }
+
+        RatingError.Text = "";
+        RatingOk.IsEnabled = false;
+        try
+        {
+            //请求体:{"reasonId":12,"type":1}
+            var post = new Dictionary<string, object>
+            {
+                { "reasonId", _selectedReasonId },
+                { "type", _ratingType }
+            };
+            var postText = SerializationHelper.TrySerialize(post);
+            var requestBody = new StringContent(postText, Encoding.UTF8, "application/json");
+            var res = await ApiService.Submit<object>(ApiEndpoints.Post.Rate(_ratingPostId), requestBody);
+            if (!res.IsSuccess)
+            {
+                RatingError.Text = $"风评失败：{res.Message}";
+                return;
+            }
+
+            Flower.Play(FlowStatus.Success, $"风评成功：{_selectedReason}");
+            RatingDialog.Hide();
+        }
+        catch (Exception ex)
+        {
+            RatingError.Text = $"风评失败：{ex.Message}";
+        }
+        finally
+        {
+            RatingOk.IsEnabled = true;
+        }
+    }
+
+    private void RatingCancel_Click(object sender, RoutedEventArgs e)
+    {
+        RatingDialog.Hide();
+    }
+
+    private void RatingDialog_Closed(ContentDialog sender, ContentDialogClosedEventArgs args)
+    {
+        RatingError.Text = "";
+        RatingRepeater.ItemsSource = null;
+    }
+
+    #endregion
+
     private async void TileFlyout_Click(object sender, RoutedEventArgs e)
     {
         var m = sender as MenuFlyoutItem;
@@ -759,6 +978,9 @@ public sealed partial class TopicPage : Page
         {
             case "GIFT":
                 await ShowWealthTransferAsync(reply);
+                break;
+            case "RATE":
+                await ShowRatingAsync(reply);
                 break;
             case "UBB":
                 pack = new DataPackage();

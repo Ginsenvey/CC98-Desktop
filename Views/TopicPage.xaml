@@ -355,7 +355,7 @@
                 <TextBlock Text="转账手续费从转账金额中收取，因此对方实际收到的金额会少于您输入的金额。" TextWrapping="Wrap" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
                 <TextBlock Text="转账的最小金额不能小于 10。" TextWrapping="Wrap" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
                 <TextBlock Text="可以对多人转账，请在收款人一栏用空格隔开每个用户。多人转账时每个用户都会收到您指定的金额并单独扣除手续费。" TextWrapping="Wrap" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
-                <TextBox x:Name="WealthReceiver" Header="收款人" PlaceholderText="用户名，多人用空格隔开" />
+                <TextBox x:Name="WealthReceiver" Header="收款人" PlaceholderText="用户名，多人用空格隔开" IsEnabled="False" />
                 <NumberBox x:Name="WealthAmount" Header="金额（米）" Minimum="0" SpinButtonPlacementMode="Compact" ValueChanged="WealthAmount_ValueChanged" />
                 <TextBox x:Name="WealthReason" Header="理由" PlaceholderText="选填" />
                 <TextBlock x:Name="WealthPreview" FontSize="12" Foreground="LightSeaGreen" TextWrapping="Wrap" />
@@ -363,6 +363,37 @@
                 <Grid>
                     <Button Content="取消" Click="WealthTransferCancel_Click" HorizontalAlignment="Left" />
                     <Button Content="赠米" x:Name="WealthTransferOk" Click="WealthTransferOk_Click" HorizontalAlignment="Right" Style="{StaticResource AccentButtonStyle}" />
+                </Grid>
+            </StackPanel>
+        </ContentDialog>
+
+        <ContentDialog x:Name="RatingDialog" Title="风评" Closed="RatingDialog_Closed">
+            <StackPanel Width="360" Spacing="10">
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                    <RadioButton x:Name="RatingPositive" Content="正面" GroupName="RatingType" Checked="RatingType_Checked" Tag="1" />
+                    <RadioButton x:Name="RatingNegative" Content="负面" GroupName="RatingType" Checked="RatingType_Checked" Tag="2" />
+                </StackPanel>
+                <TextBlock Text="滚动选择理由，点击可快速选中。" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                <ScrollViewer x:Name="RatingScroll" Height="170" VerticalScrollBarVisibility="Auto"
+                              ViewChanging="RatingScroll_ViewChanging">
+                    <ItemsRepeater x:Name="RatingRepeater" ElementPrepared="RatingRepeater_ElementPrepared">
+                        <ItemsRepeater.ItemTemplate>
+                            <DataTemplate x:DataType="obj:RatingReason">
+                                <Button Content="{x:Bind Reason}" Background="{x:Bind ColorHex}" Tag="{x:Bind Id}"
+                                        Click="RatingItem_Click" Foreground="White" HorizontalAlignment="Stretch"
+                                        Height="40" Margin="0,3" CornerRadius="6" />
+                            </DataTemplate>
+                        </ItemsRepeater.ItemTemplate>
+                    </ItemsRepeater>
+                </ScrollViewer>
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                    <Border x:Name="RatingColor" Width="40" Height="40" CornerRadius="6" Background="#888888" />
+                    <TextBlock x:Name="RatingSelectedReason" VerticalAlignment="Center" TextWrapping="Wrap" MaxWidth="280" />
+                </StackPanel>
+                <TextBlock x:Name="RatingError" Foreground="Red" TextWrapping="Wrap" FontSize="12" />
+                <Grid>
+                    <Button Content="取消" Click="RatingCancel_Click" HorizontalAlignment="Left" />
+                    <Button Content="确定" x:Name="RatingOk" Click="RatingOk_Click" HorizontalAlignment="Right" Style="{StaticResource AccentButtonStyle}" />
                 </Grid>
             </StackPanel>
         </ContentDialog>
