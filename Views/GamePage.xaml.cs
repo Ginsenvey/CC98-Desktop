@@ -94,12 +94,20 @@ public sealed partial class GamePage
         var data = drawResult.Data;
         foreach (var card in data)
         {
-            // 防御:ImageUri 可能为空串或非相对路径,避免 Substring 越界或拼出坏链接
+            // 防御空串,并正确补全图片地址:
+            // - "//path"(协议相对形式,API 实际返回):去掉一个前导斜杠拼资源域名(与原逻辑一致)
+            // - 完整 http(s) URL:原样使用
+            // - 其他相对路径:补全为资源域名下的地址
             var uri = card.ImageUri;
             if (string.IsNullOrEmpty(uri)) continue;
-            card.ImageUri = uri.StartsWith('/')
-                ? $"https://card.cc98.org{uri}"
-                : (uri.StartsWith("http") ? uri : $"https://card.cc98.org/{uri}");
+            if (uri.StartsWith("//"))
+                card.ImageUri = "https://card.cc98.org" + uri[1..];
+            else if (uri.StartsWith("http://") || uri.StartsWith("https://"))
+                card.ImageUri = uri;
+            else if (uri.StartsWith('/'))
+                card.ImageUri = "https://card.cc98.org" + uri;
+            else
+                card.ImageUri = "https://card.cc98.org/" + uri;
         }
         Cards.AddRange(data);
     }
