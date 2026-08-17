@@ -9,11 +9,13 @@ using Windows.System;
 using CC98.Kernel;
 using CC98.Objects;
 using CC98.Services;
-using Microsoft.UI.Xaml;
-using Microsoft.UI.Xaml.Controls;
 using CC98.Services.Extensions;
 using CC98.Services.Helpers;
+using CC98.Controls.Primitives;
+using CC98.Controls.UbbTextBlock.Common.Events;
 using DevWinUI;
+using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Navigation;
 
 namespace CC98.Views;
@@ -220,6 +222,40 @@ public sealed partial class BoardPage
         finally
         {
             _isLoading = false;
+        }
+    }
+
+    /// <summary>
+    /// 版面大字报(BigPaper)中的链接点击:按媒体类型显式处理。
+    /// </summary>
+    private async void Banner_MediaClicked(object sender, MediaClickEventArgs e)
+    {
+        var context = new LinkContext
+        {
+            Frame = Frame,
+            CurrentTopicId = null,
+            HasFloorLoaded = null,
+            JumpToFloor = null,
+            ImageList = null,
+            Flower = Flower
+        };
+
+        switch (e.MediaType)
+        {
+            case MediaType.Image:
+                // UBB 图片:显式启动预览器
+                LinkNavigationService.ShowImageViewer(e.Source);
+                break;
+            case MediaType.Link:
+                await LinkNavigationService.HandleLinkAsync(e.Source, context);
+                break;
+            case MediaType.AtUser:
+                await LinkNavigationService.HandleAtUserAsync(e.Source, context);
+                break;
+            case MediaType.File or MediaType.Audio or MediaType.Video:
+                // UBB 文件/音视频:显式下载
+                await LinkNavigationService.DownloadFileAsync(e.Source, context);
+                break;
         }
     }
 }

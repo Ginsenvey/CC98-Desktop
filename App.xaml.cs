@@ -185,7 +185,7 @@ public partial class App : Application
         })
         .AddHttpMessageHandler<VpnMessageHandler>()
         .AddStandardResilienceHandler();
-
+        //始终连接VPN的HttpClient,用于镜像站网络检测
         services.AddHttpClient("MirrorClient", client =>
         {
             client.Timeout = TimeSpan.FromSeconds(5);
@@ -197,6 +197,11 @@ public partial class App : Application
             {
                 AllowAutoRedirect=false
             };
+        });
+
+        services.AddHttpClient("DefaultClient", client =>
+        {
+            client.Timeout = TimeSpan.FromSeconds(5);
         });
 
         //论坛登录服务

@@ -380,9 +380,24 @@ public sealed partial class TopicPage : Page
 
     private async void UbbTextBlock_MediaClicked(object sender, MediaClickEventArgs e)
     {
+        var context = new LinkContext
+        {
+            Frame = Frame,
+            CurrentTopicId = TopicId,
+            HasFloorLoaded = floor => Replies.Any(r => r.Floor == floor),
+            JumpToFloor = async floor =>
+            {
+                IsJumping = true;
+                await Tp(floor);
+            },
+            ImageList = null,
+            Flower = Flower
+        };
+
         switch (e.MediaType)
         {
             case MediaType.Image:
+                // UBB 图片:显式启动预览器(收集帖内全部图片做画廊),不依赖 URL 识别
                 var u = sender as UbbTextBlock;
                 if (u == null) return;
                 var ubb = u.UbbText;
@@ -394,146 +409,45 @@ public sealed partial class TopicPage : Page
                 {
                     list.Add(ExtractImageUrl(node));
                 }
-                var anchor = list.IndexOf(e.Source);
-                var info = new ViewerNavigationInfo
-                {
-                    Type = MediaType.Image,
-                    Urls = list,
-                    CurrentIndex = anchor
-                };
-                var viewer = new MediaViewer(info);
-                viewer.Activate();
+                LinkNavigationService.ShowImageViewer(e.Source, list);
                 break;
             case MediaType.Link:
-                await HandleLink(e.Source);
+                await LinkNavigationService.HandleLinkAsync(e.Source, context);
                 break;
             case MediaType.AtUser:
-                await SearchForUser(e.Source);
+                await LinkNavigationService.HandleAtUserAsync(e.Source, context);
                 break;
             case MediaType.File or MediaType.Audio or MediaType.Video:
-                // 视频预览功能已移除,视频/文件/音频链接统一走下载
-                var fileRes = await Downloader.DownloadFileAsync(e.Source);
-                if (fileRes == null)
-                {
-                    Flower.Play(FlowStatus.Fail, "下载失败");
-                }
-                else
-                {
-                    Flower.Play(FlowStatus.Success, $"已下载到{fileRes}");
-                }
+                // UBB 文件/音视频:显式下载,不依赖 URL 识别(http/https 均可)
+                await LinkNavigationService.DownloadFileAsync(e.Source, context);
                 break;
-
         }
     }
-  
-    
-    private async Task SearchForUser(string userName)
+
+    private async void MdViewer_LinkClicked(object sender, CommunityToolkit.WinUI.Controls.LinkClickedEventArgs e)
     {
-        var url = ApiEndpoints.User.SearchUserByName(userName);
-        var result = await ApiService.Fetch<UserInfo>(url);
-        if (!result.IsSuccess || result.Data == null)
-        {
-            //
-            return;
-        }
-        var user = result.Data;
-        if (user == null)
-        {
-            Flower.Play(FlowStatus.Fail, "未找到用户");
-        }
-        else
-        {
-            var info = new ProfileNavigationInfo { IsMe = userName == AppSettings.Current.UserName, UserId = user.Id };
-            Frame.Navigate(typeof(ProfilePage), info);
-        }
+        e.Handled = true;
+        var url = e.Uri.ToString();
+        if (string.IsNullOrWhiteSpace(url)) return;
 
-    }
-
-    
-
-    private async Task HandleLink(string url)
-    {
-        //锚点
-        var topicAnchor = url.ExtractTopicInfo();
-        //如果整个元组为null,则下面的HasValue为false,否则为true。
-        if (topicAnchor.HasValue)
+        var context = new LinkContext
         {
-            int targetFloor = 0;
-            if (topicAnchor.Value.Page.HasValue && topicAnchor.Value.Anchor.HasValue)
-            {
-                targetFloor = (topicAnchor.Value.Page.Value - 1) * 10 + topicAnchor.Value.Anchor.Value;
-            }
-            if (topicAnchor.Value.Page.HasValue && !topicAnchor.Value.Anchor.HasValue)
-            {
-                targetFloor = (topicAnchor.Value.Page.Value - 1) * 10 + 0;
-            }
-            //topicId一致：
-            if (topicAnchor.Value.TopicId == TopicId)
+            Frame = Frame,
+            CurrentTopicId = TopicId,
+            HasFloorLoaded = floor => Replies.Any(r => r.Floor == floor),
+            JumpToFloor = async floor =>
             {
                 IsJumping = true;
-                await Tp(targetFloor);
-            }
-            else
-            {
-                TopicId = topicAnchor.Value.TopicId;
-                await LoadTopicInfo();
-                IsJumping = true;
-                await Tp(targetFloor);
-            }
-            return;
-        }
-        //外链
-        if (!url.IsCC98Url)
-        {
-            var package = new DataPackage();
-            package.SetText(url);
-            Clipboard.SetContent(package);
-            Flower.Play(FlowStatus.Success, "已复制外部链接");
-            return;
-        }
-        
-        //文件
-        if (url.IsCC98FileUrl)
-        {
-            if (url.IsCC98ImageUrl)
-            {
-                var info = new ViewerNavigationInfo
-                {
-                    Type = MediaType.Image,
-                    Urls = [url],
-                    CurrentIndex = 0
-                };
-                var viewer = new MediaViewer(info);
-                viewer.Activate();
-                return;
-            }
-            var fileRes = await Downloader.DownloadFileAsync(url);
-            if (fileRes == null)
-            {
-                Flower.Play(FlowStatus.Fail, "下载失败");
-            }
-            else
-            {
-                Flower.Play(FlowStatus.Success, $"已下载到{fileRes}");
-            }
-            return;
-        }
-        //版面
-        var match2 = UrlEx.BoardRegex.Match(url);
-        if (match2.Success)
-        {
-            int boardId = int.Parse(match2.Groups[1].ValueSpan);
-            Frame.Navigate(typeof(BoardPage), boardId);
-            return;
-        }
-        
+                await Tp(floor);
+            },
+            ImageList = null,
+            Flower = Flower
+        };
+
+        await LinkNavigationService.HandleLinkAsync(url, context);
     }
 
     
-    // 注:Markdown 回复的链接点击当前无法处理——所用 CommunityToolkit.Labs MarkdownTextBlock 版本
-    // 不支持 LinkClicked 事件(见 Labs-Windows issue #584),原 MarkdownTextBlock_LinkClicked 为
-    // 从未绑定的死代码(url 恒为空),已删除。如需支持,需升级/更换 Markdown 控件。
-
     private void writereply_Click(object sender, RoutedEventArgs e)
     {
         var param = new SketchNavigationInfo

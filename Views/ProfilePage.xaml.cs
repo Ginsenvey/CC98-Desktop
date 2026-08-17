@@ -189,47 +189,32 @@ public sealed partial class ProfilePage : Page
 
     private async void UbbTextBlock_MediaClicked(object sender, MediaClickEventArgs e)
     {
+        var context = new LinkContext
+        {
+            Frame = Frame,
+            CurrentTopicId = null,
+            HasFloorLoaded = null,
+            JumpToFloor = null,
+            ImageList = null,
+            Flower = Flower
+        };
+
         switch (e.MediaType)
         {
+            case MediaType.Image:
+                // UBB 图片:显式启动预览器
+                LinkNavigationService.ShowImageViewer(e.Source);
+                break;
             case MediaType.Link:
-                //await HandleLink(e.Source);
+                await LinkNavigationService.HandleLinkAsync(e.Source, context);
                 break;
             case MediaType.AtUser:
-                await SearchForUser(e.Source);
+                await LinkNavigationService.HandleAtUserAsync(e.Source, context);
                 break;
-            case MediaType.File or MediaType.Audio:
-                var fileRes = await Downloader.DownloadFileAsync(e.Source);
-                if (fileRes == null)
-                {
-                    Flower.Play(FlowStatus.Fail, "下载失败");
-                }
-                else
-                {
-                    Flower.Play(FlowStatus.Success, $"已下载到{fileRes}");
-                }
+            case MediaType.File or MediaType.Audio or MediaType.Video:
+                // UBB 文件/音视频:显式下载
+                await LinkNavigationService.DownloadFileAsync(e.Source, context);
                 break;
         }
-    }
-
-    private async Task SearchForUser(string userName)
-    {
-        var url = ApiEndpoints.User.SearchUserByName(userName);
-        var result = await ApiService.Fetch<UserInfo>(url);
-        if (!result.IsSuccess || result.Data == null)
-        {
-            //
-            return;
-        }
-        var user = result.Data;
-        if (user == null)
-        {
-            Flower.Play(FlowStatus.Fail, "未找到用户");
-        }
-        else
-        {
-            var info = new ProfileNavigationInfo { IsMe = userName == AppSettings.Current.UserName, UserId = user.Id };
-            Frame.Navigate(typeof(ProfilePage), info);
-        }
-
     }
 }

@@ -21,7 +21,7 @@ public class MirrorService(IHttpClientFactory httpClientFactory)
     {
         try
         {
-            var httpClient =useVpn ? httpClientFactory.CreateClient("MirrorClient") : httpClientFactory.CreateClient();
+            var httpClient =useVpn ? httpClientFactory.CreateClient("MirrorClient") : httpClientFactory.CreateClient("DefaultClient");
             var response = await httpClient.GetAsync(MirrorUrl, cancellationToken);
             var resText = await response.Content.ReadAsStringAsync(cancellationToken);
             Debug.WriteLine(response.StatusCode);

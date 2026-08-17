@@ -6,9 +6,13 @@ using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 
+using CC98.Controls.Primitives;
+using CC98.Controls.UbbTextBlock.Common.Events;
 using CC98.Kernel;
 using CC98.Objects;
+using CC98.Services;
 using CC98.Services.Extensions;
+using CC98.Services.Helpers;
 
 using DevWinUI;
 
@@ -195,5 +199,36 @@ public sealed partial class ChatPage : Page
     private async void Ref_Click(object sender, RoutedEventArgs e)
     {
         await RefreshMessageList();
+    }
+
+    private async void UbbTextBlock_MediaClicked(object sender, MediaClickEventArgs e)
+    {
+        var context = new LinkContext
+        {
+            Frame = Frame,
+            CurrentTopicId = null,
+            HasFloorLoaded = null,
+            JumpToFloor = null,
+            ImageList = null,
+            Flower = Flower
+        };
+
+        switch (e.MediaType)
+        {
+            case MediaType.Image:
+                // UBB 图片:显式启动预览器
+                LinkNavigationService.ShowImageViewer(e.Source);
+                break;
+            case MediaType.Link:
+                await LinkNavigationService.HandleLinkAsync(e.Source, context);
+                break;
+            case MediaType.AtUser:
+                await LinkNavigationService.HandleAtUserAsync(e.Source, context);
+                break;
+            case MediaType.File or MediaType.Audio or MediaType.Video:
+                // UBB 文件/音视频:显式下载
+                await LinkNavigationService.DownloadFileAsync(e.Source, context);
+                break;
+        }
     }
 }

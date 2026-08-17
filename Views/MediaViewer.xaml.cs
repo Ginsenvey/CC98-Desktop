@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using CC98.Controls.Picture;
 using CC98.Controls.Primitives;
 using CC98.Kernel.Authorize;
 using CC98.Objects;
@@ -50,8 +51,8 @@ public sealed partial class MediaViewer : Window
     {
         Direction = 0;
         ImageTransform.Angle = CurrentAngle;
-        Scale = 1.0f;
-        ScaleImage();
+        // 等待新图解码完成后自动适配视口,期间不缩放(保持上次状态直到适配)
+        _autoFitPending = true;
         InnerImage.Src = CurrentUrl;
         MediaInfo.Text = CurrentUrl;
         Posi.Text = $"{CurrentIndex + 1} / {Pictures.Count}";
@@ -130,9 +131,47 @@ public sealed partial class MediaViewer : Window
         LoadImage();
     }
 
+    // 是否等待本次加载的图片解码完成后自动适配视口
+    private bool _autoFitPending;
+
+    /// <summary>
+    /// 图片解码完成后回调:计算并应用适配因子,保证用户无需手动缩放即可看到全貌。
+    /// </summary>
+    private void InnerImage_ImageOpened(object sender, PictureImageOpenedEventArgs e)
+    {
+        if (!_autoFitPending) return;
+        _autoFitPending = false;
+        FitToViewport(e.PixelWidth, e.PixelHeight);
+    }
+
+    /// <summary>
+    /// 计算适配因子并缩放:图片宽被 Uniform 约束为视口宽,显示高 = 视口宽/宽高比,
+    /// 完整显示所需缩放 = min(1, 视口高/显示高)。只缩不放大,小图保持 100%。
+    /// </summary>
+    private void FitToViewport(int imgW, int imgH)
+    {
+        var vw = Viewer.ViewportWidth;
+        var vh = Viewer.ViewportHeight;
+        if (vw <= 0 || vh <= 0 || imgW <= 0 || imgH <= 0)
+        {
+            // 视口或图片尺寸未知,回退 100%
+            Scale = 1.0f;
+            ScaleImage();
+            return;
+        }
+
+        // 宽高比使用像素比例(与 DIP 比例一致,无需 DPI 换算)
+        var aspect = (double)imgW / imgH;
+        var displayedHeight = vw / aspect;
+        var fit = vh / displayedHeight;
+        if (fit >= 1.0) fit = 1.0; // 不放大
+        Scale = (float)fit;
+        ScaleImage();
+    }
+
     private void Viewer_ViewChanged(object sender, ScrollViewerViewChangedEventArgs e)
     {
-        Scale=Viewer.ZoomFactor;
+        Scale = Viewer.ZoomFactor;
         zoomfactor.Text = ScaleText;
     }
 

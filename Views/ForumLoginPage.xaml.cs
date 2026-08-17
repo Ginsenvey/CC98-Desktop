@@ -398,7 +398,6 @@ namespace CC98.Views
         {
             if(AppSettings.Current.IsVpnEnabled)
             {
-                isUserOperated = false;
                 EnableVpn.IsChecked = true;
             }
         }

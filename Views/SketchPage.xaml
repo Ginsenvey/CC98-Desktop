@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <Page
     x:Class="CC98.Views.SketchPage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
@@ -263,7 +263,7 @@
                 </Grid>
             </controls:RibbonCollapsibleGroup>
             <controls:RibbonGroup Label="预览">
-                <ToggleButton Height="45" Width="45" Click="PriviewMode_Click" x:Name="PriviewMode" IsChecked="True" BorderThickness="0">
+                <ToggleButton Height="45" Width="45" Click="PreviewMode_Click" x:Name="PreviewMode" IsChecked="True" BorderThickness="0">
                     <ic:SymbolIcon Symbol="Edit"></ic:SymbolIcon>
                 </ToggleButton>
             </controls:RibbonGroup>

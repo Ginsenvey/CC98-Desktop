@@ -1,19 +1,47 @@
+using System;
 using System.Threading.Tasks;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
+using Microsoft.UI.Xaml.Media.Imaging;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
 
 namespace CC98.Controls.Picture;
 
+/// <summary>
+/// 图片成功解码并渲染后的事件参数,携带图片像素尺寸(用于视口适配等)。
+/// </summary>
+public sealed class PictureImageOpenedEventArgs : EventArgs
+{
+    public int PixelWidth { get; }
+    public int PixelHeight { get; }
+
+    public PictureImageOpenedEventArgs(int pixelWidth, int pixelHeight)
+    {
+        PixelWidth = pixelWidth;
+        PixelHeight = pixelHeight;
+    }
+}
+
 public sealed partial class Picture : UserControl
 {
     public Picture()
     {
         InitializeComponent();
+        // 图片解码完成时转发事件,让调用方(如预览器)能拿到像素尺寸做视口适配
+        Viewer.ImageOpened += (_, _) =>
+        {
+            if (Viewer.Source is BitmapImage bmp)
+                ImageOpened?.Invoke(this, new(bmp.PixelWidth, bmp.PixelHeight));
+        };
     }
+
+    /// <summary>
+    /// 图片成功解码并渲染后触发,携带像素尺寸。
+    /// </summary>
+    public event EventHandler<PictureImageOpenedEventArgs>? ImageOpened;
 
     #region 图片加载
 

@@ -29,6 +29,7 @@
             <ComboBox x:Name="FavoriteBox" Grid.Column="1" HorizontalAlignment="Right" Margin="0,0,20,0"
                       PlaceholderText="切换收藏夹" Background="Transparent" ItemsSource="{x:Bind FavoritesList}"
                       SelectionChanged="FavoriteBox_SelectionChanged"
+                      dev:MaterialAttach.UseAcrylicBackground="True"
                       SelectedItem="{x:Bind SelectedFavorites,Mode=TwoWay}" Height="35.5">
                 <ComboBox.ItemTemplate>
                     <DataTemplate x:DataType="obj:Favorites">

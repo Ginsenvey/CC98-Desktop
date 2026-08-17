@@ -125,7 +125,7 @@
                 </HyperlinkButton>
 
                 <Border  Grid.Row="1" Padding="10" CornerRadius="4" Background="{ThemeResource MarkdownBackgroundBrush}">
-                    <tool:MarkdownTextBlock Text="{x:Bind Content,Mode=OneWay}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" UseAutoLinks="True" UseEmphasisExtras="True" UseListExtras="True" UsePipeTables="True" UseTaskLists="True" UseSoftlineBreakAsHardlineBreak="True"/>
+                    <tool:MarkdownTextBlock Text="{x:Bind Content,Mode=OneWay}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" UseAutoLinks="True" UseEmphasisExtras="True" UseListExtras="True" UsePipeTables="True" UseTaskLists="True" UseSoftlineBreakAsHardlineBreak="True" OnLinkClicked="MdViewer_LinkClicked"/>
                 </Border>
 
                 <StackPanel Orientation="Vertical" Grid.Row="0" Margin="5,5,10,0" HorizontalAlignment="Right">

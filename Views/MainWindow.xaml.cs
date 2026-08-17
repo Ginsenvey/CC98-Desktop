@@ -5,6 +5,7 @@ using CC98.Objects;
 using CC98.Services;
 using CC98.Services.Extensions;
 using CC98.Services.Helpers;
+using CommunityToolkit.WinUI.Converters;
 using CSharpMath;
 using DevWinUI;
 using Microsoft.Extensions.DependencyInjection;
@@ -134,16 +135,34 @@ public sealed partial class MainWindow : Window
 
     /// <summary>
     /// 启动阶段需要联网的任务。互不依赖,并行执行以缩短整体耗时。
+    /// VPN 检查独立于核心数据:其网络慢或需用户交互时,不阻塞头像等资源加载。
     /// </summary>
     private async Task LoadStartupDataAsync()
     {
+        // 定时器与网络加载无依赖,立即启动
+        InitializeTimer();
+        // VPN 检查 fire-and-forget:异常在内部捕获,失败/缓慢不影响其他任务
+        _ = CheckVpnStatusSafelyAsync();
         await Task.WhenAll(
-            CheckVpnStatus(isStartup: true),
             GetFocusBoards(),
             RefreshMessage(),
             LoadPortrait(),
             GetFavorites());
-        InitializeTimer();
+    }
+
+    /// <summary>
+    /// VPN 启动检查的安全包装:任何异常都只记录,不传播到调用链。
+    /// </summary>
+    private async Task CheckVpnStatusSafelyAsync()
+    {
+        try
+        {
+            await CheckVpnStatus(isStartup: true);
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"VPN 启动检查异常: {ex.Message}");
+        }
     }
 
     private async Task LoadPortrait()
@@ -625,8 +644,12 @@ public sealed partial class MainWindow : Window
     /// <returns></returns>
     private async Task CheckVpnStatus(bool isStartup = false)
     {
-        if(isStartup && !AppSettings.Current.IsVpnEnabled)
+        // 启动时:未启用 VPN 或凭据缺失都静默跳过——不弹配置对话框,不发起网络请求,
+        // 仅保证按钮状态正确。用户点击 VPN 按钮时才进入完整检查/配置流程。
+        if (isStartup && (!AppSettings.Current.IsVpnEnabled || !GlobalService.IsVpnConfigured))
         {
+            VPNConfigButton.Visibility = Visibility.Visible;
+            DisconnectButton.Visibility = Visibility.Collapsed;
             return;
         }
         //没有配置过VPN，或者配置过但是凭据不完整，则需要登录
@@ -724,6 +747,7 @@ public sealed partial class MainWindow : Window
             var success=await VpnConfirmAsync();
             VPNConfigButton.Visibility = success ? Visibility.Collapsed : Visibility.Visible;
             DisconnectButton.Visibility = success ? Visibility.Visible : Visibility.Collapsed;
+            return;
         }
         if (res.Status == VpnLoginStatus.NeedCaptcha || res.Status == VpnLoginStatus.Fail)
         {
@@ -749,13 +773,11 @@ public sealed partial class MainWindow : Window
         var mirrorService = App.Current.GetService<MirrorService>();
         if (AppSettings.Current.IsVpnEnabled)
         {
+            statusText = "正在检查网络状态...";
             var res = await mirrorService.CheckNetworkAsync(true);
             statusText = MirrorService.FriendlyStatus(res);
-            if(res!=NetworkStatus.InCampus)
-            {
-                VPNConfigButton.Visibility = Visibility.Collapsed;
-                DisconnectButton.Visibility=Visibility.Visible;
-            }
+            VPNConfigButton.Visibility = (res == NetworkStatus.InCampus) ? Visibility.Collapsed : Visibility.Visible;
+            DisconnectButton.Visibility = (res == NetworkStatus.InCampus) ? Visibility.Visible : Visibility.Collapsed; ;
         }
         else
         {
