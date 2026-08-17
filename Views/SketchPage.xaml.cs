@@ -18,6 +18,7 @@ using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Navigation;
 using Microsoft.Windows.Storage.Pickers;
 using CC98.Services.Extensions;
+using CC98.Services.Helpers;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -469,37 +470,24 @@ public sealed partial class SketchPage : Page
             var operation = tag.ToInt();
             if (operation == 1)
             {
-                var url = "";
-                var filter = GetSuffixes(CurrentLabel);
-                switch (CurrentLabel)
+                // 上传本地文件:选择后上传,成功后按当前模式插入标签
+                FileHelper.Hide();
+                var result = await FileUploadService.PickAndUploadAsync(XamlRoot, CurrentLabel);
+                if (!result.Success)
                 {
-                    case "img":
-                        url = await PickAndUploadFile(filter, PickerLocationId.PicturesLibrary);
-                        break;
-                    case "video":
-                        url = await PickAndUploadFile(filter, PickerLocationId.VideosLibrary);
-                        break;
-                    case "audio":
-                        url = await PickAndUploadFile(filter, PickerLocationId.MusicLibrary);
-                        break;
-                    case "upload":
-                        url = await PickAndUploadFile(filter, PickerLocationId.DocumentsLibrary);
-                        break;
+                    if (!string.IsNullOrEmpty(result.Error))
+                        Flower.Play(FlowStatus.Fail, $"上传失败:{result.Error}");
+                    return;
                 }
 
-                FileHelper.Hide();
-                if (url != "0")
-                {
-                    if (TextContentType == (int)Objects.ContentType.Markdown)
-                        InsertMdMedia(CurrentLabel, url);
-                    else
-                        InsertTag(CurrentLabel, CurrentLabel, url);
-                }
+                if (TextContentType == (int)Objects.ContentType.Markdown)
+                    InsertMdMedia(CurrentLabel, result.Url);
                 else
-                    Flower.Play(FlowStatus.Info, "未上传文件");
+                    InsertTag(CurrentLabel, CurrentLabel, result.Url);
             }
             else if (operation == 2)
             {
+                // 仅输入标签:插入空标签,由用户在编辑器中补充内容
                 FileHelper.Hide();
                 if (TextContentType == (int)Objects.ContentType.Markdown)
                     InsertMdMedia(CurrentLabel, "");
@@ -508,6 +496,7 @@ public sealed partial class SketchPage : Page
             }
             else
             {
+                // 使用自定义 URL
                 CustomLink.Visibility = Visibility.Visible;
                 CustomLink.Focus(FocusState.Keyboard); //自动聚焦，减少鼠标操作
             }
@@ -596,72 +585,6 @@ public sealed partial class SketchPage : Page
             GlobalService.Instance.NavigationAnchor = param;
             GoBack();
         }
-    }
-
-    private async Task<string> UploadFileAsync(string filePath)
-    {
-        var url = ApiEndpoints.Forum.UploadFile;
-        using var formData = new MultipartFormDataContent();
-        // 流式上传:避免 File.ReadAllBytes 在 UI 线程把整个文件(可能数百MB)读入内存
-        using var fileStream = File.OpenRead(filePath);
-        var fileContent = new StreamContent(fileStream);
-        fileContent.Headers.ContentType = new("multipart/form-data");
-        formData.Add(fileContent, "files", Path.GetFileName(filePath));
-        var res = await ApiService.Submit<List<string>>(url, formData);
-        if (!res.IsSuccess || res.Data == null)
-        {
-            //
-            status.Text = $"上传失败:{res.Message}";
-            return "";
-        }
-
-        var data = res.Data;
-        if (data.Count > 0) return data[0];
-
-        return "";
-    }
-
-    private static List<string> GetSuffixes(string type)
-    {
-        return type switch
-        {
-            "img" => [".png", ".jpg", ".jpeg", ".bmp", ".gif", ".webp"],
-            "video" => [".mp4", ".mkv", ".avi", ".mov", ".wmv"],
-            "audio" => [".mp3", ".wav", ".m4a", ".flac", ".aac"],
-            "upload" => [".pdf", ".doc", ".docx", ".xls", ".xlsx", ".ppt", ".pptx", ".txt", ".zip", ".rar", ".7z"],
-            _ => []
-        };
-    }
-
-    private async Task<string> PickAndUploadFile(IList<string> filter, PickerLocationId location)
-    {
-        try
-        {
-            var picker = new FileOpenPicker(XamlRoot.ContentIslandEnvironment.AppWindowId)
-            {
-                CommitButtonText = "上传",
-                SuggestedStartLocation = location
-            };
-            picker.FileTypeFilter.AddRange(filter);
-            var file = await picker.PickSingleFileAsync();
-            if (file != null)
-            {
-                status.Text = "正在上传文件。请稍作等待";
-                var url = await UploadFileAsync(file.Path);
-                // 成功判定:去掉脆弱的 url.Contains("file") 子串校验,以非空且非失败标记为准
-                if (!string.IsNullOrEmpty(url) && url != "0")
-                {
-                    status.Text = "上传成功:" + file.Path;
-                    return url;
-                }
-            }
-        }
-        catch (Exception ex)
-        {
-            status.Text = "上传失败:" + ex.Message;
-        }
-
-        return "0";
     }
 
     private async Task SendReply()

@@ -195,6 +195,119 @@ public sealed partial class ChatPage : Page
         }
     }
 
+    /// <summary>
+    /// 简易 UBB 工具栏统一入口:按按钮 Tag 分发。
+    /// emoji 打开表情浮出层,img/upload 走文件上传,其余插入 UBB 标签。
+    /// </summary>
+    private async void ToolButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is not HyperlinkButton b || b.Tag is not string tag) return;
+        switch (tag)
+        {
+            case "emoji":
+                EmojiFlyout.ShowAt(b);
+                break;
+            case "img":
+            case "upload":
+                await InsertMediaAsync(tag);
+                break;
+            default:
+                InsertTag(tag);
+                break;
+        }
+    }
+
+    /// <summary>
+    /// 表情浮出层打开时初始化分类栏(仅首次),并显式加载当前分类的表情。
+    /// 注意:不在 Opening 期间设置 SelectedIndex,避免 SelectionChanged 在 Flyout
+    /// 内容树初始化期间同步触发导致 XAML 模板重入崩溃(0xc000027b)。
+    /// </summary>
+    private void EmojiFlyout_Opening(object sender, object e)
+    {
+        if (EmojiCategoryBar.ItemsSource == null)
+        {
+            var categories = EmojiService.GetCategories();
+            EmojiCategoryBar.ItemsSource = categories;
+        }
+
+        // 无选中时(首次打开)默认显示第一个分类;已有选中(上次选择)则保持
+        if (EmojiCategoryBar.SelectedItem is not EmojiCategoryInfo current
+            && EmojiCategoryBar.Items.Count > 0)
+        {
+            current = (EmojiCategoryInfo)EmojiCategoryBar.Items[0];
+            EmojiGrid.ItemsSource = EmojiService.GetEmojis(current.Tag);
+        }
+    }
+
+    /// <summary>
+    /// 切换表情分类:GridView 选中项变化时加载对应表情。
+    /// </summary>
+    private void EmojiCategory_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (EmojiCategoryBar.SelectedItem is EmojiCategoryInfo category)
+            EmojiGrid.ItemsSource = EmojiService.GetEmojis(category.Tag);
+    }
+
+    /// <summary>
+    /// 点击表情:在回复框光标位置插入 [表情名] 并关闭浮出层。
+    /// </summary>
+    private void EmojiGrid_ItemClick(object sender, ItemClickEventArgs e)
+    {
+        if (e.ClickedItem is not Emoji emoji) return;
+        InsertEmoji(emoji.EmojiName);
+        EmojiFlyout.Hide();
+    }
+
+    private void InsertEmoji(string name)
+    {
+        var selStart = ReplyBody.SelectionStart;
+        var code = $"[{name}]";
+        ReplyBody.Text = ReplyBody.Text.Insert(selStart, code);
+        ReplyBody.SelectionStart = selStart + code.Length;
+        ReplyBody.Focus(FocusState.Programmatic);
+    }
+
+    /// <summary>
+    /// 在回复框光标位置插入 UBB 包裹标签,有选中文本时包裹选中内容。
+    /// </summary>
+    private void InsertTag(string tag)
+    {
+        var selStart = ReplyBody.SelectionStart;
+        var selLen = ReplyBody.SelectionLength;
+        var hasSelection = selLen > 0;
+        var selected = hasSelection ? ReplyBody.Text.Substring(selStart, selLen) : "";
+        var tagText = $"[{tag}]{selected}[/{tag}]";
+
+        ReplyBody.Text = ReplyBody.Text.Insert(selStart, tagText);
+        // 开标签长度为 tag.Length + 2("[tag]");光标停在开标签之后、
+        // 包裹内容之前(无选中时即两个标签中间,直接输入即可)
+        var openTagLen = tag.Length + 2;
+        ReplyBody.SelectionStart = selStart + openTagLen + (hasSelection ? selected.Length : 0);
+        ReplyBody.SelectionLength = 0;
+        ReplyBody.Focus(FocusState.Programmatic);
+    }
+
+    /// <summary>
+    /// 选择文件并上传,成功后插入媒体标签。
+    /// </summary>
+    private async Task InsertMediaAsync(string label)
+    {
+        var result = await FileUploadService.PickAndUploadAsync(XamlRoot, label);
+        if (!result.Success)
+        {
+            if (!string.IsNullOrEmpty(result.Error))
+                Flower.Play(FlowStatus.Fail, $"上传失败:{result.Error}");
+            return; // 取消或失败都不插入
+        }
+
+        var selStart = ReplyBody.SelectionStart;
+        var tagText = $"[{label}]{result.Url}[/{label}]";
+        ReplyBody.Text = ReplyBody.Text.Insert(selStart, tagText);
+        ReplyBody.SelectionStart = selStart + tagText.Length;
+        ReplyBody.Focus(FocusState.Programmatic);
+        Flower.Play(FlowStatus.Success, "上传成功");
+    }
+
 
     private async void Ref_Click(object sender, RoutedEventArgs e)
     {

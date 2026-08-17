@@ -135,6 +135,7 @@
             </AppBarButton>
         </CommandBar>
         <TeachingTip x:Name="ForumStat" IsLightDismissEnabled="True" Target="{x:Bind IndexAction}"
+                     dev:MaterialAttach.UseAcrylicBackground="True"
                      TailVisibility="Collapsed" PreferredPlacement="Top" Unloaded="ForumStat_Unloaded">
             <TeachingTip.HeroContent>
                 <TextBlock x:Name="welcome" Text="" Margin="10,10,10,0" HorizontalAlignment="Center"
