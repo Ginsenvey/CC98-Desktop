@@ -12,6 +12,7 @@ using CC98.Services.Helpers;
 using DevWinUI;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Controls.Primitives;
 using Microsoft.UI.Xaml.Hosting;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Navigation;
@@ -342,6 +343,7 @@ public sealed partial class TopicPage : Page
         //仅当仍是最新一次加载时才写入,防止旧请求覆盖新页数据
         if (generation != _loadReplyGeneration) return;
         Replies.AddRange(data);
+        TopicEmptyState.Visibility = Replies.Count == 0 ? Microsoft.UI.Xaml.Visibility.Visible : Microsoft.UI.Xaml.Visibility.Collapsed;
     }
 
 
@@ -384,7 +386,6 @@ public sealed partial class TopicPage : Page
         {
             Frame = Frame,
             CurrentTopicId = TopicId,
-            HasFloorLoaded = floor => Replies.Any(r => r.Floor == floor),
             JumpToFloor = async floor =>
             {
                 IsJumping = true;
@@ -434,7 +435,6 @@ public sealed partial class TopicPage : Page
         {
             Frame = Frame,
             CurrentTopicId = TopicId,
-            HasFloorLoaded = floor => Replies.Any(r => r.Floor == floor),
             JumpToFloor = async floor =>
             {
                 IsJumping = true;
@@ -1179,6 +1179,10 @@ public sealed partial class TopicPage : Page
         {
             //await App.Logger.WriteAsync("Topic", "加载用户信息预览失败", ex.Message);
         }
+        finally
+        {
+            args.Handled = true;
+        }
     }
 
 
@@ -1214,4 +1218,10 @@ public sealed partial class TopicPage : Page
     }
 
 
+    private void MoreButton_Click(object sender, RoutedEventArgs e)
+    {
+        var button = sender as HyperlinkButton;
+        // 显示附加的 Flyout
+        FlyoutBase.ShowAttachedFlyout(button);
+    }
 }

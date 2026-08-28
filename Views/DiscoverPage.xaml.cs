@@ -105,6 +105,7 @@ public sealed partial class DiscoverPage : Page
         data = [.. data.Where(x => !TopicIds.Contains(x.Id))];
         Topics.AddRange(data);
         TopicIds.AddRange(data.Select(x => x.Id));
+        DiscoverEmptyState.Visibility = Topics.Count == 0 ? Microsoft.UI.Xaml.Visibility.Visible : Microsoft.UI.Xaml.Visibility.Collapsed;
         return true;
     }
 

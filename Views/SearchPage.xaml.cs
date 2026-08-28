@@ -13,6 +13,7 @@ using Microsoft.UI.Xaml.Navigation;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Threading;
@@ -48,7 +49,6 @@ public sealed partial class SearchPage : Page
     /// <summary>话题搜索分页器(PageSize 与 API size=20 一致)。</summary>
     private Increment Pager { get; } = new(20);
 
-    private CancellationTokenSource? _debounceCts;
     private const int HistoryLimit = 12;
     private string _currentKeyword = "";
 
@@ -68,18 +68,23 @@ public sealed partial class SearchPage : Page
         base.OnNavigatedTo(e);
         await LoadHistoryAsync();
 
-        // 兼容从别处携带关键词跳转(如 IndexPage 推荐)
-        var args = e.TryGetParameter<SearchNavigationInfo>();
-        if (args != null && !string.IsNullOrWhiteSpace(args.Key))
+        try
         {
-            SearchBox.Text = args.Key;
-            await PerformSearchAsync(args.Key);
+            var args = e.TryGetParameter<SearchNavigationInfo>();
+            if (args != null && !string.IsNullOrWhiteSpace(args.Key))
+            {
+                SearchBox.Text = args.Key;
+                await PerformSearchAsync(args.Key);
+            }
+            else
+            {
+                ShowEmptyState();
+            }
         }
-        else
+        catch (Exception ex)
         {
-            ShowEmptyState();
+            Debug.WriteLine(ex.Message);
         }
-
         SearchBox.Focus(FocusState.Programmatic);
     }
 
@@ -140,9 +145,12 @@ public sealed partial class SearchPage : Page
     /// </summary>
     private async void SearchBox_QuerySubmitted(AutoSuggestBox sender, AutoSuggestBoxQuerySubmittedEventArgs args)
     {
+        // 点击建议项会同时触发 SuggestionChosen 与 QuerySubmitted(此时 ChosenSuggestion 非空)。
+        // 建议已在 SuggestionChosen 中处理,这里跳过,避免重复发起话题搜索。
+        if (args.ChosenSuggestion != null) return;
+
         var keyword = (args.QueryText ?? sender.Text).Trim();
         if (string.IsNullOrEmpty(keyword)) return;
-        _debounceCts?.Cancel();
         await PerformSearchAsync(keyword);
     }
 
@@ -156,7 +164,6 @@ public sealed partial class SearchPage : Page
         {
             case SearchSuggestionType.Topic:
                 // 搜索话题:与回车一致
-                _debounceCts?.Cancel();
                 await PerformSearchAsync(SearchBox.Text.Trim());
                 break;
             case SearchSuggestionType.User:
@@ -183,8 +190,10 @@ public sealed partial class SearchPage : Page
     /// </summary>
     private async Task PerformSearchAsync(string keyword, CancellationToken ct = default)
     {
+        Debug.WriteLine("触发话题搜索");
         SearchKeyword = keyword;
         _currentKeyword = keyword;
+       
         Pager.Clear();
         SearchResults.Clear();
         ShowLoadingState();
@@ -234,6 +243,10 @@ public sealed partial class SearchPage : Page
         if (data.Count > 0)
         {
             ResultCountText.Text = $"找到 {data.Count}+个结果";
+            // 新搜索:清空所有话题浏览 tab,更新搜索 tab 标题并选中
+            ClearTopicTabs();
+            SearchTab.Header = $"搜索:{keyword}";
+            ResultTabView.SelectedItem = SearchTab;
             ShowResultState();
             FadeInContent();
         }
@@ -451,7 +464,6 @@ public sealed partial class SearchPage : Page
     private async void PrevPage_Click(object sender, RoutedEventArgs e)
     {
         if (Pager.CurrentPage <= 0) return;
-        _debounceCts?.Cancel();
         ShowLoadingState();
         await Pager.LoadLastPage(LoadSearchPageAsync);
         ShowResultState();
@@ -459,7 +471,6 @@ public sealed partial class SearchPage : Page
 
     private async void NextPage_Click(object sender, RoutedEventArgs e)
     {
-        _debounceCts?.Cancel();
         ShowLoadingState();
         await Pager.LoadNextPage(LoadSearchPageAsync);
         ShowResultState();
@@ -481,7 +492,7 @@ public sealed partial class SearchPage : Page
         EmptyState.Visibility = Visibility.Visible;
         LoadingState.Visibility = Visibility.Collapsed;
         NoResultState.Visibility = Visibility.Collapsed;
-        ResultState.Visibility = Visibility.Collapsed;
+        ResultTabView.Visibility = Visibility.Collapsed;
     }
 
     private void ShowLoadingState()
@@ -489,7 +500,7 @@ public sealed partial class SearchPage : Page
         EmptyState.Visibility = Visibility.Collapsed;
         LoadingState.Visibility = Visibility.Visible;
         NoResultState.Visibility = Visibility.Collapsed;
-        ResultState.Visibility = Visibility.Collapsed;
+        ResultTabView.Visibility = Visibility.Collapsed;
     }
 
     private void ShowNoResultState()
@@ -497,7 +508,7 @@ public sealed partial class SearchPage : Page
         EmptyState.Visibility = Visibility.Collapsed;
         LoadingState.Visibility = Visibility.Collapsed;
         NoResultState.Visibility = Visibility.Visible;
-        ResultState.Visibility = Visibility.Collapsed;
+        ResultTabView.Visibility = Visibility.Collapsed;
     }
 
     private void ShowResultState()
@@ -505,7 +516,7 @@ public sealed partial class SearchPage : Page
         EmptyState.Visibility = Visibility.Collapsed;
         LoadingState.Visibility = Visibility.Collapsed;
         NoResultState.Visibility = Visibility.Collapsed;
-        ResultState.Visibility = Visibility.Visible;
+        ResultTabView.Visibility = Visibility.Visible;
     }
 
     /// <summary>结果出现时的淡入动画。</summary>
@@ -519,14 +530,14 @@ public sealed partial class SearchPage : Page
 
     #region 交互
 
-    private void HistoryKeyword_Click(object sender, RoutedEventArgs e)
+    /// <summary>点击历史 Token:填入关键词并立即搜索,随后取消选中以便重复点击。</summary>
+    private void HistoryTokenView_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
-        if (sender is Button b && b.Content is string kw && !string.IsNullOrWhiteSpace(kw))
-        {
-            SearchBox.Text = kw;
-            _debounceCts?.Cancel();
-            _ = PerformSearchAsync(kw);
-        }
+        if (HistoryTokenView.SelectedItem is not string keyword || string.IsNullOrWhiteSpace(keyword)) return;
+        SearchBox.Text = keyword;
+        _ = PerformSearchAsync(keyword);
+        // 取消选中,允许再次点击同一历史项
+        HistoryTokenView.SelectedItem = null;
     }
 
     
@@ -535,9 +546,55 @@ public sealed partial class SearchPage : Page
         //超绝模式匹配语法
         if (sender is Grid { Tag: int topicId })
         {
-            Frame.Navigate(typeof(TopicPage), new TopicNavigationInfo { TopicId = topicId });
+            AddTopicTab(topicId);
         }
     }
+
+    /// <summary>
+    /// 在 TabView 中新增一个话题浏览 tab(Frame 承载 TopicPage),并切换到该 tab。
+    /// </summary>
+    private void AddTopicTab(int topicId)
+    {
+        var tab = new TabViewItem
+        {
+            Header = $"主题 #{topicId}",
+            IsClosable = true
+        };
+        var frame = new Frame();
+        frame.Navigate(typeof(TopicPage), new TopicNavigationInfo { TopicId = topicId });
+        tab.Content = frame;
+        ResultTabView.TabItems.Add(tab);
+        ResultTabView.SelectedItem = tab;
+    }
+
+    /// <summary>
+    /// 清空所有话题浏览 tab(保留搜索 tab),用于新搜索时重置。
+    /// </summary>
+    private void ClearTopicTabs()
+    {
+        for (var i = ResultTabView.TabItems.Count - 1; i >= 0; i--)
+        {
+            if (ResultTabView.TabItems[i] != SearchTab)
+                ResultTabView.TabItems.RemoveAt(i);
+        }
+    }
+
+    /// <summary>
+    /// 关闭单个 tab:移除对应 TabViewItem;关闭搜索 tab 时清空结果回到空状态。
+    /// </summary>
+    private void ResultTabView_TabCloseRequested(TabView sender, TabViewTabCloseRequestedEventArgs args)
+    {
+        var tabItem = args.Tab;
+        ResultTabView.TabItems.Remove(tabItem);
+
+        // 关闭搜索 tab:清空结果并回到空状态
+        if (tabItem == SearchTab)
+        {
+            SearchResults.Clear();
+            ShowEmptyState();
+        }
+    }
+
 
     /// <summary>Ctrl+K:聚焦搜索框。</summary>
     private void FocusSearch_Invoked(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs args)
@@ -553,7 +610,6 @@ public sealed partial class SearchPage : Page
         {
             SearchBox.Text = "";
             Suggestions.Clear();
-            _debounceCts?.Cancel();
             ShowEmptyState();
         }
         else if (Frame.CanGoBack)
@@ -567,6 +623,24 @@ public sealed partial class SearchPage : Page
 
     private async void RefreshButton_Click(object sender, RoutedEventArgs e)
     {
+        // 无当前关键词时无需刷新
+        if (string.IsNullOrEmpty(_currentKeyword)) return;
+        // 重新加载第一页(PerformSearchAsync 内部会重置分页器并清空话题 tab)
         await PerformSearchAsync(_currentKeyword);
+    }
+
+    /// <summary>历史浮出层打开时绑定历史关键词集合。</summary>
+    private void HistoryFlyout_Opening(object sender, object e)
+    {
+        HistoryList.ItemsSource = SearchHistory;
+    }
+
+    /// <summary>点击历史关键词:填入搜索框并立即搜索,关闭浮出层。</summary>
+    private void HistoryList_ItemClick(object sender, ItemClickEventArgs e)
+    {
+        if (e.ClickedItem is not string keyword || string.IsNullOrWhiteSpace(keyword)) return;
+        SearchBox.Text = keyword;
+        _ = PerformSearchAsync(keyword);
+        HistoryFlyout.Hide();
     }
 }

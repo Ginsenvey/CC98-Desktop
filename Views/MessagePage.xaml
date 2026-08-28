@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 
 <Page
     x:Class="CC98.Views.MessagePage"
@@ -8,6 +8,7 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d"
     xmlns:obj="using:CC98.Objects"
+    xmlns:empty="using:CC98.Controls.EmptyState"
     xmlns:infoFlower="using:CC98.Controls.InfoFlower"
     Background="{ThemeResource DesktopAcrylicTransparentBrush}">
 
@@ -78,6 +79,8 @@
                 <ItemsRepeater x:Name="NoticeRepeater" ItemsSource="{x:Bind Notices}"
                    ItemTemplate="{StaticResource Selector}" ElementPrepared="NoticeRepeater_ElementPrepared" />
             </ScrollViewer>
+            <empty:EmptyStateControl x:Name="MessageEmptyState" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                     Visibility="Collapsed" IconGlyph="&#xEC4F;" Title="暂无消息" Subtitle="暂无通知消息" />
             <infoFlower:InfoFlower x:Name="Flower" HorizontalAlignment="Center" VerticalAlignment="Bottom" />
         </Grid>
     </Grid>

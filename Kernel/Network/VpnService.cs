@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Net;
@@ -139,8 +139,10 @@ public sealed partial class VpnService(IHttpClientFactory httpClientFactory, ICo
         var path = qm >= 0 ? suffix[..qm] : suffix;
         var query = qm >= 0 ? suffix[qm..] : "";
         var pathSb = new StringBuilder("/");
+        // 注意:此处 path 来自 uri.PathAndQuery,段已被 Uri 规范化编码为 %XX 形式。
+        // 不能再做 Uri.EscapeDataString,否则已编码的 % 会被二次转义为 %25,导致中文路径参数错误。
         foreach (var seg in path.Split('/', StringSplitOptions.RemoveEmptyEntries))
-            pathSb.Append(Uri.EscapeDataString(seg)).Append('/');
+            pathSb.Append(seg).Append('/');
         if (pathSb.Length > 1) pathSb.Length--; // 去掉末尾多余 /
         var newPathAndQuery = pathSb + query;
 

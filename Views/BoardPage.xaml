@@ -17,13 +17,14 @@
     xmlns:picture="using:CC98.Controls.Picture"
     xmlns:dev="using:DevWinUI"
     xmlns:helper="using:CC98.Services.Helpers"
+    xmlns:empty="using:CC98.Controls.EmptyState"
     Background="{ThemeResource DesktopAcrylicTransparentBrush}">
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="*" />
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
-        <SplitView x:Name="SearchView" PanePlacement="Right" DisplayMode="Overlay" PaneBackground="Transparent" OpenPaneLength="400">
+        <SplitView x:Name="SearchView" PanePlacement="Right" DisplayMode="Overlay" PaneBackground="Transparent" OpenPaneLength="380">
             <SplitView.Pane>
                 <Grid BorderBrush="{ThemeResource AcrylicCardBrush}" BorderThickness="2" Margin="0,10,20,10" CornerRadius="6" Background="{ThemeResource GlassAcrylicBackground}">
                     <Grid.RowDefinitions>
@@ -69,6 +70,7 @@
                                             <TextBlock Grid.Row="1" Grid.Column="1" Text="{x:Bind Time,Mode=OneWay}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" FontSize="12" HorizontalAlignment="Right"/>
                                             <Border  Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2" Padding="6" CornerRadius="4" Background="{ThemeResource MarkdownBackgroundBrush}"  Margin="0,4,0,0">
                                                 <TextBlock  x:Name="TitleText" FontSize="13" Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                                            TextWrapping="NoWrap" TextTrimming="CharacterEllipsis"
                                                             helper:TextBlockExtensions.HighlightedText="{x:Bind Title}"
                                                             helper:TextBlockExtensions.Keywords="{x:Bind Keyword}"
                                                             helper:TextBlockExtensions.HighlightColor="#C4ABD4"/>
@@ -181,6 +183,8 @@
                                 </ItemsRepeater.ItemTemplate>
                             </ItemsRepeater>
                         </Border>
+
+                        <empty:EmptyStateControl x:Name="BoardEmptyState" Visibility="Collapsed" IconGlyph="&#xEC4F;" Title="暂无主题" Subtitle="该版面还没有帖子" />
 
                     </StackPanel>
                 </ScrollViewer>

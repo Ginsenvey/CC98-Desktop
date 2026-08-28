@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.Linq;
 using System.Net.Http;
 using System.Text;
@@ -91,7 +92,7 @@ public sealed partial class ChatPage : Page
     {
         var userName = SearchUser.Text.Trim();
         if (string.IsNullOrEmpty(userName)) return;
-
+        Debug.WriteLine($"搜索用户: {userName}");
         // 左侧列表已有该用户(按用户名,忽略大小写):直接选中并滚动到可见,无需请求 API
         var existingIndex = ChatInfoList.ToList().FindIndex(
             x => string.Equals(x.Name, userName, StringComparison.OrdinalIgnoreCase));
@@ -103,7 +104,6 @@ public sealed partial class ChatPage : Page
             Flower.Play(FlowStatus.Success, $"找到用户:{item.Name}");
             return;
         }
-
         try
         {
             var url = ApiEndpoints.User.SearchUserByName(userName);
@@ -111,6 +111,7 @@ public sealed partial class ChatPage : Page
             if (!result.IsSuccess || result.Data == null || result.Data.Id == 0)
             {
                 Flower.Play(FlowStatus.Fail, $"未找到用户:{userName}");
+                Debug.WriteLine($"未找到用户:{userName}");
                 return;
             }
 
@@ -124,6 +125,7 @@ public sealed partial class ChatPage : Page
             // 复用 StartChat:加入列表(已存在则选中现有项)并触发消息加载
             TargetUserInfo = info;
             StartChat();
+            Debug.WriteLine("找到用户");
             Flower.Play(FlowStatus.Success, $"找到用户:{user.Name}");
         }
         catch (Exception ex)
@@ -198,6 +200,7 @@ public sealed partial class ChatPage : Page
 
         UserIncrement.HasMore = data.Count == UserIncrement.PageSize;
         ChatInfoList.AddRange(data);
+        UserListEmptyState.Visibility = ChatInfoList.Count == 0 ? Microsoft.UI.Xaml.Visibility.Visible : Microsoft.UI.Xaml.Visibility.Collapsed;
         return true;
     }
 
@@ -226,6 +229,8 @@ public sealed partial class ChatPage : Page
         combined.AddRange(Messages);
         Messages.Clear();
         foreach (var message in combined) Messages.Add(message);
+
+        ChatEmptyState.Visibility = Messages.Count == 0 ? Microsoft.UI.Xaml.Visibility.Visible : Microsoft.UI.Xaml.Visibility.Collapsed;
 
         return true;
     }
@@ -462,7 +467,6 @@ public sealed partial class ChatPage : Page
         {
             Frame = Frame,
             CurrentTopicId = null,
-            HasFloorLoaded = null,
             JumpToFloor = null,
             ImageList = null,
             Flower = Flower

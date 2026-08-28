@@ -98,6 +98,7 @@ public sealed partial class BoardPage
             var bests = result.Data?.Topics;
             Increment.HasMore = bests.Count == Increment.PageSize;
             Topics.AddRange(bests);
+            BoardEmptyState.Visibility = Topics.Count == 0 ? Microsoft.UI.Xaml.Visibility.Visible : Microsoft.UI.Xaml.Visibility.Collapsed;
             return true;
         }
 
@@ -111,6 +112,7 @@ public sealed partial class BoardPage
         var data = topicResult.Data;
         Increment.HasMore = data.Count == Increment.PageSize;
         Topics.AddRange(data);
+        BoardEmptyState.Visibility = Topics.Count == 0 ? Microsoft.UI.Xaml.Visibility.Visible : Microsoft.UI.Xaml.Visibility.Collapsed;
         return true;
     }
 
@@ -244,7 +246,6 @@ public sealed partial class BoardPage
         {
             Frame = Frame,
             CurrentTopicId = null,
-            HasFloorLoaded = null,
             JumpToFloor = null,
             ImageList = null,
             Flower = Flower

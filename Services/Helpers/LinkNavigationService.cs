@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -36,8 +37,6 @@ public record LinkContext
     /// <summary>用于显示通知的 Flower 控件。</summary>
     public required InfoFlower Flower { get; init; }
 
-    /// <summary>当前帖子已加载的楼层 ID 列表（用于锚点快速定位）。</summary>
-    public Func<int, bool>? HasFloorLoaded { get; init; }
 
     /// <summary>跳转到指定楼层的方法（用于锚点跳转）。</summary>
     public Func<int, Task>? JumpToFloor { get; init; }
@@ -173,16 +172,11 @@ public static class LinkNavigationService
             targetFloor = (topicInfo.Page.Value - 1) * 10;
 
         // 同主题且已加载目标楼层：当前页面内跳转
-        if (hasTarget && topicInfo.TopicId == context.CurrentTopicId
-            && context.HasFloorLoaded != null && context.JumpToFloor != null)
+        if (hasTarget && topicInfo.TopicId == context.CurrentTopicId  && context.JumpToFloor != null)
         {
-            if (context.HasFloorLoaded(targetFloor))
-            {
-                await context.JumpToFloor(targetFloor);
-                return;
-            }
+            await context.JumpToFloor(targetFloor);
+            return;
         }
-
         // 有楼层目标：以跳转模式导航,加载后定位到目标楼层
         if (hasTarget)
         {

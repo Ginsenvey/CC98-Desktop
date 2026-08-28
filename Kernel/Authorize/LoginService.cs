@@ -8,7 +8,6 @@ using System.Threading.Tasks;
 using Windows.Storage;
 
 namespace CC98.Kernel.Authorize;
-//Todo:提供从密码管理器提取令牌的功能
 /// <summary>
 /// 集成OpenId Connect的登录服务，提供密码登录、OAuth登录和刷新令牌功能。
 /// </summary>

@@ -121,6 +121,7 @@ public sealed partial class MessagePage
         }
 
         Notices.AddRange(data);
+        MessageEmptyState.Visibility = Notices.Count == 0 ? Microsoft.UI.Xaml.Visibility.Visible : Microsoft.UI.Xaml.Visibility.Collapsed;
         return true;
     }
 

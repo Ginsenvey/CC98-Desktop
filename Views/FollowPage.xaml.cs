@@ -98,6 +98,7 @@ public sealed partial class FollowPage : Page
         }
 
         Friends.AddRange(friendsResult.Data);
+        FollowEmptyState.Visibility = Friends.Count == 0 ? Microsoft.UI.Xaml.Visibility.Visible : Microsoft.UI.Xaml.Visibility.Collapsed;
         return true;
     }
 

@@ -140,6 +140,7 @@ public sealed partial class ProfilePage : Page
         if (data.Count == 11) data.RemoveAt(10);
         Increment.HasMore = data.Count == Increment.PageSize;
         RecentTopics.AddRange(data);
+        ProfileEmptyState.Visibility = RecentTopics.Count == 0 ? Microsoft.UI.Xaml.Visibility.Visible : Microsoft.UI.Xaml.Visibility.Collapsed;
         return true;
     }
 
@@ -193,7 +194,6 @@ public sealed partial class ProfilePage : Page
         {
             Frame = Frame,
             CurrentTopicId = null,
-            HasFloorLoaded = null,
             JumpToFloor = null,
             ImageList = null,
             Flower = Flower

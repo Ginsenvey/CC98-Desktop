@@ -50,7 +50,8 @@ public sealed partial class MainWindow : Window
         (typeof(SketchPage), typeof(TopicPage)),
         (typeof(TopicPage), typeof(MessagePage)),
         (typeof(TopicPage), typeof(FocusPage)),
-        (typeof(ProfilePage), typeof(FollowPage))
+        (typeof(ProfilePage), typeof(FollowPage)),
+        (typeof(TopicPage), typeof(SearchPage))
     ];
 
     public ObservableCollection<string> Collections = [];
