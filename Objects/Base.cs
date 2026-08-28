@@ -74,20 +74,13 @@ public class ApiResponse
 /// <summary>
 ///     增量更新模型
 /// </summary>
-public class Increment
+public class Increment(int pageSize = 10, int currentPage = 0, bool hasMore = false)
 {
-    public int CurrentPage;
+    public int CurrentPage = currentPage;
 
     //应假定没有更多项，由返回项项数决定是否还有更多
-    public bool HasMore;
-    public int PageSize;
-
-    public Increment(int pageSize = 10, int currentPage = 0, bool hasMore = false)
-    {
-        PageSize = pageSize;
-        CurrentPage = currentPage;
-        HasMore = hasMore;
-    }
+    public bool HasMore = hasMore;
+    public int PageSize = pageSize;
 
     public int StartIndex => CurrentPage * PageSize;
 
@@ -123,6 +116,7 @@ public class Increment
     {
         if (_loading) return;
         _loading = true;
+        if(!HasMore) return;
         CurrentPage++;
         try
         {
@@ -140,6 +134,7 @@ public class Increment
     {
         if (_loading) return;
         _loading = true;
+        if (CurrentPage <= 0) return;
         CurrentPage--;
         try
         {

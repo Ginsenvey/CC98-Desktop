@@ -16,6 +16,7 @@ using CC98.Services.Helpers;
 
 using DevWinUI;
 
+using Microsoft.UI.Dispatching;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Navigation;
@@ -63,6 +64,75 @@ public sealed partial class ChatPage : Page
         }
     }
 
+    /// <summary>
+    /// 搜索框回车触发用户搜索。
+    /// </summary>
+    private void SearchUser_KeyDown(object sender, Microsoft.UI.Xaml.Input.KeyRoutedEventArgs e)
+    {
+        if (e.Key == Windows.System.VirtualKey.Enter)
+        {
+            e.Handled = true;
+            _ = SearchAndSelectUserAsync();
+        }
+    }
+
+    /// <summary>
+    /// 搜索按钮点击触发用户搜索。
+    /// </summary>
+    private void Confirm_Click(object sender, RoutedEventArgs e)
+    {
+        _ = SearchAndSelectUserAsync();
+    }
+
+    /// <summary>
+    /// 按用户名搜索用户:存在则获取头像/ID 加入左侧列表并选中,否则提示未找到。
+    /// </summary>
+    private async Task SearchAndSelectUserAsync()
+    {
+        var userName = SearchUser.Text.Trim();
+        if (string.IsNullOrEmpty(userName)) return;
+
+        // 左侧列表已有该用户(按用户名,忽略大小写):直接选中并滚动到可见,无需请求 API
+        var existingIndex = ChatInfoList.ToList().FindIndex(
+            x => string.Equals(x.Name, userName, StringComparison.OrdinalIgnoreCase));
+        if (existingIndex >= 0)
+        {
+            var item = ChatInfoList[existingIndex];
+            UserList.SelectedIndex = existingIndex;
+            UserList.ScrollIntoView(item,ScrollIntoViewAlignment.Leading); // 让该项滚入左侧列表可视区域
+            Flower.Play(FlowStatus.Success, $"找到用户:{item.Name}");
+            return;
+        }
+
+        try
+        {
+            var url = ApiEndpoints.User.SearchUserByName(userName);
+            var result = await ApiService.Fetch<UserInfo>(url);
+            if (!result.IsSuccess || result.Data == null || result.Data.Id == 0)
+            {
+                Flower.Play(FlowStatus.Fail, $"未找到用户:{userName}");
+                return;
+            }
+
+            var user = result.Data;
+            var info = new ChatInfo
+            {
+                UserId = user.Id,
+                Name = user.Name,
+                PortraitUrl = user.PortraitUrl
+            };
+            // 复用 StartChat:加入列表(已存在则选中现有项)并触发消息加载
+            TargetUserInfo = info;
+            StartChat();
+            Flower.Play(FlowStatus.Success, $"找到用户:{user.Name}");
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"搜索用户失败: {ex.Message}");
+            Flower.Play(FlowStatus.Fail, "搜索失败，请重试");
+        }
+    }
+
     //用于添加目标用户到聊天列表，并执行选中
     private void StartChat()
     {
@@ -87,6 +157,16 @@ public sealed partial class ChatPage : Page
             CurrentUserId = ChatInfoList[i].UserId;
             await RefreshMessageList();
         }
+    }
+
+    /// <summary>
+    /// 左侧联系人列表增量加载:滚动到末尾附近时加载下一页最近联系人。
+    /// LoadNextPage 自带防重入,滚动回收导致的重复触发会被拦截。
+    /// </summary>
+    private async void UserList_ContainerContentChanging(ListViewBase sender, ContainerContentChangingEventArgs args)
+    {
+        if (args.ItemIndex >= ChatInfoList.Count - 3 && UserIncrement.HasMore)
+            await UserIncrement.LoadNextPage(GetRecent);
     }
 
     private async Task<bool> GetRecent()
@@ -125,24 +205,24 @@ public sealed partial class ChatPage : Page
     {
         var messageUrl = ApiEndpoints.User.ChatHistory(CurrentUserId, ChatHistoryIncrement.StartIndex);
         var messageResult = await ApiService.Fetch<List<ChatMessage>>(messageUrl);
-        if (!messageResult.IsSuccess)
-            //
-            return false;
-        if (messageResult.Data == null)
+        if (!messageResult.IsSuccess || messageResult.Data == null)
             //
             return false;
         var data = messageResult.Data;
         ChatHistoryIncrement.HasMore = data.Count == ChatHistoryIncrement.PageSize;
 
-        foreach (var message in data)
+        // API 返回顺序不确定(可能最新在前),统一按 MessageId 正序排列(旧→新,最新在底部),
+        // 避免"加载更多后顺序倒转"的问题
+        var ordered = data.OrderBy(m => m.MessageId).ToList();
+        foreach (var message in ordered)
         {
             message.IsMe = message.ReceiverId == CurrentUserId;
         }
 
         // 一次性构造完整列表(更早的消息在前)再整体填充:
         // 避免逐条 Insert(0) 导致的 O(n^2) 元素移动与多次布局,改为尾部 O(1) 追加
-        var combined = new List<ChatMessage>(data.Count + Messages.Count);
-        combined.AddRange(data);
+        var combined = new List<ChatMessage>(ordered.Count + Messages.Count);
+        combined.AddRange(ordered);
         combined.AddRange(Messages);
         Messages.Clear();
         foreach (var message in combined) Messages.Add(message);
@@ -155,12 +235,74 @@ public sealed partial class ChatPage : Page
     {
         Messages.Clear();
         ChatHistoryIncrement.Clear();
-        await GetMessageList();
+        if (await GetMessageList()) ScrollToBottom();
     }
 
-    private async void More_Click(object sender, RoutedEventArgs e)
+    // 上滑加载防重入标志
+    private bool _loadingEarlier;
+
+    /// <summary>
+    /// 滚动到接近顶部(上滑)时加载更早的消息,并显示顶部进度环。
+    /// </summary>
+    private void HistoryViewer_ViewChanged(object? sender, ScrollViewerViewChangedEventArgs e)
     {
-        await ChatHistoryIncrement.LoadNextPage(GetMessageList);
+        // 忽略滚动动画的中间帧,仅在稳定状态且接近顶部时触发
+        if (!e.IsIntermediate && HistoryViewer.VerticalOffset <= 2 && ChatHistoryIncrement.HasMore)
+        {
+            _ = LoadEarlierMessagesAsync();
+        }
+    }
+
+    /// <summary>
+    /// 加载更早一页消息:插入列表顶部,并补偿滚动偏移保持视觉位置。
+    /// </summary>
+    private async Task LoadEarlierMessagesAsync()
+    {
+        if (_loadingEarlier) return;
+        _loadingEarlier = true;
+        LoadingMore.Visibility = Visibility.Visible;
+        LoadingMore.IsActive = true;
+        var oldExtent = HistoryViewer.ExtentHeight;
+        try
+        {
+            await ChatHistoryIncrement.LoadNextPage(GetMessageList);
+            // 等布局完成后补偿滚动偏移:新消息在顶部展开,offset 需增加新增高度
+            DispatcherQueue.TryEnqueue(DispatcherQueuePriority.Low, () =>
+            {
+                var delta = HistoryViewer.ExtentHeight - oldExtent;
+                if (delta > 0)
+                    HistoryViewer.ChangeView(null, HistoryViewer.VerticalOffset + delta, null, true);
+            });
+        }
+        finally
+        {
+            _loadingEarlier = false;
+            LoadingMore.IsActive = false;
+            LoadingMore.Visibility = Visibility.Collapsed;
+        }
+    }
+
+    /// <summary>
+    /// 滚动到底部,展示最新消息。
+    /// ItemsRepeater 填充集合后布局是异步的,单次 TryEnqueue 可能早于布局完成,
+    /// 故延迟一小段时间等布局稳定后再滚动,确保切换对话/发送消息后总能停在最新消息。
+    /// </summary>
+    private void ScrollToBottom()
+    {
+        _scrollToBottomTimer ??= DispatcherQueue.CreateTimer();
+        _scrollToBottomTimer.Interval = TimeSpan.FromMilliseconds(120);
+        _scrollToBottomTimer.IsRepeating = false;
+        _scrollToBottomTimer.Tick -= ScrollToBottomHandler;
+        _scrollToBottomTimer.Tick += ScrollToBottomHandler;
+        _scrollToBottomTimer.Start();
+    }
+
+    private DispatcherQueueTimer? _scrollToBottomTimer;
+
+    private void ScrollToBottomHandler(DispatcherQueueTimer sender, object args)
+    {
+        sender.Stop();
+        HistoryViewer.ChangeView(null, HistoryViewer.ExtentHeight, null, false);
     }
 
     private async void Send_Click(object sender, RoutedEventArgs e)

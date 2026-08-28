@@ -20,6 +20,7 @@ namespace CC98.Objects;
 [JsonSerializable(typeof(ReactionState))]
 [JsonSerializable(typeof(UserInfo))]
 [JsonSerializable(typeof(SimpleTopicInfo))]
+[JsonSerializable(typeof(SearchTopicInfo))]
 [JsonSerializable(typeof(Reply))]
 [JsonSerializable(typeof(MediaContent))]
 [JsonSerializable(typeof(ChatMessage))]
@@ -52,6 +53,7 @@ namespace CC98.Objects;
 [JsonSerializable(typeof(VpnLoginResult))]
 [JsonSerializable(typeof(BrowsingRecord))]
 [JsonSerializable(typeof(PrivateMessage))]
+[JsonSerializable(typeof(HighlightInfo))]
 [JsonSerializable(typeof(Dictionary<int,string>))]
 // 常见 ApiResponse 泛型特化
 [JsonSerializable(typeof(List<int>))]
@@ -62,6 +64,7 @@ namespace CC98.Objects;
 [JsonSerializable(typeof(List<ChatInfo>))]
 [JsonSerializable(typeof(List<Friend>))]
 [JsonSerializable(typeof(List<SimpleTopicInfo>))]
+[JsonSerializable(typeof(List<SearchTopicInfo>))]
 [JsonSerializable(typeof(List<IndexTopic>))]
 [JsonSerializable(typeof(List<FlipTopic>))]
 [JsonSerializable(typeof(List<BoardInfo>))]

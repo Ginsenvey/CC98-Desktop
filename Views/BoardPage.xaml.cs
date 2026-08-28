@@ -17,6 +17,9 @@ using DevWinUI;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Navigation;
+using System.Web;
+using System.Linq;
+using System.Net.WebSockets;
 
 namespace CC98.Views;
 
@@ -26,6 +29,7 @@ namespace CC98.Views;
 public sealed partial class BoardPage
 {
     public ObservableCollection<SimpleTopicInfo> Topics = [];
+    public ObservableCollection<SearchTopicInfo> searchResultTopics= [];
     
     public ApiService ApiService = App.Current.GetService<ApiService>();
 
@@ -33,11 +37,13 @@ public sealed partial class BoardPage
     public bool IsBest { get; } = false;
 
     public int BoardId { get; set; } = 0;
+    private string searchKeyword = string.Empty;
 
     public BoardData BoardData { get; } = new();
 
     public BoardTopicFilterType FilterType { get; set; } = BoardTopicFilterType.Latest;
     public Increment Increment { get; } = new(20);
+    public Increment searchIncrement=new(20);
 
 
     public BoardPage()
@@ -160,6 +166,10 @@ public sealed partial class BoardPage
                 };
                 Frame.Navigate(typeof(SketchPage), param2);
                 break;
+
+            case "search":
+                SearchView.IsPaneOpen = true;
+                break;
         }
     }
 
@@ -258,4 +268,64 @@ public sealed partial class BoardPage
                 break;
         }
     }
+
+ 
+    private async void BoardSearchButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (!string.IsNullOrEmpty(searchKeyword))
+        {
+            searchIncrement.Clear();
+            await Search();
+        }
+    }
+    private async Task<bool> Search()
+    {
+        SearchProgressRing.IsActive = true;
+        searchResultTopics.Clear();
+        var searchUrl = ApiEndpoints.Topic.SearchTopicInBoard(BoardId, HttpUtility.UrlEncode(searchKeyword), searchIncrement.StartIndex);
+        var result = await ApiService.Fetch<List<SearchTopicInfo>>(searchUrl);
+        if(!result.IsSuccess||result.Data==null)
+        {
+            Flower.Play(FlowStatus.Fail, result?.Message ?? "搜索失败");
+            return false;
+        }
+        var data = result.Data;
+        searchIncrement.HasMore = data.Count == searchIncrement.PageSize;
+        foreach (var topic in data)
+        {
+            if (topic.IsAnonymous)
+            {
+                topic.UserName = $"匿名{topic.UserName.ToUpper()}";
+            }
+            topic.Keyword = searchKeyword; 
+        }
+        searchResultTopics.AddRange(data);
+        SearchProgressRing.IsActive = false;
+        return true;
+    }
+
+    private async void NextPageButton_Click(object sender, RoutedEventArgs e)
+    {
+        await searchIncrement.LoadNextPage(Search);
+    }
+
+    private async void PreviousPageButton_Click(object sender, RoutedEventArgs e)
+    {
+        await searchIncrement.LoadLastPage(Search);
+    }
+
+    private void BoardSearchBox_TextChanged(object sender, TextChangedEventArgs e)
+    {
+        searchKeyword=BoardSearchBox.Text;
+    }
+
+    private void SearchResultCard_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is Button button && button.Tag is int topicId)
+        {
+            Frame.Navigate(typeof(TopicPage), new TopicNavigationInfo { TopicId = topicId });
+        }
+    }
+
+    
 }

@@ -308,7 +308,7 @@ public sealed partial class TopicPage : Page
         if (!userInfoResult.IsSuccess || userInfoResult.Data == null)
         {
             //报错
-            return;
+            Flower.Play(FlowStatus.Fail, $"加载用户头像失败：{userInfoResult.Message}");
         }
 
         var userInfoList = userInfoResult.Data;
@@ -333,7 +333,7 @@ public sealed partial class TopicPage : Page
                 continue;
             }
 
-            var user = userInfoList.FirstOrDefault(x => x.Id == reply.UserId);
+            var user = userInfoList?.FirstOrDefault(x => x.Id == reply.UserId);
             if (user != null)
             {
                 reply.PortraitUrl = user.PortraitUrl;

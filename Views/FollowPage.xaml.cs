@@ -128,7 +128,7 @@ public sealed partial class FollowPage : Page
         if (f == null) return;
         var c = new ChatInfo { UserId = f.Id, Name = f.Name, PortraitUrl = f.PortraitUrl };
         var param = new ChatNavigationInfo { HasTarget = true, ChatUserInfo = c };
-        Frame.Navigate(typeof(MessagePage), param);
+        Frame.Navigate(typeof(ChatPage), param);
     }
 
     private async void FriendRepeater_ElementPrepared(ItemsRepeater sender, ItemsRepeaterElementPreparedEventArgs args)

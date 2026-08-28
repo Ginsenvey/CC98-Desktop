@@ -242,6 +242,18 @@ public static class ApiEndpoints
 
     public static class Topic
     {
+        /// <summary>
+        /// 中文关键词使用Util.UrlEncode编码
+        /// </summary>
+        /// <param name="boardId"></param>
+        /// <param name="key"></param>
+        /// <param name="start"></param>
+        /// <returns></returns>
+        public static string SearchTopicInBoard(int boardId, string key, int start)
+        {
+            return $"{Base}/topic/search/board/{boardId}?keyword={key}&from={start}&size=20";
+        }
+
         public static string RecentTopic(bool isMe, int userId, int start)
         {
             return isMe

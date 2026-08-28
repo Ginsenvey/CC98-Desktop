@@ -1,5 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-
+<?xml version="1.0" encoding="utf-8"?>
 <Page
     x:Class="CC98.Views.SearchPage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
@@ -9,104 +8,297 @@
     mc:Ignorable="d"
     xmlns:ic="using:FluentIcons.WinUI"
     xmlns:obj="using:CC98.Objects"
+    xmlns:picture="using:CC98.Controls.Picture"
     xmlns:infoFlower="using:CC98.Controls.InfoFlower"
+    xmlns:helpers="using:CC98.Services.Helpers"
+    NavigationCacheMode="Disabled"
     Background="{ThemeResource DesktopAcrylicTransparentBrush}">
 
-    <Grid Padding="15" RowSpacing="15">
+    <Page.Resources>
+        <!-- 状态切换淡入动画 -->
+        <Storyboard x:Key="ContentFadeIn">
+            <DoubleAnimation Storyboard.TargetName="StateContent" Storyboard.TargetProperty="Opacity"
+                             From="0" To="1" Duration="0:0:0.2" />
+        </Storyboard>
+        <Style x:Key="AutoSuggestBoxBlankStyle" TargetType="AutoSuggestBox">
+            <Setter Property="TextBoxStyle">
+                <Setter.Value>
+                    <Style TargetType="TextBox">
+                        <Setter Property="Background" Value="Transparent" />
+                        <Setter Property="BorderThickness" Value="0" />
+                        <Setter Property="CornerRadius" Value="0" />
+                    </Style>
+                </Setter.Value>
+            </Setter>
+        </Style>
+        <!-- 下拉推荐项模板 -->
+        <DataTemplate x:Key="SuggestionTemplate" x:DataType="obj:SearchSuggestion">
+            <Grid  Padding="4">
+                <StackPanel Orientation="Horizontal" 
+                            Spacing="10">
+                    <ic:SymbolIcon 
+                        Symbol="{x:Bind Type, Converter={StaticResource SuggestionIconConverter}}"
+                        FontSize="14" 
+                        VerticalAlignment="Center"
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                    <TextBlock 
+                        Text="{x:Bind Title}" 
+                        FontSize="14" 
+                        Foreground="{ThemeResource TextFillColorPrimaryBrush}" />
+                </StackPanel>
+                <Border 
+                    BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}"
+                    BorderThickness="1"
+                    CornerRadius="3" 
+                    HorizontalAlignment="Right"
+                    VerticalAlignment="Center" 
+                    Padding="5,3,5,3" 
+                    Visibility="{x:Bind Subtitle, Converter={StaticResource StringToVisibility}}">
+                    <TextBlock 
+                        Text="{x:Bind Subtitle}" 
+                        FontSize="11"
+                        Foreground="{ThemeResource TextFillColorTertiaryBrush}"/>
+                </Border>
+            </Grid>
+          
+        </DataTemplate>
+    </Page.Resources>
+
+    <!-- 键盘快捷: Ctrl+K 聚焦搜索框; ESC 清空/退出搜索 -->
+    <Page.KeyboardAccelerators>
+        <KeyboardAccelerator Key="K" Modifiers="Control" Invoked="FocusSearch_Invoked" />
+        <KeyboardAccelerator Key="Escape" Invoked="Escape_Invoked" />
+    </Page.KeyboardAccelerators>
+
+    <Grid Padding="0,8,0,8" RowSpacing="8" x:Name="RootGrid">
+
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
+            <RowDefinition Height="3" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
-        <Grid Grid.Row="0" ColumnSpacing="10">
+
+        <!-- 顶部搜索栏: 返回 + AutoSuggestBox + 清除 -->
+        <Grid Grid.Row="0" Margin="15,0,15,0" ColumnSpacing="8">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto" />
-                <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
-            <Button x:Name="NaviBar" Grid.Column="0" Tag="Back" Click="NaviBar_Click" Padding="7">
-                <ic:SymbolIcon Symbol="ChevronLeft" />
-            </Button>
-            <Button Tag="Forward" Grid.Column="1" Click="NaviBar_Click" Padding="7">
-                <ic:SymbolIcon Symbol="ChevronRight" />
-            </Button>
-            <Button Grid.Column="2" VerticalAlignment="Center" HorizontalAlignment="Right">
-                <TextBlock Text="第 1 页" x:Name="PageIndex" />
-            </Button>
+            
+           
+            <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="4">
+
+                
+                <Button x:Name="SortButton" Click="SortButton_Click"
+                        Background="Transparent" BorderThickness="0" Padding="8"
+                        VerticalAlignment="Center" ToolTipService.ToolTip="排序">
+                    <StackPanel Orientation="Horizontal" Spacing="4">
+                        <ic:SymbolIcon Symbol="Filter" FontSize="14" />
+                        <TextBlock x:Name="SortButtonText" Text="排序:时间" FontSize="12"
+                                   VerticalAlignment="Center" />
+                    </StackPanel>
+                </Button>
+                <AppBarSeparator></AppBarSeparator>
+                <Button x:Name="RefreshButton" Grid.Column="0" Click="RefreshButton_Click"
+Background="Transparent" BorderThickness="0"  Padding="8"
+VerticalAlignment="Center" ToolTipService.ToolTip="刷新">
+                    <FontIcon Glyph="&#xE72C;" FontSize="16" />
+                </Button>
+            </StackPanel>
+            <!--UpdateTextOnSelect必须为False,因为我们自定义了建议的类型，没有使用String.如为True,点击选中建议，WINUI会把类型名贴上去-->
+            <Border Grid.Column="1" BorderBrush="{ThemeResource AcrylicCardBrush}" BorderThickness="1" CornerRadius="4">
+                <AutoSuggestBox x:Name="SearchBox" 
+                PlaceholderText="搜索话题、用户、版面..."
+                VerticalAlignment="Center"
+                Style="{ThemeResource AutoSuggestBoxBlankStyle}"
+                TextChanged="SearchBox_TextChanged"
+                UpdateTextOnSelect="False"
+                QuerySubmitted="SearchBox_QuerySubmitted"
+                SuggestionChosen="SearchBox_SuggestionChosen"
+                ItemTemplate="{StaticResource SuggestionTemplate}"
+                ItemsSource="{x:Bind Suggestions}"
+                AutomationProperties.Name="搜索框" />
+            </Border>
+
+            <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="4">
+                <Button x:Name="HistoryButton" Grid.Column="2"
+        
+        Background="Transparent" BorderThickness="0" Padding="8"
+        VerticalAlignment="Center"
+        ToolTipService.ToolTip="历史">
+                    <ic:SymbolIcon Symbol="History" FontSize="18" />
+                </Button>
+                <AppBarSeparator></AppBarSeparator>
+                <Button x:Name="MoreButton" Grid.Column="2"
+        
+        Background="Transparent" BorderThickness="0" Padding="8"
+        VerticalAlignment="Center"
+        ToolTipService.ToolTip="更多">
+                    <ic:SymbolIcon Symbol="MoreHorizontal" FontSize="18" />
+                </Button>
+                
+            </StackPanel>
+               
         </Grid>
-        <ScrollViewer CornerRadius="5" Grid.Row="1" x:Name="RootViewer">
-            <ItemsRepeater x:Name="SearchList" VerticalCacheLength="4">
-                <ItemsRepeater.Layout>
-                    <StackLayout Orientation="Vertical" Spacing="10" />
-                </ItemsRepeater.Layout>
+        <Border Grid.Row="1" BorderThickness="1" Height="1" BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}" />
 
-                <ItemsRepeater.ItemTemplate>
-                    <DataTemplate x:DataType="obj:TopicInfo">
-                        <Grid Padding="8" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
-                              BorderThickness="1" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-                              RowSpacing="8" CornerRadius="5">
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="2*" />
-                                <RowDefinition Height="3*" />
-                                <RowDefinition Height="*" />
-                            </Grid.RowDefinitions>
+        <!-- 主内容区: 空/加载/无结果/结果 四状态 -->
+        <Grid x:Name="StateContent" Grid.Row="2" Margin="15,0,15,0">
 
-                            <HyperlinkButton Grid.Row="0" Margin="1,0,0,0" x:Name="Person"
-                                             BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}"
-                                             Tag="{x:Bind UserId}" BorderThickness="1" Click="Person_Click">
-                                <TextBlock Text="{x:Bind UserName}" FontSize="12" VerticalAlignment="Center" />
+            <!-- 1. 空状态: 提示 + 搜索历史 -->
+            <StackPanel x:Name="EmptyState" Spacing="6"
+                        HorizontalAlignment="Center" VerticalAlignment="Center" MaxWidth="520">
+                <FontIcon Glyph="&#xE721;" FontSize="48"
+                          Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                          HorizontalAlignment="Center" />
+                <TextBlock Text="搜索话题和用户" FontSize="20" FontWeight="SemiBold"
+                           Foreground="{ThemeResource TextFillColorPrimaryBrush}"
+                           HorizontalAlignment="Center" />
+                <TextBlock Text="输入关键词，开始你的探索" FontSize="14"
+                           Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                           HorizontalAlignment="Center" />
+                <TextBlock x:Name="HistoryLabel" Text="搜索历史" FontSize="14" FontWeight="SemiBold"
+                           Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                           Margin="0,20,0,0" HorizontalAlignment="Center" Visibility="Collapsed" />
+                <ItemsRepeater x:Name="HistoryRepeater" HorizontalAlignment="Center">
+                    <ItemsRepeater.Layout>
+                        <StackLayout Orientation="Horizontal" Spacing="8" />
+                    </ItemsRepeater.Layout>
+                    <ItemsRepeater.ItemTemplate>
+                        <DataTemplate x:DataType="x:String">
+                            <Button Content="{x:Bind}" Click="HistoryKeyword_Click"
+                                    AutomationProperties.Name="{x:Bind}"
+                                    Background="{ThemeResource SubtleFillColorSecondaryBrush}"
+                                    CornerRadius="16" Padding="12,6,12,6" FontSize="13"
+                                    BorderThickness="0" />
+                        </DataTemplate>
+                    </ItemsRepeater.ItemTemplate>
+                </ItemsRepeater>
+            </StackPanel>
 
-                            </HyperlinkButton>
-                            <TextBlock Grid.Row="0" HorizontalAlignment="Right" Text="{x:Bind Time}" FontSize="10"
-                                       Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
-                            <HyperlinkButton Grid.Row="1" Padding="10" Height="Auto" HorizontalAlignment="Stretch"
-                                             HorizontalContentAlignment="Left" Click="SearchContent_Click"
-                                             Tag="{x:Bind Id}">
-                                <TextBlock Text="{x:Bind Title}" TextWrapping="Wrap"
-                                           Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
-                            </HyperlinkButton>
-                            <StackPanel Orientation="Horizontal" Grid.Row="2">
-                                <Border Padding="8,0,8,0" Background="Transparent" HorizontalAlignment="Left">
-                                    <StackPanel Orientation="Horizontal" Spacing="5">
-                                        <ic:SymbolIcon Symbol="Chat" FontSize="11" />
-                                        <TextBlock Text="{x:Bind ReplyCount}" FontSize="12"
-                                                   Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                                   VerticalAlignment="Center" />
+            <!-- 2. 加载状态 -->
+            <StackPanel x:Name="LoadingState" Visibility="Collapsed" Spacing="10"
+                        HorizontalAlignment="Center" VerticalAlignment="Center">
+                <ProgressRing IsActive="True" Width="40" Height="40" />
+                <TextBlock Text="搜索中..." FontSize="14"
+                           Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                           HorizontalAlignment="Center" />
+            </StackPanel>
+
+            <!-- 3. 无结果状态 -->
+            <StackPanel x:Name="NoResultState" Visibility="Collapsed" Spacing="6"
+                        HorizontalAlignment="Center" VerticalAlignment="Center">
+                <FontIcon Glyph="&#xE76D;" FontSize="48"
+                          Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                          HorizontalAlignment="Center" />
+                <TextBlock Text="未找到相关内容" FontSize="20" FontWeight="SemiBold"
+                           Foreground="{ThemeResource TextFillColorPrimaryBrush}"
+                           HorizontalAlignment="Center" />
+                <TextBlock Text="试试其他关键词" FontSize="14"
+                           Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                           HorizontalAlignment="Center" />
+            </StackPanel>
+
+            <!-- 4. 搜索结果状态 -->
+            <Grid x:Name="ResultState" Visibility="Collapsed" RowSpacing="4">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                    <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+
+                <TextBlock x:Name="ResultCountText" Grid.Row="0" FontSize="12" Margin="4,0,0,4"
+                           Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+
+                <ScrollViewer Grid.Row="1" x:Name="ResultViewer" VerticalScrollBarVisibility="Auto">
+                    <ItemsRepeater x:Name="ResultList" ItemsSource="{x:Bind SearchResults}"
+                                   AutomationProperties.Name="搜索结果列表">
+                        <ItemsRepeater.Layout>
+                            <StackLayout Orientation="Vertical" Spacing="12" />
+                        </ItemsRepeater.Layout>
+                        <ItemsRepeater.ItemTemplate>
+                            <DataTemplate x:DataType="obj:TopicInfo">
+                                <!-- 结果卡片(参考 DiscoverPage 样式) -->
+                                <Grid Tag="{x:Bind Id}" Padding="15" CornerRadius="5" RowSpacing="8"
+                                      Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                                      BorderThickness="1" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                                      Tapped="ResultCard_Tapped">
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="32" />
+                                        <RowDefinition Height="Auto" />
+                                    </Grid.RowDefinitions>
+
+                                    <!-- 头像 + 用户名 -->
+                                    <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="8,0,0,0" Spacing="10">
+                                        <Border Width="28" Height="28" BorderThickness="0" CornerRadius="9999"
+                                                Background="{ThemeResource PortraitBackgroundColor}"
+                                                AutomationProperties.Name="用户头像">
+                                            <picture:Picture x:Name="portrait" Src="{x:Bind PortraitUrl}"
+                                                             LoadImageCallback="{StaticResource PortraitLoader}" />
+                                        </Border>
+                                        <TextBlock Text="{x:Bind UserName}" VerticalAlignment="Center"
+                                                   FontFamily="{StaticResource HarmonySansBold}"
+                                                   Foreground="LightSeaGreen" />
+                                        <Border BorderThickness="1" BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}" Width="1" Margin="0,4,0,4"></Border>
+                                        <StackPanel Orientation="Horizontal" Spacing="5">
+                                            <ic:SymbolIcon Symbol="Chat" FontSize="14" />
+                                            <TextBlock Text="{x:Bind ReplyCount}" FontSize="12" VerticalAlignment="Center" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                                        </StackPanel>
+                                        <StackPanel Orientation="Horizontal" Spacing="5" Margin="5,0,0,0">
+                                            <ic:SymbolIcon Symbol="Fire" FontSize="14" />
+                                            <TextBlock Text="{x:Bind HitCount}" FontSize="12" VerticalAlignment="Center" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                                        </StackPanel>
                                     </StackPanel>
-                                </Border>
+                                    <!-- 时间 -->
+                                    <TextBlock Grid.Row="0" HorizontalAlignment="Right" VerticalAlignment="Center"
+                                               Text="{x:Bind Time}" FontSize="10"
+                                               Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                                    <!-- 分隔线 -->
+                                   
 
-                                <Border Padding="8,0,8,0" Background="Transparent" HorizontalAlignment="Left">
-                                    <StackPanel Orientation="Horizontal" Spacing="5">
-                                        <ic:SymbolIcon Symbol="Fire" FontSize="11" />
-                                        <TextBlock Text="{x:Bind HitCount}" FontSize="12"
-                                                   Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                                   VerticalAlignment="Center" />
-                                    </StackPanel>
-                                </Border>
+                                    <!-- 标题(关键词高亮) -->
+                                    <Border Grid.Row="1"  Padding="10" CornerRadius="4" Background="{ThemeResource MarkdownBackgroundBrush}">
+                                        <TextBlock  TextWrapping="Wrap" VerticalAlignment="Center"
+            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+            helpers:TextBlockExtensions.HighlightedText="{x:Bind Title}"
+            helpers:TextBlockExtensions.Keywords="{x:Bind SearchKeyword}"
+            helpers:TextBlockExtensions.BoldFontFamily="{ThemeResource HarmonySansBold}"
+            helpers:TextBlockExtensions.HighlightColor="SystemAccentColor"
+            helpers:TextBlockExtensions.IsBold="True" />
+                                    </Border>
+                                   
 
-                            </StackPanel>
-                            <Button Grid.Row="2" HorizontalAlignment="Right" Background="Transparent" Margin="0,10,0,0">
-                                <ic:SymbolIcon Symbol="MoreHorizontal" FontSize="11" />
-                                <Button.Flyout>
-                                    <MenuFlyout>
-                                        <MenuFlyoutItem Text="收藏">
-                                            <MenuFlyoutItem.Icon>
-                                                <ic:FluentIcon Icon="StarAdd" />
-                                            </MenuFlyoutItem.Icon>
-                                        </MenuFlyoutItem>
-                                        <MenuFlyoutItem Text="复制帖子ID">
-                                            <MenuFlyoutItem.Icon>
-                                                <ic:SymbolIcon Symbol="Link" />
-                                            </MenuFlyoutItem.Icon>
-                                        </MenuFlyoutItem>
-                                    </MenuFlyout>
-                                </Button.Flyout>
-                            </Button>
-                        </Grid>
-                    </DataTemplate>
-                </ItemsRepeater.ItemTemplate>
-            </ItemsRepeater>
-        </ScrollViewer>
-        <infoFlower:InfoFlower x:Name="Flower" Grid.Row="0" Grid.RowSpan="2" HorizontalAlignment="Center"
-                               VerticalAlignment="Bottom" />
+                                </Grid>
+                            </DataTemplate>
+                        </ItemsRepeater.ItemTemplate>
+                    </ItemsRepeater>
+                </ScrollViewer>
+
+                <!-- 翻页栏 -->
+                <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Center" Spacing="12"
+                            Margin="0,8,0,0" AutomationProperties.Name="翻页">
+                    <Button x:Name="PrevPageButton" Click="PrevPage_Click" IsEnabled="False"
+                            AutomationProperties.Name="上一页" BorderThickness="0">
+                        <StackPanel Orientation="Horizontal" Spacing="6">
+                            <ic:SymbolIcon Symbol="ChevronLeft" FontSize="12" />
+                            <TextBlock Text="上一页" />
+                        </StackPanel>
+                    </Button>
+                    <TextBlock x:Name="PageText" Text="第 1 页" FontSize="12" VerticalAlignment="Center"
+                               Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                    <Button x:Name="NextPageButton" Click="NextPage_Click" IsEnabled="False"
+                            AutomationProperties.Name="下一页" BorderThickness="0">
+                        <StackPanel Orientation="Horizontal" Spacing="6">
+                            <TextBlock Text="下一页" />
+                            <ic:SymbolIcon Symbol="ChevronRight" FontSize="12" />
+                        </StackPanel>
+                    </Button>
+                </StackPanel>
+            </Grid>
+        </Grid>
+
+        <infoFlower:InfoFlower x:Name="Flower" Grid.Row="0" Grid.RowSpan="2"
+                               HorizontalAlignment="Center" VerticalAlignment="Bottom" />
     </Grid>
 </Page>

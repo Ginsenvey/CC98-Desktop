@@ -141,7 +141,7 @@ public sealed partial class IndexPage
                     Flower.Play(FlowStatus.Fail, "刷新首页失败");
                 break;
             case "search":
-
+                Frame.Navigate(typeof(SearchPage));
                 break;
             case "appcenter":
                 await Launcher.LaunchUriAsync(new(ApiEndpoints.Forum.AppCenter));

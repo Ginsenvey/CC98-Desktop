@@ -1,6 +1,7 @@
 using System;
 using Windows.UI;
 using CC98.Kernel;
+using CC98.Objects;
 using FluentIcons.Common;
 using Microsoft.UI;
 using Microsoft.UI.Xaml;
@@ -186,6 +187,48 @@ public partial class BoolToVariantConverter : IValueConverter
     }
 
     object IValueConverter.ConvertBack(object value, Type targetType, object parameter, string language)
+    {
+        throw new NotImplementedException();
+    }
+}
+
+/// <summary>
+/// 搜索建议类型 → 图标(Symbol)转换。
+/// </summary>
+public partial class SearchSuggestionIconConverter : IValueConverter
+{
+    public object Convert(object value, Type targetType, object parameter, string language)
+    {
+        return value is SearchSuggestionType type
+            ? type switch
+            {
+                SearchSuggestionType.Topic => Symbol.Document,
+                SearchSuggestionType.User => Symbol.Person,
+                SearchSuggestionType.UserId => Symbol.Person,
+                SearchSuggestionType.Board => Symbol.Board,
+                SearchSuggestionType.TopicId => Symbol.Chat,
+                _ => Symbol.Search
+            }
+            : Symbol.Search;
+    }
+
+    public object ConvertBack(object value, Type targetType, object parameter, string language)
+    {
+        throw new NotImplementedException();
+    }
+}
+
+/// <summary>
+/// 字符串非空 → Visible,空/空白 → Collapsed。
+/// </summary>
+public partial class StringToVisibilityConverter : IValueConverter
+{
+    public object Convert(object value, Type targetType, object parameter, string language)
+    {
+        return string.IsNullOrWhiteSpace(value as string) ? Visibility.Collapsed : Visibility.Visible;
+    }
+
+    public object ConvertBack(object value, Type targetType, object parameter, string language)
     {
         throw new NotImplementedException();
     }

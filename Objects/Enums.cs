@@ -72,6 +72,19 @@ public enum ContentType
     Markdown = 1
 }
 
+
+/// <summary>
+/// 搜索结果排序方式。
+/// </summary>
+public enum SearchSortMode
+{
+    /// <summary>默认排序(API 发帖时间)。</summary>
+    Default = 0,
+    /// <summary>最多回复。</summary>
+    MostReplies = 1,
+    /// <summary>最多点击。</summary>
+    MostHits = 2
+}
 public enum PostType
 {
     Normal=0,

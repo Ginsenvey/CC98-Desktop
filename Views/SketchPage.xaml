@@ -59,7 +59,7 @@
                 <Style  TargetType="Button">
                     <Setter Property="Background" Value="{ThemeResource AccentAAFillColorDefaultBrush}" />
                     <Setter Property="CornerRadius" Value="3"></Setter>
-                    <Setter Property="Foreground" Value="{ThemeResource StandardBrush}"></Setter>
+                    <Setter Property="Foreground" Value="{ThemeResource TextOnAccentFillColorDefault}"></Setter>
                 </Style>
             </ContentDialog.PrimaryButtonStyle>
             <StackPanel>
@@ -277,7 +277,7 @@
             <SplitView.Pane>
                 <ScrollViewer>
                     <Grid>
-                        <controls:MarkdownTextBlock Background="{ThemeResource MarkdownBackgroundBrush}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" x:Name="MdViewer" Visibility="Collapsed"></controls:MarkdownTextBlock>
+                        <controls:MarkdownTextBlock Background="{ThemeResource MarkdownBackgroundBrush}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" x:Name="MdViewer" Visibility="Collapsed" Config="{ThemeResource CustomMarkdownConfig}"></controls:MarkdownTextBlock>
                         <ubbTextBlock:UbbTextBlock ImageMaxWidth="320" Background="{ThemeResource MarkdownBackgroundBrush}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" QuoteBackground="{ThemeResource QuoteBackgroundBrush}" CodeBackground="{ThemeResource QuoteBackgroundBrush}" BoldFontFamily="{ThemeResource HarmonySansBold}" x:Name="UbbViewer"/>
                     </Grid>
                 </ScrollViewer>
