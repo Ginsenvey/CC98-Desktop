@@ -3,6 +3,7 @@ using ColorCode;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Documents;
+using Windows.ApplicationModel.DataTransfer;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -123,4 +124,11 @@ public sealed partial class CodeBlock : UserControl
     }
 
     #endregion
+
+    private void CopyButton_Click(object sender, RoutedEventArgs e)
+    {
+        var package= new DataPackage();
+        package.SetText(Code);
+        Clipboard.SetContent(package);
+    }
 }

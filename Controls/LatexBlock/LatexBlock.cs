@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Diagnostics;
 using Windows.Foundation;
 using CSharpMath.SkiaSharp;
@@ -9,52 +9,55 @@ using SkiaSharp.Views.Windows;
 
 namespace CC98.Controls.LatexBlock;
 
+/// <summary>
+/// 使用 CSharpMath + SkiaSharp 渲染 LaTeX 公式的控件。
+/// </summary>
 public sealed partial class LatexBlock : UserControl
 {
-    private readonly SKXamlCanvas _canvas;
+    private readonly SKXamlCanvas _canvas = new();
     private readonly MathPainter _painter = new();
     private float _contentHeight;
-
-    // 内容尺寸（不包含Padding）
     private float _contentWidth;
     private string _latex = "";
 
-    // 行间距
+    /// <summary>行间距(相对行高的比例)。</summary>
     private float _lineSpacing = 0.2f;
 
-    // 内边距
-    private Thickness _padding = new(5);
+    /// <summary>每行公式额外预留的底部空白比例。</summary>
+    private const float BottomSlackRatio = 0.2f;
 
     public LatexBlock()
     {
-        _canvas = new();
-        //必须设置 IgnorePixelScaling 为 true，以避免 DPI 缩放问题
-        //关闭将导致实际高度和宽度与测量值不一致
+        // 必须设置 IgnorePixelScaling 为 true,以避免 DPI 缩放问题
+        // 关闭将导致实际高度和宽度与测量值不一致
         _canvas.IgnorePixelScaling = true;
 
         var grid = new Grid();
         grid.Children.Add(_canvas);
-
-
         Content = grid;
-
 
         HorizontalAlignment = HorizontalAlignment.Center;
         VerticalAlignment = VerticalAlignment.Bottom;
 
+        // 复用基类 DP,并通过回调统一触发重新测量(字体/内边距/内容对齐变化时)
+        RegisterPropertyChangedCallback(Control.FontSizeProperty, (_, _) => OnFontSizeChanged());
+        RegisterPropertyChangedCallback(Control.PaddingProperty, (_, _) => InvalidateMeasure());
+        RegisterPropertyChangedCallback(Control.HorizontalContentAlignmentProperty, (_, _) => InvalidateMeasure());
+
+        // 默认字号(与旧行为一致)
+        FontSize = 20;
+
         _canvas.PaintSurface += OnPaintSurface;
+        OnFontSizeChanged(); // 同步 _painter 字号
     }
 
-    public Thickness Padding
+    private void OnFontSizeChanged()
     {
-        get => _padding;
-        set
-        {
-            _padding = value;
-            InvalidateMeasure();
-        }
+        _painter.FontSize = (float)FontSize;
+        InvalidateMeasure();
     }
 
+    /// <summary>行间距。</summary>
     public double LineSpacing
     {
         get => _lineSpacing;
@@ -65,7 +68,7 @@ public sealed partial class LatexBlock : UserControl
         }
     }
 
-    // LaTeX公式
+    /// <summary>LaTeX 公式(可含换行,每行独立公式)。</summary>
     public string LaTeX
     {
         get => _latex;
@@ -76,23 +79,10 @@ public sealed partial class LatexBlock : UserControl
         }
     }
 
-    // 字体大小
-    public double FontSize
-    {
-        get => _painter.FontSize;
-        set
-        {
-            _painter.FontSize = (float)value;
-            InvalidateMeasure();
-        }
-    }
-
-    // 水平对齐
-    public HorizontalAlignment HorizontalContentAlignment { get; set; } = HorizontalAlignment.Center;
-
-    // 是否显示调试边框
+    /// <summary>是否显示调试边框/空状态提示。</summary>
     public bool ShowDebugBounds { get; set; } = false;
 
+    /// <summary>调试信息。</summary>
     public string DebugInfo
     {
         get
@@ -111,22 +101,15 @@ public sealed partial class LatexBlock : UserControl
         {
             _contentWidth = 0;
             _contentHeight = 0;
-            var emptySize = new Size(
-                Padding.Left + Padding.Right,
-                Padding.Top + Padding.Bottom
-            );
-
-            // 测量Content
+            var emptySize = new Size(Padding.Left + Padding.Right, Padding.Top + Padding.Bottom);
             if (Content is FrameworkElement c) c.Measure(emptySize);
-
             return emptySize;
         }
 
         try
         {
-            // 使用足够大的宽度测量（公式不需要换行）
+            // 公式不需要换行,用足够大的宽度测量
             const float measureWidth = 2000f;
-
             var lines = _latex.Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries);
 
             _contentWidth = 0;
@@ -134,22 +117,19 @@ public sealed partial class LatexBlock : UserControl
 
             for (var i = 0; i < lines.Length; i++)
             {
-                if (string.IsNullOrWhiteSpace(lines[i]))
-                    continue;
+                if (string.IsNullOrWhiteSpace(lines[i])) continue;
 
                 _painter.LaTeX = lines[i].Trim();
                 var rect = _painter.Measure(measureWidth);
 
                 _contentWidth = Math.Max(_contentWidth, rect.Width);
-                //_contentHeight += rect.Height;
-                var lineHeight = rect.Height;
-                var extraBottomSpace = lineHeight * 0.2f; // 增加20%的底部空间
-                _contentHeight += lineHeight + extraBottomSpace;
-
+                // 行块 = 公式高 + 底部余量;行间距只在行间额外加,避免单行虚高
+                var lineStep = rect.Height * (1f + BottomSlackRatio);
+                _contentHeight += lineStep;
                 if (i < lines.Length - 1) _contentHeight += rect.Height * _lineSpacing;
             }
 
-            if (_contentWidth <= 0) _contentWidth = 20;
+        if (_contentWidth <= 0) _contentWidth = 20;
             if (_contentHeight <= 0) _contentHeight = 20;
         }
         catch (Exception ex)
@@ -159,91 +139,81 @@ public sealed partial class LatexBlock : UserControl
             _contentHeight = 30;
         }
 
-        // 计算总尺寸（内容 + Padding）
         var totalWidth = _contentWidth + Padding.Left + Padding.Right;
         var totalHeight = _contentHeight + Padding.Top + Padding.Bottom;
-
         var desiredSize = new Size(totalWidth, totalHeight);
 
-        // 测量Content
         if (Content is FrameworkElement content) content.Measure(desiredSize);
-
-        Debug.WriteLine($"MeasureOverride 返回: {totalWidth:F1}x{totalHeight:F1}");
 
         return desiredSize;
     }
 
     protected override Size ArrangeOverride(Size finalSize)
     {
-        Debug.WriteLine($"ArrangeOverride 收到: {finalSize.Width:F1}x{finalSize.Height:F1}");
-
-        // 排列Content
         if (Content is FrameworkElement content) content.Arrange(new(0, 0, finalSize.Width, finalSize.Height));
-
         return finalSize;
     }
+
+    /// <summary>计算单行公式的占位高度(公式高度 + 底部余量 + 行间距)。</summary>
+    private float MeasureLineStep(float lineHeight) =>
+        lineHeight * (1f + BottomSlackRatio) + lineHeight * _lineSpacing;
+
+    /// <summary>计算单行公式相对行块顶部的绘制偏移。</summary>
+    private float DrawBaselineOffset(float lineHeight) => lineHeight * (1f + BottomSlackRatio);
 
     private void OnPaintSurface(object sender, SKPaintSurfaceEventArgs e)
     {
         var canvas = e.Surface.Canvas;
         canvas.Clear(SKColors.Transparent);
 
-        // 获取画布实际尺寸
         var canvasWidth = (float)_canvas.ActualWidth;
         var canvasHeight = (float)_canvas.ActualHeight;
 
-        // 如果没有内容或尺寸无效，直接返回
-        if (string.IsNullOrEmpty(_latex) || _contentWidth <= 0 || _contentHeight <= 0 || canvasWidth <= 0 ||
-            canvasHeight <= 0)
+        if (string.IsNullOrEmpty(_latex) || _contentWidth <= 0 || _contentHeight <= 0 || canvasWidth <= 0 || canvasHeight <= 0)
         {
-            // 绘制空状态提示
             if (ShowDebugBounds && string.IsNullOrEmpty(_latex))
             {
-                var textPaint = new SKPaint
-                {
-                    Color = SKColors.Gray,
-                    IsAntialias = true,
-                };
-                canvas.DrawText(SKTextBlob.Create("无公式", new SKFont()), 10, 30, textPaint);
+                canvas.DrawText(SKTextBlob.Create("无公式", new SKFont()), 10f, 30f, new SKPaint { Color = SKColors.Gray, IsAntialias = true });
             }
-
             return;
         }
 
         try
         {
-            // ============ 4. 绘制公式内容 ============
             var lines = _latex.Split(['\r', '\n'], StringSplitOptions.RemoveEmptyEntries);
             var currentY = (float)Padding.Top;
 
             for (var i = 0; i < lines.Length; i++)
             {
-                if (string.IsNullOrWhiteSpace(lines[i]))
-                    continue;
+                if (string.IsNullOrWhiteSpace(lines[i])) continue;
 
                 _painter.LaTeX = lines[i].Trim();
                 var rect = _painter.Measure(_contentWidth);
-
-                // 计算水平对齐
+                // 水平对齐(基于控件实际宽度,而非仅内容宽度,保证控件被拉伸时居中正确)
                 var x = (float)Padding.Left;
-
                 switch (HorizontalContentAlignment)
                 {
                     case HorizontalAlignment.Right:
                         x = canvasWidth - rect.Width - (float)Padding.Right;
                         break;
                     case HorizontalAlignment.Center:
-                        x = (float)Padding.Left + (_contentWidth - rect.Width) / 2;
+                        x = (float)Padding.Left + (canvasWidth - (float)Padding.Left - (float)Padding.Right - rect.Width) / 2f;
                         break;
                 }
+                // ★ 关键发现(经对比各版本调试确定):
+                // CSharpMath 的 MathPainter.Draw(canvas, position) 中 position 是【公式的基线】,而非左上角。
+                // 公式体实际绘制范围为: [基线 - |rect.Y|, 基线 + (rect.Height - |rect.Y|)]
+                //   - rect.Y 为负值,表示基线以上的高度(基线上方部分);
+                //   - rect.Height - |rect.Y| 为基线以下的部分。
+                // 若把 position 当作左上角(currentY)或行底(currentY + rect.Height)直接绘制,会分别出现
+                // 「公式顶出画布被裁」或「公式沉底被裁」两种错误——都必须以基线语义来定位。
+                // 正确基线 = 行顶 + 行块内居中留白 + 基线上方高度,使公式体在行块内垂直居中。
+                var lineStep = rect.Height * (1f + BottomSlackRatio);   // 行块高 = 公式高 + 底部余量
+                var topPad = (lineStep - rect.Height) / 2f;             // 行块内顶部留白,用于垂直居中
+                var baseline = currentY + topPad + Math.Abs(rect.Y);    // 基线 = 行顶 + 居中止白 + 基线上方高度
+                _painter.Draw(canvas, new(x, baseline));
 
-                // 绘制公式 - 给底部增加额外空间
-                var baselineOffset = Math.Abs(rect.Y); // rect.Y 是负值，表示基线以上的高度
-                var extraBottomSpace = rect.Height * 0.2f; // 增加20%的底部空间
-                _painter.Draw(canvas, new(x, currentY + rect.Height + extraBottomSpace));
-
-                currentY += rect.Height;
-
+                currentY += rect.Height * (1f + BottomSlackRatio);
                 if (i < lines.Length - 1) currentY += rect.Height * _lineSpacing;
             }
         }

@@ -265,19 +265,5 @@ public sealed partial class UbbTextBlock : Control
         }
     }
 
-    public string GetSelectedText()
-    {
-        if (Context != null) return Context.GetSelectedTextExternal();
-        return string.Empty;
-    }
-
-    /// <summary>
-    ///     全选所有文本
-    /// </summary>
-    public void SelectAll()
-    {
-        Context?.SelectAllExternal();
-    }
-
     #endregion
 }
