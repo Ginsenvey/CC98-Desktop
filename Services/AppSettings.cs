@@ -117,10 +117,15 @@ public sealed partial class AppSettings : INotifyPropertyChanged
         get => GetValue<string>(nameof(ThemePicture)) ?? string.Empty;
         set => SetValue(nameof(ThemePicture), value);
     }
-    public string Portrait
+    public string PortraitUrl
     {
-        get => GetValue<string>(nameof(Portrait)) ?? string.Empty;
-        set => SetValue(nameof(Portrait), value);
+        get => GetValue<string>(nameof(PortraitUrl)) ?? string.Empty;
+        set => SetValue(nameof(PortraitUrl), value);
+    }
+    public string LocalPortraitUrl
+    {
+        get => GetValue<string>(nameof(LocalPortraitUrl)) ?? string.Empty;
+        set => SetValue(nameof(LocalPortraitUrl), value);
     }
     public bool IsVpnEnabled
     {
@@ -140,7 +145,7 @@ public sealed partial class AppSettings : INotifyPropertyChanged
 
     public event PropertyChangedEventHandler? PropertyChanged;
 
-    //[调用成员名]属性只有在get;set中起作用。如果在SetValue中使用，UI将不会正常刷新
+    //[调用成员名]属性只有在get;set中起作用。如果在SetValue中使用，不手动指定属性名，UI将不会正常刷新
     private void OnPropertyChanged([CallerMemberName] string? propertyName = null)
     {
         PropertyChanged?.Invoke(this, new(propertyName));

@@ -58,6 +58,8 @@ public static class ApiEndpoints
     /// </summary>
     public static class User
     {
+        public static string BrowseHistory(int start) => $"{Base}/me/browsing-record?from={start}&size=11";
+        public static string EnableBrowseHistory(bool enabled) => $"{Base}/me/browsing-history?enabled={enabled.ToString().ToLower()}";
         public static string SendPrivateMessage => $"{Base}/message";
 
         /// <summary>
@@ -147,8 +149,8 @@ public static class ApiEndpoints
         {
             return $"{Base}/notification/{typeName}?from={start}&size=10";
         }
-
-        public static string EditFriends(int userId)
+        //取关和关注
+        public static string EditFollowee(int userId)
         {
             return $"{Base}/me/followee/{userId}";
         }
@@ -158,15 +160,7 @@ public static class ApiEndpoints
             return $"{Base}/me/transfer-wealth";
         }
 
-        public static string EnableBrowseHistory(bool value)
-        {
-            return $"{Base}/me/browsing-history?enabled={value.ToString().ToLower()}";
-        }
-
-        public static string BrowseHistory(int start)
-        {
-            return $"{Base}/me/browsing-record?from={start}&size=11";
-        }
+        
     }
 
     public static class Post

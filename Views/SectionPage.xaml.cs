@@ -22,7 +22,7 @@ public sealed partial class SectionPage : Page
 {
     public ObservableCollection<SectionInfo> AllSections { get; } = [];
     
-    private static BoardSectionManager Manager => BoardSectionManager.Instance;
+    private static BoardCacheManager Manager => BoardCacheManager.Instance;
 
     public SectionPage()
     {

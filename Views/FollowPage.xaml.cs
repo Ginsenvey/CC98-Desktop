@@ -1,16 +1,18 @@
-using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Linq;
-using System.Threading.Tasks;
-using Windows.Storage;
 using CC98.Kernel;
 using CC98.Objects;
 using CC98.Services;
+using CC98.Services.Extensions;
 using DevWinUI;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
-using CC98.Services.Extensions;
 using Microsoft.UI.Xaml.Navigation;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.Linq;
+using System.Net.Http;
+using System.Text;
+using System.Threading.Tasks;
+using Windows.Storage;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -25,7 +27,6 @@ public sealed partial class FollowPage : Page
     public ObservableCollection<Friend> Friends = [];
     public GlobalService GlobalService = GlobalService.Instance;
     public Increment Increment = new();
-    public ApplicationDataContainer Set = ApplicationData.Current.LocalSettings;
     public string Type = "follower";
     public ApiService ApiService = App.Current.GetService<ApiService>();
     public FollowPage()
@@ -37,28 +38,21 @@ public sealed partial class FollowPage : Page
     protected override async void OnNavigatedTo(NavigationEventArgs e)
     {
         base.OnNavigatedTo(e);
-        var param = "";
         if (GlobalService.ShouldReplaceNavigationArgs)
         {
             if (GlobalService.NavigationAnchor is string targetType)
-                param = targetType;
-            else
-                param = "follower";
+                Type = targetType;
         }
         else
         {
-            param = e.TryGetParameter<string>() ?? "";
+            Type = e.TryGetParameter<string>() ?? "follower";
         }
 
 
-        if (!string.IsNullOrEmpty(param))
-        {
-            Type = param;
-            if (param == "follower")
-                FriendType.Text = "粉丝";
-            else
-                FriendType.Text = "关注";
-        }
+        if (Type == "follower")
+            FriendType.Text = "粉丝";
+        else
+            FriendType.Text = "关注";
 
         await LoadFriend();
     }
@@ -79,10 +73,7 @@ public sealed partial class FollowPage : Page
         }
 
         var ids = friendIdsResult.Data;
-        // 与全库分页约定一致:返回 PageSize+1 条表示还有更多,先判定再截断
-        var hasMore = ids.Count > Increment.PageSize;
-        if (hasMore) ids.RemoveAt(Increment.PageSize);
-        Increment.HasMore = hasMore;
+        Increment.HasMore = ids.Count == Increment.PageSize;
         if (!Increment.HasMore) Flower.Play(FlowStatus.Info, "已全部加载");
         var param = string.Join("&", ids.Select(id => $"id={id}"));
         var userInfoUrl = ApiEndpoints.User.UserInfoList(param);
@@ -96,38 +87,47 @@ public sealed partial class FollowPage : Page
             //await App.Logger.WriteAsync("NoticeMsg", "加载好友信息失败", friendsResult.Message);
             return false;
         }
-
-        Friends.AddRange(friendsResult.Data);
-        FollowEmptyState.Visibility = Friends.Count == 0 ? Microsoft.UI.Xaml.Visibility.Visible : Microsoft.UI.Xaml.Visibility.Collapsed;
+        var data = friendsResult.Data;
+        foreach (var friend in data)
+        {
+            friend.IsFollowee = Type == "followee";
+        }
+        Friends.AddRange(data);
+        FollowEmptyState.Visibility = Friends.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
         return true;
     }
 
     private void TileContent_Click(object sender, RoutedEventArgs e)
     {
-        var h = sender as HyperlinkButton;
-        var tag = h?.Tag;
-        if (tag == null) return;
-        var param = new ProfileNavigationInfo { IsMe = false, UserId = tag.ToInt() };
+        if (sender is not HyperlinkButton button || button.Tag is not int userId) return;
+        var param = new ProfileNavigationInfo { IsMe = false, UserId = userId };
         Frame.Navigate(typeof(ProfilePage), param);
     }
 
 
     private async void UnFollow_Click(object sender, RoutedEventArgs e)
     {
-        var m = (MenuFlyoutItem)sender;
-
-        if (m.Tag is string tag)
+        var m = sender as MenuFlyoutItem;
+        if (m?.DataContext is not Friend friend) return;
+        var url = ApiEndpoints.User.EditFollowee(friend.Id);
+        var content = new StringContent("", Encoding.UTF8, "application/json");
+        var result = await ApiService.Put(url, content);
+        if(result.IsSuccess)
         {
-            //string restext = await RequestSender.Follow("0", tag);
+            Friends.Remove(friend);
+            Flower.Play(FlowStatus.Success, $"已取关用户:{friend.Name}");
+        }
+        else
+        {
+            Flower.Play(FlowStatus.Fail, "取消关注失败");
         }
     }
 
     private void Chat_Click(object sender, RoutedEventArgs e)
     {
         var m = sender as MenuFlyoutItem;
-        var f = m?.DataContext as Friend;
-        if (f == null) return;
-        var c = new ChatInfo { UserId = f.Id, Name = f.Name, PortraitUrl = f.PortraitUrl };
+        if (m?.DataContext is not Friend friend) return;
+        var c = new ChatInfo { UserId = friend.Id, Name = friend.Name, PortraitUrl = friend.PortraitUrl };
         var param = new ChatNavigationInfo { HasTarget = true, ChatUserInfo = c };
         Frame.Navigate(typeof(ChatPage), param);
     }

@@ -7,7 +7,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace CC98.Services;
+namespace CC98.Kernel.Network;
 /// <summary>
 /// 与浙江大学镜像站通信，判断当前是否需要使用VPN服务的类
 /// </summary>

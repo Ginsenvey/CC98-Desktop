@@ -5,6 +5,7 @@ using CC98.Objects;
 using CC98.Services;
 using CC98.Services.Extensions;
 using CC98.Services.Helpers;
+using ColorCode.Compilation.Languages;
 using CommunityToolkit.WinUI.Converters;
 using CSharpMath;
 using DevWinUI;
@@ -31,8 +32,12 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Text.Json;
 using System.Threading.Tasks;
+using System.Xml.Linq;
 using Windows.Storage;
+using static CC98.Kernel.ApiEndpoints;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 using Symbol = FluentIcons.Common.Symbol;
 
 // To learn more about WinUI, the WinUI project structure,
@@ -145,12 +150,10 @@ public sealed partial class MainWindow : Window
         // VPN 检查 fire-and-forget:异常在内部捕获,失败/缓慢不影响其他任务
         _ = CheckVpnStatusSafelyAsync();
         await Task.WhenAll(
-            GetFocusBoards(),
             RefreshMessage(),
-            LoadPortrait(),
+            LoadUserProfile(),
             GetFavorites());
     }
-
     /// <summary>
     /// VPN 启动检查的安全包装:任何异常都只记录,不传播到调用链。
     /// </summary>
@@ -166,22 +169,89 @@ public sealed partial class MainWindow : Window
         }
     }
 
-    private async Task LoadPortrait()
+    private async Task LoadUserProfile()
     {
-        var portraitUrl = AppSettings.Current.Portrait;
-        var userId = AppSettings.Current.UserId;
-
-        if (string.IsNullOrEmpty(portraitUrl) || userId == 0)
+        try
         {
+            //尝试获取新头像地址。获取失败时，尝试加载本地缓存。加载缓存也失败，使用AppSettings.Current.Portrait。
             var profileUrl = ApiEndpoints.User.UserProfile(true);
             var profileResult = await ApiService.Fetch<UserInfo>(profileUrl);
-            if (!profileResult.IsSuccess) return;
-            var data = profileResult.Data;
-            AppSettings.Current.Portrait = data.PortraitUrl;
-            AppSettings.Current.UserId = data.Id;
+            var customBoards = SerializationHelper.TryDeserialize<List<int>>(AppSettings.Current.CustomBoards);
+            if (!profileResult.IsSuccess || profileResult.Data == null)
+            {
+                Flower.Play(FlowStatus.Fail, $"更新用户信息失败: {profileResult.Message}");
+                if(customBoards!=null) await LoadFocusBoards(customBoards);
+                return;
+            }
+            else
+            {
+                var data = profileResult.Data;
+                await RefreshPortraitIfNeeded(data.PortraitUrl);
+                var refreshTask = RefreshPortraitIfNeeded(data.PortraitUrl);
+                var loadBoardsTask = LoadFocusBoardsIfNeeded(data, customBoards);
+                await Task.WhenAll(refreshTask, loadBoardsTask);
+               
+            }
+            
+        }
+        catch(Exception ex)
+        {
+            Debug.WriteLine($"加载头像失败: {ex.Message}");
+            Flower.Play(FlowStatus.Fail, $"更新头像出错: {ex.Message}");
+        }  
+    }
+    private async Task RefreshPortraitIfNeeded(string url)
+    {
+        if (AppSettings.Current.PortraitUrl == url) return;
+        AppSettings.Current.PortraitUrl = url;
+        //进行下载缓存,并使用缓存图片
+        var portraitPath = await Downloader.DownloadFileAsync(url, ApplicationData.Current.LocalCacheFolder.Path);
+        if (portraitPath == null) return;
+        AppSettings.Current.LocalPortraitUrl = portraitPath;
+    }
+    private async Task LoadFocusBoardsIfNeeded(UserInfo data, List<int>? customBoards)
+    {
+        if (customBoards == null || !customBoards.ToHashSet().SetEquals(data.CustomBoards.ToHashSet()))
+        {
+            AppSettings.Current.CustomBoards = SerializationHelper.TrySerialize(data.CustomBoards);
+            await LoadFocusBoards(data.CustomBoards);
+        }
+        else
+        {
+            await LoadFocusBoards(customBoards);
         }
     }
-   
+    private async Task LoadFocusBoards(IEnumerable<int> boardIds)
+    {
+        var sections = await BoardCacheManager.Instance.GetSectionDataAsync();
+        if (sections == null)
+        {
+            //
+            Flower.Play(FlowStatus.Fail, "版面信息加载失败");
+            return;
+        }
+        //构建查找字典
+        var boardDict = sections
+            .SelectMany(section => section.Boards)
+            .ToDictionary(board => board.Id);
+
+        var boardItems = boardIds.Select(id =>
+        {
+            boardDict.TryGetValue(id, out var board);
+            string name = board?.Name ?? "未知版面";
+
+            return new NavigationItem
+            {
+                Tag = id.ToString(),
+                Name = name,
+                IconSymbol = BoardIconHelper.GetSymbol(id, name),
+                IsEditable = true
+            };
+        });
+
+        MenuItems.AddRange(boardItems);
+    }
+
     private void OnNavigationItemAdded(NavigationItem item)
     {
         //检查导航栏中是否已经存在相同Tag的项，如果存在则不添加
@@ -203,6 +273,7 @@ public sealed partial class MainWindow : Window
         MenuItems.Add(new NavigationItem { Name = "动态", IconSymbol = Symbol.Home, Tag = "Focus", IsEditable = false });
         MenuItems.Add(new NavigationItem
             { Name = "收藏集", IconSymbol = Symbol.StarLineHorizontal3, Tag = "Favorite", IsEditable = false });
+        MenuItems.Add(new NavigationItem { Name = "历史", IconSymbol = Symbol.AnimalPawPrint, Tag = "History", IsEditable = false });
         MenuItems.Add(pinnedGroup);
         FooterMenuItems.Add(new NavigationItem
             { Name = "消息", IconSymbol = Symbol.MailRead, Tag = "Message", IsEditable = false });
@@ -212,88 +283,29 @@ public sealed partial class MainWindow : Window
 
     private async void PinOff_Click(object sender, RoutedEventArgs e)
     {
-        if ((sender as MenuFlyoutItem)?.Tag is not int boardId) return;
-        var url = ApiEndpoints.Board.EditFocusBoards(boardId);
+        if ((sender as MenuFlyoutItem)?.Tag is not string boardIdStr) return;
+        var url = ApiEndpoints.Board.EditFocusBoards(int.Parse(boardIdStr));
         var result = await ApiService.Delete(url);
         if (!result.IsSuccess)
         {
             //
+            Flower.Play(FlowStatus.Fail, $"取消关注失败: {result.Message}");
             return;
         }
-        var customBoards = AppSettings.Current.CustomBoards;
-        if (customBoards != "")
-        {
-            var boardInfo = SerializationHelper.TryDeserialize<Dictionary<int, string>>(customBoards);
-            boardInfo?.Remove(boardId);
-        }
-
-        var item = MenuItems.OfType<NavigationItem>().FirstOrDefault(g => g.Tag == boardId.ToString());
-        if (item != null) MenuItems.Remove(item);
-    }
-
-    private async Task GetFocusBoards() //同步客户端和在线关注版块的信息
-    {
         var customBoards = AppSettings.Current.CustomBoards;
         if (string.IsNullOrEmpty(customBoards))
         {
-            Memory = [];
-        }
-        else
-        {
-            Memory = SerializationHelper.TryDeserialize<Dictionary<int, string>>(customBoards) ?? [];
-        }
-        //初始化本地缓存
-        var profileUrl = ApiEndpoints.User.UserProfile(true, 0);
-        var profileResult = await ApiService.Fetch<UserInfo>(profileUrl);
-        if (!profileResult.IsSuccess || profileResult.Data == null)
-        {
-            MenuItems.AddRange(Memory.Select(board => new NavigationItem
-            {
-                Name = board.Value,
-                IconSymbol = BoardIconHelper.GetSymbol(board.Key, board.Value),
-                Tag = board.Key.ToString(),
-                IsEditable = true
-            }));
-            
-            return;
+            var boardInfo = SerializationHelper.TryDeserialize<Dictionary<int, string>>(customBoards);
+            boardInfo?.Remove(int.Parse(boardIdStr));
         }
 
-        var data = profileResult.Data;
-        var boards = data.CustomBoards;
-        //并行获取各版面的信息,再按原顺序添加到导航栏
-        var infos = await Task.WhenAll(boards.Select(GetBoardInfoAsync));
-        var changed = false;
-        foreach (var info in infos)
-        {
-            if (info is not (var boardId, var name)) continue;
-            if (!Memory.ContainsKey(boardId))
-            {
-                Memory.Add(boardId, name);
-                changed = true;
-            }
-            MenuItems.Add(new NavigationItem
-            {
-                Name = name, IconSymbol = BoardIconHelper.GetSymbol(boardId, name), Tag = boardId.ToString(),
-                IsEditable = true
-            });
-        }
-        if (changed)
-        {
-            AppSettings.Current.CustomBoards = SerializationHelper.TrySerialize(Memory) ?? "";
-        }
+        var item = MenuItems.OfType<NavigationItem>().FirstOrDefault(g => g.Tag == boardIdStr);
+        if (item != null) MenuItems.Remove(item);
     }
 
-    /// <summary>
-    /// 获取单个版面的信息。本地已缓存则直接返回,否则请求网络。返回null表示获取失败。
-    /// </summary>
-    private async Task<(int BoardId, string Name)?> GetBoardInfoAsync(int boardId)
-    {
-        if (Memory.TryGetValue(boardId, out var cachedName)) return (boardId, cachedName);
-        var boardDataUrl = ApiEndpoints.Board.BoardInfo(boardId);
-        var boardDataResult = await ApiService.Fetch<BoardData>(boardDataUrl);
-        if (!boardDataResult.IsSuccess || boardDataResult.Data == null) return null;
-        return (boardId, boardDataResult.Data.Name);
-    }
+    
+
+    
 
     private void LoadIndex()
     {
@@ -429,6 +441,9 @@ public sealed partial class MainWindow : Window
                 break;
             case "Focus":
                 ContentFrame.Navigate(typeof(FocusPage));
+                break;
+            case "History":
+                ContentFrame.Navigate(typeof(HistoryPage));
                 break;
             default:
                 if (tag.All(char.IsDigit))
@@ -755,8 +770,8 @@ public sealed partial class MainWindow : Window
             //密码有问题，清理旧密码，要求重新登录
             PasswordManager.RemovePassword("VpnUserName");
             PasswordManager.RemovePassword("VpnPassWord");
-            VPNConfigButton.Visibility = Visibility.Collapsed;
-            DisconnectButton.Visibility = Visibility.Visible;
+            VPNConfigButton.Visibility = Visibility.Visible;
+            DisconnectButton.Visibility = Visibility.Collapsed;
             AppSettings.Current.IsVpnEnabled=false;
             Flower.Play(FlowStatus.Fail, "VPN套餐过期或密码已错误，请重新登录");
         }

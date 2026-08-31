@@ -64,7 +64,7 @@ public static class BoardIconHelper
     /// <param name="id">版面的编号。</param>
     /// <param name="name">版面的名称。</param>
     /// <returns>和版面对应的图标。</returns>
-    public static Symbol GetSymbol(int id, string name)
+    public static Symbol GetSymbol(int id, string name="")
     {
         if (Icons.TryGetValue(id, out var symbol)) return symbol;
 

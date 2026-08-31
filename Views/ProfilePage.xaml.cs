@@ -111,7 +111,7 @@ public sealed partial class ProfilePage : Page
         if (IsMe && AppSettings.Current.UserId == 0)
         {
             AppSettings.Current.UserId = data.Id;
-            AppSettings.Current.Portrait = data.PortraitUrl;
+            AppSettings.Current.PortraitUrl = data.PortraitUrl;
         }
         UserProfile.IsOthers = !IsMe;
         try
@@ -121,7 +121,7 @@ public sealed partial class ProfilePage : Page
         }
         catch (Exception ex)
         {
-            //await App.Logger.WriteAsync("UserProfile", "加载头像失败", ex.Message);
+            Flower.Play(FlowStatus.Fail, $"加载主页失败: {ex.Message}"); 
         }
         InfoContent.DataContext = UserProfile;
         SignBoard.DataContext = UserProfile;
@@ -176,11 +176,19 @@ public sealed partial class ProfilePage : Page
         Frame.Navigate(typeof(ChatPage), param);
     }
 
-    private void Follow_Click(object sender, RoutedEventArgs e)
+    private async void Follow_Click(object sender, RoutedEventArgs e)
     {
-        var flag = UserProfile.IsFollowing;
-        var mode = flag ? "0" : "1";
-
+        Follow.IsEnabled = false;
+        var isFollowing = UserProfile.IsFollowing;
+        var url = ApiEndpoints.User.EditFollowee(UserProfile.Id);
+        var content = new StringContent("", Encoding.UTF8, "application/json");
+        var result = isFollowing ? await ApiService.Delete(url) : await ApiService.Put(url, content);
+        if (result.IsSuccess)
+        {
+            UserProfile.IsFollowing = !UserProfile.IsFollowing;
+            Flower.Play(FlowStatus.Success, isFollowing ? "已取消关注" : "已关注");
+        }
+        Follow.IsEnabled = true;
     }
 
     private async void RecentTopicRepeater_ElementPrepared(ItemsRepeater sender, ItemsRepeaterElementPreparedEventArgs args)

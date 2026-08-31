@@ -12,6 +12,7 @@
     xmlns:picture="using:CC98.Controls.Picture"
     xmlns:infoFlower="using:CC98.Controls.InfoFlower"
     xmlns:empty="using:CC98.Controls.EmptyState"
+    xmlns:dev="using:DevWinUI"
     Background="{ThemeResource DesktopAcrylicTransparentBrush}">
 
     <Grid Padding="15,0,15,0">
@@ -34,15 +35,16 @@
                         <HyperlinkButton HorizontalContentAlignment="Stretch" HorizontalAlignment="Stretch"
                                          CornerRadius="0" x:Name="TileContent" Click="TileContent_Click"
                                          BorderThickness="0.5"
-                                         BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}" Tag="{x:Bind Id}">
+                                         Tag="{x:Bind Id}"
+                                         BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}">
                             <HyperlinkButton.ContextFlyout>
-                                <MenuFlyout>
+                                <MenuFlyout dev:MaterialAttach.UseAcrylicBackground="True">
                                     <MenuFlyoutItem Text="私信" Click="Chat_Click">
                                         <MenuFlyoutItem.Icon>
-                                            <ic:FluentIcon Icon="ChatAdd" />
+                                            <ic:FluentIcon Icon="Chat" />
                                         </MenuFlyoutItem.Icon>
                                     </MenuFlyoutItem>
-                                    <MenuFlyoutItem Text="取关" Click="UnFollow_Click" Tag="{x:Bind Id}">
+                                    <MenuFlyoutItem Text="取消关注" Click="UnFollow_Click"  Visibility="{x:Bind IsFollowee, Converter={StaticResource BoolToVisibility},Mode=OneWay}" DataContext="{x:Bind}">
                                         <MenuFlyoutItem.Icon>
                                             <ic:FluentIcon Icon="PersonDelete" />
                                         </MenuFlyoutItem.Icon>

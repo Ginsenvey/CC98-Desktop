@@ -184,6 +184,7 @@ public static class UbbToMarkdown
         var content = ConvertChildren(node, isImageVisible, quoteDepth);
         var href = node.GetAttribute("href");
         if (string.IsNullOrEmpty(href)) href = content;
+        if(string.IsNullOrEmpty(content)) content = href;
         return $"[{content}]({href})";
     }
 

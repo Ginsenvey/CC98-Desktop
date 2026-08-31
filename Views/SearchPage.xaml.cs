@@ -448,7 +448,7 @@ public sealed partial class SearchPage : Page
         if (_sections != null) return _sections;
         try
         {
-            _sections = await BoardSectionManager.Instance.GetSectionDataAsync();
+            _sections = await BoardCacheManager.Instance.GetSectionDataAsync();
         }
         catch
         {

@@ -23,6 +23,7 @@
                     <Color x:Key="QuoteBorderColor">#ffc4ae</Color>
                     <Color x:Key="AcrylicTintColor">#66ccff</Color>
                     <Color x:Key="PortraitBackgroundColor">#62b3ae</Color>
+                    <x:Double x:Key="AdaptiveOpacity">0.8</x:Double>
                 </ResourceDictionary>
                 <ResourceDictionary x:Key="Dark">
                     <Color x:Key="UserNameForegroundColor">#C4ABD4</Color>

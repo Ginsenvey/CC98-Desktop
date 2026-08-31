@@ -20,7 +20,7 @@
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
-
+        
         <TextBlock FontSize="24" Text="设定" FontWeight="Bold" FontFamily="{StaticResource HarmonySansBold}"
                    Foreground="LightSeaGreen" Grid.Row="0" HorizontalAlignment="Left" VerticalAlignment="Center" Margin="15,10,10,10" x:Name="de" />
         <Border BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}" BorderThickness="1" Height="1"

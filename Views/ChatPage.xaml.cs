@@ -324,7 +324,7 @@ public sealed partial class ChatPage : Page
             };
             var postText = SerializationHelper.TrySerialize(post);
             var requestBody = new StringContent(postText, Encoding.UTF8, "application/json");
-            var res = await ApiService.Submit<object>(url, requestBody);
+            var res = await ApiService.Submit<string>(url, requestBody);
             if (res.IsSuccess)
                 await RefreshMessageList();
             else

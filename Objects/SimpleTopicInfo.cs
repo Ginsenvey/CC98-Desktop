@@ -48,6 +48,9 @@ public partial class SimpleTopicInfo : ObservableObject
 
     [ObservableProperty] public partial DateTime Time { get; set; }
 
+    [ObservableProperty] public partial DateTime LastBrowsingTime { get; set; }
+
+
 }
 
 public partial class SearchTopicInfo : ObservableObject

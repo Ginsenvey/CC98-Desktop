@@ -26,7 +26,7 @@
         </Grid.RowDefinitions>
         <SplitView x:Name="SearchView" PanePlacement="Right" DisplayMode="Overlay" PaneBackground="Transparent" OpenPaneLength="380">
             <SplitView.Pane>
-                <Grid BorderBrush="{ThemeResource AcrylicCardBrush}" BorderThickness="2" Margin="0,10,20,10" CornerRadius="6" Background="{ThemeResource GlassAcrylicBackground}">
+                <Grid BorderBrush="{ThemeResource AcrylicCardBrush}" Background="{ThemeResource AcrylicInAppFillColorDefaultBrush}" BorderThickness="2" Margin="0,10,20,10" CornerRadius="6">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto" />
                         <RowDefinition Height="Auto"/>
@@ -34,7 +34,6 @@
                     </Grid.RowDefinitions>
                     <Grid Grid.Row="0">
                         <TextBlock HorizontalAlignment="Left" VerticalAlignment="Center" Text="版内搜索" Margin="10" Foreground="LightSeaGreen"></TextBlock>
-                        <TextBlock Text="0" Foreground="{ThemeResource TextFillColorSecondaryBrush}" HorizontalAlignment="Center" VerticalAlignment="Center"></TextBlock>
                         <StackPanel HorizontalAlignment="Right" Orientation="Horizontal" Spacing="4" Margin="10,0,10,0">
                             <Button Padding="7" ToolTipService.ToolTip="上一页"   x:Name="PreviousPageButton" Click="PreviousPageButton_Click">
                                 <ic:SymbolIcon Symbol="ChevronLeft" FontSize="12"></ic:SymbolIcon>

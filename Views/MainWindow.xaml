@@ -1,5 +1,4 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-
 <Window
     x:Class="CC98.Views.MainWindow"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
@@ -101,7 +100,7 @@
                     RenderTransformOrigin="0.5,0.5" PointerEntered="Me_PointerEntered" PointerExited="Me_PointerExited"
                     PointerPressed="Me_PointerPressed" PointerReleased="Me_PointerReleased"
                     PointerCanceled="Me_PointerCanceled" Click="Me_Click">
-                <picture:Picture x:Name="MyPicture" Src="{x:Bind sv:AppSettings.Current.Portrait,Mode=TwoWay}" LoadImageCallback="{StaticResource PortraitLoader}" />
+                <picture:Picture x:Name="MyPicture" Src="{x:Bind sv:AppSettings.Current.LocalPortraitUrl,Mode=OneWay}" LoadImageCallback="{StaticResource PortraitLoader}" />
                 <Button.RenderTransform>
                     <ScaleTransform ScaleX="1" ScaleY="1" x:Name="PortScaleTransform" />
                 </Button.RenderTransform>
@@ -124,7 +123,7 @@
                     <NavigationViewItem Tag="{x:Bind Tag}">
                         <NavigationViewItem.ContextFlyout>
                             <MenuFlyout>
-                                <MenuFlyoutItem Text="取消固定" Tag="{x:Bind Tag}" x:Name="PinOff" Click="PinOff_Click">
+                                <MenuFlyoutItem Text="取消固定" DataContext="{x:Bind}" Tag="{x:Bind Tag}" x:Name="PinOff" Click="PinOff_Click">
                                     <MenuFlyoutItem.Icon>
                                         <ic:SymbolIcon Symbol="PinOff" />
                                     </MenuFlyoutItem.Icon>

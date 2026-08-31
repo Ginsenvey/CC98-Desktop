@@ -153,6 +153,7 @@
     <None Remove="UBBRichTextBlock.xaml" />
     <None Remove="Views\ForumLoginPage.xaml" />
     <None Remove="Views\GuidePage.xaml" />
+    <None Remove="Views\HistoryPage.xaml" />
     <None Remove="Views\OpenIdLoginPage.xaml" />
   </ItemGroup>
 
@@ -199,6 +200,11 @@
     <PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.28000.2270" />
     <PackageReference Include="Microsoft.WindowsAppSDK" Version="2.2.0" />
     <PackageReference Include="SkiaSharp.Views.WinUI" Version="4.148.0" />
+  </ItemGroup>
+  <ItemGroup>
+    <Page Update="Views\HistoryPage.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
   </ItemGroup>
   <ItemGroup>
     <Page Update="Controls\StatusIndicator.xaml">

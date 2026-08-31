@@ -27,7 +27,7 @@ public sealed partial class FavoritePage : Page
     public ObservableCollection<Favorites> FavoritesList = [];
     public int GroupId;
     public Increment Increment = new();
-    public ApplicationDataContainer Set = ApplicationData.Current.LocalSettings;
+
     public int SortId;
     public ObservableCollection<SimpleTopicInfo> Topics = [];
     public ApiService ApiService = App.Current.GetService<ApiService>();

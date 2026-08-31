@@ -23,7 +23,7 @@ namespace CC98.Services;
 /// <summary>
 /// 提供分区数据的管理，包括从API刷新、缓存读取和搜索功能。
 /// </summary>
-public class BoardSectionManager
+public class BoardCacheManager
 {
     public ApiService ApiService=App.Current.GetService<ApiService>();
     /// <summary>
@@ -39,14 +39,14 @@ public class BoardSectionManager
     /// <summary>
     ///     私有构造方法。
     /// </summary>
-    private BoardSectionManager()
+    private BoardCacheManager()
     {
     }
 
     /// <summary>
     ///     对象的唯一实例。
     /// </summary>
-    public static BoardSectionManager Instance { get; } = new();
+    public static BoardCacheManager Instance { get; } = new();
 
     /// <summary>
     /// 加载分区数据。

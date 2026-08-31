@@ -186,7 +186,7 @@ ToolTipService.ToolTip="最新信息">
                         <ic:SymbolIcon Symbol="CommentQuote"></ic:SymbolIcon>
                     </HyperlinkButton>
                 </StackPanel>
-                <HyperlinkButton x:Name="SendButton" HorizontalAlignment="Right" Padding="7">
+                <HyperlinkButton x:Name="SendButton" HorizontalAlignment="Right" Padding="7" Click="Send_Click">
                     <ic:SymbolIcon Symbol="Send"></ic:SymbolIcon>
                 </HyperlinkButton>
             </Grid>
