@@ -218,6 +218,7 @@ public class ImageRenderStrategy : IRenderStrategy
                     Hide = context.Control.HideImage || value == "1",
                     Src = src,
                     MaxWidth = (double)context.Properties["ImageMaxWidth"],
+                    MaxHeight = (double)context.Properties["ImageMaxHeight"],
                     Stretch = Stretch.Uniform
                 };
                 var hyperlinkButton = new HyperlinkButton

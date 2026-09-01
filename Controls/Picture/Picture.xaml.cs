@@ -85,7 +85,7 @@ public sealed partial class Picture : UserControl
             nameof(Stretch),
             typeof(Stretch),
             typeof(Picture),
-            new(Stretch.Uniform));
+            new(Stretch.UniformToFill));
 
     public static readonly DependencyProperty SrcProperty =
         DependencyProperty.Register(

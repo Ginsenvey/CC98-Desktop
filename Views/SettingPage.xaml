@@ -11,10 +11,17 @@
     xmlns:ic="using:FluentIcons.WinUI"
     xmlns:sv="using:CC98.Services"
     xmlns:views="using:CC98.Views"
+    xmlns:ubb="using:CC98.Controls.UbbTextBlock"
     xmlns:infoFlower="using:CC98.Controls.InfoFlower"
     Background="{ThemeResource DesktopAcrylicTransparentBrush}">
 
-
+    <Page.Resources>
+        <Style x:Key="TextBoxBlankStyle" TargetType="TextBox">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="CornerRadius" Value="0" />
+        </Style>
+    </Page.Resources>
     <Grid x:Name="RootGrid">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
@@ -27,6 +34,11 @@
                 Grid.Row="0" VerticalAlignment="Bottom" />
         <ScrollViewer Grid.Row="1" Padding="20" Margin="0,0,0,15">
             <StackPanel Orientation="Vertical" Spacing="10">
+                <StackPanel.ChildrenTransitions>
+                    <TransitionCollection>
+                        <EntranceThemeTransition IsStaggeringEnabled="True" />
+                    </TransitionCollection>
+                </StackPanel.ChildrenTransitions>
                 <TextBlock Text="登录行为" FontSize="16" Margin="5,2,0,5" />
                 <tool:SettingsExpander Header="登录凭据" Description="管理登录状态">
                     <tool:SettingsExpander.HeaderIcon>
@@ -142,12 +154,23 @@
                     </tool:SettingsCard.HeaderIcon>
                     <ToggleSwitch x:Name="ShowBigPaper" IsOn="{x:Bind sv:AppSettings.Current.ShowBigPaper,Mode=TwoWay}" />
                 </tool:SettingsCard>
-                <tool:SettingsCard Header="发帖展示小尾巴" Description="展示客户端平台标识">
-                    <tool:SettingsCard.HeaderIcon>
+                <tool:SettingsExpander Header="发帖展示小尾巴" Description="展示客户端平台标识">
+                    <tool:SettingsExpander.HeaderIcon>
                         <ic:SymbolIcon Symbol="DesktopCheckmark" />
-                    </tool:SettingsCard.HeaderIcon>
+                    </tool:SettingsExpander.HeaderIcon>
                     <ToggleSwitch x:Name="TailVisibility" IsOn="{x:Bind sv:AppSettings.Current.IsTailVisible,Mode=TwoWay}" />
-                </tool:SettingsCard>
+                    <tool:SettingsExpander.Items>
+                        <tool:SettingsCard Header="自定义小尾巴">
+                            <Border Grid.Column="1" BorderBrush="{ThemeResource AcrylicCardBrush}" BorderThickness="1" CornerRadius="4">
+                                <TextBox x:Name="LittleTailTextBox" Text="{x:Bind sv:AppSettings.Current.LittleTail,Mode=TwoWay}"  Width="400" Style="{StaticResource TextBoxBlankStyle}"/>
+                            </Border>
+                        </tool:SettingsCard>
+                        <tool:SettingsCard Header="预览" MaxHeight="60">
+                            <ubb:UbbTextBlock UbbText="{x:Bind LittleTailTextBox.Text,Mode=OneWay}" HideImage="True" Foreground="{ThemeResource TextFillColorSecondaryBrush}" BoldFontFamily="{ThemeResource HarmonySansBold}" MaxHeight="50" MaxWidth="400"></ubb:UbbTextBlock>
+                        </tool:SettingsCard>
+                    </tool:SettingsExpander.Items>
+                    
+                </tool:SettingsExpander>
                 <TextBlock Text="关于" FontSize="16" Margin="5,2,0,5" />
                 <tool:SettingsExpander Header="CC98 Desktop" Description="2026.发布构建">
                     <tool:SettingsExpander.HeaderIcon>
@@ -199,6 +222,7 @@
                         </tool:SettingsCard>
                     </tool:SettingsExpander.Items>
                 </tool:SettingsExpander>
+                
             </StackPanel>
         </ScrollViewer>
         <infoFlower:InfoFlower HorizontalAlignment="Center" x:Name="Flower" Grid.Row="0" Grid.RowSpan="2" />

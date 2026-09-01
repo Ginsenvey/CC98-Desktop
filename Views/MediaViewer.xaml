@@ -80,15 +80,10 @@
                     Click="last_Click">
                 <FontIcon FontSize="{ThemeResource FlipViewButtonFontSize}" Glyph="&#xedd9;" />
             </Button>
-            <ScrollViewer x:Name="Viewer" Grid.Column="2" ZoomMode="Enabled" ViewChanged="Viewer_ViewChanged"
-                          HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
-                          HorizontalScrollMode="Enabled" HorizontalScrollBarVisibility="Visible"
-                          VerticalScrollMode="Enabled" VerticalScrollBarVisibility="Auto"
-                          HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+            <ScrollViewer Grid.Column="2" ZoomMode="Enabled"  x:Name="Viewer" ViewChanged="Viewer_ViewChanged" HorizontalContentAlignment="Center" VerticalAlignment="Stretch" HorizontalScrollMode="Enabled" HorizontalScrollBarVisibility="Visible" HorizontalAlignment="Stretch" >
                 <picture:Picture x:Name="InnerImage" Stretch="Uniform"
-                                 LoadImageCallback="{StaticResource CustomPortraitLoader}"
-                                 RenderTransformOrigin="0.5,0.5" HorizontalAlignment="Center"
-                                 ImageOpened="InnerImage_ImageOpened">
+                 LoadImageCallback="{StaticResource CustomPortraitLoader}"
+                 RenderTransformOrigin="0.5,0.5" HorizontalAlignment="Center">
                     <picture:Picture.RenderTransform>
                         <RotateTransform x:Name="ImageTransform" Angle="0" />
                     </picture:Picture.RenderTransform>

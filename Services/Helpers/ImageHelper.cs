@@ -31,7 +31,6 @@ public class ImageHelper
 
     public static async Task<BitmapSource> LoadLocalImage(string path,bool lowRes = false, CancellationToken cancellationToken = default)
     {
-        Debug.WriteLine("开始加载本地图像");
         if (path.StartsWith("ms-appx:///") || path.StartsWith("ms-appdata:///"))
         {
             return new BitmapImage(new(await UrlEx.LocateEmojiAsync(path, cancellationToken)));
@@ -39,7 +38,6 @@ public class ImageHelper
 
         if (File.Exists(path))
         {
-            Debug.WriteLine($"存在文件: {path}");
             // 本地文件路径
             var file = await StorageFile.GetFileFromPathAsync(path);
             using IRandomAccessStream fileStream = await file.OpenAsync(FileAccessMode.Read);

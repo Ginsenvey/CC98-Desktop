@@ -84,17 +84,14 @@
                 </dev:BubbleButton>
                 <CheckBox x:Name="EnableVpn" Content="启用WebVPN" HorizontalAlignment="Left" Checked="EnableVpn_Checked" Unchecked="EnableVpn_Unchecked" VerticalAlignment="Center"></CheckBox>
             </Grid>
-           
+
             <Grid>
                 <HyperlinkButton x:Name="OpenIdLoginButton" Content="OpenID登录" HorizontalAlignment="Left" ToolTipService.ToolTip="提供更好的安全性" Click="OpenIdLoginButton_Click"></HyperlinkButton>
                 <Border Width="2" BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}" BorderThickness="2" HorizontalAlignment="Center" Height="20"></Border>
                 <HyperlinkButton x:Name="CheckNetworkButton" Content="检查网络连接" HorizontalAlignment="Right" ToolTipService.ToolTip="检查网络连接" Click="CheckNetworkButton_Click"></HyperlinkButton>
             </Grid>
         </StackPanel>
-        <TeachingTip Target="{Binding ElementName=RootGrid}" x:Name="ErrorBox"  PreferredPlacement="Center" TailVisibility="Collapsed" IsLightDismissEnabled="True" PlacementMargin="20" Closed="ErrorBox_Closed">
-        </TeachingTip>
         <ProgressRing x:Name="LoadingIndicator" IsActive="False"></ProgressRing>
-        <infoFlower:InfoFlower x:Name="Flower" HorizontalAlignment="Center" VerticalAlignment="Bottom" />
     </Grid>
     
 </Page>

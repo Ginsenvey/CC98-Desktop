@@ -1,6 +1,8 @@
 using CC98.Kernel;
 using CC98.Kernel.Authorize;
+using CC98.Objects;
 using CC98.Services;
+using CommunityToolkit.Mvvm.Messaging;
 using Duende.IdentityModel.OidcClient;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -44,7 +46,7 @@ namespace CC98.Views
         {
             if (sender is not HyperlinkButton button) return;
             button.IsEnabled = false;
-
+            button.Content="启动浏览器…";
             try
             {
                 var oidcClient = new OidcClient(new OidcClientOptions
@@ -67,8 +69,13 @@ namespace CC98.Views
             catch (Exception ex)
             {
                 // 网络不可达/超时/协议错误:避免异常逃逸出 async void 导致进程崩溃,恢复按钮供重试
-                Debug.WriteLine($"OpenID 登录失败: {ex.Message}");
+                WeakReferenceMessenger.Default.Send(new InfoFlowerMessage { FlowStatus = FlowStatus.Fail, Message = $"OpenID 登录失败: {ex.Message}" });
+                Debug.WriteLine($"OpenID 登录失败: {ex.Message}"); 
+            }
+            finally
+            {
                 button.IsEnabled = true;
+                button.Content = "一键登录";
             }
         }
     }

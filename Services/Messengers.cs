@@ -17,3 +17,9 @@ public class Messenger
         NavigationItemAdded?.Invoke(item);
     }
 }
+
+public class  InfoFlowerMessage
+{
+    public FlowStatus FlowStatus { get; set; }
+    public string Message { get; set; }= "";
+}

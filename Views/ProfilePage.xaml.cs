@@ -67,7 +67,7 @@ public sealed partial class ProfilePage : Page
         var url = ApiEndpoints.User.SignIn();
         var content = new StringContent("", Encoding.UTF8, "application/json");
         var result = await ApiService.Submit<string>(url, content);
-        if (result.IsSuccess)
+        if (result.IsSuccess||int.TryParse(result.Data, out _))
         {
             SignStatus.Text = "签到中";
             SignStatusIcon.IconVariant = IconVariant.Filled;

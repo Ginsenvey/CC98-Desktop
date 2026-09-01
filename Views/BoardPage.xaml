@@ -123,6 +123,7 @@
                             <ubbTextBlock:UbbTextBlock x:Name="Banner" UbbText="{x:Bind BoardData.BigPaper,Mode=OneWay}"
                                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                                        BoldFontFamily="{StaticResource HarmonySansBold}"
+                                       ImageMaxHeight="200"
                                        MediaClicked="Banner_MediaClicked" />
                         </Border>
 

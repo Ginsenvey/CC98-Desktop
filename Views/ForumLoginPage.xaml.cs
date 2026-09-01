@@ -3,6 +3,7 @@ using CC98.Kernel.Authorize;
 using CC98.Kernel.Network;
 using CC98.Objects;
 using CC98.Services;
+using CommunityToolkit.Mvvm.Messaging;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Controls.Primitives;
@@ -55,9 +56,7 @@ namespace CC98.Views
                 AppSettings.Current.IsVpnEnabled = false;
                 isUserOperated = false;
                 EnableVpn.IsChecked = false;
-                ErrorBox.Title = MirrorService.FriendlyStatus(status);
-                ErrorBox.Content = "请尝试启用WebVPN或ZJU Connect";
-                ErrorBox.IsOpen = true;
+                WeakReferenceMessenger.Default.Send(new InfoFlowerMessage { FlowStatus = FlowStatus.Fail, Message = MirrorService.FriendlyStatus(status) });
                 return;
             }
             
@@ -85,10 +84,10 @@ namespace CC98.Views
                 var loginService = App.Current.GetService<LoginService>();
                 var appConfig = App.Current.GetService<AppConfig>();
                 var res = await loginService.LoginWithPasswordAsync(userName, password);
-                if (res != null && res.IsError)
+                if (res == null || res.IsError)
                 {
                     //
-                    ErrorBox.Title = res.Error ?? res.ErrorDescription;
+                    WeakReferenceMessenger.Default.Send(new InfoFlowerMessage { FlowStatus = FlowStatus.Fail, Message = res?.ErrorDescription?? res?.Error ?? "登录失败" });
                     VisualStateManager.GoToState(this, "Fail", true);
                     return;
                 }
@@ -100,7 +99,7 @@ namespace CC98.Views
             }
             catch (Exception ex)
             {
-                ErrorBox.Title = ex.Message;
+                WeakReferenceMessenger.Default.Send(new InfoFlowerMessage { FlowStatus = FlowStatus.Fail, Message = ex.Message });
                 VisualStateManager.GoToState(this, "Fail", true);
                 //记录异常
             }
@@ -120,10 +119,7 @@ namespace CC98.Views
             }
         }
 
-        private void ErrorBox_Closed(TeachingTip sender, TeachingTipClosedEventArgs args)
-        {
-            ErrorBox.Title = "";
-        }
+        
 
         private void OpenIdLoginButton_Click(object sender, RoutedEventArgs e)
         {
@@ -133,9 +129,8 @@ namespace CC98.Views
         private async void CheckNetworkButton_Click(object sender, RoutedEventArgs e)
         {
             var mirrorService = App.Current.GetService<MirrorService>();
-            var status = await mirrorService.CheckNetworkAsync(useVpn:false);
-            ErrorBox.Title= MirrorService.FriendlyStatus(status);
-            ErrorBox.IsOpen = true;
+            var status = await mirrorService.CheckNetworkAsync(AppSettings.Current.IsVpnEnabled);
+            WeakReferenceMessenger.Default.Send(new InfoFlowerMessage { FlowStatus = FlowStatus.Fail, Message = MirrorService.FriendlyStatus(status) });
         }
         
         private async void EnableVpn_Checked(object sender, RoutedEventArgs e)
@@ -167,7 +162,7 @@ namespace CC98.Views
                 isUserOperated = false;
                 EnableVpn.IsChecked = true;
                 VPNConfigDialog.Hide();
-                Flower.Play(FlowStatus.Success, "已保存凭据并启用VPN");
+                WeakReferenceMessenger.Default.Send(new InfoFlowerMessage { FlowStatus = FlowStatus.Success, Message = "已保存凭据并启用VPN" });
             }
             else
             {
@@ -244,7 +239,7 @@ namespace CC98.Views
             {
                 // 网络异常:避免异常逃逸出 async void 调用链导致进程崩溃
                 Debug.WriteLine($"VPN确认失败: {ex.Message}");
-                Flower.Play(FlowStatus.Fail, "VPN确认失败，请重试");
+                WeakReferenceMessenger.Default.Send(new InfoFlowerMessage { FlowStatus = FlowStatus.Fail, Message = "VPN确认失败，请重试" });
                 AppSettings.Current.IsVpnEnabled = false;
                 return false;
             }
@@ -252,14 +247,14 @@ namespace CC98.Views
             {
                 //可以肯定此时账户密码均正确
                 //需要重试
-                Flower.Play(FlowStatus.Fail, "VPN确认顶号失败，请重试");
+                WeakReferenceMessenger.Default.Send(new InfoFlowerMessage { FlowStatus = FlowStatus.Fail, Message = "VPN确认顶号失败，请重试" });
                 AppSettings.Current.IsVpnEnabled = false;
 
                 return false;
             }
             else
             {
-                Flower.Play(FlowStatus.Success, "VPN连接成功");
+                WeakReferenceMessenger.Default.Send(new InfoFlowerMessage { FlowStatus = FlowStatus.Success, Message = "VPN连接成功" });
                 return true;
             }
         }
@@ -285,7 +280,7 @@ namespace CC98.Views
                 }
                 catch (Exception ex)
                 {
-                    Flower.Play(FlowStatus.Warning, ex.Message);
+                    WeakReferenceMessenger.Default.Send(new InfoFlowerMessage { FlowStatus = FlowStatus.Warning, Message = ex.Message });
                 }
                 //等待用户登录VPN
             }
@@ -301,7 +296,7 @@ namespace CC98.Views
                     AppSettings.Current.IsVpnEnabled = true;
                     isUserOperated = false;
                     EnableVpn.IsChecked = true;
-                    Flower.Play(FlowStatus.Success, "VPN连接成功");
+                    WeakReferenceMessenger.Default.Send(new InfoFlowerMessage { FlowStatus = FlowStatus.Success, Message = "VPN连接成功" });
                 }
                 else if (networkStatus == NetworkStatus.VpnCookieExpired)
                 {
@@ -313,7 +308,7 @@ namespace CC98.Views
                     AppSettings.Current.IsVpnEnabled = false;
                     isUserOperated = false;
                     EnableVpn.IsChecked = false;
-                    Flower.Play(FlowStatus.Fail, $"VPN连接失败{networkStatus}");
+                    WeakReferenceMessenger.Default.Send(new InfoFlowerMessage { FlowStatus = FlowStatus.Fail, Message = $"VPN连接失败{networkStatus}" });
                 }
             }
 
@@ -326,7 +321,7 @@ namespace CC98.Views
             var password = PasswordManager.RetrievePassword("VpnPassWord");
             if (string.IsNullOrEmpty(userName) || string.IsNullOrEmpty(password))
             {
-                Flower.Play(FlowStatus.Fail, "VPN凭据不完整，请重新配置");
+                WeakReferenceMessenger.Default.Send(new InfoFlowerMessage { FlowStatus = FlowStatus.Fail, Message = "VPN凭据不完整，请重新配置" });
                 return;
             }
             var vpnService = App.Current.GetService<IVpnService>();
@@ -342,7 +337,7 @@ namespace CC98.Views
                 AppSettings.Current.IsVpnEnabled = false;
                 isUserOperated = false;
                 EnableVpn.IsChecked = false;
-                Flower.Play(FlowStatus.Fail, "VPN连接失败，请检查网络后重试");
+                WeakReferenceMessenger.Default.Send(new InfoFlowerMessage { FlowStatus = FlowStatus.Fail, Message = "VPN连接失败，请检查网络后重试" });
                 return;
             }
             if (res == null)
@@ -351,7 +346,7 @@ namespace CC98.Views
                 AppSettings.Current.IsVpnEnabled = false;
                 isUserOperated = false;
                 EnableVpn.IsChecked = false;
-                Flower.Play(FlowStatus.Fail, "VPN连接失败，请检查网络后重试");
+                WeakReferenceMessenger.Default.Send(new InfoFlowerMessage { FlowStatus = FlowStatus.Fail, Message = "VPN连接失败，请检查网络后重试" });
                 return;
             }
 
@@ -361,7 +356,7 @@ namespace CC98.Views
                 AppSettings.Current.IsVpnEnabled = true;
                 isUserOperated = false;
                 EnableVpn.IsChecked = true;
-                Flower.Play(FlowStatus.Success, "VPN连接成功");
+                WeakReferenceMessenger.Default.Send(new InfoFlowerMessage { FlowStatus = FlowStatus.Success, Message = "VPN连接成功" });
                 return;
             }
             if (res.Status == VpnLoginStatus.NeedConfirm)
@@ -379,7 +374,7 @@ namespace CC98.Views
                 AppSettings.Current.IsVpnEnabled = false;
                 isUserOperated = false;
                 EnableVpn.IsChecked = false;
-                Flower.Play(FlowStatus.Fail, "VPN套餐过期或密码已错误，请重新登录");
+                WeakReferenceMessenger.Default.Send(new InfoFlowerMessage { FlowStatus = FlowStatus.Fail, Message = "VPN套餐过期或密码已错误，请重新登录" });
             }
         }
 
@@ -391,7 +386,7 @@ namespace CC98.Views
                 return;
             }
             AppSettings.Current.IsVpnEnabled = false;
-            Flower.Play(FlowStatus.Info, "WebVPN已禁用");
+            WeakReferenceMessenger.Default.Send(new InfoFlowerMessage { FlowStatus = FlowStatus.Info, Message = "WebVPN已禁用" });
         }
 
         private void RootGrid_Loaded(object sender, RoutedEventArgs e)

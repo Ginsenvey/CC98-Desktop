@@ -209,13 +209,15 @@ public sealed partial class ChatPage : Page
         var messageUrl = ApiEndpoints.User.ChatHistory(CurrentUserId, ChatHistoryIncrement.StartIndex);
         var messageResult = await ApiService.Fetch<List<ChatMessage>>(messageUrl);
         if (!messageResult.IsSuccess || messageResult.Data == null)
+        {
             //
+            Flower.Play(FlowStatus.Fail, "获取聊天记录失败");
             return false;
+        }
+            
         var data = messageResult.Data;
         ChatHistoryIncrement.HasMore = data.Count == ChatHistoryIncrement.PageSize;
 
-        // API 返回顺序不确定(可能最新在前),统一按 MessageId 正序排列(旧→新,最新在底部),
-        // 避免"加载更多后顺序倒转"的问题
         var ordered = data.OrderBy(m => m.MessageId).ToList();
         foreach (var message in ordered)
         {
@@ -230,7 +232,7 @@ public sealed partial class ChatPage : Page
         Messages.Clear();
         foreach (var message in combined) Messages.Add(message);
 
-        ChatEmptyState.Visibility = Messages.Count == 0 ? Microsoft.UI.Xaml.Visibility.Visible : Microsoft.UI.Xaml.Visibility.Collapsed;
+        ChatEmptyState.Visibility = Messages.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
 
         return true;
     }
@@ -326,7 +328,11 @@ public sealed partial class ChatPage : Page
             var requestBody = new StringContent(postText, Encoding.UTF8, "application/json");
             var res = await ApiService.Submit<string>(url, requestBody);
             if (res.IsSuccess)
+            {
+                ReplyBody.Text = "";
                 await RefreshMessageList();
+            }
+                
             else
                 Flower.Play(FlowStatus.Fail, "发送回复失败");
         }

@@ -2,6 +2,7 @@
 using CC98.Kernel.Authorize;
 using CC98.Objects;
 using CC98.Services;
+using CommunityToolkit.Mvvm.Messaging;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
@@ -73,6 +74,11 @@ public sealed partial class LoginWindow : Window
         var area = DisplayArea.GetFromWindowId(AppWindow.Id, DisplayAreaFallback.Nearest)?.WorkArea;
         if (area == null) return;
         AppWindow.Move(new((area.Value.Width - AppWindow.Size.Width) / 2,(area.Value.Height - AppWindow.Size.Height) / 2));
+
+        WeakReferenceMessenger.Default.Register<InfoFlowerMessage>(this, (r, message) =>
+        {
+            this.DispatcherQueue.TryEnqueue(() => Flower.Play(message.FlowStatus, message.Message));
+        });
     }
 
     private void RootGrid_Loaded(object sender, RoutedEventArgs e)
