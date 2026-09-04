@@ -69,7 +69,10 @@ public static class ApiEndpoints
         {
             return isMe ? $"{Base}/me" : $"{Base}/user/{userId}";
         }
-
+        /// <summary>
+        ///  Post:""
+        /// </summary>
+        /// <returns>在成功时返回财富值数字，400失败时返回字符串has_signed_in_today</returns>
         public static string SignIn()
         {
             return $"{Base}/me/signin";

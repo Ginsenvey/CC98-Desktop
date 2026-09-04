@@ -14,10 +14,13 @@ using Microsoft.UI.Xaml.Controls;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.Net;
 using System.Net.Http;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
+using System.Xml.Linq;
 using Windows.Storage;
 
 // To learn more about WinUI, the WinUI project structure,
@@ -64,15 +67,29 @@ public sealed partial class ProfilePage : Page
     }
     private async Task SignIn()
     {
+        //此方法本可以使用GET进行判断再签到，会额外多一次请求
+        //从规范的角度讲，其实服务器应该合并GET/POST到一个请求
         var url = ApiEndpoints.User.SignIn();
         var content = new StringContent("", Encoding.UTF8, "application/json");
-        var result = await ApiService.Submit<string>(url, content);
-        if (result.IsSuccess||int.TryParse(result.Data, out _))
+        var result = await ApiService.Submit<JsonElement>(url, content);
+        if (result.IsSuccess)
         {
-            SignStatus.Text = "签到中";
+            SignStatus.Text = "已签到";
             SignStatusIcon.IconVariant = IconVariant.Filled;
+            var element = result.Data;
+            if (element.ValueKind == JsonValueKind.Number)
+            {
+                var wealth = element.GetRawText();
+                Flower.Play(FlowStatus.Success, $"签到成功，获得财富值: {wealth}");
+            }
+            //理论上不会出现非数字的情况
+            else
+            {
+                Flower.Play(FlowStatus.Success, "签到成功");
+            }
             return;
         }
+        //此信息在errorContent中，由result.Message传递
         if (result.StatusCode == (int)HttpStatusCode.BadRequest)
         {
             var info = result.Message;

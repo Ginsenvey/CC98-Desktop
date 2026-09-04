@@ -566,16 +566,27 @@ public sealed partial class TopicPage : Page
             };
             var postText = SerializationHelper.TrySerialize(post);
             var requestBody = new StringContent(postText, Encoding.UTF8, "application/json");
-            var res = await ApiService.Submit<List<string>>(ApiEndpoints.User.TransferWealth(), requestBody);
-            if (!res.IsSuccess || res.Data == null)
+            var res = await ApiService.Put(ApiEndpoints.User.TransferWealth(), requestBody);
+            if (!res.IsSuccess)
             {
                 //网络问题或财富值不足等,展示服务器返回的错误信息
                 WealthError.Text = $"赠米失败：{res.Message}";
                 return;
             }
-
-            Flower.Play(FlowStatus.Success, $"赠米成功：{string.Join("、", res.Data)}");
-            WealthTransferDialog.Hide();
+            try
+            {
+                var userList = SerializationHelper.TryDeserialize<List<string>>(res.Content) ?? [];
+                Flower.Play(FlowStatus.Success, $"赠米成功：{string.Join("、", userList)}");
+            }
+            catch (Exception ex)
+            {
+                Flower.Play(FlowStatus.Success, $"解析收款人列表失败：{ex.Message}");
+            }
+            finally
+            {
+                WealthTransferDialog.Hide();
+            }
+            
         }
         catch (Exception ex)
         {

@@ -129,16 +129,11 @@ public sealed partial class SearchPage : Page
 
         if (string.IsNullOrEmpty(keyword))
         {
-            Suggestions.Clear();
-            SearchResults.Clear();
-            ShowEmptyState();
             return;
         }
+        Suggestions.Clear();
         await BuildQuickSuggestions(keyword);
 
-        // 输入变化:旧结果不再匹配,清除并回到空状态
-        SearchResults.Clear();
-        ShowEmptyState();
     }
     /// <summary>
     /// 回车提交:立即搜索话题(取消防抖)。
@@ -190,7 +185,6 @@ public sealed partial class SearchPage : Page
     /// </summary>
     private async Task PerformSearchAsync(string keyword, CancellationToken ct = default)
     {
-        Debug.WriteLine("触发话题搜索");
         SearchKeyword = keyword;
         _currentKeyword = keyword;
        
@@ -574,7 +568,7 @@ public sealed partial class SearchPage : Page
     {
         for (var i = ResultTabView.TabItems.Count - 1; i >= 0; i--)
         {
-            if (ResultTabView.TabItems[i] != SearchTab)
+            if (ResultTabView.TabItems[i] as TabViewItem != SearchTab)
                 ResultTabView.TabItems.RemoveAt(i);
         }
     }
@@ -595,31 +589,6 @@ public sealed partial class SearchPage : Page
         }
     }
 
-
-    /// <summary>Ctrl+K:聚焦搜索框。</summary>
-    private void FocusSearch_Invoked(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs args)
-    {
-        SearchBox.Focus(FocusState.Programmatic);
-        args.Handled = true;
-    }
-
-    /// <summary>ESC:清空搜索框;已清空则返回上一页。</summary>
-    private void Escape_Invoked(KeyboardAccelerator sender, KeyboardAcceleratorInvokedEventArgs args)
-    {
-        if (!string.IsNullOrEmpty(SearchBox.Text))
-        {
-            SearchBox.Text = "";
-            Suggestions.Clear();
-            ShowEmptyState();
-        }
-        else if (Frame.CanGoBack)
-        {
-            Frame.GoBack();
-        }
-        args.Handled = true;
-    }
-
-    #endregion
 
     private async void RefreshButton_Click(object sender, RoutedEventArgs e)
     {
@@ -644,3 +613,4 @@ public sealed partial class SearchPage : Page
         HistoryFlyout.Hide();
     }
 }
+    #endregion

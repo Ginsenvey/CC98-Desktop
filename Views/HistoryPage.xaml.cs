@@ -11,7 +11,6 @@ using Microsoft.UI.Xaml.Navigation;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -80,7 +79,6 @@ public sealed partial class HistoryPage : Page
         var hasMore = data.Count > Increment.PageSize;
         if (hasMore) data.RemoveAt(Increment.PageSize);
         Increment.HasMore = hasMore;
-        Debug.WriteLine($"获取到{data.Count}条历史记录,是否还有更多:{hasMore}");
         HistoryTopics.AddRange(data);
         return true;
     }
@@ -89,7 +87,6 @@ public sealed partial class HistoryPage : Page
         //接口速率限制。由于只有10条，很容易触发403，必须减速。
         await Task.Delay(1500);
         await Increment.LoadMore(args.Index, GetHistoryTopic);
-        Debug.WriteLine($"加载第{args.Index}项");
     }
 
     private void Content_Click(object sender, RoutedEventArgs e)

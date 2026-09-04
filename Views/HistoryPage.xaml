@@ -19,7 +19,7 @@
         </Grid.RowDefinitions>
         <Grid Grid.Row="0" Margin="10,10,10,10" VerticalAlignment="Center">
             <TextBlock Text="足迹" FontSize="20" FontWeight="Bold"  Foreground="LightSeaGreen" VerticalAlignment="Center" HorizontalAlignment="Left" ToolTipService.ToolTip="此页面请求限速，可能卡顿"/>
-            <Button x:Name="EnableRecordButton"  HorizontalAlignment="Right"  Visibility="Collapsed" Click="EnableRecordButton_Click"></Button> 
+            <Button x:Name="EnableRecordButton"  HorizontalAlignment="Right"  Background="Transparent" Visibility="Collapsed" Click="EnableRecordButton_Click"></Button> 
         </Grid>
 
         <ScrollViewer Grid.Row="1" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" BorderBrush="{ThemeResource AcrylicCardBrush}" BorderThickness="2" CornerRadius="7"

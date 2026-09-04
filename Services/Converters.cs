@@ -44,7 +44,9 @@ public partial class BoolToAlignmentConverter : IValueConverter
         return DependencyProperty.UnsetValue;
     }
 }
-
+/// <summary>
+/// 将十六进制颜色字符串转换为 SolidColorBrush 的值转换器。
+/// </summary>
 public partial class HexToBrushConverter : IValueConverter
 {
     public object Convert(object value, Type targetType, object parameter, string language)
@@ -107,7 +109,9 @@ public partial class BooltoVisibilityConverter : IValueConverter
         throw new NotImplementedException();
     }
 }
-
+/// <summary>
+/// 点赞状态 → 图标变体转换器。
+/// </summary>
 public partial class LikeToVariantConverter : IValueConverter
 {
     object IValueConverter.Convert(object value, Type targetType, object parameter, string language)
@@ -127,7 +131,9 @@ public partial class LikeToVariantConverter : IValueConverter
         throw new NotImplementedException();
     }
 }
-
+/// <summary>
+/// 点踩状态 → 图标变体转换器。
+/// </summary>
 public partial class DisLikeToVariantConverter : IValueConverter
 {
     object IValueConverter.Convert(object value, Type targetType, object parameter, string language)
@@ -167,8 +173,8 @@ public partial class BoolToFollowTextConverter : IValueConverter
 {
     public object Convert(object value, Type targetType, object parameter, string language)
     {
-        if (value is bool isFollowing) return isFollowing ? "取消关注" : "关注";
-        return "关注";
+        if (value is bool isFollowing) return isFollowing ? "取消关注" : "关注用户";
+        return "关注用户";
     }
 
     public object ConvertBack(object value, Type targetType, object parameter, string language)
@@ -176,14 +182,14 @@ public partial class BoolToFollowTextConverter : IValueConverter
         throw new NotImplementedException();
     }
 }
-
+/// <summary>
+/// 布尔值转换为图标变体的值转换器。
+/// </summary>
 public partial class BoolToVariantConverter : IValueConverter
 {
     object IValueConverter.Convert(object value, Type targetType, object parameter, string language)
     {
-        if (value is bool state) return state ? IconVariant.Color : IconVariant.Regular;
-
-        return IconVariant.Regular;
+        return (value is bool state && state) ? IconVariant.Filled : IconVariant.Regular;
     }
 
     object IValueConverter.ConvertBack(object value, Type targetType, object parameter, string language)
@@ -206,7 +212,7 @@ public partial class SearchSuggestionIconConverter : IValueConverter
                 SearchSuggestionType.User => Symbol.Person,
                 SearchSuggestionType.UserId => Symbol.Person,
                 SearchSuggestionType.Board => Symbol.Board,
-                SearchSuggestionType.TopicId => Symbol.Chat,
+                SearchSuggestionType.TopicId => Symbol.Document,
                 _ => Symbol.Search
             }
             : Symbol.Search;

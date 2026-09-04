@@ -1,6 +1,7 @@
 using CC98.Kernel.Network;
 using System;
 using System.Collections.Generic;
+using System.Text.Json;
 using System.Text.Json.Serialization;
 
 namespace CC98.Objects;
@@ -10,6 +11,7 @@ namespace CC98.Objects;
 [JsonSerializable(typeof(bool))]
 [JsonSerializable(typeof(int))]
 [JsonSerializable(typeof(string))]
+[JsonSerializable(typeof(JsonElement))]
 [JsonSerializable(typeof(Dictionary<string, object>))]
 [JsonSerializable(typeof(Favorites))]
 [JsonSerializable(typeof(FavoritesInfo))]
@@ -81,4 +83,5 @@ namespace CC98.Objects;
 internal partial class CC98JsonContext : JsonSerializerContext
 {
 }
+
 

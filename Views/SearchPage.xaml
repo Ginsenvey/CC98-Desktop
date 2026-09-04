@@ -64,11 +64,6 @@
         </DataTemplate>
     </Page.Resources>
 
-    <!-- 键盘快捷: Ctrl+K 聚焦搜索框; ESC 清空/退出搜索 -->
-    <Page.KeyboardAccelerators>
-        <KeyboardAccelerator Key="K" Modifiers="Control" Invoked="FocusSearch_Invoked" />
-        <KeyboardAccelerator Key="Escape" Invoked="Escape_Invoked" />
-    </Page.KeyboardAccelerators>
 
     <Grid Padding="0,8,0,8" RowSpacing="8" x:Name="RootGrid">
 

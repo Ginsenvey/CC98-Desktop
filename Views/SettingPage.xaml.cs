@@ -1,20 +1,18 @@
-using System;
-using System.Collections.ObjectModel;
-using System.IO;
-
-using Windows.Storage;
-
 using CC98.Kernel;
 using CC98.Objects;
 using CC98.Services;
-
 using DevWinUI;
-
 using Microsoft.UI.Composition.SystemBackdrops;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media.Imaging;
 using Microsoft.Windows.AppLifecycle;
+using System;
+using System.Collections.ObjectModel;
+using System.Diagnostics;
+using System.IO;
+using System.Threading.Tasks;
+using Windows.Storage;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -199,16 +197,46 @@ public sealed partial class SettingPage : Page
         LocalSetManager.IsExpanded = true;
     }
 
-    private void SwitchUser_Click(object sender, RoutedEventArgs e)
+    private async void SwitchUser_Click(object sender, RoutedEventArgs e)
     {
         AppSettings.Current.IsActive = false;
+        await ClearAppCacheAsync();
         PasswordManager.Logout();
         //重启应用
         AppInstance.Restart("");
     }
+    /// <summary>
+    /// 清理应用缓存，包括本地缓存文件夹中的所有文件和子文件夹。防止生成多份头像。
+    /// </summary>
+    /// <returns></returns>
+    public async Task ClearAppCacheAsync()
+    {
+        try
+        {
+            StorageFolder localCacheFolder = ApplicationData.Current.LocalCacheFolder;
+            var items = await localCacheFolder.GetItemsAsync();
+            foreach (var item in items)
+            {
+                if (item is StorageFile file)
+                {
+                    await file.DeleteAsync();
+                }
+                else if (item is StorageFolder folder)
+                {
+                    await folder.DeleteAsync();
+                }
+            }
+
+            Debug.WriteLine("应用缓存已成功清理。");
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"清理缓存时发生错误: {ex.Message}");
+            // 处理异常，例如文件正在使用中
+        }
+    }
 
 
-    
 }
 
 public class ThemePicture

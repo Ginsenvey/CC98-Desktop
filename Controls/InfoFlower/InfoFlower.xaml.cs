@@ -35,13 +35,13 @@ public sealed partial class InfoFlower : UserControl
         set => SetValue(TextProperty, value);
     }
 
-    public string Glygh
+    public string Glyph
     {
         get => (string)GetValue(GlyphProperty);
         set => SetValue(GlyphProperty, value);
     }
 
-    public string GetGlyphFromStatus(FlowStatus status)
+    private string GetGlyphFromStatus(FlowStatus status)
     {
         return status switch
         {

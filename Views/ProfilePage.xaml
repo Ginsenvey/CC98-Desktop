@@ -17,7 +17,7 @@
     Background="{ThemeResource DesktopAcrylicTransparentBrush}">
     <Page.Resources>
         <services:BooltoVisibilityConverter x:Key="BoolToVisibility"></services:BooltoVisibilityConverter>
-        <services:LikeToVariantConverter x:Key="BoolToVariant"></services:LikeToVariantConverter>
+        <services:BoolToVariantConverter x:Key="BoolToVariant"></services:BoolToVariantConverter>
         <services:BoolToFollowTextConverter x:Key="FollowConverter"/>
     </Page.Resources>
     <Grid>
@@ -94,7 +94,7 @@
                         <Border  Visibility="{x:Bind UserProfile.IsOthers,Converter={StaticResource ReBoolToVisibility},Mode=OneWay}" BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}" BorderThickness="1" CornerRadius="4" Padding="5,3,5,3">
                             <StackPanel Orientation="Horizontal" Spacing="5">
                                 <ic:SymbolIcon Symbol="CalendarCheckmarkSparkle"  IconVariant="Regular" FontSize="16" x:Name="SignStatusIcon"></ic:SymbolIcon>
-                                <TextBlock x:Name="SignStatus" Text="未签到" VerticalAlignment="Center"></TextBlock>
+                                <TextBlock x:Name="SignStatus" Text="签到中" VerticalAlignment="Center"></TextBlock>
                             </StackPanel>
                         </Border>
                     </StackPanel>
