@@ -6,6 +6,7 @@ using Microsoft.UI.Xaml.Documents;
 using Microsoft.UI.Xaml.Media;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text.RegularExpressions;
 using Windows.UI;
@@ -116,7 +117,7 @@ public static class TextBlockExtensions
         var text = GetHighlightedText(textBlock);
         var keywordsStr = GetKeywords(textBlock);
         var colorStr = GetHighlightColor(textBlock);
-        var isBold = GetIsBold(textBlock);     
+        var isBold = GetIsBold(textBlock);
         var isItalic = GetIsItalic(textBlock);
         var boldFontFamily = GetBoldFontFamily(textBlock);
 
@@ -130,56 +131,68 @@ public static class TextBlockExtensions
         if (string.IsNullOrEmpty(keywordsStr))
         {
             textBlock.Inlines.Clear();
-            textBlock.Inlines.Add(new Run { Text = text });
+            textBlock.Inlines.Add(CreatePlainRun(text));
             return;
         }
 
-        var keywords = keywordsStr.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
-        SolidColorBrush highlightBrush;
-        if (string.IsNullOrEmpty(colorStr))
+        // 未指定高亮颜色时 highlightBrush 为 null：高亮 Run 不覆盖前景色，
+        // 从而继承 TextBlock 的 ThemeResource(主题感知)前景色，避免深色模式下黑字不可读。
+        SolidColorBrush? highlightBrush = null;
+        if (!string.IsNullOrEmpty(colorStr))
         {
-            highlightBrush=(textBlock.Foreground as SolidColorBrush)!;
+            highlightBrush = new SolidColorBrush(ParseColor(colorStr));
         }
-        else
-        {
-            var color = ParseColor(colorStr);
-            highlightBrush = new SolidColorBrush(color);
-        }
-       
 
         textBlock.Inlines.Clear();
 
-        // 构建高亮文本
+        var keywords = keywordsStr.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
         var pattern = string.Join("|", keywords.Select(k => Regex.Escape(k)));
-        var regex = new Regex(pattern, RegexOptions.IgnoreCase);
+        // CultureInvariant 避免区域差异(如土耳其语 I)导致大小写匹配不一致。
+        var regex = new Regex(pattern, RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
 
         int lastIndex = 0;
         foreach (Match match in regex.Matches(text))
         {
             if (match.Index > lastIndex)
             {
-                textBlock.Inlines.Add(new Run
-                {
-                    Text = text[lastIndex..match.Index]
-                });
+                textBlock.Inlines.Add(CreatePlainRun(text[lastIndex..match.Index]));
             }
 
-            textBlock.Inlines.Add(new Run
-            {
-                Text = match.Value,
-                Foreground = highlightBrush,
-                FontWeight = isBold ? FontWeights.Bold : FontWeights.Normal,
-                FontStyle = isItalic ? FontStyle.Italic : FontStyle.Normal,
-                FontFamily = isBold && boldFontFamily != null ? boldFontFamily : textBlock.FontFamily
-            });
+            textBlock.Inlines.Add(CreateStyledRun(match.Value, highlightBrush, isBold, isItalic, boldFontFamily, textBlock.FontFamily));
 
             lastIndex = match.Index + match.Length;
         }
 
         if (lastIndex < text.Length)
         {
-            textBlock.Inlines.Add(new Run { Text = text.Substring(lastIndex) });
+            textBlock.Inlines.Add(CreatePlainRun(text[lastIndex..]));
         }
+    }
+
+    /// <summary>
+    /// 创建一段完全继承 TextBlock 样式(含主题感知前景色)的普通纯文本 Run。
+    /// </summary>
+    private static Run CreatePlainRun(string text) => new() { Text = text };
+
+    /// <summary>
+    /// 创建一段高亮 Run，按 isBold/isItalic/boldFontFamily 统一应用字型；
+    /// 前景色为 null 时不覆盖(继承 TextBlock 主题感知前景色)，避免冻结 ThemeResource 画刷。
+    /// </summary>
+    private static Run CreateStyledRun(string text, SolidColorBrush? foreground,
+        bool isBold, bool isItalic, FontFamily? boldFontFamily, FontFamily baseFontFamily)
+    {
+        var run = new Run
+        {
+            Text = text,
+            FontWeight = isBold ? FontWeights.Bold : FontWeights.Normal,
+            FontStyle = isItalic ? FontStyle.Italic : FontStyle.Normal,
+            FontFamily = isBold && boldFontFamily != null ? boldFontFamily : baseFontFamily
+        };
+        if (foreground is not null)
+        {
+            run.Foreground = foreground;
+        }
+        return run;
     }
     private static Color ParseColor(string colorStr)
     {

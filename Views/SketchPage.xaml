@@ -75,12 +75,6 @@
                         <SelectorBarItem Text="回帖" Tag="1" x:Name="replyselector"></SelectorBarItem>
                         <SelectorBarItem Text="投票" Tag="2" x:Name="voteselector"></SelectorBarItem>
                     </SelectorBar>
-
-
-                    <ComboBox PlaceholderText="标签">
-                        <ComboBoxItem Content="讨论"></ComboBoxItem>
-                        <ComboBoxItem Content="资源"></ComboBoxItem>
-                    </ComboBox>
                     <TextBox AcceptsReturn="True"  x:Name="SetTitle"></TextBox>
                     <CheckBox Content="接收消息提醒" IsChecked="True"  Checked="ReceiveNotice_Checked" Unchecked="ReceiveNotice_Unchecked" x:Name="ReceiveNotice"></CheckBox>
                     <RadioButtons Header="发帖类型"  x:Name="SetPostType">

@@ -23,7 +23,7 @@
                     <Color x:Key="QuoteBorderColor">#ffc4ae</Color>
                     <Color x:Key="AcrylicTintColor">#66ccff</Color>
                     <Color x:Key="PortraitBackgroundColor">#62b3ae</Color>
-                    <x:Double x:Key="AdaptiveOpacity">0.8</x:Double>
+                    <x:Double x:Key="AdaptiveOpacity">0</x:Double>
                 </ResourceDictionary>
                 <ResourceDictionary x:Key="Dark">
                     <Color x:Key="UserNameForegroundColor">#C4ABD4</Color>
@@ -32,6 +32,7 @@
                     <Color x:Key="QuoteBorderColor">#ffc4ae</Color>
                     <Color x:Key="AcrylicTintColor">#000000</Color>
                     <Color x:Key="PortraitBackgroundColor">#004d9891</Color>
+                    <x:Double x:Key="AdaptiveOpacity">0.4</x:Double>
                 </ResourceDictionary>
             </ResourceDictionary.ThemeDictionaries>
             <SolidColorBrush x:Key="UserNameForegroundBrush" Color="{ThemeResource UserNameForegroundColor}" />
@@ -63,7 +64,7 @@
                 <Setter Property="FontFamily" Value="{StaticResource HarmonySans}" />
             </Style>
 
-            <tool:MarkdownConfig x:Key="CustomMarkdownConfig">
+            <tool:MarkdownConfig x:Key="CustomMarkdownConfig" BaseUrl="https://www.cc98.org">
                 <tool:MarkdownConfig.ImageProvider>
                     <primitives:SmartMarkdownImageProvider></primitives:SmartMarkdownImageProvider>
                 </tool:MarkdownConfig.ImageProvider>

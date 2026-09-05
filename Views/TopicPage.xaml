@@ -194,7 +194,10 @@
         </Grid.RowDefinitions>
         
         
-        <Border Background="{ThemeResource CardBackgroundFillColorTertiaryBrush}"  BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}" BorderThickness="0,0,0,1" Grid.Row="0" MinHeight="90" Height="Auto" CornerRadius="5" x:Name="MetaDataArea" >
+        <Border BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}" BorderThickness="0,0,0,1" Grid.Row="0" MinHeight="90" Height="Auto" CornerRadius="5" x:Name="MetaDataArea" >
+            <Border.Background>
+                <ImageBrush ImageSource="{x:Bind svc:AppSettings.Current.ThemePicture,Mode=OneWay}" Stretch="UniformToFill" Opacity="{ThemeResource AdaptiveOpacity}"></ImageBrush>
+            </Border.Background>
             <Border.ContextFlyout>
                 <MenuFlyout>
                     <MenuFlyoutItem Text="刷新"  x:Name="TileFlyout" Tag="0" Click="TileFlyout_Click">
@@ -207,12 +210,17 @@
                             <ic:SymbolIcon Symbol="Share"></ic:SymbolIcon>
                         </MenuFlyoutItem.Icon>
                     </MenuFlyoutItem>
-                    <MenuFlyoutSubItem Text="收藏" Tag="2" x:Name="CollectionMenu">
+                    <MenuFlyoutSubItem Text="收藏" Tag="2" Visibility="{x:Bind TopicInfo.IsFavorite,Converter={StaticResource ReBoolToVisibility},Mode=OneWay}" x:Name="CollectionMenu">
                         <MenuFlyoutSubItem.Icon>
                             <ic:SymbolIcon Symbol="StarAdd"></ic:SymbolIcon>
                         </MenuFlyoutSubItem.Icon>
                     </MenuFlyoutSubItem>
-                    <MenuFlyoutItem x:Name="HideImageFlyoutItem" Text="启用无图模式" Tag="3" Click="TileFlyout_Click" >
+                    <MenuFlyoutItem Text="取消收藏" Tag="3" Visibility="{x:Bind TopicInfo.IsFavorite,Converter={StaticResource BoolToVisibility},Mode=OneWay}">
+                        <MenuFlyoutItem.Icon>
+                            <ic:SymbolIcon Symbol="StarOff"></ic:SymbolIcon>
+                        </MenuFlyoutItem.Icon>
+                    </MenuFlyoutItem>
+                    <MenuFlyoutItem x:Name="HideImageFlyoutItem" Text="启用无图模式" Tag="4" Click="TileFlyout_Click" >
                         <MenuFlyoutItem.Icon>
                             <ic:SymbolIcon x:Name="ImageOffIcon" Symbol="ImageOff"></ic:SymbolIcon>
                         </MenuFlyoutItem.Icon>

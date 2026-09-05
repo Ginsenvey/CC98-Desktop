@@ -861,6 +861,19 @@ public sealed partial class TopicPage : Page
                 //无需响应
                 break;
             case "3":
+                var endpoint = ApiEndpoints.Topic.DeleteFavoriteTopic(TopicId);
+                var res = await ApiService.Delete(endpoint);
+                if (res == null || !res.IsSuccess)
+                {
+                    Flower.Play(FlowStatus.Fail, $"取消收藏失败:{res?.Message}");
+                }
+                else
+                {
+                    TopicInfo.IsFavorite = false;
+                    Flower.Play(FlowStatus.Success, "已取消收藏");
+                }
+                break;
+            case "4":
                 AppSettings.Current.HideImage = !AppSettings.Current.HideImage;
                 LoadSet();
                 break;

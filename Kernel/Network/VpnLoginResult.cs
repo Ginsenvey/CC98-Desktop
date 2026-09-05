@@ -12,14 +12,21 @@ public record VpnLoginResult
         {
             if (Success) return VpnLoginStatus.Success;
             if (NeedConfirm) return VpnLoginStatus.NeedConfirm;
-            if (CaptchaFail) return VpnLoginStatus.NeedCaptcha;
+            if (AccounInvalid) return VpnLoginStatus.AccoutInvalid;
+            if (CaptchaFail) return VpnLoginStatus.CaptchaFail;
+
             return VpnLoginStatus.Fail;
         }
     }
 
     [JsonIgnore] public bool NeedConfirm => Error == "NEED_CONFIRM";
+    /// <summary>
+    /// 针对输入错误图形验证码的情况。刷新图形验证码。
+    /// </summary>
+    [JsonIgnore] public bool AccounInvalid => Error == "INVALID_ACCOUNT";
 
-    [JsonIgnore] public bool CaptchaFail => Error == "CAPTCHA_FAILED"; //验证码错误
+    [JsonIgnore]
+    public bool CaptchaFail => Error == "CAPTCHA_FAILED";
 
     [JsonPropertyName("success")] public bool Success { get; set; }
 

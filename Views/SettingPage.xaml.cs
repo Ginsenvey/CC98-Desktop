@@ -1,6 +1,6 @@
-using CC98.Kernel;
 using CC98.Objects;
 using CC98.Services;
+using CC98.Services.Extensions;
 using DevWinUI;
 using Microsoft.UI.Composition.SystemBackdrops;
 using Microsoft.UI.Xaml;
@@ -24,76 +24,60 @@ namespace CC98.Views;
 /// </summary>
 public sealed partial class SettingPage : Page
 {
-    public string EffectHistory = "";
-    public ObservableCollection<ThemePicture> Pics = [];
+    public int lastEffect = 0;
+    public ObservableCollection<ThemePicture> ThemePictures = [];
     public ApplicationDataContainer Set = ApplicationData.Current.LocalSettings;
-
     public SettingPage()
     {
         InitializeComponent();
         LoadSettings();
-        LoadPics();
+        LoadThemePicture();
     }
 
     //第一次进入时，初始化设置项。
     //如果项存在且有值，为选项赋值。
+
+
     private void LoadSettings()
     {
-        if (Set.Values.ContainsKey("Effect"))
+        var effect=AppSettings.Current.Effect;
+        lastEffect = effect;
+        switch (effect)
         {
-            var effect = (string)Set.Values["Effect"];
-            EffectHistory = effect;
-            switch (effect)
-            {
-                case "0":
-                    Mica.IsChecked = true;
-
-                    break;
-                case "1":
-                    MicaAlt.IsChecked = true;
-
-                    break;
-                case "2":
-                    AcrylicBase.IsChecked = true;
-
-                    break;
-                case "3":
-                    AcrylicThin.IsChecked = true;
-
-                    break;
-
-                default:
-                    Mica.IsChecked = true;
-
-                    break;
-            }
+            case 0:
+                Mica.IsChecked = true;
+                break;
+            case 1:
+                MicaAlt.IsChecked = true;
+                break;
+            case 2:
+                AcrylicBase.IsChecked = true;
+                break;
+            case 3:
+                AcrylicThin.IsChecked = true;
+                break;
+            default:
+                Mica.IsChecked = true;
+                break;
         }
-        else
+      
+        var theme = AppSettings.Current.Theme;
+        switch (theme)
         {
-            Set.Values["Effect"] = "0";
-            EffectHistory = "0";
-            Mica.IsChecked = true;
-        }
-
-        if (Set.Values.ContainsKey("Theme"))
-        {
-            var theme = (string)Set.Values["Theme"];
-            if (theme == "0")
+            case 0:
                 Follow.IsChecked = true;
-            else if (theme == "1")
+                break;
+            case 1:
                 Light.IsChecked = true;
-            else
+                break;
+            case 2:
                 Dark.IsChecked = true;
-        }
-        else
-        {
-            Set.Values["Theme"] = "2";
-            Follow.IsChecked = true;
+                break;
+            default:
+                Follow.IsChecked = true;
+                break;
         }
 
-       
-
-        
     }
 
     private void ToFeedBack_Click(object sender, RoutedEventArgs e)
@@ -110,75 +94,57 @@ public sealed partial class SettingPage : Page
 
     private void Effect_Checked(object sender, RoutedEventArgs e)
     {
-        var button = (RadioButton)sender;
-        if (button == null) return;
-        var tag = button.Tag;
-        if (tag is not string effect) return;
-        Set.Values["Effect"] = effect;
-        if (effect == EffectHistory) return; //当选项与原设置不同时，才进行设置。
-        EffectHistory = effect;
-        switch (effect)
+        if(sender is not RadioButton button) return;
+        var effect = button.Tag.ToInt();
+        if (effect == lastEffect) return; //当选项与原设置不同时，才进行设置。
+        AppSettings.Current.Effect = effect;
+        lastEffect = effect;
+        App.Current.AppMainWindow.SystemBackdrop = effect switch
         {
-            case "0":
-                Mica.IsChecked = true;
-                App.Current.AppMainWindow.SystemBackdrop = new MicaSystemBackdrop();
-                break;
-            case "1":
-                MicaAlt.IsChecked = true;
-                App.Current.AppMainWindow.SystemBackdrop = new MicaSystemBackdrop(MicaKind.BaseAlt);
-                break;
-            case "2":
-                AcrylicBase.IsChecked = true;
-                App.Current.AppMainWindow.SystemBackdrop = new AcrylicSystemBackdrop();
-                break;
-            case "3":
-                AcrylicThin.IsChecked = true;
-                App.Current.AppMainWindow.SystemBackdrop = new AcrylicSystemBackdrop(DesktopAcrylicKind.Thin);
-                break;
-            default:
-                Mica.IsChecked = true;
-                App.Current.AppMainWindow.SystemBackdrop = new MicaSystemBackdrop();
-                break;
-        }
+            0 => new MicaSystemBackdrop(),
+            1 => new MicaSystemBackdrop(MicaKind.BaseAlt),
+            2 => new AcrylicSystemBackdrop(),
+            3 => new AcrylicSystemBackdrop(DesktopAcrylicKind.Thin),
+            4 => null,
+            _ => new MicaSystemBackdrop()
+        };
     }
 
     private void Light_Checked(object sender, RoutedEventArgs e)
     {
-        if (((RadioButton)sender)?.Tag is not string theme) return;
-        Set.Values["Theme"] = theme;
-        if (theme == "1")
-            App.RaiseThemeChanged(ElementTheme.Light);
-        else if (theme == "2")
-            App.RaiseThemeChanged(ElementTheme.Dark);
-        else
-            App.RaiseThemeChanged(ElementTheme.Default);
+        if (sender is not RadioButton button) return;
+        var theme = button.Tag.ToInt();
+        AppSettings.Current.Theme = theme;
+        var elementTheme = theme switch
+        {
+            0 => ElementTheme.Default,
+            1 => ElementTheme.Light,
+            2 => ElementTheme.Dark,
+            _ => ElementTheme.Default
+        };
+        App.RaiseThemeChanged(elementTheme);
     }
 
 
-    private void LoadPics()
+    private void LoadThemePicture()
     {
         var themesPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Themes");
         var files = Directory.GetFiles(themesPath, "*.jpg", SearchOption.AllDirectories);
-        Pics.Clear();
+        ThemePictures.Clear();
         foreach (var file in files)
         {
             var filename = Path.GetFileName(file);
-            Pics.Add(new() { FileName = filename, FilePath = file });
+            ThemePictures.Add(new() { FileName = filename, FilePath = file });
         }
 
-        ThemesGrid.ItemsSource = Pics;
+        ThemesGrid.ItemsSource = ThemePictures;
     }
 
     private void ThemesGrid_SelectionChanged(object sender, SelectionChangedEventArgs e)
     {
-        if (ThemesGrid.SelectedItem != null)
-        {
-            var selected = Pics[ThemesGrid.SelectedIndex];
-            //预览尺寸很小,按显示宽度 2 倍解码即可,避免整张 1080p/4K 原图解码
-            var bitmap = new BitmapImage(new(selected.FilePath)) { DecodePixelWidth = 120 };
-            PicPreview.ImageSource = bitmap;
-            AppSettings.Current.ThemePicture = selected.FilePath;
-        }
+        if (ThemesGrid.SelectedItem == null) return;
+        var selected = ThemePictures[ThemesGrid.SelectedIndex];
+        AppSettings.Current.ThemePicture = selected.FilePath;
     }
 
 
@@ -239,13 +205,3 @@ public sealed partial class SettingPage : Page
 
 }
 
-public class ThemePicture
-{
-    public string FileName { get; set; } = "";
-    public string FilePath { get; set; } = "";
-
-    /// <summary>
-    /// 低分辨率缩略图:只按显示宽度 2 倍解码,避免把整张壁纸原图解码后缩放到 60x35。
-    /// </summary>
-    public BitmapImage Thumb => new(new Uri(FilePath)) { DecodePixelWidth = 120 };
-}

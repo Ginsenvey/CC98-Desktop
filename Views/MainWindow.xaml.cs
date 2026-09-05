@@ -20,6 +20,7 @@ using Microsoft.UI.Xaml.Controls.Primitives;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Media.Animation;
+using Microsoft.UI.Xaml.Media.Imaging;
 using Microsoft.UI.Xaml.Navigation;
 using Microsoft.Windows.AppLifecycle;
 using Microsoft.Windows.AppNotifications;
@@ -547,7 +548,7 @@ public sealed partial class MainWindow : Window
         var password = VPNPassword.Password;
         if (string.IsNullOrEmpty(userName) || string.IsNullOrEmpty(password))
         {
-            ErrorBox.Text= "请输入完整的VPN凭据";
+            Flower.Play(FlowStatus.Fail, "用户名或密码不能为空");
             return;
         }
         var result= await LoginAsync(userName, password);
@@ -561,7 +562,7 @@ public sealed partial class MainWindow : Window
         }
         else
         {
-            ErrorBox.Text = "登录失败";
+            Flower.Play(FlowStatus.Fail, "VPN登录失败，请检查用户名和密码");
         }
     }
     private void VPNConfigCancel_Click(object sender, RoutedEventArgs e)
@@ -569,10 +570,7 @@ public sealed partial class MainWindow : Window
         AppSettings.Current.IsVpnEnabled = false;
         VPNConfigDialog.Hide();
     }
-    private void VPNConfigDialog_Closed(ContentDialog sender, ContentDialogClosedEventArgs args)
-    {
-        ErrorBox.Text = "";
-    }
+
     /// <summary>
     /// 只负责在VPN登录时调用VPN服务的登录方法，并处理返回结果。不会直接更改UI状态。
     /// </summary>
@@ -596,24 +594,43 @@ public sealed partial class MainWindow : Window
                 Debug.WriteLine("登录成功");
                 return true;
             }
-            else
+            if (res.Status == VpnLoginStatus.AccoutInvalid || res.Status == VpnLoginStatus.CaptchaFail)
             {
-                if (res.Status == VpnLoginStatus.NeedCaptcha)
+                //显示图形验证码和验证码框
+                if (VPNPassword.IsLoaded && res.Status == VpnLoginStatus.AccoutInvalid)
                 {
-                    //验证码
-                    Debug.WriteLine("需要验证码");
-                    return false;
+                    VPNPassword.Password = "";
+                    VPNPassword.PlaceholderText = "输入正确凭据";
                 }
-                else if (res.Status == VpnLoginStatus.NeedConfirm)
+                Debug.WriteLine("显示验证码输入框");
+                if (CaptchaBox.IsLoaded)
                 {
-                    //确认
-                    Debug.WriteLine("正在进行确认");
-                    return await VpnConfirmAsync();
+                    CaptchaBox.Visibility = Visibility.Visible;
+                    if (res.Status == VpnLoginStatus.CaptchaFail)
+                    {
+                        CaptchaBox.Text = "";
+                        CaptchaBox.PlaceholderText = "验证码错误";
+                    }
                 }
-                Debug.WriteLine($"状态：{res.Status}");
+                var captchaUrl = $"https://webvpn.zju.edu.cn/captcha/{vpnService.ParameterGroup.LastCaptchaId}.png?reload={DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()}";
+                Debug.WriteLine("显示验证码图片");
+                if (CaptchaImage.IsLoaded)
+                {
+                    CaptchaImage.Source = new BitmapImage(new Uri(captchaUrl));
+                    CaptchaImage.Visibility = Visibility.Visible;
+                }
+                Debug.WriteLine("需要验证码");
                 return false;
             }
-          
+            else if (res.Status == VpnLoginStatus.NeedConfirm)
+            {
+                //确认
+                Debug.WriteLine("正在进行确认");
+                return await VpnConfirmAsync();
+            }
+            Debug.WriteLine($"状态：{res.Status}");
+            return false;
+
         }
         catch (Exception ex)
         {
@@ -636,6 +653,8 @@ public sealed partial class MainWindow : Window
             Debug.WriteLine($"VPN确认失败: {ex.Message}");
             Flower.Play(FlowStatus.Fail, "VPN确认失败，请重试");
             AppSettings.Current.IsVpnEnabled = false;
+            VPNConfigButton.Visibility = Visibility.Visible;
+            DisconnectButton.Visibility = Visibility.Collapsed;
             return false;
         }
         if (confirmResult == null || !confirmResult.Success)
@@ -644,7 +663,8 @@ public sealed partial class MainWindow : Window
             //需要重试
             Flower.Play(FlowStatus.Fail, "VPN确认顶号失败，请重试");
             AppSettings.Current.IsVpnEnabled = false;
-
+            VPNConfigButton.Visibility = Visibility.Visible;
+            DisconnectButton.Visibility = Visibility.Collapsed;
             return false;
         }
         else
@@ -761,11 +781,13 @@ public sealed partial class MainWindow : Window
         if (res.Status == VpnLoginStatus.NeedConfirm)
         {
             var success=await VpnConfirmAsync();
+            AppSettings.Current.IsVpnEnabled = true;
             VPNConfigButton.Visibility = success ? Visibility.Collapsed : Visibility.Visible;
             DisconnectButton.Visibility = success ? Visibility.Visible : Visibility.Collapsed;
+            Flower.Play(FlowStatus.Success, "VPN连接成功");
             return;
         }
-        if (res.Status == VpnLoginStatus.NeedCaptcha || res.Status == VpnLoginStatus.Fail)
+        if (res.Status == VpnLoginStatus.AccoutInvalid || res.Status == VpnLoginStatus.Fail)
         {
             //密码有问题，清理旧密码，要求重新登录
             PasswordManager.RemovePassword("VpnUserName");
@@ -809,5 +831,18 @@ public sealed partial class MainWindow : Window
         Flower.Play(FlowStatus.Success, "VPN连接已断开");
         DisconnectButton.Visibility = Visibility.Collapsed;
         VPNConfigButton.Visibility = Visibility.Visible;
+    }
+
+    private void CaptchaBox_TextChanged(object sender, TextChangedEventArgs e)
+    {
+        var vpnService = App.Current.GetService<IVpnService>();
+        vpnService.ParameterGroup.CaptchaValue = CaptchaBox.Text;
+    }
+
+    private void VPNConfigDialog_Closed(ContentDialog sender, ContentDialogClosedEventArgs args)
+    {
+        VPNPassword.Password = "";
+        CaptchaBox.Text = "";
+        CaptchaImage.Source = null;
     }
 }

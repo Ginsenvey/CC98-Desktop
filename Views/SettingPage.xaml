@@ -13,6 +13,7 @@
     xmlns:views="using:CC98.Views"
     xmlns:ubb="using:CC98.Controls.UbbTextBlock"
     xmlns:infoFlower="using:CC98.Controls.InfoFlower"
+    xmlns:obj="using:CC98.Objects"
     Background="{ThemeResource DesktopAcrylicTransparentBrush}">
 
     <Page.Resources>
@@ -114,7 +115,7 @@
                             <SplitButton x:Name="PicSelector" Padding="0">
                                 <Border Height="35" Width="60">
                                     <Border.Background>
-                                        <ImageBrush ImageSource="/Assets/Themes/mid_autumn.jpg" Stretch="UniformToFill"
+                                        <ImageBrush ImageSource="{x:Bind sv:AppSettings.Current.ThemePicture,Mode=OneWay}" Stretch="UniformToFill"
                                                     x:Name="PicPreview" />
                                     </Border.Background>
                                 </Border>
@@ -123,12 +124,12 @@
                                         <GridView x:Name="ThemesGrid" SelectionChanged="ThemesGrid_SelectionChanged">
                                             <GridView.ItemsPanel>
                                                 <ItemsPanelTemplate>
-                                                    <ItemsWrapGrid Orientation="Horizontal" MaximumRowsOrColumns="3" />
+                                                    <ItemsWrapGrid Orientation="Horizontal" MaximumRowsOrColumns="1" />
                                                 </ItemsPanelTemplate>
                                             </GridView.ItemsPanel>
                                             <GridView.ItemTemplate>
-                                                <DataTemplate x:DataType="views:ThemePicture">
-                                                    <Image Source="{x:Bind Thumb}" Width="60" Height="35"
+                                                <DataTemplate x:DataType="obj:ThemePicture">
+                                                    <Image Source="{x:Bind FilePath}" Width="200" Height="35"
                                                            Stretch="UniformToFill"
                                                            ToolTipService.ToolTip="{x:Bind FileName}" />
                                                 </DataTemplate>

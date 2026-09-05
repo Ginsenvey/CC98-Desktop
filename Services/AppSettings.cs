@@ -1,6 +1,7 @@
 ﻿using CC98.Kernel;
 using System;
 using System.ComponentModel;
+using System.IO;
 using System.Runtime.CompilerServices;
 using Windows.Storage;
 
@@ -114,7 +115,11 @@ public sealed partial class AppSettings : INotifyPropertyChanged
     }
     public string ThemePicture
     {
-        get => GetValue<string>(nameof(ThemePicture)) ?? string.Empty;
+        get
+        {
+            var defaultThemePicture = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Themes", "new_year_2026.jpg");
+            return GetValue<string>(nameof(ThemePicture),defaultThemePicture) ?? defaultThemePicture;
+        }
         set => SetValue(nameof(ThemePicture), value);
     }
     public string PortraitUrl

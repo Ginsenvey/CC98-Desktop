@@ -86,7 +86,6 @@ public static class LinkNavigationService
     public static async Task HandleLinkAsync(string url, LinkContext context)
     {
         if (string.IsNullOrWhiteSpace(url)) return;
-
         // 1. 主题链接（含锚点）
         var topicInfo = url.ExtractTopicInfo();
         if (topicInfo.HasValue)
@@ -153,6 +152,8 @@ public static class LinkNavigationService
             context.Flower.Play(FlowStatus.Success, "已复制外部链接");
         }
     }
+
+    
 
     /// <summary>
     /// 处理主题链接：同主题锚点跳转或跨主题导航。

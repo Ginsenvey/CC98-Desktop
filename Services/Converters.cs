@@ -189,6 +189,22 @@ public partial class BoolToVariantConverter : IValueConverter
 {
     object IValueConverter.Convert(object value, Type targetType, object parameter, string language)
     {
+        return (value is bool state && state) ? IconVariant.Color : IconVariant.Regular;
+    }
+
+    object IValueConverter.ConvertBack(object value, Type targetType, object parameter, string language)
+    {
+        throw new NotImplementedException();
+    }
+}
+
+/// <summary>
+/// 布尔值转换为图标变体的值转换器（Filled/Regular）。
+/// </summary>
+public partial class BoolToFilledConverter : IValueConverter
+{
+    object IValueConverter.Convert(object value, Type targetType, object parameter, string language)
+    {
         return (value is bool state && state) ? IconVariant.Filled : IconVariant.Regular;
     }
 

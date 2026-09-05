@@ -192,7 +192,10 @@
         </SplitView>
         
 
-        <CommandBar Grid.Row="1" Background="{ThemeResource CardGradient1Brush}" dev:MaterialAttach.UseAcrylicBackground="True">
+        <CommandBar Grid.Row="1" dev:MaterialAttach.UseAcrylicBackground="True">
+            <CommandBar.Background>
+                <ImageBrush ImageSource="{x:Bind sv:AppSettings.Current.ThemePicture,Mode=OneWay}" Stretch="UniformToFill" Opacity="{ThemeResource AdaptiveOpacity}"></ImageBrush>
+            </CommandBar.Background>
             <AppBarButton Label="刷新" Tag="refresh" Click="BoardAction_Click" ToolTipService.ToolTip="刷新">
                 <AppBarButton.Icon>
                     <FontIcon Glyph="&#xE72C;" />

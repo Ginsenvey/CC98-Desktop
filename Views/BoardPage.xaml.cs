@@ -153,12 +153,7 @@ public sealed partial class BoardPage
                 await Pin();
                 break;
             case "draft":
-                var param = new SketchNavigationInfo
-                {
-                    EditorMode = EditorMode.DraftNewTopic,
-                    BoardId = BoardId
-                };
-                Frame.Navigate(typeof(SketchPage), param);
+                Flower.Play(FlowStatus.Info, "暂不支持发主题");
                 break;
             case "vote":
                 var param2 = new SketchNavigationInfo

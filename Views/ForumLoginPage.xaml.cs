@@ -10,6 +10,7 @@ using Microsoft.UI.Xaml.Controls.Primitives;
 using Microsoft.UI.Xaml.Data;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
+using Microsoft.UI.Xaml.Media.Imaging;
 using Microsoft.UI.Xaml.Navigation;
 using System;
 using System.Collections.Generic;
@@ -130,7 +131,7 @@ namespace CC98.Views
         {
             var mirrorService = App.Current.GetService<MirrorService>();
             var status = await mirrorService.CheckNetworkAsync(AppSettings.Current.IsVpnEnabled);
-            WeakReferenceMessenger.Default.Send(new InfoFlowerMessage { FlowStatus = FlowStatus.Fail, Message = MirrorService.FriendlyStatus(status) });
+            WeakReferenceMessenger.Default.Send(new InfoFlowerMessage { FlowStatus = FlowStatus.Info, Message = MirrorService.FriendlyStatus(status) });
         }
         
         private async void EnableVpn_Checked(object sender, RoutedEventArgs e)
@@ -150,7 +151,7 @@ namespace CC98.Views
             var password = VPNPassword.Password;
             if (string.IsNullOrEmpty(userName) || string.IsNullOrEmpty(password))
             {
-                ErrorText.Text = "请输入完整的VPN凭据";
+                WeakReferenceMessenger.Default.Send(new InfoFlowerMessage { FlowStatus = FlowStatus.Fail, Message = "用户名和密码不可为空" });
                 return;
             }
             var result = await LoginVpnAsync(userName, password);
@@ -166,17 +167,13 @@ namespace CC98.Views
             }
             else
             {
-                ErrorText.Text = "登录失败";
+                WeakReferenceMessenger.Default.Send(new InfoFlowerMessage { FlowStatus = FlowStatus.Fail, Message = "登录失败" });
             }
         }
         private void VPNConfigCancel_Click(object sender, RoutedEventArgs e)
         {
             AppSettings.Current.IsVpnEnabled = false;
             VPNConfigDialog.Hide();
-        }
-        private void VPNConfigDialog_Closed(ContentDialog sender, ContentDialogClosedEventArgs args)
-        {
-            ErrorText.Text = "";
         }
         /// <summary>
         /// 只负责在VPN登录时调用VPN服务的登录方法，并处理返回结果。不会直接更改UI状态。
@@ -201,23 +198,42 @@ namespace CC98.Views
                     Debug.WriteLine("登录成功");
                     return true;
                 }
-                else
+                if (res.Status == VpnLoginStatus.AccoutInvalid || res.Status == VpnLoginStatus.CaptchaFail)
                 {
-                    if (res.Status == VpnLoginStatus.NeedCaptcha)
+                    //显示图形验证码和验证码框
+                    if (VPNPassword.IsLoaded && res.Status == VpnLoginStatus.AccoutInvalid)
                     {
-                        //验证码
-                        Debug.WriteLine("需要验证码");
-                        return false;
+                        VPNPassword.Password = "";
+                        VPNPassword.PlaceholderText = "输入正确凭据";
                     }
-                    else if (res.Status == VpnLoginStatus.NeedConfirm)
+                    Debug.WriteLine("显示验证码输入框");
+                    if (CaptchaBox.IsLoaded)
                     {
-                        //确认
-                        Debug.WriteLine("正在进行确认");
-                        return await VpnConfirmAsync();
+                        CaptchaBox.Visibility = Visibility.Visible;
+                        if (res.Status == VpnLoginStatus.CaptchaFail)
+                        {
+                            CaptchaBox.Text = "";
+                            CaptchaBox.PlaceholderText = "验证码错误";
+                        }
                     }
-                    Debug.WriteLine($"状态：{res.Status}");
+                    var captchaUrl = $"https://webvpn.zju.edu.cn/captcha/{vpnService.ParameterGroup.LastCaptchaId}.png?reload={DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()}";
+                    Debug.WriteLine("显示验证码图片");
+                    if (CaptchaImage.IsLoaded)
+                    {
+                        CaptchaImage.Source = new BitmapImage(new Uri(captchaUrl));
+                        CaptchaImage.Visibility = Visibility.Visible;
+                    }
+                    Debug.WriteLine("需要验证码");
                     return false;
                 }
+                else if (res.Status == VpnLoginStatus.NeedConfirm)
+                {
+                    //确认
+                    Debug.WriteLine("正在进行确认");
+                    return await VpnConfirmAsync();
+                }
+                Debug.WriteLine($"状态：{res.Status}");
+                return false;
 
             }
             catch (Exception ex)
@@ -276,6 +292,8 @@ namespace CC98.Views
                 VPNConfigDialog.XamlRoot = RootGrid.XamlRoot;
                 try
                 {
+                    isUserOperated = false;
+                    EnableVpn.IsChecked = false;
                     await VPNConfigDialog.ShowAsync();
                 }
                 catch (Exception ex)
@@ -362,20 +380,19 @@ namespace CC98.Views
             if (res.Status == VpnLoginStatus.NeedConfirm)
             {
                 isUserOperated = false;
-                EnableVpn.IsChecked = await VpnConfirmAsync();
-                
+                var success = await VpnConfirmAsync();
+                EnableVpn.IsChecked = success;
+                AppSettings.Current.IsVpnEnabled = success;
+                return;
             }
-            if (res.Status == VpnLoginStatus.NeedCaptcha || res.Status == VpnLoginStatus.Fail)
-            {
-                //密码有问题，清理旧密码，要求重新登录
-                PasswordManager.RemovePassword("VpnUserName");
-                PasswordManager.RemovePassword("VpnPassWord");
-                
-                AppSettings.Current.IsVpnEnabled = false;
-                isUserOperated = false;
-                EnableVpn.IsChecked = false;
-                WeakReferenceMessenger.Default.Send(new InfoFlowerMessage { FlowStatus = FlowStatus.Fail, Message = "VPN套餐过期或密码已错误，请重新登录" });
-            }
+            //密码有问题，清理旧密码，要求重新登录
+            PasswordManager.RemovePassword("VpnUserName");
+            PasswordManager.RemovePassword("VpnPassWord");
+
+            AppSettings.Current.IsVpnEnabled = false;
+            isUserOperated = false;
+            EnableVpn.IsChecked = false;
+            WeakReferenceMessenger.Default.Send(new InfoFlowerMessage { FlowStatus = FlowStatus.Fail, Message = "VPN套餐过期或密码已错误，请重新登录" });
         }
 
         private void EnableVpn_Unchecked(object sender, RoutedEventArgs e)
@@ -395,6 +412,19 @@ namespace CC98.Views
             {
                 EnableVpn.IsChecked = true;
             }
+        }
+
+        private void CaptchaBox_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            var vpnService = App.Current.GetService<IVpnService>();
+            vpnService.ParameterGroup.CaptchaValue = CaptchaBox.Text;
+        }
+
+        private void VPNConfigDialog_Closed(ContentDialog sender, ContentDialogClosedEventArgs args)
+        {
+            VPNPassword.Password = "";
+            CaptchaBox.Text = "";
+            CaptchaImage.Source = null;
         }
     }
 }

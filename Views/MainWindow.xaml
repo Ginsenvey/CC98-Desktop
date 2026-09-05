@@ -39,14 +39,14 @@
             </Grid.ColumnDefinitions>
             <ContentDialog x:Name="VPNConfigDialog" Title="配置VPN" Closed="VPNConfigDialog_Closed">
                 <StackPanel Orientation="Vertical" Spacing="10">
-                    <TextBlock x:Name="ErrorBox" FontSize="12" Foreground="Red" />
                     <TextBox x:Name="VPNUsername" Header="用户名" PlaceholderText="请输入用户名"></TextBox>
                     <PasswordBox x:Name="VPNPassword" Header="密码" PlaceholderText="请输入密码"/>
+                    <TextBox x:Name="CaptchaBox" Header="验证码" PlaceholderText="请输入图形验证码" Visibility="Collapsed" TextChanged="CaptchaBox_TextChanged"></TextBox>
+                    <Image x:Name="CaptchaImage" Height="35" HorizontalAlignment="Left" Visibility="Collapsed"/>
                     <Grid>
                         <Button Content="连接" Click="VPNConfigSave_Click" HorizontalAlignment="Left"/>
                         <Button Content="取消" x:Name="VPNCancel" Click="VPNConfigCancel_Click" HorizontalAlignment="Right"/>
                     </Grid>
-                    
                 </StackPanel>
             </ContentDialog>
             <Image Grid.Column="0" Source="/Assets/back.png" Width="28" VerticalAlignment="Center" Margin="5,0,0,3" />

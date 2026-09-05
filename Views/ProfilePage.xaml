@@ -17,7 +17,7 @@
     Background="{ThemeResource DesktopAcrylicTransparentBrush}">
     <Page.Resources>
         <services:BooltoVisibilityConverter x:Key="BoolToVisibility"></services:BooltoVisibilityConverter>
-        <services:BoolToVariantConverter x:Key="BoolToVariant"></services:BoolToVariantConverter>
+        <services:BoolToFilledConverter x:Key="BoolToFilled"></services:BoolToFilledConverter>
         <services:BoolToFollowTextConverter x:Key="FollowConverter"/>
     </Page.Resources>
     <Grid>
@@ -87,7 +87,7 @@
                         </Button>
                         <Button x:Name="Follow" Visibility="{x:Bind UserProfile.IsOthers,Converter={StaticResource BoolToVisibility},Mode=OneWay}" Click="Follow_Click">
                             <StackPanel Orientation="Horizontal" Spacing="5">
-                                <ic:SymbolIcon Symbol="Heart"  IconVariant="{x:Bind UserProfile.IsFollowing,Converter={StaticResource BoolToVariant},Mode=OneWay}" FontSize="15"></ic:SymbolIcon>
+                                <ic:SymbolIcon Symbol="Heart"  IconVariant="{x:Bind UserProfile.IsFollowing,Converter={StaticResource BoolToFilled},Mode=OneWay}" FontSize="15"></ic:SymbolIcon>
                                 <TextBlock Text="{x:Bind UserProfile.IsFollowing,Converter={StaticResource FollowConverter},Mode=OneWay}" ></TextBlock>
                             </StackPanel>
                         </Button>

@@ -344,6 +344,9 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
   </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Controls\StatusIndicator\" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <WebView2DispatchAdapterNamespace>CC98</WebView2DispatchAdapterNamespace>
   </PropertyGroup>
