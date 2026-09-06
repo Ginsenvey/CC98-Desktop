@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 
 <Page
     x:Class="CC98.Views.FollowPage"
@@ -11,6 +11,8 @@
     xmlns:obj="using:CC98.Objects"
     xmlns:picture="using:CC98.Controls.Picture"
     xmlns:infoFlower="using:CC98.Controls.InfoFlower"
+    xmlns:empty="using:CC98.Controls.EmptyState"
+    xmlns:dev="using:DevWinUI"
     Background="{ThemeResource DesktopAcrylicTransparentBrush}">
 
     <Grid Padding="15,0,15,0">
@@ -33,15 +35,16 @@
                         <HyperlinkButton HorizontalContentAlignment="Stretch" HorizontalAlignment="Stretch"
                                          CornerRadius="0" x:Name="TileContent" Click="TileContent_Click"
                                          BorderThickness="0.5"
-                                         BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}" Tag="{x:Bind Id}">
+                                         Tag="{x:Bind Id}"
+                                         BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}">
                             <HyperlinkButton.ContextFlyout>
-                                <MenuFlyout>
+                                <MenuFlyout dev:MaterialAttach.UseAcrylicBackground="True">
                                     <MenuFlyoutItem Text="私信" Click="Chat_Click">
                                         <MenuFlyoutItem.Icon>
-                                            <ic:FluentIcon Icon="ChatAdd" />
+                                            <ic:FluentIcon Icon="Chat" />
                                         </MenuFlyoutItem.Icon>
                                     </MenuFlyoutItem>
-                                    <MenuFlyoutItem Text="取关" Click="UnFollow_Click" Tag="{x:Bind Id}">
+                                    <MenuFlyoutItem Text="取消关注" Click="UnFollow_Click"  Visibility="{x:Bind IsFollowee, Converter={StaticResource BoolToVisibility},Mode=OneWay}" DataContext="{x:Bind}">
                                         <MenuFlyoutItem.Icon>
                                             <ic:FluentIcon Icon="PersonDelete" />
                                         </MenuFlyoutItem.Icon>
@@ -82,6 +85,10 @@
                 </ItemsRepeater.ItemTemplate>
             </ItemsRepeater>
         </ScrollViewer>
+
+        <empty:EmptyStateControl x:Name="FollowEmptyState" Grid.Row="1" Visibility="Collapsed"
+                                 IconGlyph="&#xEC4F;" Title="暂无关注" Subtitle="关注感兴趣的人"
+                                 HorizontalAlignment="Center" VerticalAlignment="Center" />
 
         <infoFlower:InfoFlower HorizontalAlignment="Center" x:Name="Flower" Grid.Row="0" Grid.RowSpan="2" />
     </Grid>

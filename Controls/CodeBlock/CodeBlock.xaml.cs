@@ -3,6 +3,7 @@ using ColorCode;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Documents;
+using Windows.ApplicationModel.DataTransfer;
 
 // To learn more about WinUI, the WinUI project structure,
 // and more about our project templates, see: http://aka.ms/winui-project-info.
@@ -50,7 +51,7 @@ public sealed partial class CodeBlock : UserControl
             "xml" => "XML",
             "bash" or "sh" => "Bash",
             "powershell" or "ps" => "PowerShell",
-            "plaintext" or "text" => "Plain Text",
+            "plaintext" or "text" => "plaintext",
             _ => CultureInfo.CurrentCulture.TextInfo.ToTitleCase(languageName)
         };
     }
@@ -66,7 +67,7 @@ public sealed partial class CodeBlock : UserControl
 
     public new static readonly DependencyProperty LanguageProperty =
         DependencyProperty.Register("Language", typeof(string), typeof(CodeBlock),
-            new("PlainText"));
+            new("plaintext"));
 
     public string Code
     {
@@ -88,10 +89,10 @@ public sealed partial class CodeBlock : UserControl
     private void RenderCode()
     {
         var languageName = LanguageName;
-        if (string.IsNullOrEmpty(languageName)) languageName = "PlainText";
+        if (string.IsNullOrEmpty(languageName)) languageName = "plaintext";
         var displayName = string.Empty;
         var language = Languages.Cpp;
-        if (languageName == "PlainText")
+        if (languageName == "plaintext")
         {
             displayName = languageName;
         }
@@ -102,7 +103,7 @@ public sealed partial class CodeBlock : UserControl
         }
 
         LanguageTag.Text = displayName;
-        if (languageName != "PlainText")
+        if (languageName != "plaintext")
         {
             var formatter = new RichTextBlockFormatter();
             formatter.FormatRichTextBlock(Code, language, Viewer);
@@ -123,4 +124,11 @@ public sealed partial class CodeBlock : UserControl
     }
 
     #endregion
+
+    private void CopyButton_Click(object sender, RoutedEventArgs e)
+    {
+        var package= new DataPackage();
+        package.SetText(Code);
+        Clipboard.SetContent(package);
+    }
 }

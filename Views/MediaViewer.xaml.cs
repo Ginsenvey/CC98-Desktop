@@ -1,6 +1,7 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
+using CC98.Controls.Picture;
 using CC98.Controls.Primitives;
 using CC98.Kernel.Authorize;
 using CC98.Objects;
@@ -22,7 +23,6 @@ public sealed partial class MediaViewer : Window
 {
     public List<string> Pictures = [];
     public int CurrentIndex = 0;
-    private MediaType _mediaType = MediaType.Image;
     public string CurrentUrl=>Pictures[CurrentIndex];
     public int Direction = 0;
     public double CurrentAngle => 90.0 * Direction;
@@ -31,8 +31,6 @@ public sealed partial class MediaViewer : Window
     public MediaViewer(ViewerNavigationInfo info)
     {
         InitializeComponent();
-        //初始化环境参数
-        _mediaType=info.Type;
         CurrentIndex = info.CurrentIndex;
         Pictures.AddRange(info.Urls);
         //初始化UI
@@ -52,30 +50,17 @@ public sealed partial class MediaViewer : Window
     {
         Direction = 0;
         ImageTransform.Angle = CurrentAngle;
-        Scale = 1.0f;
-        ScaleImage();
         InnerImage.Src = CurrentUrl;
         MediaInfo.Text = CurrentUrl;
         Posi.Text = $"{CurrentIndex + 1} / {Pictures.Count}";
     }
-    //TODO:rewrite
-    private async void MediaViewer_Activated(object sender, WindowActivatedEventArgs args)
+    // 只在首次激活时加载,避免每次窗口重新获得焦点都重置用户的缩放/旋转状态
+    private bool _initialized;
+    private void MediaViewer_Activated(object sender, WindowActivatedEventArgs args)
     {
-        switch (_mediaType)
-        {
-            case MediaType.Image:
-                VideoPlayer.Visibility = Visibility.Collapsed;
-                LoadImage();
-                break;
-            case MediaType.Video:
-                VideoPlayer.Visibility = Visibility.Visible;
-                Grid.SetRow(VideoPlayer, 1);
-                Grid.SetRowSpan(VideoPlayer, 2);
-                //var source = await LoginService.Vpn.GetSourceAsync(CurrentUrl);
-                //if (source == null) return;
-                //VideoPlayer.Source = source;
-                break;
-        }     
+        if (_initialized) return;
+        _initialized = true;
+        LoadImage();
     }
 
        
@@ -94,7 +79,6 @@ public sealed partial class MediaViewer : Window
     private void MediaViewer_Closed(object sender, WindowEventArgs e)
     {
         // 释放资源示例
-        VideoPlayer.Source = null;
         InnerImage.Src = "";
     }
     private void ScaleImage()
@@ -143,9 +127,12 @@ public sealed partial class MediaViewer : Window
         LoadImage();
     }
 
+
+    
+
     private void Viewer_ViewChanged(object sender, ScrollViewerViewChangedEventArgs e)
     {
-        Scale=Viewer.ZoomFactor;
+        Scale = Viewer.ZoomFactor;
         zoomfactor.Text = ScaleText;
     }
 
@@ -165,4 +152,5 @@ public sealed partial class MediaViewer : Window
         Tip.Subtitle = subTitle;
         Tip.IsOpen = true;
     }
+
 }

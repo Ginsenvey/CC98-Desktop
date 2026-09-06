@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Threading.Tasks;
@@ -31,12 +31,7 @@ public sealed partial class IndexPage
 {
     private readonly IndexDataService _indexService = IndexDataService.Instance;
     public ObservableCollection<FlipTopic> FlipTopics = [];
-
-
-    public bool IsOnlineMode = false;
-    public string NaviCode = "";
     public ObservableCollection<SectionCard> Sections = [];
-    public ApplicationDataContainer Set = ApplicationData.Current.LocalSettings;
 
     public IndexPage()
     {
@@ -47,28 +42,53 @@ public sealed partial class IndexPage
     protected override async void OnNavigatedTo(NavigationEventArgs e)
     {
         base.OnNavigatedTo(e);
+        var url = ApiEndpoints.Forum.Index;
+        _ = IndexDataService.Instance.RefreshFromApiAsync(url);
         await LoadFromCacheAsync();
     }
-
 
     private async Task LoadFromCacheAsync()
     {
         //只从缓存中读取。
-        
         Sections.Clear();
         FlipTopics.Clear();
-        Sections.AddRange(await IndexDataService.GetSectionsAsync());
-
+        var sections = await IndexDataService.GetSectionsAsync();
         var recommendations = await IndexDataService.GetRecommendationReadingAsync();
-        if (recommendations == null)
+        if (sections.Any() && recommendations.Any())
         {
-            //await App.Logger.WriteAsync("Index", "获取推荐阅读列表失败");
+            Sections.AddRange(sections);
+            AddRecommendations(recommendations);
+            Pips.NumberOfPages = recommendations.Count();
             return;
         }
 
-        foreach (var item in recommendations) item.Url = $"cc98:/{item.Url}";
-        FlipTopics.AddRange(recommendations);
-        Pips.NumberOfPages = recommendations.Count();
+        //缓存为空或推荐列表为空:只刷新一次并直接渲染,避免无限递归。
+        var url = ApiEndpoints.Forum.Index;
+        var success = await IndexDataService.Instance.RefreshFromApiAsync(url);
+        if (!success) return;
+        var freshSections = await IndexDataService.GetSectionsAsync();
+        var freshRecommendations = await IndexDataService.GetRecommendationReadingAsync();
+        Sections.AddRange(freshSections);
+        AddRecommendations(freshRecommendations);
+        Pips.NumberOfPages = freshRecommendations.Count();
+    }
+
+    /// <summary>
+    /// 复制推荐项并加上协议前缀。不能直接修改缓存对象:JsonFileCache 使用 NeverRemove 的
+    /// MemoryCache,对象跨导航共享,直接加前缀会导致二次进入时前缀叠加(cc98:/cc98://...)。
+    /// </summary>
+    private void AddRecommendations(IEnumerable<FlipTopic> recommendations)
+    {
+        foreach (var item in recommendations)
+        {
+            FlipTopics.Add(new FlipTopic
+            {
+                Title = item.Title,
+                Content = item.Content,
+                Time = item.Time,
+                Url = string.IsNullOrEmpty(item.Url) ? item.Url : $"cc98:/{item.Url}"
+            });
+        }
     }
 
 
@@ -98,13 +118,13 @@ public sealed partial class IndexPage
 
     private void RecomHyperlink_Click(Hyperlink sender, HyperlinkClickEventArgs args)
     {
+        if (sender.NavigateUri == null) return;
         var url = sender.NavigateUri.ToString();
-        if (!string.IsNullOrEmpty(url))
-        {
-            var topicId = int.Parse(url.Replace("cc98://topic/", ""));
-            var param = new TopicNavigationInfo { TopicId = topicId };
-            Frame.Navigate(typeof(TopicPage), param);
-        }
+        //兼容 cc98://topic/123 与历史遗留的 cc98:/cc98://topic/123 前缀叠加形式,取末尾数字,避免 int.Parse 抛异常
+        var match = System.Text.RegularExpressions.Regex.Match(url, @"(\d+)\s*$");
+        if (!match.Success || !int.TryParse(match.Groups[1].Value, out var topicId)) return;
+        var param = new TopicNavigationInfo { TopicId = topicId };
+        Frame.Navigate(typeof(TopicPage), param);
     }
 
     private async void IndexAction_Click(object sender, RoutedEventArgs e)
@@ -123,7 +143,7 @@ public sealed partial class IndexPage
                     Flower.Play(FlowStatus.Fail, "刷新首页失败");
                 break;
             case "search":
-
+                Frame.Navigate(typeof(SearchPage));
                 break;
             case "appcenter":
                 await Launcher.LaunchUriAsync(new(ApiEndpoints.Forum.AppCenter));

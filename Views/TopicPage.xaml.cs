@@ -1,4 +1,4 @@
-﻿using CC98.Controls.Extensions;
+using CC98.Controls.Extensions;
 using CC98.Controls.Primitives;
 using CC98.Controls.UbbTextBlock;
 using CC98.Controls.UbbTextBlock.Common.Events;
@@ -12,6 +12,8 @@ using CC98.Services.Helpers;
 using DevWinUI;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Controls.Primitives;
+using Microsoft.UI.Xaml.Hosting;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Navigation;
 using System;
@@ -99,20 +101,22 @@ public sealed partial class TopicPage : Page
         }
         if (args == null) return;
         TopicId = args.TopicId;
-        await LoadTopicInfo();
-        if (args.GoToLatest)
+        if (args.GoToLatest || args.IsJumpingMode)
         {
-            Pager.SelectedPageIndex = Pager.NumberOfPages - 1;
-            return;
-        }
-        if (args.IsJumpingMode)
-        {
+            // 跳转路径依赖 LoadTopicInfo 先设置 Pager.NumberOfPages,保持串行
+            await LoadTopicInfo();
+            if (args.GoToLatest)
+            {
+                Pager.SelectedPageIndex = Pager.NumberOfPages - 1;
+                return;
+            }
             IsJumping = true;
             await Tp(args.TargetFloor);
             return;
         }
 
-        await LoadReply();
+        // 普通路径:主题信息与回复列表互不依赖,并行加载缩短首屏等待
+        await Task.WhenAll(LoadTopicInfo(), LoadReply());
 
 
     }
@@ -245,8 +249,13 @@ public sealed partial class TopicPage : Page
     }
     private async Task LoadTopicInfo()
     {
+        // 主题信息与收藏状态互不依赖,并行请求
         var topicInfoUrl = ApiEndpoints.Topic.TopicInfo(TopicId);
-        var topicInfoResult = await ApiService.Fetch<TopicInfo>(topicInfoUrl);
+        var isFavoriteUrl = ApiEndpoints.Topic.IsFavorite(TopicId);
+        var topicInfoTask = ApiService.Fetch<TopicInfo>(topicInfoUrl);
+        var isFavoriteTask = ApiService.Fetch<bool>(isFavoriteUrl);
+
+        var topicInfoResult = await topicInfoTask;
         if (!topicInfoResult.IsSuccess || topicInfoResult.Data == null)
         {
             return;
@@ -257,8 +266,7 @@ public sealed partial class TopicPage : Page
         TopicInfo.Time = data.Time;
         TopicInfo.HitCount = data.HitCount;
         TopicInfo.ReplyCount = data.ReplyCount;
-        var isFavoriteUrl = ApiEndpoints.Topic.IsFavorite(TopicId);
-        var isFavoriteResult = await ApiService.Fetch<bool>(isFavoriteUrl);
+        var isFavoriteResult = await isFavoriteTask;
         if (isFavoriteResult.IsNotValid)
         {
             //
@@ -277,8 +285,12 @@ public sealed partial class TopicPage : Page
     }
 
 
+    // LoadReply 的加载代次:翻页/跳页可能并发触发多次 LoadReply(如 SelectedIndexChanged 与显式调用同时发生),
+    // 用代次确保只有最新一次加载的结果被写入,避免楼层重复/串页。
+    private int _loadReplyGeneration;
     private async Task LoadReply()
     {
+        var generation = ++_loadReplyGeneration;
         //清空
         Replies.Clear();
         var replyUrl = ApiEndpoints.Topic.ReplyList(TopicId, CurrentPage * PageSize);
@@ -297,7 +309,7 @@ public sealed partial class TopicPage : Page
         if (!userInfoResult.IsSuccess || userInfoResult.Data == null)
         {
             //报错
-            return;
+            Flower.Play(FlowStatus.Fail, $"加载用户头像失败：{userInfoResult.Message}");
         }
 
         var userInfoList = userInfoResult.Data;
@@ -322,13 +334,16 @@ public sealed partial class TopicPage : Page
                 continue;
             }
 
-            var user = userInfoList.First(x => x.Id == reply.UserId);
+            var user = userInfoList?.FirstOrDefault(x => x.Id == reply.UserId);
             if (user != null)
             {
                 reply.PortraitUrl = user.PortraitUrl;
             }
         }
+        //仅当仍是最新一次加载时才写入,防止旧请求覆盖新页数据
+        if (generation != _loadReplyGeneration) return;
         Replies.AddRange(data);
+        TopicEmptyState.Visibility = Replies.Count == 0 ? Microsoft.UI.Xaml.Visibility.Visible : Microsoft.UI.Xaml.Visibility.Collapsed;
     }
 
 
@@ -367,9 +382,23 @@ public sealed partial class TopicPage : Page
 
     private async void UbbTextBlock_MediaClicked(object sender, MediaClickEventArgs e)
     {
+        var context = new LinkContext
+        {
+            Frame = Frame,
+            CurrentTopicId = TopicId,
+            JumpToFloor = async floor =>
+            {
+                IsJumping = true;
+                await Tp(floor);
+            },
+            ImageList = null,
+            Flower = Flower
+        };
+
         switch (e.MediaType)
         {
             case MediaType.Image:
+                // UBB 图片:显式启动预览器(收集帖内全部图片做画廊),不依赖 URL 识别
                 var u = sender as UbbTextBlock;
                 if (u == null) return;
                 var ubb = u.UbbText;
@@ -381,264 +410,44 @@ public sealed partial class TopicPage : Page
                 {
                     list.Add(ExtractImageUrl(node));
                 }
-                var anchor = list.IndexOf(e.Source);
-                var info = new ViewerNavigationInfo
-                {
-                    Type = MediaType.Image,
-                    Urls = list,
-                    CurrentIndex = anchor
-                };
-                var viewer = new MediaViewer(info);
-                viewer.Activate();
-                break;
-            case MediaType.Video:
-                var vinfo = new ViewerNavigationInfo
-                {
-                    Type = MediaType.Video,
-                    Urls = [e.Source]
-                };
-                Frame.Navigate(typeof(MediaViewer), vinfo);
+                LinkNavigationService.ShowImageViewer(e.Source, list);
                 break;
             case MediaType.Link:
-                await HandleLink(e.Source);
+                await LinkNavigationService.HandleLinkAsync(e.Source, context);
                 break;
             case MediaType.AtUser:
-                await SearchForUser(e.Source);
-                break;       
-            case MediaType.File or MediaType.Audio:
-                var fileRes = await Downloader.DownloadFileAsync(e.Source);
-                if (fileRes == null)
-                {
-                    Flower.Play(FlowStatus.Fail, "下载失败");
-                }
-                else
-                {
-                    Flower.Play(FlowStatus.Success, $"已下载到{fileRes}");
-                }
+                await LinkNavigationService.HandleAtUserAsync(e.Source, context);
                 break;
-
+            case MediaType.File or MediaType.Audio or MediaType.Video:
+                // UBB 文件/音视频:显式下载,不依赖 URL 识别(http/https 均可)
+                await LinkNavigationService.DownloadFileAsync(e.Source, context);
+                break;
         }
     }
-  
-    
-    private async Task SearchForUser(string userName)
+
+    private async void MdViewer_LinkClicked(object sender, CommunityToolkit.WinUI.Controls.LinkClickedEventArgs e)
     {
-        var url = ApiEndpoints.User.SearchUserByName(userName);
-        var result = await ApiService.Fetch<UserInfo>(url);
-        if (!result.IsSuccess || result.Data == null)
-        {
-            //
-            return;
-        }
-        var user = result.Data;
-        if (user == null)
-        {
-            Flower.Play(FlowStatus.Fail, "未找到用户");
-        }
-        else
-        {
-            var info = new ProfileNavigationInfo { IsMe = userName == AppSettings.Current.UserName, UserId = user.Id };
-            Frame.Navigate(typeof(ProfilePage), info);
-        }
+        e.Handled = true;
+        var url = e.Uri.ToString();
+        if (string.IsNullOrWhiteSpace(url)) return;
 
-    }
-
-    
-
-    private async Task HandleLink(string url)
-    {
-        //锚点
-        var topicAnchor = url.ExtractTopicInfo();
-        //如果整个元组为null,则下面的HasValue为false,否则为true。
-        if (topicAnchor.HasValue)
+        var context = new LinkContext
         {
-            int targetFloor = 0;
-            if (topicAnchor.Value.Page.HasValue && topicAnchor.Value.Anchor.HasValue)
-            {
-                targetFloor = (topicAnchor.Value.Page.Value - 1) * 10 + topicAnchor.Value.Anchor.Value;
-            }
-            if (topicAnchor.Value.Page.HasValue && !topicAnchor.Value.Anchor.HasValue)
-            {
-                targetFloor = (topicAnchor.Value.Page.Value - 1) * 10 + 0;
-            }
-            //topicId一致：
-            if (topicAnchor.Value.TopicId == TopicId)
+            Frame = Frame,
+            CurrentTopicId = TopicId,
+            JumpToFloor = async floor =>
             {
                 IsJumping = true;
-                await Tp(targetFloor);
-            }
-            else
-            {
-                TopicId = topicAnchor.Value.TopicId;
-                await LoadTopicInfo();
-                IsJumping = true;
-                await Tp(targetFloor);
-            }
-            return;
-        }
-        //外链
-        if (!url.IsCC98Url)
-        {
-            var package = new DataPackage();
-            package.SetText(url);
-            Clipboard.SetContent(package);
-            Flower.Play(FlowStatus.Success, "已复制外部链接");
-            return;
-        }
-        
-        //文件
-        if (url.IsCC98FileUrl)
-        {
-            if (url.IsCC98ImageUrl)
-            {
-                var info = new ViewerNavigationInfo
-                {
-                    Type = MediaType.Image,
-                    Urls = [url],
-                    CurrentIndex = 0
-                };
-                var viewer = new MediaViewer(info);
-                viewer.Activate();
-                return;
-            }
-            var fileRes = await Downloader.DownloadFileAsync(url);
-            if (fileRes == null)
-            {
-                Flower.Play(FlowStatus.Fail, "下载失败");
-            }
-            else
-            {
-                Flower.Play(FlowStatus.Success, $"已下载到{fileRes}");
-            }
-            return;
-        }
-        //版面
-        var match2 = UrlEx.BoardRegex.Match(url);
-        if (match2.Success)
-        {
-            int boardId = int.Parse(match2.Groups[1].ValueSpan);
-            Frame.Navigate(typeof(BoardPage), boardId);
-            return;
-        }
-        
+                await Tp(floor);
+            },
+            ImageList = null,
+            Flower = Flower
+        };
+
+        await LinkNavigationService.HandleLinkAsync(url, context);
     }
 
     
-    private async void MarkdownTextBlock_LinkClicked(object sender)
-    {
-        var url = "";
-        var result = LinkAnalyzer.Parse(url);
-        switch (result.Key)
-        {
-            case "topic":
-                Set.Values["CurrentTopicId"] = result.Value;
-                TopicId = int.Parse(result.Value);
-                await LoadTopicInfo();
-                await LoadReply();
-                break;
-            case "user":
-                {
-                    url = "https://api.cc98.org/user/name/" + result.Value;
-                    break;
-                }
-            //using语句不能在switch语句中直接出现。因此，使用大括号包围这个case.
-            case "anchor":
-                var pattern = @"/topic/(\d{7})/(\d+)#(\d+)";
-                //暂时不考虑跨页引用。如果考虑，我们需要改进跳转参数，让其包含一个跳转信息。
-                var regex = new Regex(pattern);
-
-                // 使用正则表达式进行匹配
-                var match = regex.Match(url);
-
-                if (match.Success)
-                {
-                    // 输出匹配的内容
-                    var before = match.Groups[2].Value;  // #页码
-                    var after = match.Groups[3].Value;   // #楼层
-                    var page = Convert.ToInt32(before);
-                    var floor = Convert.ToInt32(after);
-                    try
-                    {
-                        if (Pager.SelectedPageIndex + 1 == page && floor > 0)
-                        {
-                            ScrollTo(floor - 1);
-                        }
-                        else
-                        {
-                            Pager.SelectedPageIndex = page - 1;
-                            //应在页码变化函数中进行跳转，否则不等待。
-                            IsJumping = true;
-                            JumpToFloor = floor - 1;
-                        }
-                    }
-                    catch
-                    {
-
-                    }
-                }
-                break;
-            case "board":
-                Frame.Navigate(typeof(BoardPage), result.Value);
-                break;
-            case "file":
-                if (result.Value == "image")
-                {
-
-                }
-                else if (result.Value == "doc")//无法预览的媒体文件类
-                {
-                    //var Operation = await DownLoadDialog.ShowAsync();
-                    if (true)
-                    {
-
-                        var userProfile = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
-                        var downloadsFolder = Path.Combine(userProfile, "Downloads");
-                        var downloadLocation = "";
-                        var filepattern = @"(?<=https://file\.cc98\.org/v4-upload/d/\d{4}/\d{4}/)[^/]+";
-                        var fileregex = new Regex(filepattern);
-                        var filematch = fileregex.Match(url);
-                        if (filematch.Success)
-                        {
-                            downloadLocation = downloadsFolder + "\\" + filematch.Value;
-                        }
-                        else
-                        {
-                            downloadLocation = Path.Combine(downloadsFolder, "CC98_Download_" + DateTime.Now.ToString("yyyyMMdd_HHmmss") + ".pdf");
-                        }
-                        try
-                        {
-                            
-                        }
-                        catch (Exception ex)
-                        {
-                            Flower.Play("\uEA39", ex.Message);
-                        }
-                    }
-                }
-                break;
-            case "backlink":
-                if (result.Value == "bili")
-                {
-                    var dataPackage = new DataPackage();
-                    dataPackage.SetText(url);
-                    Clipboard.SetContent(dataPackage);
-                    Flower.Play(FlowStatus.Success, "已复制Bili外链");
-                }
-                break;
-            default: //自动复制到用户剪切板
-                {
-                    var dataPackage = new DataPackage();
-
-                    dataPackage.SetText(url);
-                    Clipboard.SetContent(dataPackage);
-                    Flower.Play(FlowStatus.Success, "已复制外部链接");
-                }
-                break;
-        }
-
-    }
-
-
     private void writereply_Click(object sender, RoutedEventArgs e)
     {
         var param = new SketchNavigationInfo
@@ -649,6 +458,386 @@ public sealed partial class TopicPage : Page
         };
         Frame.Navigate(typeof(SketchPage), param);
     }
+
+    #region 赠米(财富转账)
+
+    /// <summary>
+    /// 从帖子操作菜单(赠米)打开转账弹窗,收款人预填为被赠楼层作者。
+    /// </summary>
+    private async Task ShowWealthTransferAsync(Reply reply)
+    {
+        //不能向自己赠米:用 AppSettings 中的当前用户 id 校验
+        if (reply.UserId.HasValue && reply.UserId.Value == AppSettings.Current.UserId)
+        {
+            Flower.Play(FlowStatus.Warning, "不能给自己赠米");
+            return;
+        }
+        //已删除/匿名的楼层无法确定真实收款人,禁止赠米
+        if (reply.IsDeleted)
+        {
+            Flower.Play(FlowStatus.Warning, "该楼层已被删除，无法赠米");
+            return;
+        }
+        if (reply.IsAnonymous || string.IsNullOrEmpty(reply.UserName))
+        {
+            Flower.Play(FlowStatus.Warning, "不能给匿名用户赠米");
+            return;
+        }
+
+        //重置弹窗输入并预填收款人
+        WealthReceiver.Text = reply.UserName;
+        WealthAmount.Value = 0;
+        WealthReason.Text = "";
+        WealthError.Text = "";
+        UpdateWealthPreview();
+        WealthTransferDialog.XamlRoot = XamlRoot;
+        try
+        {
+            await WealthTransferDialog.ShowAsync();
+        }
+        catch (Exception ex)
+        {
+            // 页面被导航移除等场景下对话框可能无法显示
+            System.Diagnostics.Debug.WriteLine($"赠米弹窗打开失败: {ex.Message}");
+        }
+    }
+
+    private void WealthAmount_ValueChanged(NumberBox sender, NumberBoxValueChangedEventArgs args)
+    {
+        UpdateWealthPreview();
+    }
+
+    /// <summary>
+    /// 按"手续费 = max(金额*10%, 10)"实时计算并显示实际到账。
+    /// </summary>
+    private void UpdateWealthPreview()
+    {
+        var wealth = (int)System.Math.Round(WealthAmount.Value);
+        if (wealth < 10)
+        {
+            WealthPreview.Text = "";
+            return;
+        }
+
+        var fee = System.Math.Max((int)(wealth * 0.1), 10);
+        var received = wealth - fee;
+        WealthPreview.Text = $"手续费 {fee} 米，对方实际收到 {received} 米";
+    }
+
+    private async void WealthTransferOk_Click(object sender, RoutedEventArgs e)
+    {
+        //校验收款人
+        var userNames = WealthReceiver.Text
+            .Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Distinct()
+            .ToList();
+        if (userNames.Count == 0)
+        {
+            WealthError.Text = "请输入收款人用户名";
+            return;
+        }
+
+        //不能给自己赠米:收款人中不允许出现当前登录用户
+        if (userNames.Contains(AppSettings.Current.UserName, StringComparer.OrdinalIgnoreCase))
+        {
+            WealthError.Text = "不能给自己赠米";
+            return;
+        }
+
+        //校验金额
+        var wealth = (int)System.Math.Round(WealthAmount.Value);
+        if (wealth < 10)
+        {
+            WealthError.Text = "转账金额不能小于 10";
+            return;
+        }
+
+        var reason = WealthReason.Text.Trim();
+        WealthError.Text = "";
+        WealthTransferOk.IsEnabled = false;
+        try
+        {
+            //使用强类型请求体
+            var post = new WealthTransferMessage
+            {
+                UserNames = userNames,
+                Wealth = wealth,
+                Reason = reason
+            };
+            var postText = SerializationHelper.TrySerialize(post);
+            var requestBody = new StringContent(postText, Encoding.UTF8, "application/json");
+            var res = await ApiService.Put(ApiEndpoints.User.TransferWealth(), requestBody);
+            if (!res.IsSuccess)
+            {
+                //网络问题或财富值不足等,展示服务器返回的错误信息
+                WealthError.Text = $"赠米失败：{res.Message}";
+                return;
+            }
+            try
+            {
+                var userList = SerializationHelper.TryDeserialize<List<string>>(res.Content) ?? [];
+                Flower.Play(FlowStatus.Success, $"赠米成功：{string.Join("、", userList)}");
+            }
+            catch (Exception ex)
+            {
+                Flower.Play(FlowStatus.Success, $"解析收款人列表失败：{ex.Message}");
+            }
+            finally
+            {
+                WealthTransferDialog.Hide();
+            }
+            
+        }
+        catch (Exception ex)
+        {
+            WealthError.Text = $"赠米失败：{ex.Message}";
+        }
+        finally
+        {
+            WealthTransferOk.IsEnabled = true;
+        }
+    }
+
+    private void WealthTransferCancel_Click(object sender, RoutedEventArgs e)
+    {
+        WealthTransferDialog.Hide();
+    }
+
+    private void WealthTransferDialog_Closed(ContentDialog sender, ContentDialogClosedEventArgs args)
+    {
+        WealthError.Text = "";
+    }
+
+    #endregion
+
+    #region 风评(加/扣风评)
+
+    private int _ratingPostId;
+    private int _ratingType = 1;
+    private int _selectedReasonId;
+    private string _selectedReason = "";
+
+    /// <summary>
+    /// 从帖子操作菜单(风评)打开风评弹窗,默认加载正面理由。
+    /// </summary>
+    private async Task ShowRatingAsync(Reply reply)
+    {
+        //匿名、已删除、自己的楼层不可风评
+        if (reply.IsDeleted)
+        {
+            Flower.Play(FlowStatus.Warning, "该楼层已被删除，无法风评");
+            return;
+        }
+        if (reply.IsAnonymous)
+        {
+            Flower.Play(FlowStatus.Warning, "不能给匿名用户风评");
+            return;
+        }
+        if (reply.UserId.HasValue && reply.UserId.Value == AppSettings.Current.UserId)
+        {
+            Flower.Play(FlowStatus.Warning, "不能给自己风评");
+            return;
+        }
+
+        _ratingPostId = reply.Id;
+        _selectedReasonId = 0;
+        _selectedReason = "";
+        RatingError.Text = "";
+        RatingColor.Background = null;
+        RatingSelectedReason.Text = "";
+        RatingOk.IsEnabled = false;
+
+        //默认选中"正面";若与当前选择相同则不触发 SelectionChanged,需显式加载
+        _isSettingRatingType = true;
+        RatingTypeBar.SelectedItem = RatingTypeBar.Items[0];
+        _isSettingRatingType = false;
+        if (RatingTypeBar.SelectedItem == RatingTypeBar.Items[0])
+        {
+            await LoadRatingReasonsAsync(1);
+        }
+
+        RatingDialog.XamlRoot = XamlRoot;
+        try
+        {
+            await RatingDialog.ShowAsync();
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"风评弹窗打开失败: {ex.Message}");
+        }
+    }
+
+    //程序化设置类型时跳过事件处理,避免重复加载
+    private bool _isSettingRatingType;
+
+    private async void RatingTypeBar_SelectionChanged(SelectorBar sender, SelectorBarSelectionChangedEventArgs args)
+    {
+        if (_isSettingRatingType) return;
+        if (sender.SelectedItem?.Tag is not string s || !int.TryParse(s, out var type)) return;
+        RatingError.Text = "";
+        await LoadRatingReasonsAsync(type);
+    }
+
+    /// <summary>
+    /// 按类型(1正面/2负面)加载理由列表,并为每项随机生成莫兰迪色。
+    /// </summary>
+    private async Task LoadRatingReasonsAsync(int type)
+    {
+        _ratingType = type;
+        RatingOk.IsEnabled = false;
+        try
+        {
+            var url = ApiEndpoints.Post.RateReason(type);
+            var result = await ApiService.Fetch<List<RatingReason>>(url);
+            if (!result.IsSuccess || result.Data == null)
+            {
+                RatingError.Text = $"加载风评理由失败：{result.Message}";
+                return;
+            }
+
+            var reasons = result.Data.Where(r => r.Enabled).ToList();
+            foreach (var r in reasons) r.ColorHex = ColorEx.GenerateMorandiColorHex();
+            RatingRepeater.ItemsSource = reasons;
+
+            //默认选中第一项
+            if (reasons.Count > 0)
+            {
+                _selectedReasonId = reasons[0].Id;
+                _selectedReason = reasons[0].Reason;
+                if (RatingRepeater.TryGetElement(0) is Button first)
+                {
+                    RatingColor.Background = first.Background;
+                    RatingSelectedReason.Text = _selectedReason;
+                }
+                RatingOk.IsEnabled = true;
+            }
+            else
+            {
+                RatingSelectedReason.Text = "暂无可用理由";
+            }
+        }
+        catch (Exception ex)
+        {
+            RatingError.Text = $"加载风评理由失败：{ex.Message}";
+        }
+    }
+
+    private void RatingItem_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is not Button b || b.Tag is not int id) return;
+        _selectedReasonId = id;
+        _selectedReason = b.Content?.ToString() ?? "";
+        RatingColor.Background = b.Background;
+        RatingSelectedReason.Text = _selectedReason;
+        //滚动到该项并居中
+        b.StartBringIntoView(new BringIntoViewOptions
+        {
+            VerticalAlignmentRatio = 0.5,
+            AnimationDesired = true
+        });
+    }
+
+    //理由项固定尺寸,用于按视口中心计算当前项索引
+    private const double RatingItemHeight = 40;
+    private const double RatingItemStep = RatingItemHeight + 6; //高度 + 上下Margin(3+3)
+
+    private double CenterPointOfViewportInExtent()
+    {
+        return RatingScroll.VerticalOffset + RatingScroll.ViewportHeight / 2;
+    }
+
+    private int GetSelectedIndexFromViewport()
+    {
+        if (RatingRepeater.ItemsSourceView == null || RatingRepeater.ItemsSourceView.Count == 0) return -1;
+        var index = (int)System.Math.Floor(CenterPointOfViewportInExtent() / RatingItemStep);
+        index %= RatingRepeater.ItemsSourceView.Count;
+        return index;
+    }
+
+    private void RatingScroll_ViewChanging(object sender, ScrollViewerViewChangingEventArgs e)
+    {
+        var index = GetSelectedIndexFromViewport();
+        if (index < 0) return;
+        if (RatingRepeater.TryGetElement(index) is not Button selected) return;
+        _selectedReasonId = (int)selected.Tag;
+        _selectedReason = selected.Content?.ToString() ?? "";
+        RatingColor.Background = selected.Background;
+        RatingSelectedReason.Text = _selectedReason;
+    }
+
+    //参考微软 ItemsRepeater 滚动缩放示例:靠近视口中心的项放大
+    private void RatingRepeater_ElementPrepared(ItemsRepeater sender, ItemsRepeaterElementPreparedEventArgs args)
+    {
+        var item = ElementCompositionPreview.GetElementVisual(args.Element);
+        var svVisual = ElementCompositionPreview.GetElementVisual(RatingScroll);
+        var scrollProperties = ElementCompositionPreview.GetScrollViewerManipulationPropertySet(RatingScroll);
+
+        var scaleExpresion = scrollProperties.Compositor.CreateExpressionAnimation();
+        scaleExpresion.SetReferenceParameter("svVisual", svVisual);
+        scaleExpresion.SetReferenceParameter("scrollProperties", scrollProperties);
+        scaleExpresion.SetReferenceParameter("item", item);
+        scaleExpresion.Expression = "1 - abs((svVisual.Size.Y/2 - scrollProperties.Translation.Y) - (item.Offset.Y + item.Size.Y/2))*(.25/(svVisual.Size.Y/2))";
+        item.StartAnimation("Scale.X", scaleExpresion);
+        item.StartAnimation("Scale.Y", scaleExpresion);
+
+        var centerPointExpression = scrollProperties.Compositor.CreateExpressionAnimation();
+        centerPointExpression.SetReferenceParameter("item", item);
+        centerPointExpression.Expression = "Vector3(item.Size.X/2, item.Size.Y/2, 0)";
+        item.StartAnimation("CenterPoint", centerPointExpression);
+    }
+
+    private async void RatingOk_Click(object sender, RoutedEventArgs e)
+    {
+        if (_selectedReasonId == 0)
+        {
+            RatingError.Text = "请选择一个风评理由";
+            return;
+        }
+
+        RatingError.Text = "";
+        RatingOk.IsEnabled = false;
+        try
+        {
+            //请求体:{"reasonId":12,"type":1},使用强类型,风评为 PUT 请求
+            var post = new Rating
+            {
+                ReasonId = _selectedReasonId,
+                Type = _ratingType
+            };
+            var postText = SerializationHelper.TrySerialize(post);
+            var requestBody = new StringContent(postText, Encoding.UTF8, "application/json");
+            var res = await ApiService.Put(ApiEndpoints.Post.Rate(_ratingPostId), requestBody);
+            if (!res.IsSuccess)
+            {
+                RatingError.Text = $"风评失败：{res.Message}";
+                return;
+            }
+
+            Flower.Play(FlowStatus.Success, $"风评成功：{_selectedReason}");
+            RatingDialog.Hide();
+        }
+        catch (Exception ex)
+        {
+            RatingError.Text = $"风评失败：{ex.Message}";
+        }
+        finally
+        {
+            RatingOk.IsEnabled = true;
+        }
+    }
+
+    private void RatingCancel_Click(object sender, RoutedEventArgs e)
+    {
+        RatingDialog.Hide();
+    }
+
+    private void RatingDialog_Closed(ContentDialog sender, ContentDialogClosedEventArgs args)
+    {
+        RatingError.Text = "";
+        RatingRepeater.ItemsSource = null;
+    }
+
+    #endregion
 
     private async void TileFlyout_Click(object sender, RoutedEventArgs e)
     {
@@ -672,6 +861,19 @@ public sealed partial class TopicPage : Page
                 //无需响应
                 break;
             case "3":
+                var endpoint = ApiEndpoints.Topic.DeleteFavoriteTopic(TopicId);
+                var res = await ApiService.Delete(endpoint);
+                if (res == null || !res.IsSuccess)
+                {
+                    Flower.Play(FlowStatus.Fail, $"取消收藏失败:{res?.Message}");
+                }
+                else
+                {
+                    TopicInfo.IsFavorite = false;
+                    Flower.Play(FlowStatus.Success, "已取消收藏");
+                }
+                break;
+            case "4":
                 AppSettings.Current.HideImage = !AppSettings.Current.HideImage;
                 LoadSet();
                 break;
@@ -717,24 +919,30 @@ public sealed partial class TopicPage : Page
 
 
 
-    private void PostOperation_Click(object sender, RoutedEventArgs e)
+    private async void PostOperation_Click(object sender, RoutedEventArgs e)
     {
         var operation = sender as MenuFlyoutItem;
         DataPackage pack;
         if (operation?.DataContext is not Reply reply || operation?.Tag is not string tag) return;
         switch (tag)
         {
+            case "GIFT":
+                await ShowWealthTransferAsync(reply);
+                break;
+            case "RATE":
+                await ShowRatingAsync(reply);
+                break;
             case "UBB":
                 pack = new DataPackage();
                 pack.SetText(reply.Content);
                 Clipboard.SetContent(pack);
-                Flower.Play(FlowStatus.Success, "已复制为原代码");
+                Flower.Play(FlowStatus.Success, "已复制为UBB代码");
                 break;
             case "MD":
                 pack = new DataPackage();
                 if (reply.ContentType == (int)ContentType.Ubb)
                 {
-                    pack.SetText(UbbToMd.Convert(reply.Content, true));
+                    pack.SetText(UbbToMarkdown.Convert(reply.Content, true));
                 }
                 else
                 {
@@ -744,6 +952,11 @@ public sealed partial class TopicPage : Page
                 Flower.Play(FlowStatus.Success, "已复制为Markdown文本");
                 break;
             case "QUOTE":
+                if (reply.IsDeleted)
+                {
+                    Flower.Play(FlowStatus.Info, "无法回复被删除的帖子");
+                    return;
+                }
                 if (reply.Content != null)
                 {
                     var floor = reply.Floor;
@@ -763,6 +976,7 @@ public sealed partial class TopicPage : Page
                 }
                 break;
             case "EDIT":
+                //使用括号放置param变量名重复
                 {
                     var param = new SketchNavigationInfo
                     {
@@ -793,29 +1007,39 @@ public sealed partial class TopicPage : Page
         var b = sender as Button;
         if (b == null) return;
         if (b.DataContext is not Reply reply || b.Tag is not string mode) return;
-        var postId = reply.Id;
-        var url = ApiEndpoints.Post.React(postId);
-        var content = new StringContent(mode, Encoding.UTF8, "application/json");
-        var result = await ApiService.Put(url, content);
-        if (!result.IsSuccess)
+        // 防重入:请求期间禁用按钮,避免连点并发提交导致状态错乱
+        b.IsEnabled = false;
+        try
         {
-            //
-            Flower.Play(FlowStatus.Fail, "操作失败");
-            return;
+            var postId = reply.Id;
+            var url = ApiEndpoints.Post.React(postId);
+            var content = new StringContent(mode, Encoding.UTF8, "application/json");
+            var result = await ApiService.Put(url, content);
+            if (!result.IsSuccess)
+            {
+                //
+                Flower.Play(FlowStatus.Fail, "操作失败");
+                return;
+            }
+            var newStateUrl = ApiEndpoints.Post.ReactionState(postId);
+            var newStateResult = await ApiService.Fetch<ReactionState>(newStateUrl);
+            if (!newStateResult.IsSuccess || newStateResult.Data == null)
+            {
+                //
+                Flower.Play(FlowStatus.Fail, "获取赞踩数据失败");
+                return;
+            }
+            var newState = newStateResult.Data;
+            reply.LikeState = newState.LikeState;
+            reply.LikeCount = newState.LikeCount;
+            reply.DislikeCount = newState.DislikeCount;
         }
-        var newStateUrl = ApiEndpoints.Post.ReactionState(postId);
-        var newStateResult = await ApiService.Fetch<ReactionState>(newStateUrl);
-        if (!newStateResult.IsSuccess || newStateResult.Data == null)
+        finally
         {
-            //
-            Flower.Play(FlowStatus.Fail, "获取赞踩数据失败");
-            return;
+            b.IsEnabled = true;
         }
-        var newState = newStateResult.Data;
-        reply.LikeState = newState.LikeState;
-        reply.LikeCount = newState.LikeCount;
-        reply.DislikeCount = newState.DislikeCount;
     }
+
 
 
 
@@ -824,8 +1048,17 @@ public sealed partial class TopicPage : Page
     {
         var p = sender as PersonPicture;
         if (p?.Tag is not string tag) return;
-        var bitmap = await ImageHelper.LoadWebImageAsync(tag);
-        p.ProfilePicture = bitmap;
+        try
+        {
+            var bitmap = await ImageHelper.LoadWebImageAsync(tag);
+            // 加载期间 TeachingTip 可能已关闭,不再向已卸载控件赋值
+            if (p.IsLoaded) p.ProfilePicture = bitmap;
+        }
+        catch (Exception ex)
+        {
+            // 避免 async void 未捕获异常崩溃
+            System.Diagnostics.Debug.WriteLine($"加载用户头像失败: {ex.Message}");
+        }
     }
 
     private void SmallProfile_Unloaded(object sender, RoutedEventArgs e)
@@ -834,6 +1067,9 @@ public sealed partial class TopicPage : Page
         p?.ProfilePicture = null;
     }
 
+
+    // 投票最多可选数(供 SelectionChanged 具名处理器使用)
+    private int _voteMaxCount;
 
     private async Task InitializeVote()
     {
@@ -849,14 +1085,25 @@ public sealed partial class TopicPage : Page
             }
             var data = voteResult.Data;
             VoteList.ItemsSource = data.VoteItems;
+            VoteList.SelectedItems.Clear();
             var record = data.MyRecord;
-            if (record.Count > 0)
+            if (record != null)
             {
                 foreach (var i in record)
                 {
-                    VoteList.SelectedItems.Add(VoteList.Items[i - 1]);
+                    // 防御:API 返回的记录索引可能越界
+                    var index = i - 1;
+                    if (index >= 0 && index < VoteList.Items.Count)
+                    {
+                        VoteList.SelectedItems.Add(VoteList.Items[index]);
+                    }
                 }
             }
+
+            _voteMaxCount = data.MaxVoteCount;
+            // 具名处理器并先退订再订阅,避免每次初始化都累积匿名 handler
+            VoteList.SelectionChanged -= VoteList_SelectionChanged;
+            VoteList.SelectionChanged += VoteList_SelectionChanged;
 
             if (data.CanVote && data.IsAvailable)
             {
@@ -876,22 +1123,16 @@ public sealed partial class TopicPage : Page
                     VoteTitle.Text = "投票(已过期)";
                 }
             }
-            VoteList.SelectionChanged += (s, e) =>
-            {
-                if (VoteList.SelectedItems.Count > data.MaxVoteCount)
-                {
-                    SendVote.IsEnabled = false;
-                }
-                else
-                {
-                    SendVote.IsEnabled = true;
-                }
-            };
             votetime.Text = $"过期时间:{data.ExpiredTime}";
             voteinfo.Text = $"参与人数:{data.VoteUserCount},票数限制:{data.MaxVoteCount}";
 
 
         }
+    }
+
+    private void VoteList_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        SendVote.IsEnabled = VoteList.SelectedItems.Count <= _voteMaxCount;
     }
     private async void StartVote_Click(object sender, RoutedEventArgs e)
     {
@@ -968,6 +1209,10 @@ public sealed partial class TopicPage : Page
         {
             //await App.Logger.WriteAsync("Topic", "加载用户信息预览失败", ex.Message);
         }
+        finally
+        {
+            args.Handled = true;
+        }
     }
 
 
@@ -1003,4 +1248,10 @@ public sealed partial class TopicPage : Page
     }
 
 
+    private void MoreButton_Click(object sender, RoutedEventArgs e)
+    {
+        var button = sender as HyperlinkButton;
+        // 显示附加的 Flyout
+        FlyoutBase.ShowAttachedFlyout(button);
+    }
 }

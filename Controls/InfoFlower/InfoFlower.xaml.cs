@@ -35,13 +35,13 @@ public sealed partial class InfoFlower : UserControl
         set => SetValue(TextProperty, value);
     }
 
-    public string Glygh
+    public string Glyph
     {
         get => (string)GetValue(GlyphProperty);
         set => SetValue(GlyphProperty, value);
     }
 
-    public string GetGlyphFromStatus(FlowStatus status)
+    private string GetGlyphFromStatus(FlowStatus status)
     {
         return status switch
         {
@@ -101,7 +101,7 @@ public sealed partial class InfoFlower : UserControl
     private static void OnGlyphChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
     {
         var control = (InfoFlower)d;
-        if (control.FlowIcon != null) control.FlowIcon.Glyph = (string)e.NewValue;
+        control.FlowIcon?.Glyph = (string)e.NewValue;
     }
 
     // 动画完成事件

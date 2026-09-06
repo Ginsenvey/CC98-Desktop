@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Diagnostics;
 using System.IO;
 using System.Runtime.InteropServices.WindowsRuntime;
@@ -35,17 +35,20 @@ public static partial class UrlEx
 
     [GeneratedRegex(@"\/board\/(\d{2,3})$")]
     public static partial Regex BoardRegex { get; }
-    [GeneratedRegex(@"^https://www\.cc98\.org(/[a-zA-Z0-9\-._~:/?#[\]@!$&'()*+,;=]*)?$")]
+    [GeneratedRegex(@"^https?://www\.cc98\.org(/[a-zA-Z0-9\-._~:/?#[\]@!$&'()*+,;=]*)?$")]
     public static partial Regex CC98UrlRegex { get; }
 
-    [GeneratedRegex(@"^https://file\.cc98\.org(/[a-zA-Z0-9\-._~:/?#[\]@!$&'()*+,;=]*)?$")]
+    [GeneratedRegex(@"^https?://file\.cc98\.org(/[a-zA-Z0-9\-._~:/?#[\]@!$&'()*+,;=]*)?$")]
     public static partial Regex CC98FileUrlRegex { get; }
 
-    [GeneratedRegex(@"^https://file\.cc98\.org/.*\.webp$")]
+    [GeneratedRegex(@"^https?://file\.cc98\.org/.*\.(png|jpe?g|gif|bmp|webp)$", RegexOptions.IgnoreCase)]
     public static partial Regex CC98ImageUrlRegex { get; }
 
-    [GeneratedRegex(@"^https://www\.cc98\.org/user/id/(\d+)$")]
+    [GeneratedRegex(@"^https?://www\.cc98\.org/user/id/(\d+)$")]
     public static partial Regex CC98UserIdUrlRegex { get; }
+
+    [GeneratedRegex(@"^https?://(api\.cc98\.org|www\.cc98\.org)/user/name/(.+)$")]
+    public static partial Regex CC98UserNameUrlRegex { get; }
 
 
     extension(string url)
@@ -55,6 +58,7 @@ public static partial class UrlEx
         public bool IsCC98BoardUrl => BoardRegex.IsMatch(url);
         public bool IsCC98ImageUrl => CC98ImageUrlRegex.IsMatch(url);
         public bool IsCC98UserIdUrl => CC98UserIdUrlRegex.IsMatch(url);
+        public bool IsCC98UserNameUrl => CC98UserNameUrlRegex.IsMatch(url);
     }
 
     /// <summary>

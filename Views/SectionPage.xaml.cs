@@ -1,4 +1,5 @@
-﻿using System.Collections.ObjectModel;
+using System;
+using System.Collections.ObjectModel;
 using System.Threading.Tasks;
 using Windows.Storage;
 using CC98.Kernel;
@@ -21,7 +22,7 @@ public sealed partial class SectionPage : Page
 {
     public ObservableCollection<SectionInfo> AllSections { get; } = [];
     
-    private static BoardSectionManager Manager => BoardSectionManager.Instance;
+    private static BoardCacheManager Manager => BoardCacheManager.Instance;
 
     public SectionPage()
     {
@@ -35,8 +36,16 @@ public sealed partial class SectionPage : Page
     }
     private async Task LoadSection()
     {
-        var data = await Manager.GetSectionDataAsync();
-        if (data != null) AllSections.AddRange(data);
+        try
+        {
+            var data = await Manager.GetSectionDataAsync();
+            if (data != null) AllSections.AddRange(data);
+        }
+        catch (Exception ex)
+        {
+            // 无缓存且接口失败时 BoardSectionManager 会抛出异常,在此兜底避免崩溃
+            System.Diagnostics.Debug.WriteLine($"加载分区失败: {ex.Message}");
+        }
     }
 
     private void BoardButton_Click(object sender, RoutedEventArgs e)

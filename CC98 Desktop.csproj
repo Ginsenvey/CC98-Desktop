@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
     <TargetFramework>net10.0-windows10.0.26100.0</TargetFramework>
@@ -16,6 +16,10 @@
     <Nullable>enable</Nullable>
 	  <WindowsSdkPackageVersion>10.0.26100.81</WindowsSdkPackageVersion>
   </PropertyGroup>
+  <!-- 排除 tools/ 下的独立工具项目(如 ubb-md-verify),避免其 .cs 与 obj 生成文件被主项目默认 glob 编入 -->
+  <ItemGroup>
+    <Compile Remove="tools\**\*.cs" />
+  </ItemGroup>
   <ItemGroup>
     <Content Remove="Assets\cc98.altform-lightunplated_targetsize-16.png" />
     <Content Remove="Assets\cc98.altform-lightunplated_targetsize-24.png" />
@@ -129,6 +133,7 @@
     <None Remove="CC98 Desktop_1.0.5预览体验（x64）.zip" />
     <None Remove="CC98 Desktop_1.0.6.0_x64_Debug.cer" />
     <None Remove="Controls\FileCard\FileCard.xaml" />
+    <None Remove="Controls\StatusIndicator.xaml" />
     <None Remove="Discover.xaml" />
     <None Remove="Focus.xaml" />
     <None Remove="Friend.xaml" />
@@ -148,6 +153,7 @@
     <None Remove="UBBRichTextBlock.xaml" />
     <None Remove="Views\ForumLoginPage.xaml" />
     <None Remove="Views\GuidePage.xaml" />
+    <None Remove="Views\HistoryPage.xaml" />
     <None Remove="Views\OpenIdLoginPage.xaml" />
   </ItemGroup>
 
@@ -194,6 +200,16 @@
     <PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.28000.2270" />
     <PackageReference Include="Microsoft.WindowsAppSDK" Version="2.2.0" />
     <PackageReference Include="SkiaSharp.Views.WinUI" Version="4.148.0" />
+  </ItemGroup>
+  <ItemGroup>
+    <Page Update="Views\HistoryPage.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+  </ItemGroup>
+  <ItemGroup>
+    <Page Update="Controls\StatusIndicator.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
   </ItemGroup>
   <ItemGroup>
     <Page Update="Views\GuidePage.xaml">
@@ -327,6 +343,9 @@
     <Page Update="Controls\FileCard\FileCard.xaml">
       <Generator>MSBuild:Compile</Generator>
     </Page>
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Controls\StatusIndicator\" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <WebView2DispatchAdapterNamespace>CC98</WebView2DispatchAdapterNamespace>

@@ -1,7 +1,9 @@
-﻿using System;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
+using Microsoft.UI.Xaml.Documents;
+using System;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Text.Json.Serialization;
-using CommunityToolkit.Mvvm.ComponentModel;
-using FluentIcons.Common;
 
 namespace CC98.Objects;
 
@@ -15,10 +17,15 @@ public partial class SimpleTopicInfo : ObservableObject
         get => field ?? "匿名";
         set => SetProperty(ref field, value);
     }
+    public int? UserId
+    {
+        get;
+        set => SetProperty(ref field, value);
+    }
 
     public string Title
     {
-        get => field ?? string.Empty;
+        get => field?.Trim() ?? string.Empty;
         set => SetProperty(ref field, value);
     }
 
@@ -26,13 +33,14 @@ public partial class SimpleTopicInfo : ObservableObject
 
     [ObservableProperty] public partial int BoardId { get; set; }
 
-    [JsonIgnore] [ObservableProperty] public partial int SortId { get; set; }
-
+    public HighlightInfo? HighlightInfo { get; set; }
     public string BoardName
     {
         get => field ?? string.Empty;
         set => SetProperty(ref field, value);
     }
+    [ObservableProperty]
+    public partial bool IsAnonymous { get; set; }
 
     [ObservableProperty] public partial int HitCount { get; set; }
 
@@ -40,5 +48,65 @@ public partial class SimpleTopicInfo : ObservableObject
 
     [ObservableProperty] public partial DateTime Time { get; set; }
 
-    [ObservableProperty] public partial Symbol Symbol { get; set; }
+    [ObservableProperty] public partial DateTime LastBrowsingTime { get; set; }
+
+
+}
+
+public partial class SearchTopicInfo : ObservableObject
+{
+    public string UserName
+    {
+        get => field ?? "匿名";
+        set => SetProperty(ref field, value);
+    }
+    public int? UserId
+    {
+        get;
+        set => SetProperty(ref field, value);
+    }
+
+    public string Title
+    {
+        get => field?.Trim() ?? string.Empty;
+        set => SetProperty(ref field, value);
+    }
+    
+    [ObservableProperty] public partial int Id { get; set; }
+
+    [ObservableProperty] public partial int BoardId { get; set; }
+
+    [JsonIgnore][ObservableProperty] public partial int SortId { get; set; }
+
+    public string BoardName
+    {
+        get => field ?? string.Empty;
+        set => SetProperty(ref field, value);
+    }
+    [ObservableProperty]
+    public partial bool IsAnonymous { get; set; }
+    
+
+    [ObservableProperty] public partial int HitCount { get; set; }
+
+    [ObservableProperty] public partial int ReplyCount { get; set; }
+
+    [ObservableProperty] public partial DateTime Time { get; set; }
+
+    [JsonIgnore]
+    public string Keyword
+    {
+        get=> field ?? string.Empty;
+        set=> SetProperty(ref field, value);
+    }
+    public string HitAndReplyCount => $"{HitCount}点击/{ReplyCount}回复";
+    [JsonIgnore]
+    public ObservableCollection<Inline> TitleInlines { get; set; } = [];
+}
+
+public class HighlightInfo
+{
+    public string Color { get; set; } = string.Empty;
+    public bool IsBold { get; set; }
+    public bool IsItalic { get; set; }
 }

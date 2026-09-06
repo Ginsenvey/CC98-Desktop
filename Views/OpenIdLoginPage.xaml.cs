@@ -1,6 +1,8 @@
 using CC98.Kernel;
 using CC98.Kernel.Authorize;
+using CC98.Objects;
 using CC98.Services;
+using CommunityToolkit.Mvvm.Messaging;
 using Duende.IdentityModel.OidcClient;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -11,6 +13,7 @@ using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Navigation;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices.WindowsRuntime;
@@ -41,24 +44,39 @@ namespace CC98.Views
 
         private async void OpenIdLoginButton_Click(object sender, RoutedEventArgs e)
         {
-            (sender as HyperlinkButton)?.IsEnabled = false;
-
-            var oidcClient = new OidcClient(new OidcClientOptions
+            if (sender is not HyperlinkButton button) return;
+            button.IsEnabled = false;
+            button.Content="启动浏览器…";
+            try
             {
-                Authority = ApiEndpoints.OpenId.Endpoint,
-                ClientId = AppConfig.DesktopClientId,
-                RedirectUri = "cc98://callback",
-                Scope = "openid profile cc98-api cc98-card.all offline_access",
-            });
+                var oidcClient = new OidcClient(new OidcClientOptions
+                {
+                    Authority = ApiEndpoints.OpenId.Endpoint,
+                    ClientId = AppConfig.DesktopClientId,
+                    RedirectUri = "cc98://callback",
+                    Scope = "openid profile cc98-api cc98-card.all offline_access",
+                });
 
-            var loginState = await oidcClient.PrepareLoginAsync();
-            var authorizeUrl = loginState.StartUrl;
-            PasswordManager.SavePassword(loginState.State, "OpenIdState");
-            PasswordManager.SavePassword(loginState.CodeVerifier, "OpenIdCodeVerifier");
-            await Launcher.LaunchUriAsync(new Uri(authorizeUrl));
+                var loginState = await oidcClient.PrepareLoginAsync();
+                var authorizeUrl = loginState.StartUrl;
+                PasswordManager.SavePassword(loginState.State, "OpenIdState");
+                PasswordManager.SavePassword(loginState.CodeVerifier, "OpenIdCodeVerifier");
+                await Launcher.LaunchUriAsync(new Uri(authorizeUrl));
 
-            await Task.Delay(200);
-            App.Current.Exit();
+                await Task.Delay(200);
+                App.Current.Exit();
+            }
+            catch (Exception ex)
+            {
+                // 网络不可达/超时/协议错误:避免异常逃逸出 async void 导致进程崩溃,恢复按钮供重试
+                WeakReferenceMessenger.Default.Send(new InfoFlowerMessage { FlowStatus = FlowStatus.Fail, Message = $"OpenID 登录失败: {ex.Message}" });
+                Debug.WriteLine($"OpenID 登录失败: {ex.Message}"); 
+            }
+            finally
+            {
+                button.IsEnabled = true;
+                button.Content = "一键登录";
+            }
         }
     }
 }

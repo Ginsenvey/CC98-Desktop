@@ -12,9 +12,9 @@
     <StackPanel Orientation="Horizontal" x:Name="Flower" Background="{ThemeResource AcrylicCardBrush}" Height="40"
                 HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,0,0,120" Spacing="10" Padding="10"
                 CornerRadius="5" Visibility="Collapsed">
-        <FontIcon Glyph="{Binding Glyph}" x:Name="FlowIcon" VerticalAlignment="Center"
+        <FontIcon Glyph="{x:Bind Glyph,Mode=OneWay}" x:Name="FlowIcon" VerticalAlignment="Center"
                   Foreground="{ThemeResource AccentAAFillColorDefaultBrush}" FontSize="16" />
-        <TextBlock x:Name="FlowInfo" Text="{Binding Text}" VerticalAlignment="Center" TextAlignment="Center"
+        <TextBlock x:Name="FlowInfo" Text="{x:Bind Text,Mode=OneWay}" VerticalAlignment="Center" TextAlignment="Center"
                    FontSize="13" />
         <StackPanel.RenderTransform>
             <!-- 用于移动的变换 -->

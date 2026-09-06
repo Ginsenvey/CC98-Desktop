@@ -1,4 +1,4 @@
-﻿using CC98.Controls.Primitives;
+using CC98.Controls.Primitives;
 using CC98.Controls.UbbTextBlock;
 using CC98.Controls.UbbTextBlock.Common.Events;
 using CC98.Controls.UbbTextBlock.Parser;
@@ -14,10 +14,13 @@ using Microsoft.UI.Xaml.Controls;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.Net;
 using System.Net.Http;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
+using System.Xml.Linq;
 using Windows.Storage;
 
 // To learn more about WinUI, the WinUI project structure,
@@ -57,22 +60,36 @@ public sealed partial class ProfilePage : Page
         {
             UserId = args.UserId;
             IsMe = args.IsMe;
-            await LoadUserProfile();
-            await LoadRecentTopic();
-            if (IsMe) SignIn();
+            // 用户资料与最近主题互不依赖,并行加载
+            await Task.WhenAll(LoadUserProfile(), LoadRecentTopic());
+            if (IsMe) await SignIn();
         }
     }
-    private async void SignIn()
+    private async Task SignIn()
     {
+        //此方法本可以使用GET进行判断再签到，会额外多一次请求
+        //从规范的角度讲，其实服务器应该合并GET/POST到一个请求
         var url = ApiEndpoints.User.SignIn();
         var content = new StringContent("", Encoding.UTF8, "application/json");
-        var result = await ApiService.Submit<string>(url, content);
+        var result = await ApiService.Submit<JsonElement>(url, content);
         if (result.IsSuccess)
         {
-            SignStatus.Text = "签到中";
+            SignStatus.Text = "已签到";
             SignStatusIcon.IconVariant = IconVariant.Filled;
+            var element = result.Data;
+            if (element.ValueKind == JsonValueKind.Number)
+            {
+                var wealth = element.GetRawText();
+                Flower.Play(FlowStatus.Success, $"签到成功，获得财富值: {wealth}");
+            }
+            //理论上不会出现非数字的情况
+            else
+            {
+                Flower.Play(FlowStatus.Success, "签到成功");
+            }
             return;
         }
+        //此信息在errorContent中，由result.Message传递
         if (result.StatusCode == (int)HttpStatusCode.BadRequest)
         {
             var info = result.Message;
@@ -111,7 +128,7 @@ public sealed partial class ProfilePage : Page
         if (IsMe && AppSettings.Current.UserId == 0)
         {
             AppSettings.Current.UserId = data.Id;
-            AppSettings.Current.Portrait = data.PortraitUrl;
+            AppSettings.Current.PortraitUrl = data.PortraitUrl;
         }
         UserProfile.IsOthers = !IsMe;
         try
@@ -121,7 +138,7 @@ public sealed partial class ProfilePage : Page
         }
         catch (Exception ex)
         {
-            //await App.Logger.WriteAsync("UserProfile", "加载头像失败", ex.Message);
+            Flower.Play(FlowStatus.Fail, $"加载主页失败: {ex.Message}"); 
         }
         InfoContent.DataContext = UserProfile;
         SignBoard.DataContext = UserProfile;
@@ -140,6 +157,7 @@ public sealed partial class ProfilePage : Page
         if (data.Count == 11) data.RemoveAt(10);
         Increment.HasMore = data.Count == Increment.PageSize;
         RecentTopics.AddRange(data);
+        ProfileEmptyState.Visibility = RecentTopics.Count == 0 ? Microsoft.UI.Xaml.Visibility.Visible : Microsoft.UI.Xaml.Visibility.Collapsed;
         return true;
     }
 
@@ -172,14 +190,22 @@ public sealed partial class ProfilePage : Page
     {
         var c = new ChatInfo { UserId = UserProfile.Id, Name = UserProfile.Name, PortraitUrl = UserProfile.PortraitUrl };
         var param = new ChatNavigationInfo { ChatUserInfo = c, HasTarget = true };
-        Frame.Navigate(typeof(MessagePage), param);
+        Frame.Navigate(typeof(ChatPage), param);
     }
 
-    private void Follow_Click(object sender, RoutedEventArgs e)
+    private async void Follow_Click(object sender, RoutedEventArgs e)
     {
-        var flag = UserProfile.IsFollowing;
-        var mode = flag ? "0" : "1";
-
+        Follow.IsEnabled = false;
+        var isFollowing = UserProfile.IsFollowing;
+        var url = ApiEndpoints.User.EditFollowee(UserProfile.Id);
+        var content = new StringContent("", Encoding.UTF8, "application/json");
+        var result = isFollowing ? await ApiService.Delete(url) : await ApiService.Put(url, content);
+        if (result.IsSuccess)
+        {
+            UserProfile.IsFollowing = !UserProfile.IsFollowing;
+            Flower.Play(FlowStatus.Success, isFollowing ? "已取消关注" : "已关注");
+        }
+        Follow.IsEnabled = true;
     }
 
     private async void RecentTopicRepeater_ElementPrepared(ItemsRepeater sender, ItemsRepeaterElementPreparedEventArgs args)
@@ -189,47 +215,31 @@ public sealed partial class ProfilePage : Page
 
     private async void UbbTextBlock_MediaClicked(object sender, MediaClickEventArgs e)
     {
+        var context = new LinkContext
+        {
+            Frame = Frame,
+            CurrentTopicId = null,
+            JumpToFloor = null,
+            ImageList = null,
+            Flower = Flower
+        };
+
         switch (e.MediaType)
         {
+            case MediaType.Image:
+                // UBB 图片:显式启动预览器
+                LinkNavigationService.ShowImageViewer(e.Source);
+                break;
             case MediaType.Link:
-                //await HandleLink(e.Source);
+                await LinkNavigationService.HandleLinkAsync(e.Source, context);
                 break;
             case MediaType.AtUser:
-                await SearchForUser(e.Source);
+                await LinkNavigationService.HandleAtUserAsync(e.Source, context);
                 break;
-            case MediaType.File or MediaType.Audio:
-                var fileRes = await Downloader.DownloadFileAsync(e.Source);
-                if (fileRes == null)
-                {
-                    Flower.Play(FlowStatus.Fail, "下载失败");
-                }
-                else
-                {
-                    Flower.Play(FlowStatus.Success, $"已下载到{fileRes}");
-                }
+            case MediaType.File or MediaType.Audio or MediaType.Video:
+                // UBB 文件/音视频:显式下载
+                await LinkNavigationService.DownloadFileAsync(e.Source, context);
                 break;
         }
-    }
-
-    private async Task SearchForUser(string userName)
-    {
-        var url = ApiEndpoints.User.SearchUserByName(userName);
-        var result = await ApiService.Fetch<UserInfo>(url);
-        if (!result.IsSuccess || result.Data == null)
-        {
-            //
-            return;
-        }
-        var user = result.Data;
-        if (user == null)
-        {
-            Flower.Play(FlowStatus.Fail, "未找到用户");
-        }
-        else
-        {
-            var info = new ProfileNavigationInfo { IsMe = userName == AppSettings.Current.UserName, UserId = user.Id };
-            Frame.Navigate(typeof(ProfilePage), info);
-        }
-
     }
 }

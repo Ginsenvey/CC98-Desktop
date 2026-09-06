@@ -24,12 +24,12 @@
             <Border Background="{ThemeResource AccentAAFillColorDefaultBrush}" Height="3" CornerRadius="1.5" />
         </StackPanel>
         <Button x:Name="CopyButton" Grid.Row="0" HorizontalAlignment="Right" Width="32" Height="32" Padding="0"
-                Margin="0,0,8,0">
+                Margin="0,0,8,0" Click="CopyButton_Click">
             <FontIcon Glyph="&#xE8C8;" FontSize="16" />
         </Button>
         <ScrollViewer Grid.Row="1" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
             <RichTextBlock x:Name="Viewer" FontFamily="Consolas" IsTextSelectionEnabled="True"
-                           FontSize="{Binding FontSize,ElementName=Control}" />
+                           FontSize="{x:Bind Control.FontSize,Mode=OneWay}" />
         </ScrollViewer>
     </Grid>
 </UserControl>

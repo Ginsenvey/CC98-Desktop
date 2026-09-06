@@ -21,7 +21,7 @@
                 <Expander.Header>
                     <StackPanel Orientation="Horizontal" Spacing="15">
                         <TextBlock Text="{x:Bind Name}" FontWeight="Bold" FontFamily="{StaticResource HarmonySansBold}"/>
-                        <TextBlock Text="{x:Bind SectionMasters}" Foreground="{StaticResource TextFillColorSecondaryBrush}" FontSize="12" VerticalAlignment="Center"/>
+                        <TextBlock Text="{x:Bind SectionMasters}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" FontSize="12" VerticalAlignment="Center"/>
                     </StackPanel>
                     
                 </Expander.Header>
@@ -43,7 +43,7 @@
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="*" />
             </Grid.RowDefinitions>
-            <TextBlock Grid.Row="0" Text="版面" FontWeight="Bold" FontSize="22" Margin="10" />
+            <TextBlock Grid.Row="0" Text="版面" FontWeight="Bold" FontSize="22" Margin="15,10,10,10" />
             <ScrollViewer Grid.Row="1" Padding="10">
                 <ItemsRepeater x:Name="SectionPresenter" ItemsSource="{x:Bind AllSections}"
                                ItemTemplate="{StaticResource SectionCase}">

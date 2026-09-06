@@ -47,6 +47,8 @@ public partial class UserInfo : ObservableObject
     [JsonIgnore] [ObservableProperty] public partial bool IsOthers { get; set; }
 
     [ObservableProperty] public partial bool IsFollowing { get; set; }
+    [ObservableProperty]public partial bool BrowsingHistoryEnabled { get; set; }
+
 
     public List<int> CustomBoards
     {

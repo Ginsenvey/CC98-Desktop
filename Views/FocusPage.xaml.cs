@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Threading.Tasks;
@@ -87,12 +87,13 @@ public sealed partial class FocusPage : Page
                 continue;
             }
 
-            var user = userInfoList?.First(x => x.Id == topic.UserId);
+            var user = userInfoList?.FirstOrDefault(x => x.Id == topic.UserId);
             if (user != null) topic.PortraitUrl = user.PortraitUrl;
         }
 
         data = [.. data.Where(x => !TopicIds.Contains(x.Id))];
         Topics.AddRange(data);
+        FocusEmptyState.Visibility = Topics.Count == 0 ? Microsoft.UI.Xaml.Visibility.Visible : Microsoft.UI.Xaml.Visibility.Collapsed;
         TopicIds.AddRange(data.Select(x => x.Id));
         return true;
     }

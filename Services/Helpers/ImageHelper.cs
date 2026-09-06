@@ -2,6 +2,7 @@
 using Microsoft.UI.Xaml.Media.Imaging;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Runtime.InteropServices.WindowsRuntime;
 using System.Text;
@@ -28,7 +29,7 @@ public class ImageHelper
         return await LoadFromBytesAsync(imageBytes!, lowRes, cancellationToken);
     }
 
-    public static async Task<BitmapSource> LoadLocalImage(string path, CancellationToken cancellationToken = default)
+    public static async Task<BitmapSource> LoadLocalImage(string path,bool lowRes = false, CancellationToken cancellationToken = default)
     {
         if (path.StartsWith("ms-appx:///") || path.StartsWith("ms-appdata:///"))
         {
@@ -39,32 +40,22 @@ public class ImageHelper
         {
             // 本地文件路径
             var file = await StorageFile.GetFileFromPathAsync(path);
-            using var stream = await file.OpenReadAsync();
-            return await LoadFromStreamAsync(stream.AsStream(), cancellationToken);
+            using IRandomAccessStream fileStream = await file.OpenAsync(FileAccessMode.Read);
+            BitmapImage bitmapImage = new();
+            if (lowRes)
+            {
+                bitmapImage.DecodePixelHeight = 64;
+                bitmapImage.DecodePixelWidth = 64;
+            }
+            await bitmapImage.SetSourceAsync(fileStream);
+            return bitmapImage;
         }
 
         // 尝试作为资源加载
         var uri = new Uri($"ms-appx:///Assets/{path}");
         return new BitmapImage(uri);
     }
-    /// <summary>
-    /// 从流中加载图像。
-    /// </summary>
-    /// <param name="stream"></param>
-    /// <param name="cancellationToken"></param>
-    /// <returns></returns>
-    public static async Task<BitmapSource> LoadFromStreamAsync(Stream stream,CancellationToken cancellationToken = default)
-    {
-        using var ras = new InMemoryRandomAccessStream();
-        await stream.CopyToAsync(ras.AsStream(), cancellationToken);
-        ras.Seek(0);
-
-        var bitmapImage = new BitmapImage();
-        await bitmapImage.SetSourceAsync(ras);
-        bitmapImage.DecodePixelHeight = 48;
-        bitmapImage.DecodePixelWidth = 48;
-        return bitmapImage;
-    }
+  
 
     public static async Task<BitmapSource> LoadFromBytesAsync(byte[] bytes, bool lowRes = false,CancellationToken cancellationToken = default)
     {

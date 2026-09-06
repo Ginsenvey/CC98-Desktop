@@ -63,7 +63,13 @@ public sealed partial class UbbTextBlock : Control
             nameof(ImageMaxWidth),
             typeof(double),
             typeof(UbbTextBlock),
-            new(400.0));
+            new(double.PositiveInfinity));
+    public static readonly DependencyProperty ImageMaxHeightProperty =
+        DependencyProperty.Register(
+            nameof(ImageMaxHeight),
+            typeof(double),
+            typeof(UbbTextBlock),
+            new(double.PositiveInfinity));
 
     public static readonly DependencyProperty HideImageProperty =
         DependencyProperty.Register(
@@ -113,6 +119,11 @@ public sealed partial class UbbTextBlock : Control
     {
         get => (double)GetValue(ImageMaxWidthProperty);
         set => SetValue(ImageMaxWidthProperty, value);
+    }
+    public double ImageMaxHeight
+    {
+        get => (double)GetValue(ImageMaxHeightProperty);
+        set => SetValue(ImageMaxHeightProperty, value);
     }
 
     public bool HideImage
@@ -246,6 +257,7 @@ public sealed partial class UbbTextBlock : Control
             Context.Properties["QuoteBackground"] =
                 QuoteBackground ?? new SolidColorBrush(Color.FromArgb(20, 0, 120, 215));
             Context.Properties["ImageMaxWidth"] = ImageMaxWidth;
+            Context.Properties["ImageMaxHeight"] = ImageMaxHeight;
 
             // 渲染文档
             Context.RenderNode(_document.Root);
@@ -263,20 +275,6 @@ public sealed partial class UbbTextBlock : Control
             };
             _rootPanel.Children.Add(errorText);
         }
-    }
-
-    public string GetSelectedText()
-    {
-        if (Context != null) return Context.GetSelectedTextExternal();
-        return string.Empty;
-    }
-
-    /// <summary>
-    ///     全选所有文本
-    /// </summary>
-    public void SelectAll()
-    {
-        Context?.SelectAllExternal();
     }
 
     #endregion

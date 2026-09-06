@@ -43,10 +43,6 @@ public class ApiService(IHttpClientFactory httpClientFactory)
         {
             return ApiResponse<T>.Fail($"网络错误: {ex.Message}");
         }
-        catch (JsonException ex)
-        {
-            return ApiResponse<T>.Fail($"数据解析错误: {ex.Message}");
-        }
         catch (TaskCanceledException)
         {
             return ApiResponse<T>.Fail("请求超时");
@@ -75,10 +71,6 @@ public class ApiService(IHttpClientFactory httpClientFactory)
         {
             return ApiResponse.Fail($"网络错误: {ex.Message}");
         }
-        catch (JsonException ex)
-        {
-            return ApiResponse.Fail($"数据解析错误: {ex.Message}");
-        }
         catch (TaskCanceledException)
         {
             return ApiResponse.Fail("请求超时");
@@ -105,10 +97,6 @@ public class ApiService(IHttpClientFactory httpClientFactory)
         catch (HttpRequestException ex)
         {
             return ApiResponse.Fail($"网络错误: {ex.Message}");
-        }
-        catch (JsonException ex)
-        {
-            return ApiResponse.Fail($"数据解析错误: {ex.Message}");
         }
         catch (TaskCanceledException)
         {
@@ -139,10 +127,6 @@ public class ApiService(IHttpClientFactory httpClientFactory)
         {
             return ApiResponse<T>.Fail($"网络错误: {ex.Message}");
         }
-        catch (JsonException ex)
-        {
-            return ApiResponse<T>.Fail($"数据解析错误: {ex.Message}");
-        }
         catch (TaskCanceledException)
         {
             return ApiResponse<T>.Fail("请求超时");
@@ -164,11 +148,21 @@ public class ApiService(IHttpClientFactory httpClientFactory)
                 var errorContent = await res.Content.ReadAsStringAsync(cancellationToken);
                 return ApiResponse<T>.Fail(errorContent??"响应失败", (int)res.StatusCode);
             }
+            var contentLength = res.Content.Headers.ContentLength;
+            if (contentLength == 0 || contentLength == null)
+            {
+                // 内容为空,此时ReadFromJsonAsync会报错：The input does not contain any JSON tokens
+                //  使用额外的装箱来传入string.Empty,因为string是引用类型，default(string)是null,而不是string.Empty
+                return typeof(T) == typeof(string)
+                    ? ApiResponse<T>.Success((T)(object)string.Empty,"正文为空")
+                    : ApiResponse<T>.Success(default!,"正文为空");
+            }
             var obj = await res.Content.ReadFromJsonAsync(typeof(T), CC98JsonContext.Default, cancellationToken);
             return ApiResponse<T>.Success((T?)obj!);
         }
         catch (JsonException ex)
         {
+            Debug.WriteLine("Kernel", $"数据解析错误: {ex.Message}");
             return ApiResponse<T>.Fail(ex.Message, (int)res.StatusCode);
         }
     }

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using CC98.Services.Helpers;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -68,8 +68,12 @@ public sealed partial class SmartImage : UserControl
         if (d is SmartImage control) control.LoadImage();
     }
 
+    // 加载代次:Source 快速变化/控件复用时,旧请求完成不得覆盖新请求的结果
+    private int _loadGeneration;
+
     private async void LoadImage()
     {
+        var generation = ++_loadGeneration;
         if (Source == null)
         {
             InnerImage.Source = null;
@@ -84,23 +88,31 @@ public sealed partial class SmartImage : UserControl
             switch (Source)
             {
                 case string url when UrlEx.IsWebUrl(url):
-                    InnerImage.Source = await ImageHelper.LoadWebImageAsync(url);
-                    ImageSource = InnerImage.Source;
+                    var webBitmap = await ImageHelper.LoadWebImageAsync(url);
+                    if (generation != _loadGeneration) return;
+                    InnerImage.Source = webBitmap;
+                    ImageSource = webBitmap;
                     break;
 
                 case string path when UrlEx.IsLocalPath(path):
-                    InnerImage.Source = await ImageHelper.LoadLocalImage(path);
-                    ImageSource = InnerImage.Source;
+                    var localBitmap = await ImageHelper.LoadLocalImage(path);
+                    if (generation != _loadGeneration) return;
+                    InnerImage.Source = localBitmap;
+                    ImageSource = localBitmap;
                     break;
 
                 case Uri uri when uri.IsWebUri:
-                    InnerImage.Source = await ImageHelper.LoadWebImageAsync(uri.ToString());
-                    ImageSource = InnerImage.Source;
+                    var uriWebBitmap = await ImageHelper.LoadWebImageAsync(uri.ToString());
+                    if (generation != _loadGeneration) return;
+                    InnerImage.Source = uriWebBitmap;
+                    ImageSource = uriWebBitmap;
                     break;
 
                 case Uri uri when uri.IsLocalUri:
-                    InnerImage.Source = await ImageHelper.LoadLocalImage(uri.ToString());
-                    ImageSource = InnerImage.Source;
+                    var uriLocalBitmap = await ImageHelper.LoadLocalImage(uri.ToString());
+                    if (generation != _loadGeneration) return;
+                    InnerImage.Source = uriLocalBitmap;
+                    ImageSource = uriLocalBitmap;
                     break;
 
                 case ImageSource imageSource:
@@ -111,12 +123,15 @@ public sealed partial class SmartImage : UserControl
         }
         catch
         {
-            InnerImage.Source = null;
+            if (generation == _loadGeneration) InnerImage.Source = null;
         }
         finally
         {
-            LoadingIndicator.IsActive = false;
-            InnerImage.Opacity = 1;
+            if (generation == _loadGeneration)
+            {
+                LoadingIndicator.IsActive = false;
+                InnerImage.Opacity = 1;
+            }
         }
     }
 

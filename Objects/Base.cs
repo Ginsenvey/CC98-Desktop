@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Net;
 using System.Threading.Tasks;
@@ -74,20 +74,13 @@ public class ApiResponse
 /// <summary>
 ///     增量更新模型
 /// </summary>
-public class Increment
+public class Increment(int pageSize = 10, int currentPage = 0, bool hasMore = false)
 {
-    public int CurrentPage;
+    public int CurrentPage = currentPage;
 
     //应假定没有更多项，由返回项项数决定是否还有更多
-    public bool HasMore;
-    public int PageSize;
-
-    public Increment(int pageSize = 10, int currentPage = 0, bool hasMore = false)
-    {
-        PageSize = pageSize;
-        CurrentPage = currentPage;
-        HasMore = hasMore;
-    }
+    public bool HasMore = hasMore;
+    public int PageSize = pageSize;
 
     public int StartIndex => CurrentPage * PageSize;
 
@@ -99,29 +92,61 @@ public class Increment
 
     public async Task LoadMore(int currentIndex, Func<Task<bool>> load)
     {
+        // 防重入:增量加载期间忽略重复触发(ItemsRepeater 回收/重复 Prepare 会重复调用)
+        if (_loading) return;
         if (HasMore && (currentIndex + 1) % PageSize == 0)
         {
+            _loading = true;
             CurrentPage++;
-            var success = await load();
-            //如果没有成功，则回退页码，等待下一次尝试
-            if (!success) CurrentPage--;
+            try
+            {
+                var success = await load();
+                //如果没有成功，则回退页码，等待下一次尝试
+                if (!success) CurrentPage--;
+            }
+            finally
+            {
+                _loading = false;
+            }
         }
     }
 
     //强制加载下一页
     public async Task LoadNextPage(Func<Task<bool>> load)
     {
+        if (_loading) return;
+        _loading = true;
+        if(!HasMore) return;
         CurrentPage++;
-        var success = await load();
-        //如果没有成功，则回退页码，等待下一次尝试
-        if (!success) CurrentPage--;
+        try
+        {
+            var success = await load();
+            //如果没有成功，则回退页码，等待下一次尝试
+            if (!success) CurrentPage--;
+        }
+        finally
+        {
+            _loading = false;
+        }
     }
 
     public async Task LoadLastPage(Func<Task<bool>> load)
     {
+        if (_loading) return;
+        _loading = true;
+        if (CurrentPage <= 0) return;
         CurrentPage--;
-        var success = await load();
-        //如果没有成功，则回退页码，等待下一次尝试
-        if (!success) CurrentPage++;
+        try
+        {
+            var success = await load();
+            //如果没有成功，则回退页码，等待下一次尝试
+            if (!success) CurrentPage++;
+        }
+        finally
+        {
+            _loading = false;
+        }
     }
+
+    private bool _loading;
 }

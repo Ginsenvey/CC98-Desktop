@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 
 <Page
     x:Class="CC98.Views.MessagePage"
@@ -8,6 +8,7 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     mc:Ignorable="d"
     xmlns:obj="using:CC98.Objects"
+    xmlns:empty="using:CC98.Controls.EmptyState"
     xmlns:infoFlower="using:CC98.Controls.InfoFlower"
     Background="{ThemeResource DesktopAcrylicTransparentBrush}">
 
@@ -34,7 +35,7 @@
             </HyperlinkButton>
         </DataTemplate>
         <DataTemplate x:Key="ReplyOrAtNoticeTemplate" x:DataType="obj:Notice">
-            <HyperlinkButton HorizontalContentAlignment="Stretch" HorizontalAlignment="Stretch" CornerRadius="0"
+            <HyperlinkButton HorizontalContentAlignment="Stretch" HorizontalAlignment="Stretch" CornerRadius="0" BorderThickness="0,0.5,0,0.5" BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}"
                          x:Name="NoticeCard" Click="NoticeCard_Click" DataContext="{x:Bind}">
                 <Grid Padding="3" RowSpacing="8">
                     <Grid.ColumnDefinitions>
@@ -72,12 +73,14 @@
         </SelectorBar>
         <TextBlock x:Name="MsgCount" Grid.Row="0" HorizontalAlignment="Right" VerticalAlignment="Center"
                    Margin="0,0,3,0" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="0条未读信息" />
-        <Grid Grid.Row="1" CornerRadius="6" BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}"
+        <Grid Grid.Row="1" CornerRadius="6" BorderBrush="{ThemeResource AcrylicCardBrush}"
               BorderThickness="1">
             <ScrollViewer x:Name="NoticeViewer">
                 <ItemsRepeater x:Name="NoticeRepeater" ItemsSource="{x:Bind Notices}"
                    ItemTemplate="{StaticResource Selector}" ElementPrepared="NoticeRepeater_ElementPrepared" />
             </ScrollViewer>
+            <empty:EmptyStateControl x:Name="MessageEmptyState" HorizontalAlignment="Center" VerticalAlignment="Center"
+                                     Visibility="Collapsed" IconGlyph="&#xEC4F;" Title="暂无消息" Subtitle="暂无通知消息" />
             <infoFlower:InfoFlower x:Name="Flower" HorizontalAlignment="Center" VerticalAlignment="Bottom" />
         </Grid>
     </Grid>

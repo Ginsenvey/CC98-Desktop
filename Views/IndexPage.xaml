@@ -11,6 +11,8 @@
     xmlns:ic="using:FluentIcons.WinUI"
     xmlns:obj="using:CC98.Objects"
     xmlns:tool="using:CommunityToolkit.WinUI.Controls"
+    xmlns:dev="using:DevWinUI"
+    xmlns:sv="using:CC98.Services"
     xmlns:infoFlower="using:CC98.Controls.InfoFlower"
 
     Background="{ThemeResource CardGradient1Brush}">
@@ -106,7 +108,10 @@
                 </ItemsRepeater.Layout>
             </ItemsRepeater>
         </ScrollViewer>
-        <CommandBar x:Name="IndexAction" Grid.Row="2" Background="{ThemeResource CardGradient1Brush}">
+        <CommandBar x:Name="IndexAction" Grid.Row="2"  dev:MaterialAttach.UseAcrylicBackground="True">
+            <CommandBar.Background>
+                <ImageBrush ImageSource="{x:Bind sv:AppSettings.Current.ThemePicture,Mode=OneWay}" Stretch="UniformToFill" Opacity="{ThemeResource AdaptiveOpacity}"></ImageBrush>
+            </CommandBar.Background>
             <AppBarButton Label="刷新" Tag="refresh" Click="IndexAction_Click" ToolTipService.ToolTip="刷新">
                 <AppBarButton.Icon>
                     <FontIcon Glyph="&#xE72C;" />
@@ -134,6 +139,7 @@
             </AppBarButton>
         </CommandBar>
         <TeachingTip x:Name="ForumStat" IsLightDismissEnabled="True" Target="{x:Bind IndexAction}"
+                     dev:MaterialAttach.UseAcrylicBackground="True"
                      TailVisibility="Collapsed" PreferredPlacement="Top" Unloaded="ForumStat_Unloaded">
             <TeachingTip.HeroContent>
                 <TextBlock x:Name="welcome" Text="" Margin="10,10,10,0" HorizontalAlignment="Center"

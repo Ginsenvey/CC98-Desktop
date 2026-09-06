@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Text.Json.Serialization;
 using CommunityToolkit.Mvvm.ComponentModel;
 
@@ -21,7 +21,7 @@ public partial class TopicInfo : ObservableObject
 
     public string Title
     {
-        get => field ?? string.Empty;
+        get => field?.Trim() ?? string.Empty;
         set => SetProperty(ref field, value);
     }
 
@@ -53,4 +53,16 @@ public partial class TopicInfo : ObservableObject
         get => field ?? string.Empty;
         set => SetProperty(ref field, value);
     }
+
+    /// <summary>搜索页填充:当前搜索关键词,用于标题高亮绑定。</summary>
+    [JsonIgnore]
+    public string SearchKeyword
+    {
+        get => field ?? string.Empty;
+        set => SetProperty(ref field, value);
+    }
+
+    /// <summary>头像占位:用户名首字母。</summary>
+    [JsonIgnore]
+    public string Initial => string.IsNullOrWhiteSpace(UserName) ? "?" : UserName[..1].ToUpperInvariant();
 }

@@ -29,4 +29,8 @@ public partial class Friend : ObservableObject
     [JsonPropertyName("portraitUrl")]
     [ObservableProperty]
     public partial string PortraitUrl { get; set; }
+    //为True表示是正在关注的用户，为False表示是粉丝
+    [JsonIgnore]
+    [ObservableProperty]
+    public partial bool IsFollowee { get; set; } 
 }

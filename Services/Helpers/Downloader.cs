@@ -55,12 +55,12 @@ public class Downloader
     /// </summary>
     /// <param name="fileName">文件名（可选，不指定则从URL自动提取）</param>
     /// <returns>下载成功返回文件路径，失败返回null</returns>
-    public static async Task<string?> DownloadFileAsync(string src, string fileName = null)
+    public static async Task<string?> DownloadFileAsync(string sourceUrl, string? folderPath=null,string? fileName = null)
     {
         try
         {
             // 获取用户的下载文件夹
-            var downloadsFolder = await GetDownloadsFolderAsync();
+            var downloadsFolder = folderPath != null ? await StorageFolder.GetFolderFromPathAsync(folderPath) : await GetDownloadsFolderAsync();
             if (downloadsFolder == null)
             {
                 Debug.WriteLine("无法访问下载文件夹");
@@ -68,7 +68,7 @@ public class Downloader
             }
 
             // 如果没有指定文件名，从URL中提取
-            if (string.IsNullOrEmpty(fileName)) fileName = ExtractFileNameFromUrl(src);
+            if (string.IsNullOrEmpty(fileName)) fileName = ExtractFileNameFromUrl(sourceUrl);
 
             // 处理文件名冲突
             fileName = await GetUniqueFileNameAsync(downloadsFolder, fileName);
@@ -76,7 +76,7 @@ public class Downloader
             // 创建文件
             var file = await downloadsFolder.CreateFileAsync(fileName, CreationCollisionOption.ReplaceExisting);
             var apiService = App.Current.GetService<ApiService>();
-            var imageBytes = await apiService.GetBytesAsync(src);
+            var imageBytes = await apiService.GetBytesAsync(sourceUrl);
             if (imageBytes == null) return null;
             await using var stream = await file.OpenStreamForWriteAsync();
             await stream.WriteAsync(imageBytes);

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Net.Http;
@@ -9,12 +9,17 @@ using Windows.System;
 using CC98.Kernel;
 using CC98.Objects;
 using CC98.Services;
-using Microsoft.UI.Xaml;
-using Microsoft.UI.Xaml.Controls;
 using CC98.Services.Extensions;
 using CC98.Services.Helpers;
+using CC98.Controls.Primitives;
+using CC98.Controls.UbbTextBlock.Common.Events;
 using DevWinUI;
+using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Navigation;
+using System.Web;
+using System.Linq;
+using System.Net.WebSockets;
 
 namespace CC98.Views;
 
@@ -24,6 +29,7 @@ namespace CC98.Views;
 public sealed partial class BoardPage
 {
     public ObservableCollection<SimpleTopicInfo> Topics = [];
+    public ObservableCollection<SearchTopicInfo> searchResultTopics= [];
     
     public ApiService ApiService = App.Current.GetService<ApiService>();
 
@@ -31,11 +37,13 @@ public sealed partial class BoardPage
     public bool IsBest { get; } = false;
 
     public int BoardId { get; set; } = 0;
+    private string searchKeyword = string.Empty;
 
     public BoardData BoardData { get; } = new();
 
     public BoardTopicFilterType FilterType { get; set; } = BoardTopicFilterType.Latest;
     public Increment Increment { get; } = new(20);
+    public Increment searchIncrement=new(20);
 
 
     public BoardPage()
@@ -49,8 +57,8 @@ public sealed partial class BoardPage
         var args = e.TryGetParameter<int>();
         BoardId = args;
         BoardSymbol.Symbol = BoardIconHelper.GetSymbol(BoardId, "");
-        await GetData();
-        await LoadTopics();
+        // 版面信息与主题列表互不依赖,并行加载
+        await Task.WhenAll(GetData(), LoadTopics());
     }
 
 
@@ -90,6 +98,7 @@ public sealed partial class BoardPage
             var bests = result.Data?.Topics;
             Increment.HasMore = bests.Count == Increment.PageSize;
             Topics.AddRange(bests);
+            BoardEmptyState.Visibility = Topics.Count == 0 ? Microsoft.UI.Xaml.Visibility.Visible : Microsoft.UI.Xaml.Visibility.Collapsed;
             return true;
         }
 
@@ -103,6 +112,7 @@ public sealed partial class BoardPage
         var data = topicResult.Data;
         Increment.HasMore = data.Count == Increment.PageSize;
         Topics.AddRange(data);
+        BoardEmptyState.Visibility = Topics.Count == 0 ? Microsoft.UI.Xaml.Visibility.Visible : Microsoft.UI.Xaml.Visibility.Collapsed;
         return true;
     }
 
@@ -136,20 +146,14 @@ public sealed partial class BoardPage
             case "refresh":
                 Increment.Clear();
                 Topics.Clear();
-                await GetData();
-                await LoadTopics();
+                await RefreshAsync();
                 Flower.Play(FlowStatus.Success, "刷新成功");
                 break;
             case "pin":
                 await Pin();
                 break;
             case "draft":
-                var param = new SketchNavigationInfo
-                {
-                    EditorMode = EditorMode.DraftNewTopic,
-                    BoardId = BoardId
-                };
-                Frame.Navigate(typeof(SketchPage), param);
+                Flower.Play(FlowStatus.Info, "暂不支持发主题");
                 break;
             case "vote":
                 var param2 = new SketchNavigationInfo
@@ -158,6 +162,11 @@ public sealed partial class BoardPage
                     BoardId = BoardId
                 };
                 Frame.Navigate(typeof(SketchPage), param2);
+                break;
+
+            case "search":
+                SearchView.IsPaneOpen = true;
+                BoardSearchBox.Focus(FocusState.Programmatic);
                 break;
         }
     }
@@ -188,9 +197,10 @@ public sealed partial class BoardPage
 
     private async void TypeSelectorBar_SelectionChanged(SelectorBar sender, SelectorBarSelectionChangedEventArgs args)
     {
-        //在不恰当的时间触发此事件会重复加载两次帖子。
+        // 防重入:加载期间忽略重复触发,避免"重复加载两次帖子"的问题
+        if (_isLoading) return;
         var item = sender as SelectorBar;
-        if (item?.SelectedItem.Tag is not string tag) return;
+        if (item?.SelectedItem?.Tag is not string tag) return;
         Increment.Clear();
         Topics.Clear();
         //切换时，清除已有列表，重置增量更新，修改当前筛选类型
@@ -200,6 +210,119 @@ public sealed partial class BoardPage
             "top" => BoardTopicFilterType.Top,
             _ => BoardTopicFilterType.Best,
         };
-        await LoadTopics();
+        await RefreshAsync();
     }
+
+    // 版面数据加载防重入标志
+    private bool _isLoading;
+
+    /// <summary>
+    /// 版面信息与主题列表并行加载,并防止并发触发。
+    /// </summary>
+    private async Task RefreshAsync()
+    {
+        if (_isLoading) return;
+        _isLoading = true;
+        try
+        {
+            await Task.WhenAll(GetData(), LoadTopics());
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+
+    /// <summary>
+    /// 版面大字报(BigPaper)中的链接点击:按媒体类型显式处理。
+    /// </summary>
+    private async void Banner_MediaClicked(object sender, MediaClickEventArgs e)
+    {
+        var context = new LinkContext
+        {
+            Frame = Frame,
+            CurrentTopicId = null,
+            JumpToFloor = null,
+            ImageList = null,
+            Flower = Flower
+        };
+
+        switch (e.MediaType)
+        {
+            case MediaType.Image:
+                // UBB 图片:显式启动预览器
+                LinkNavigationService.ShowImageViewer(e.Source);
+                break;
+            case MediaType.Link:
+                await LinkNavigationService.HandleLinkAsync(e.Source, context);
+                break;
+            case MediaType.AtUser:
+                await LinkNavigationService.HandleAtUserAsync(e.Source, context);
+                break;
+            case MediaType.File or MediaType.Audio or MediaType.Video:
+                // UBB 文件/音视频:显式下载
+                await LinkNavigationService.DownloadFileAsync(e.Source, context);
+                break;
+        }
+    }
+
+ 
+    private async void BoardSearchButton_Click(object sender, RoutedEventArgs e)
+    {
+        if (!string.IsNullOrEmpty(searchKeyword))
+        {
+            searchIncrement.Clear();
+            await Search();
+        }
+    }
+    private async Task<bool> Search()
+    {
+        SearchProgressRing.IsActive = true;
+        searchResultTopics.Clear();
+        var searchUrl = ApiEndpoints.Topic.SearchTopicInBoard(BoardId, HttpUtility.UrlEncode(searchKeyword), searchIncrement.StartIndex);
+        var result = await ApiService.Fetch<List<SearchTopicInfo>>(searchUrl);
+        if(!result.IsSuccess||result.Data==null)
+        {
+            Flower.Play(FlowStatus.Fail, result?.Message ?? "搜索失败");
+            return false;
+        }
+        var data = result.Data;
+        searchIncrement.HasMore = data.Count == searchIncrement.PageSize;
+        foreach (var topic in data)
+        {
+            if (topic.IsAnonymous)
+            {
+                topic.UserName = $"匿名{topic.UserName.ToUpper()}";
+            }
+            topic.Keyword = searchKeyword; 
+        }
+        searchResultTopics.AddRange(data);
+        SearchProgressRing.IsActive = false;
+        return true;
+    }
+
+    private async void NextPageButton_Click(object sender, RoutedEventArgs e)
+    {
+        await searchIncrement.LoadNextPage(Search);
+    }
+
+    private async void PreviousPageButton_Click(object sender, RoutedEventArgs e)
+    {
+        await searchIncrement.LoadLastPage(Search);
+    }
+
+    private void BoardSearchBox_TextChanged(object sender, TextChangedEventArgs e)
+    {
+        searchKeyword=BoardSearchBox.Text;
+    }
+
+    private void SearchResultCard_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is Button button && button.Tag is int topicId)
+        {
+            Frame.Navigate(typeof(TopicPage), new TopicNavigationInfo { TopicId = topicId });
+        }
+    }
+
+    
 }

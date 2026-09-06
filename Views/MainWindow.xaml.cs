@@ -1,15 +1,18 @@
-﻿using CC98.Kernel;
+using CC98.Kernel;
 using CC98.Kernel.Authorize;
 using CC98.Kernel.Network;
 using CC98.Objects;
 using CC98.Services;
 using CC98.Services.Extensions;
 using CC98.Services.Helpers;
+using ColorCode.Compilation.Languages;
+using CommunityToolkit.WinUI.Converters;
 using CSharpMath;
 using DevWinUI;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI;
 using Microsoft.UI.Composition.SystemBackdrops;
+using Microsoft.UI.Dispatching;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -17,6 +20,7 @@ using Microsoft.UI.Xaml.Controls.Primitives;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Xaml.Media.Animation;
+using Microsoft.UI.Xaml.Media.Imaging;
 using Microsoft.UI.Xaml.Navigation;
 using Microsoft.Windows.AppLifecycle;
 using Microsoft.Windows.AppNotifications;
@@ -29,8 +33,12 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Text.Json;
 using System.Threading.Tasks;
+using System.Xml.Linq;
 using Windows.Storage;
+using static CC98.Kernel.ApiEndpoints;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 using Symbol = FluentIcons.Common.Symbol;
 
 // To learn more about WinUI, the WinUI project structure,
@@ -48,7 +56,8 @@ public sealed partial class MainWindow : Window
         (typeof(SketchPage), typeof(TopicPage)),
         (typeof(TopicPage), typeof(MessagePage)),
         (typeof(TopicPage), typeof(FocusPage)),
-        (typeof(ProfilePage), typeof(FollowPage))
+        (typeof(ProfilePage), typeof(FollowPage)),
+        (typeof(TopicPage), typeof(SearchPage))
     ];
 
     public ObservableCollection<string> Collections = [];
@@ -67,12 +76,23 @@ public sealed partial class MainWindow : Window
     public MainWindow()
     {
         InitializeComponent();
+        // 初始化复用的头像缩放动画(XAML 解析完成后才能绑定 Target)
+        Storyboard.SetTarget(_portScaleX, PortScaleTransform);
+        Storyboard.SetTargetProperty(_portScaleX, "ScaleX");
+        Storyboard.SetTarget(_portScaleY, PortScaleTransform);
+        Storyboard.SetTargetProperty(_portScaleY, "ScaleY");
+        _portScaleStoryboard.Children.Add(_portScaleX);
+        _portScaleStoryboard.Children.Add(_portScaleY);
         App.ThemeChanged += OnAppThemeChanged;
         //设置窗口状态
         SetWindowState();
         //加载自定义设置
         LoadSettings();
-        PrepareContent();
+        //同步部分:填充导航菜单并导航到初始页面。均无网络请求,不阻塞窗口显示。
+        LoadMenuItem();
+        LoadIndex();
+        //网络相关的初始化延迟到窗口显示(首帧渲染)之后再执行,避免阻塞主窗口显示。
+        //RootGrid_Loaded 已在 XAML 中挂接。
     }
     
 
@@ -108,43 +128,131 @@ public sealed partial class MainWindow : Window
             2 => ElementTheme.Dark,
             _ => ElementTheme.Default
         };
-
-
-        if (string.IsNullOrEmpty(AppSettings.Current.ThemePicture)) return;
-        var themesPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Assets", "Themes");
-        var files = Directory.GetFiles(themesPath, "*.jpg", SearchOption.AllDirectories);
-        var file = files[0];
-        //加载到FlipView
-        AppSettings.Current.IsVpnEnabled = false;
     }
 
-    private async void PrepareContent()
+    /// <summary>
+    /// 窗口首帧渲染完成后触发,在此启动网络相关的初始化。
+    /// </summary>
+    private void RootGrid_Loaded(object sender, RoutedEventArgs e)
     {
-        LoadMenuItem();
-        await LoadIndex();
-        await GetFocusBoards();
-        await RefreshMessage();
-        await LoadPortrait();
-        await GetFavorites();
+        RootGrid.Loaded -= RootGrid_Loaded;
+        //低优先级排队,确保首帧渲染完成后再发起网络请求
+        DispatcherQueue.TryEnqueue(DispatcherQueuePriority.Low, async () => await LoadStartupDataAsync());
+    }
+
+    /// <summary>
+    /// 启动阶段需要联网的任务。互不依赖,并行执行以缩短整体耗时。
+    /// VPN 检查独立于核心数据:其网络慢或需用户交互时,不阻塞头像等资源加载。
+    /// </summary>
+    private async Task LoadStartupDataAsync()
+    {
+        // 定时器与网络加载无依赖,立即启动
         InitializeTimer();
+        // VPN 检查 fire-and-forget:异常在内部捕获,失败/缓慢不影响其他任务
+        _ = CheckVpnStatusSafelyAsync();
+        await Task.WhenAll(
+            RefreshMessage(),
+            LoadUserProfile(),
+            GetFavorites());
     }
-
-    private async Task LoadPortrait()
+    /// <summary>
+    /// VPN 启动检查的安全包装:任何异常都只记录,不传播到调用链。
+    /// </summary>
+    private async Task CheckVpnStatusSafelyAsync()
     {
-        var portraitUrl = AppSettings.Current.Portrait;
-        var userId = AppSettings.Current.UserId;
-
-        if (string.IsNullOrEmpty(portraitUrl) || userId == 0)
+        try
         {
-            var profileUrl = ApiEndpoints.User.UserProfile(true);
-            var profileResult = await ApiService.Fetch<UserInfo>(profileUrl);
-            if (!profileResult.IsSuccess) return;
-            var data = profileResult.Data;
-            AppSettings.Current.Portrait = data.PortraitUrl;
-            AppSettings.Current.UserId = data.Id;
+            await CheckVpnStatus(isStartup: true);
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"VPN 启动检查异常: {ex.Message}");
         }
     }
-   
+
+    private async Task LoadUserProfile()
+    {
+        try
+        {
+            //尝试获取新头像地址。获取失败时，尝试加载本地缓存。加载缓存也失败，使用AppSettings.Current.Portrait。
+            var profileUrl = ApiEndpoints.User.UserProfile(true);
+            var profileResult = await ApiService.Fetch<UserInfo>(profileUrl);
+            var customBoards = SerializationHelper.TryDeserialize<List<int>>(AppSettings.Current.CustomBoards);
+            if (!profileResult.IsSuccess || profileResult.Data == null)
+            {
+                Flower.Play(FlowStatus.Fail, $"更新用户信息失败: {profileResult.Message}");
+                if(customBoards!=null) await LoadFocusBoards(customBoards);
+                return;
+            }
+            else
+            {
+                var data = profileResult.Data;
+                await RefreshPortraitIfNeeded(data.PortraitUrl);
+                var refreshTask = RefreshPortraitIfNeeded(data.PortraitUrl);
+                var loadBoardsTask = LoadFocusBoardsIfNeeded(data, customBoards);
+                await Task.WhenAll(refreshTask, loadBoardsTask);
+               
+            }
+            
+        }
+        catch(Exception ex)
+        {
+            Debug.WriteLine($"加载头像失败: {ex.Message}");
+            Flower.Play(FlowStatus.Fail, $"更新头像出错: {ex.Message}");
+        }  
+    }
+    private async Task RefreshPortraitIfNeeded(string url)
+    {
+        if (AppSettings.Current.PortraitUrl == url) return;
+        AppSettings.Current.PortraitUrl = url;
+        //进行下载缓存,并使用缓存图片
+        var portraitPath = await Downloader.DownloadFileAsync(url, ApplicationData.Current.LocalCacheFolder.Path);
+        if (portraitPath == null) return;
+        AppSettings.Current.LocalPortraitUrl = portraitPath;
+    }
+    private async Task LoadFocusBoardsIfNeeded(UserInfo data, List<int>? customBoards)
+    {
+        if (customBoards == null || !customBoards.ToHashSet().SetEquals(data.CustomBoards.ToHashSet()))
+        {
+            AppSettings.Current.CustomBoards = SerializationHelper.TrySerialize(data.CustomBoards);
+            await LoadFocusBoards(data.CustomBoards);
+        }
+        else
+        {
+            await LoadFocusBoards(customBoards);
+        }
+    }
+    private async Task LoadFocusBoards(IEnumerable<int> boardIds)
+    {
+        var sections = await BoardCacheManager.Instance.GetSectionDataAsync();
+        if (sections == null)
+        {
+            //
+            Flower.Play(FlowStatus.Fail, "版面信息加载失败");
+            return;
+        }
+        //构建查找字典
+        var boardDict = sections
+            .SelectMany(section => section.Boards)
+            .ToDictionary(board => board.Id);
+
+        var boardItems = boardIds.Select(id =>
+        {
+            boardDict.TryGetValue(id, out var board);
+            string name = board?.Name ?? "未知版面";
+
+            return new NavigationItem
+            {
+                Tag = id.ToString(),
+                Name = name,
+                IconSymbol = BoardIconHelper.GetSymbol(id, name),
+                IsEditable = true
+            };
+        });
+
+        MenuItems.AddRange(boardItems);
+    }
+
     private void OnNavigationItemAdded(NavigationItem item)
     {
         //检查导航栏中是否已经存在相同Tag的项，如果存在则不添加
@@ -166,6 +274,7 @@ public sealed partial class MainWindow : Window
         MenuItems.Add(new NavigationItem { Name = "动态", IconSymbol = Symbol.Home, Tag = "Focus", IsEditable = false });
         MenuItems.Add(new NavigationItem
             { Name = "收藏集", IconSymbol = Symbol.StarLineHorizontal3, Tag = "Favorite", IsEditable = false });
+        MenuItems.Add(new NavigationItem { Name = "历史", IconSymbol = Symbol.AnimalPawPrint, Tag = "History", IsEditable = false });
         MenuItems.Add(pinnedGroup);
         FooterMenuItems.Add(new NavigationItem
             { Name = "消息", IconSymbol = Symbol.MailRead, Tag = "Message", IsEditable = false });
@@ -175,88 +284,31 @@ public sealed partial class MainWindow : Window
 
     private async void PinOff_Click(object sender, RoutedEventArgs e)
     {
-        if ((sender as MenuFlyoutItem)?.Tag is not int boardId) return;
-        var url = ApiEndpoints.Board.EditFocusBoards(boardId);
+        if ((sender as MenuFlyoutItem)?.Tag is not string boardIdStr) return;
+        var url = ApiEndpoints.Board.EditFocusBoards(int.Parse(boardIdStr));
         var result = await ApiService.Delete(url);
         if (!result.IsSuccess)
         {
             //
+            Flower.Play(FlowStatus.Fail, $"取消关注失败: {result.Message}");
             return;
         }
-        var customBoards = AppSettings.Current.CustomBoards;
-        if (customBoards != "")
-        {
-            var boardInfo = SerializationHelper.TryDeserialize<Dictionary<int, string>>(customBoards);
-            boardInfo?.Remove(boardId);
-        }
-
-        var item = MenuItems.OfType<NavigationItem>().First(g => g.Tag == boardId.ToString());
-        MenuItems.Remove(item);
-    }
-
-    private async Task GetFocusBoards() //同步客户端和在线关注版块的信息
-    {
         var customBoards = AppSettings.Current.CustomBoards;
         if (string.IsNullOrEmpty(customBoards))
         {
-            Memory = [];
-        }
-        else
-        {
-            Memory = SerializationHelper.TryDeserialize<Dictionary<int, string>>(customBoards) ?? [];
-        }
-        //初始化本地缓存
-        var profileUrl = ApiEndpoints.User.UserProfile(true, 0);
-        var profileResult = await ApiService.Fetch<UserInfo>(profileUrl);
-        if (!profileResult.IsSuccess || profileResult.Data == null)
-        {
-            MenuItems.AddRange(Memory.Select(board => new NavigationItem
-            {
-                Name = board.Value,
-                IconSymbol = BoardIconHelper.GetSymbol(board.Key, board.Value),
-                Tag = board.Key.ToString(),
-                IsEditable = true
-            }));
-            
-            return;
+            var boardInfo = SerializationHelper.TryDeserialize<Dictionary<int, string>>(customBoards);
+            boardInfo?.Remove(int.Parse(boardIdStr));
         }
 
-        var data = profileResult.Data;
-        var boards = data.CustomBoards;
-        foreach (var board in boards) await AddBoards(board);
+        var item = MenuItems.OfType<NavigationItem>().FirstOrDefault(g => g.Tag == boardIdStr);
+        if (item != null) MenuItems.Remove(item);
     }
 
-    private async Task AddBoards(int boardId)
-    {
-        //此方法将检测本地是否已存储板块，没有则添加。无论本地是否已经存在，都会加载到导航栏。
-        //先判断本地存储是否有此板块
-        if (!Memory.ContainsKey(boardId))
-        {
-            var boardDataUrl = ApiEndpoints.Board.BoardInfo(boardId);
-            var boardDataResult = await ApiService.Fetch<BoardData>(boardDataUrl);
-            if (!boardDataResult.IsSuccess || boardDataResult.Data == null) return;
-            var data = boardDataResult.Data;
-            Memory.Add(boardId, data.Name);
-            MenuItems.Add(new NavigationItem
-            {
-                Name = data.Name, IconSymbol = BoardIconHelper.GetSymbol(boardId, data.Name), Tag = boardId.ToString(),
-                IsEditable = true
-            });
-            var boardjsontext = SerializationHelper.TrySerialize(Memory);
-            AppSettings.Current.CustomBoards = boardjsontext;
-        }
-        else
-        {
-            //如果本地存储有此板块，则直接添加
-            MenuItems.Add(new NavigationItem
-            {
-                Name = Memory[boardId], IconSymbol = BoardIconHelper.GetSymbol(boardId, Memory[boardId]),
-                Tag = boardId.ToString(), IsEditable = true
-            });
-        }
-    }
+    
 
-    private async Task LoadIndex()
+    
+
+    private void LoadIndex()
     {
         var index = AppSettings.Current.TitlePage;
         switch (index)
@@ -270,7 +322,6 @@ public sealed partial class MainWindow : Window
                 break;
             default:
                 ContentFrame.Navigate(typeof(IndexPage));
-                await FetchIndex();
                 break;
         }
       
@@ -284,8 +335,8 @@ public sealed partial class MainWindow : Window
         };
         SyncTimer.Tick += async (s, e) => 
         {
-            await FetchIndex();
-            await RefreshMessage();
+            // 刷新首页缓存与刷新未读数互不依赖,并行执行
+            await Task.WhenAll(FetchIndex(), RefreshMessage());
         };
         SyncTimer.Start();
     }
@@ -392,6 +443,9 @@ public sealed partial class MainWindow : Window
             case "Focus":
                 ContentFrame.Navigate(typeof(FocusPage));
                 break;
+            case "History":
+                ContentFrame.Navigate(typeof(HistoryPage));
+                break;
             default:
                 if (tag.All(char.IsDigit))
                 {
@@ -434,31 +488,26 @@ public sealed partial class MainWindow : Window
         AnimateButton(PortScaleTransform, 1, 1);
     }
 
+    // 复用的头像缩放动画:避免每次指针事件都 new Storyboard/DoubleAnimation
+    private readonly Storyboard _portScaleStoryboard = new();
+    private readonly DoubleAnimation _portScaleX = new()
+    {
+        Duration = TimeSpan.FromSeconds(0.2),
+        EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
+    };
+    private readonly DoubleAnimation _portScaleY = new()
+    {
+        Duration = TimeSpan.FromSeconds(0.2),
+        EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
+    };
+
     private void AnimateButton(ScaleTransform transform, double x, double y)
     {
-        var storyboard = new Storyboard();
-
-        var animationX = new DoubleAnimation
-        {
-            To = x,
-            Duration = TimeSpan.FromSeconds(0.2),
-            EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
-        };
-        Storyboard.SetTarget(animationX, transform);
-        Storyboard.SetTargetProperty(animationX, "ScaleX");
-
-        var animationY = new DoubleAnimation
-        {
-            To = y,
-            Duration = TimeSpan.FromSeconds(0.2),
-            EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
-        };
-        Storyboard.SetTarget(animationY, transform);
-        Storyboard.SetTargetProperty(animationY, "ScaleY");
-
-        storyboard.Children.Add(animationX);
-        storyboard.Children.Add(animationY);
-        storyboard.Begin();
+        // 复用同一个 Storyboard,避免高频指针事件下持续分配动画对象
+        _portScaleStoryboard.Stop();
+        _portScaleX.To = x;
+        _portScaleY.To = y;
+        _portScaleStoryboard.Begin();
     }
 
     private void Me_PointerPressed(object sender, PointerRoutedEventArgs e)
@@ -492,26 +541,14 @@ public sealed partial class MainWindow : Window
         GlobalService.ShouldReplaceNavigationArgs = e.NavigationMode == NavigationMode.Back && _rules.Contains((fromPage, toPage));
     }
 
-    private async void VpnButton_Click(object sender, RoutedEventArgs e)
-    {
-        if (VpnButton.IsChecked==false)
-        {
-            Flower.Play(FlowStatus.Info, "VPN已断开");
-        }
-        else
-        {
-            VpnButton.IsChecked = false;
-            await CheckVpnStatus();
-        }
-
-    }
+    
     private async void VPNConfigSave_Click(object sender, RoutedEventArgs e)
     {
         var userName = VPNUsername.Text;
         var password = VPNPassword.Password;
         if (string.IsNullOrEmpty(userName) || string.IsNullOrEmpty(password))
         {
-            ErrorBox.Text= "请输入完整的VPN凭据";
+            Flower.Play(FlowStatus.Fail, "用户名或密码不能为空");
             return;
         }
         var result= await LoginAsync(userName, password);
@@ -519,14 +556,13 @@ public sealed partial class MainWindow : Window
         {
             PasswordManager.SavePassword(userName, "VpnUserName");
             PasswordManager.SavePassword(password, "VpnPassWord");
-            VpnButton.IsChecked=true;
             AppSettings.Current.IsVpnEnabled=true;
             VPNConfigDialog.Hide();
             Flower.Play(FlowStatus.Success, "已保存凭据并启用VPN");
         }
         else
         {
-            ErrorBox.Text = "登录失败";
+            Flower.Play(FlowStatus.Fail, "VPN登录失败，请检查用户名和密码");
         }
     }
     private void VPNConfigCancel_Click(object sender, RoutedEventArgs e)
@@ -534,10 +570,7 @@ public sealed partial class MainWindow : Window
         AppSettings.Current.IsVpnEnabled = false;
         VPNConfigDialog.Hide();
     }
-    private void VPNConfigDialog_Closed(ContentDialog sender, ContentDialogClosedEventArgs args)
-    {
-        ErrorBox.Text = "";
-    }
+
     /// <summary>
     /// 只负责在VPN登录时调用VPN服务的登录方法，并处理返回结果。不会直接更改UI状态。
     /// </summary>
@@ -561,24 +594,43 @@ public sealed partial class MainWindow : Window
                 Debug.WriteLine("登录成功");
                 return true;
             }
-            else
+            if (res.Status == VpnLoginStatus.AccoutInvalid || res.Status == VpnLoginStatus.CaptchaFail)
             {
-                if (res.Status == VpnLoginStatus.NeedCaptcha)
+                //显示图形验证码和验证码框
+                if (VPNPassword.IsLoaded && res.Status == VpnLoginStatus.AccoutInvalid)
                 {
-                    //验证码
-                    Debug.WriteLine("需要验证码");
-                    return false;
+                    VPNPassword.Password = "";
+                    VPNPassword.PlaceholderText = "输入正确凭据";
                 }
-                else if (res.Status == VpnLoginStatus.NeedConfirm)
+                Debug.WriteLine("显示验证码输入框");
+                if (CaptchaBox.IsLoaded)
                 {
-                    //确认
-                    Debug.WriteLine("正在进行确认");
-                    return await VpnConfirmAsync();
+                    CaptchaBox.Visibility = Visibility.Visible;
+                    if (res.Status == VpnLoginStatus.CaptchaFail)
+                    {
+                        CaptchaBox.Text = "";
+                        CaptchaBox.PlaceholderText = "验证码错误";
+                    }
                 }
-                Debug.WriteLine($"状态：{res.Status}");
+                var captchaUrl = $"https://webvpn.zju.edu.cn/captcha/{vpnService.ParameterGroup.LastCaptchaId}.png?reload={DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()}";
+                Debug.WriteLine("显示验证码图片");
+                if (CaptchaImage.IsLoaded)
+                {
+                    CaptchaImage.Source = new BitmapImage(new Uri(captchaUrl));
+                    CaptchaImage.Visibility = Visibility.Visible;
+                }
+                Debug.WriteLine("需要验证码");
                 return false;
             }
-          
+            else if (res.Status == VpnLoginStatus.NeedConfirm)
+            {
+                //确认
+                Debug.WriteLine("正在进行确认");
+                return await VpnConfirmAsync();
+            }
+            Debug.WriteLine($"状态：{res.Status}");
+            return false;
+
         }
         catch (Exception ex)
         {
@@ -590,26 +642,54 @@ public sealed partial class MainWindow : Window
     private async Task<bool> VpnConfirmAsync()
     {
         var vpnService = App.Current.GetService<IVpnService>();
-        var confirmResult = await vpnService.ConfirmAsync();
+        VpnLoginResult? confirmResult;
+        try
+        {
+            confirmResult = await vpnService.ConfirmAsync();
+        }
+        catch (Exception ex)
+        {
+            // 网络异常:避免异常逃逸出 async void 调用链导致进程崩溃
+            Debug.WriteLine($"VPN确认失败: {ex.Message}");
+            Flower.Play(FlowStatus.Fail, "VPN确认失败，请重试");
+            AppSettings.Current.IsVpnEnabled = false;
+            VPNConfigButton.Visibility = Visibility.Visible;
+            DisconnectButton.Visibility = Visibility.Collapsed;
+            return false;
+        }
         if (confirmResult == null || !confirmResult.Success)
         {
             //可以肯定此时账户密码均正确
             //需要重试
             Flower.Play(FlowStatus.Fail, "VPN确认顶号失败，请重试");
             AppSettings.Current.IsVpnEnabled = false;
+            VPNConfigButton.Visibility = Visibility.Visible;
+            DisconnectButton.Visibility = Visibility.Collapsed;
             return false;
         }
         else
         {
-            VpnButton.IsChecked = true;
             Flower.Play(FlowStatus.Success, "VPN连接成功");
             return true;
         }
     }
-    private async Task CheckVpnStatus()
+    /// <summary>
+    /// 如果是启动时调用，那么，如果VPN暂未启用，就不做任何操作。
+    /// </summary>
+    /// <param name="isStartup"></param>
+    /// <returns></returns>
+    private async Task CheckVpnStatus(bool isStartup = false)
     {
+        // 启动时:未启用 VPN 或凭据缺失都静默跳过——不弹配置对话框,不发起网络请求,
+        // 仅保证按钮状态正确。用户点击 VPN 按钮时才进入完整检查/配置流程。
+        if (isStartup && (!AppSettings.Current.IsVpnEnabled || !GlobalService.IsVpnConfigured))
+        {
+            VPNConfigButton.Visibility = Visibility.Visible;
+            DisconnectButton.Visibility = Visibility.Collapsed;
+            return;
+        }
         //没有配置过VPN，或者配置过但是凭据不完整，则需要登录
-        var isVpnUsable = PasswordManager.PasswordExists("VpnUserName") && PasswordManager.PasswordExists("VpnPassWord");
+        var isVpnUsable = GlobalService.IsVpnConfigured;
         if (!isVpnUsable)
         {
             VPNConfigDialog.XamlRoot = RootGrid.XamlRoot;
@@ -626,17 +706,18 @@ public sealed partial class MainWindow : Window
         else
         {
             //尝试使用Cookie
-            AppSettings.Current.IsVpnEnabled = true;
             var mirrorService = App.Current.GetService<MirrorService>();
-            var networkStatus = await mirrorService.CheckNetworkAsync();
+            var networkStatus = await mirrorService.CheckNetworkAsync(useVpn: true);
             //如果有效，通知连接成功
             if (networkStatus == NetworkStatus.InCampus)
             {
                 //
-                VpnButton.IsChecked= true;
+                AppSettings.Current.IsVpnEnabled = true;
+                VPNConfigButton.Visibility = Visibility.Collapsed;
+                DisconnectButton.Visibility = Visibility.Visible;
                 Flower.Play(FlowStatus.Success, "VPN连接成功");
             }
-            else if (networkStatus == NetworkStatus.NotInCampus)
+            else if (networkStatus == NetworkStatus.VpnCookieExpired)
             {
                 await ReloginVpn();
             }
@@ -644,6 +725,8 @@ public sealed partial class MainWindow : Window
             {
                 //其他错误，提示用户
                 AppSettings.Current.IsVpnEnabled = false;
+                VPNConfigButton.Visibility = Visibility.Visible;
+                DisconnectButton.Visibility = Visibility.Collapsed;
                 Flower.Play(FlowStatus.Fail, $"VPN连接失败{networkStatus}");
             }
         }
@@ -657,14 +740,31 @@ public sealed partial class MainWindow : Window
         var password = PasswordManager.RetrievePassword("VpnPassWord");
         if(string.IsNullOrEmpty(userName) || string.IsNullOrEmpty(password))
         {
-            throw new ArgumentNullException("VPNUserCredentials", "VPN用户名或密码为空，无法重新登录。");
+            Flower.Play(FlowStatus.Fail, "VPN凭据不完整，请重新配置");
+            return;
         }
         var vpnService = App.Current.GetService<IVpnService>();
-        var res = await vpnService.LoginAsync(userName, password);
+        VpnLoginResult? res;
+        try
+        {
+            res = await vpnService.LoginAsync(userName, password);
+        }
+        catch (Exception ex)
+        {
+            // 网络异常:避免异常逃逸出 async void 调用链导致进程崩溃
+            Debug.WriteLine($"VPN重新登录失败: {ex.Message}");
+            AppSettings.Current.IsVpnEnabled = false;
+            VPNConfigButton.Visibility = Visibility.Visible;
+            DisconnectButton.Visibility = Visibility.Collapsed;
+            Flower.Play(FlowStatus.Fail, "VPN连接失败，请检查网络后重试");
+            return;
+        }
         if (res == null)
         {
             //请用户重试
             AppSettings.Current.IsVpnEnabled=false;
+            VPNConfigButton.Visibility = Visibility.Visible;
+            DisconnectButton.Visibility = Visibility.Collapsed;
             Flower.Play(FlowStatus.Fail, "VPN连接失败，请检查网络后重试");
             return;
         }
@@ -672,23 +772,77 @@ public sealed partial class MainWindow : Window
         if (res.Status == VpnLoginStatus.Success)
         {
             //通知连接成功
-            VpnButton.IsChecked = true;
+            AppSettings.Current.IsVpnEnabled = true;
+            VPNConfigButton.Visibility = Visibility.Collapsed;
+            DisconnectButton.Visibility = Visibility.Visible;
             Flower.Play(FlowStatus.Success, "VPN连接成功");
             return;
         }
         if (res.Status == VpnLoginStatus.NeedConfirm)
         {
-            await VpnConfirmAsync();
+            var success=await VpnConfirmAsync();
+            AppSettings.Current.IsVpnEnabled = true;
+            VPNConfigButton.Visibility = success ? Visibility.Collapsed : Visibility.Visible;
+            DisconnectButton.Visibility = success ? Visibility.Visible : Visibility.Collapsed;
+            Flower.Play(FlowStatus.Success, "VPN连接成功");
+            return;
         }
-        if (res.Status == VpnLoginStatus.NeedCaptcha || res.Status == VpnLoginStatus.Fail)
+        if (res.Status == VpnLoginStatus.AccoutInvalid || res.Status == VpnLoginStatus.Fail)
         {
             //密码有问题，清理旧密码，要求重新登录
             PasswordManager.RemovePassword("VpnUserName");
             PasswordManager.RemovePassword("VpnPassWord");
+            VPNConfigButton.Visibility = Visibility.Visible;
+            DisconnectButton.Visibility = Visibility.Collapsed;
             AppSettings.Current.IsVpnEnabled=false;
             Flower.Play(FlowStatus.Fail, "VPN套餐过期或密码已错误，请重新登录");
         }
     }
 
-    
+    private async void VPNConfig_Click(object sender, RoutedEventArgs e)
+    {
+        VPNConfigButton.Visibility=Visibility.Collapsed;
+        await CheckVpnStatus();
+    }
+
+    private async void VpnPanel_Opening(object sender, object e)
+    {
+        string statusText;
+        var mirrorService = App.Current.GetService<MirrorService>();
+        if (AppSettings.Current.IsVpnEnabled)
+        {
+            statusText = "正在检查网络状态...";
+            var res = await mirrorService.CheckNetworkAsync(true);
+            statusText = MirrorService.FriendlyStatus(res);
+            VPNConfigButton.Visibility = (res == NetworkStatus.InCampus) ? Visibility.Collapsed : Visibility.Visible;
+            DisconnectButton.Visibility = (res == NetworkStatus.InCampus) ? Visibility.Visible : Visibility.Collapsed; ;
+        }
+        else
+        {
+            statusText = "VPN未启用";
+            VPNConfigButton.Visibility = Visibility.Visible;  
+        }
+        VpnStatusText.Text = statusText;
+    }
+
+    private void DisconnectButton_Click(object sender, RoutedEventArgs e)
+    {
+        AppSettings.Current.IsVpnEnabled = false;
+        Flower.Play(FlowStatus.Success, "VPN连接已断开");
+        DisconnectButton.Visibility = Visibility.Collapsed;
+        VPNConfigButton.Visibility = Visibility.Visible;
+    }
+
+    private void CaptchaBox_TextChanged(object sender, TextChangedEventArgs e)
+    {
+        var vpnService = App.Current.GetService<IVpnService>();
+        vpnService.ParameterGroup.CaptchaValue = CaptchaBox.Text;
+    }
+
+    private void VPNConfigDialog_Closed(ContentDialog sender, ContentDialogClosedEventArgs args)
+    {
+        VPNPassword.Password = "";
+        CaptchaBox.Text = "";
+        CaptchaImage.Source = null;
+    }
 }

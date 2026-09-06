@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Net;
@@ -38,23 +38,26 @@ public sealed partial class VpnService(IHttpClientFactory httpClientFactory, ICo
 
     public string Domain { get; set; } = "webvpn.zju.edu.cn";
 
-    public string CaptchaValue { get; set; } = "";
-    private string LastRandCode { get; set; } = "";
-    public string LastCaptchaId { get; set; } = "";
+    public VpnParameterGroup ParameterGroup { get; set; } = new VpnParameterGroup();
 
 
     public async Task<VpnLoginResult?> LoginAsync(string userName, string password, CancellationToken cancellationToken = default)
     {
-        if (CaptchaValue == "") await UpdateCodeCoreAsync(cancellationToken);
-        var csrf = LastRandCode;
-        var captchaId = LastCaptchaId;
+        //对于无需验证码的情况，获取全新的随机码和验证码ID
+        //对于需要验证码的情况，使用原来的随机码和验证码ID，验证码值由外部传入
+        if (ParameterGroup.CaptchaValue == "")
+        {
+            await UpdateCodeCoreAsync(cancellationToken);
+        }
+        var csrf = ParameterGroup.LastRandCode;
+        var captchaId = ParameterGroup.LastCaptchaId;
         var encryptedPassword = EncryptString(password, PasswordEncryptKey);
         var formData = new Dictionary<string, string>
         {
             { "_csrf", csrf },
             { "auth_type", "local" },
             { "sms_code", "" },
-            { "captcha", CaptchaValue },
+            { "captcha", ParameterGroup.CaptchaValue },
             { "needCaptcha", "false" },
             { "captcha_id", captchaId },
             { "username", userName },
@@ -63,7 +66,10 @@ public sealed partial class VpnService(IHttpClientFactory httpClientFactory, ICo
         var content = new FormUrlEncodedContent(formData);
         var loginRes = await HttpClient.PostAsync(LoginPswUrl, content, cancellationToken);
         if (loginRes.StatusCode != HttpStatusCode.OK)
+        {
             throw new InvalidOperationException($"网络请求失败:{loginRes.StatusCode}");
+        }
+           
         var result = await loginRes.Content.ReadFromJsonAsync(CC98JsonContext.Default.VpnLoginResult, cancellationToken);
         if (result == null) throw new InvalidOperationException("登录结果为空");
         if (result.Success && result.Status != VpnLoginStatus.NeedConfirm)
@@ -86,8 +92,8 @@ public sealed partial class VpnService(IHttpClientFactory httpClientFactory, ICo
         var html = await res.Content.ReadAsStringAsync(cancellationToken);
         var (csrfToken, captcha, _) = GetRandCode(html);
         if (csrfToken == "" || captcha == "") throw new InvalidOperationException("获取登录参数失败");
-        LastRandCode = csrfToken;
-        LastCaptchaId = captcha;
+        ParameterGroup.LastRandCode = csrfToken;
+        ParameterGroup.LastCaptchaId = captcha;
     }
 
 
@@ -96,6 +102,11 @@ public sealed partial class VpnService(IHttpClientFactory httpClientFactory, ICo
     {
         var res = await HttpClient.PostAsync(ConfirmUrl, null, cancellationToken);
         var result = await res.Content.ReadFromJsonAsync(CC98JsonContext.Default.VpnLoginResult, cancellationToken);
+        if (result == null) throw new InvalidOperationException("登录结果为空");
+        if (result.Success)
+        {
+            cookieService.SaveCookieHeader($"https://{Domain}");
+        }
         return result;
     }
 
@@ -139,8 +150,10 @@ public sealed partial class VpnService(IHttpClientFactory httpClientFactory, ICo
         var path = qm >= 0 ? suffix[..qm] : suffix;
         var query = qm >= 0 ? suffix[qm..] : "";
         var pathSb = new StringBuilder("/");
+        // 注意:此处 path 来自 uri.PathAndQuery,段已被 Uri 规范化编码为 %XX 形式。
+        // 不能再做 Uri.EscapeDataString,否则已编码的 % 会被二次转义为 %25,导致中文路径参数错误。
         foreach (var seg in path.Split('/', StringSplitOptions.RemoveEmptyEntries))
-            pathSb.Append(Uri.EscapeDataString(seg)).Append('/');
+            pathSb.Append(seg).Append('/');
         if (pathSb.Length > 1) pathSb.Length--; // 去掉末尾多余 /
         var newPathAndQuery = pathSb + query;
 

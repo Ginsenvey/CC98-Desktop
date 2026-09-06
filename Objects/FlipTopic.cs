@@ -6,7 +6,7 @@ public partial class FlipTopic : ObservableObject
 {
     public string Title
     {
-        get => field ?? string.Empty;
+        get => field?.Trim() ?? string.Empty;
         set => SetProperty(ref field, value);
     }
 

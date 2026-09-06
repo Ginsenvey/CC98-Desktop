@@ -1,6 +1,7 @@
-﻿using CC98.Kernel.Network;
+using CC98.Kernel.Network;
 using System;
 using System.Collections.Generic;
+using System.Text.Json;
 using System.Text.Json.Serialization;
 
 namespace CC98.Objects;
@@ -10,6 +11,7 @@ namespace CC98.Objects;
 [JsonSerializable(typeof(bool))]
 [JsonSerializable(typeof(int))]
 [JsonSerializable(typeof(string))]
+[JsonSerializable(typeof(JsonElement))]
 [JsonSerializable(typeof(Dictionary<string, object>))]
 [JsonSerializable(typeof(Favorites))]
 [JsonSerializable(typeof(FavoritesInfo))]
@@ -20,6 +22,7 @@ namespace CC98.Objects;
 [JsonSerializable(typeof(ReactionState))]
 [JsonSerializable(typeof(UserInfo))]
 [JsonSerializable(typeof(SimpleTopicInfo))]
+[JsonSerializable(typeof(SearchTopicInfo))]
 [JsonSerializable(typeof(Reply))]
 [JsonSerializable(typeof(MediaContent))]
 [JsonSerializable(typeof(ChatMessage))]
@@ -45,9 +48,14 @@ namespace CC98.Objects;
 [JsonSerializable(typeof(Rating))]
 [JsonSerializable(typeof(RatingReason))]
 [JsonSerializable(typeof(WealthTransferMessage))]
+[JsonSerializable(typeof(SendReplyRequest))]
+[JsonSerializable(typeof(SendReplyToPostRequest))]
+[JsonSerializable(typeof(EditPostRequest))]
+[JsonSerializable(typeof(CreateTopicRequest))]
 [JsonSerializable(typeof(VpnLoginResult))]
 [JsonSerializable(typeof(BrowsingRecord))]
 [JsonSerializable(typeof(PrivateMessage))]
+[JsonSerializable(typeof(HighlightInfo))]
 [JsonSerializable(typeof(Dictionary<int,string>))]
 // 常见 ApiResponse 泛型特化
 [JsonSerializable(typeof(List<int>))]
@@ -58,6 +66,7 @@ namespace CC98.Objects;
 [JsonSerializable(typeof(List<ChatInfo>))]
 [JsonSerializable(typeof(List<Friend>))]
 [JsonSerializable(typeof(List<SimpleTopicInfo>))]
+[JsonSerializable(typeof(List<SearchTopicInfo>))]
 [JsonSerializable(typeof(List<IndexTopic>))]
 [JsonSerializable(typeof(List<FlipTopic>))]
 [JsonSerializable(typeof(List<BoardInfo>))]
@@ -74,4 +83,5 @@ namespace CC98.Objects;
 internal partial class CC98JsonContext : JsonSerializerContext
 {
 }
+
 

@@ -58,6 +58,8 @@ public static class ApiEndpoints
     /// </summary>
     public static class User
     {
+        public static string BrowseHistory(int start) => $"{Base}/me/browsing-record?from={start}&size=11";
+        public static string EnableBrowseHistory(bool enabled) => $"{Base}/me/browsing-history?enabled={enabled.ToString().ToLower()}";
         public static string SendPrivateMessage => $"{Base}/message";
 
         /// <summary>
@@ -67,7 +69,10 @@ public static class ApiEndpoints
         {
             return isMe ? $"{Base}/me" : $"{Base}/user/{userId}";
         }
-
+        /// <summary>
+        ///  Post:""
+        /// </summary>
+        /// <returns>在成功时返回财富值数字，400失败时返回字符串has_signed_in_today</returns>
         public static string SignIn()
         {
             return $"{Base}/me/signin";
@@ -147,8 +152,8 @@ public static class ApiEndpoints
         {
             return $"{Base}/notification/{typeName}?from={start}&size=10";
         }
-
-        public static string EditFriends(int userId)
+        //取关和关注
+        public static string EditFollowee(int userId)
         {
             return $"{Base}/me/followee/{userId}";
         }
@@ -158,15 +163,7 @@ public static class ApiEndpoints
             return $"{Base}/me/transfer-wealth";
         }
 
-        public static string EnableBrowseHistory(bool value)
-        {
-            return $"{Base}/me/browsing-history?enabled={value.ToString().ToLower()}";
-        }
-
-        public static string BrowseHistory(int start)
-        {
-            return $"{Base}/me/browsing-record?from={start}&size=11";
-        }
+        
     }
 
     public static class Post
@@ -242,6 +239,18 @@ public static class ApiEndpoints
 
     public static class Topic
     {
+        /// <summary>
+        /// 中文关键词使用Util.UrlEncode编码
+        /// </summary>
+        /// <param name="boardId"></param>
+        /// <param name="key"></param>
+        /// <param name="start"></param>
+        /// <returns></returns>
+        public static string SearchTopicInBoard(int boardId, string key, int start)
+        {
+            return $"{Base}/topic/search/board/{boardId}?keyword={key}&from={start}&size=20";
+        }
+
         public static string RecentTopic(bool isMe, int userId, int start)
         {
             return isMe
@@ -306,6 +315,10 @@ public static class ApiEndpoints
         public static string SendReply(int topicId)
         {
             return $"{Base}/topic/{topicId}/post";
+        }
+        public static string DeleteFavoriteTopic(int topicId)
+        {
+            return $"{Base}/me/favorite/{topicId}";
         }
     }
 

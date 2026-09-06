@@ -11,7 +11,6 @@ public class TopicNavigationInfo
     public bool IsJumpingMode { get; set; } = false;
     public int TargetFloor { get; set; } = 0;
     public int TopicId { get; set; }
-
     public bool GoToLatest { get; set; } = false;
 }
 

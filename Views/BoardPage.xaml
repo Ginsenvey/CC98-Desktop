@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 
 <Page
     x:Class="CC98.Views.BoardPage"
@@ -10,110 +10,192 @@
     xmlns:lab="using:CommunityToolkit.Labs.WinUI"
     xmlns:ic="using:FluentIcons.WinUI"
     xmlns:obj="using:CC98.Objects"
+    xmlns:tool="using:CommunityToolkit.WinUI.Controls"
     xmlns:ubbTextBlock="using:CC98.Controls.UbbTextBlock"
     xmlns:infoFlower="using:CC98.Controls.InfoFlower"
     xmlns:sv="using:CC98.Services"
+    xmlns:picture="using:CC98.Controls.Picture"
+    xmlns:dev="using:DevWinUI"
+    xmlns:helper="using:CC98.Services.Helpers"
+    xmlns:empty="using:CC98.Controls.EmptyState"
     Background="{ThemeResource DesktopAcrylicTransparentBrush}">
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="*" />
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
-        <ScrollViewer Grid.Row="0" Padding="15,0,15,0">
-            <StackPanel>
-                <Grid>
+        <SplitView x:Name="SearchView" PanePlacement="Right" DisplayMode="Overlay" PaneBackground="Transparent" OpenPaneLength="380">
+            <SplitView.Pane>
+                <Grid BorderBrush="{ThemeResource AcrylicCardBrush}" Background="{ThemeResource AcrylicInAppFillColorDefaultBrush}" BorderThickness="2" Margin="0,10,20,10" CornerRadius="6">
                     <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto" MinHeight="45" />
-                        <RowDefinition Height="Auto" MinHeight="45" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*" />
                     </Grid.RowDefinitions>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="60" />
-                        <ColumnDefinition Width="2*" />
-                        <ColumnDefinition Width="3*" />
-                        <ColumnDefinition Width="3*" />
-                    </Grid.ColumnDefinitions>
-                    <ic:SymbolIcon x:Name="BoardSymbol" Symbol="Chat" Grid.Row="0" Grid.RowSpan="2" FontSize="22"
-                                   Grid.Column="0" Foreground="{ThemeResource AccentAAFillColorDefaultBrush}" />
-                    <TextBlock Grid.Row="0" Grid.RowSpan="2" Grid.Column="1" Text="{x:Bind BoardData.Name,Mode=OneWay}"
-                               FontSize="20" FontWeight="Bold"
-                               Foreground="{ThemeResource AccentAAFillColorDefaultBrush}" VerticalAlignment="Center" />
-                    <TextBlock Grid.Row="0" Grid.Column="2" Text="{x:Bind BoardData.Description,Mode=OneWay}"
-                               Foreground="{ThemeResource TextFillColorSecondaryBrush}" VerticalAlignment="Center"
-                               TextWrapping="Wrap" Margin="0,10,10,0" />
-                    <TextBlock Grid.Row="1" Grid.Column="2" Text="{x:Bind BoardData.BoardMastersString,Mode=OneWay}"
-                               Foreground="{ThemeResource TextFillColorSecondaryBrush}" VerticalAlignment="Bottom"
-                               Margin="0,0,10,10" />
-                    <lab:TokenView Grid.Column="3" Grid.Row="0" Grid.RowSpan="2">
-                        <lab:TokenItem>
-                            <TextBlock Text="{x:Bind BoardData.TopicCountString,Mode=OneWay}" />
-                        </lab:TokenItem>
-                        <lab:TokenItem IsSelected="True">
-                            <TextBlock Text="{x:Bind BoardData.TodayCountString,Mode=OneWay}" />
-                        </lab:TokenItem>
-                    </lab:TokenView>
+                    <Grid Grid.Row="0">
+                        <TextBlock HorizontalAlignment="Left" VerticalAlignment="Center" Text="版内搜索" Margin="10" Foreground="LightSeaGreen"></TextBlock>
+                        <StackPanel HorizontalAlignment="Right" Orientation="Horizontal" Spacing="4" Margin="10,0,10,0">
+                            <Button Padding="7" ToolTipService.ToolTip="上一页"   x:Name="PreviousPageButton" Click="PreviousPageButton_Click">
+                                <ic:SymbolIcon Symbol="ChevronLeft" FontSize="12"></ic:SymbolIcon>
+                            </Button>
+                            <Button Padding="7" ToolTipService.ToolTip="下一页" x:Name="NextPageButton" Click="NextPageButton_Click">
+                                <ic:SymbolIcon Symbol="ChevronRight" FontSize="12"></ic:SymbolIcon>
+                            </Button>
+                        </StackPanel>
+                    </Grid>
+                   
+                    <dev:TextBox Grid.Row="1" Margin="10,0,10,0" x:Name="BoardSearchBox" TextChanged="BoardSearchBox_TextChanged">
+                        <Button Padding="0" x:Name="BoardSearchButton" Click="BoardSearchButton_Click">
+                            <ic:SymbolIcon Symbol="Search" FontSize="14"></ic:SymbolIcon>
+                        </Button>
+                    </dev:TextBox>
+                    <ScrollViewer Grid.Row="2" Padding="10">
+                        <ItemsRepeater x:Name="ResultRepeater" ItemsSource="{x:Bind searchResultTopics,Mode=OneWay}">
+                            <ItemsRepeater.ItemTemplate>
+                                <DataTemplate x:DataType="obj:SearchTopicInfo">
+                                    <Button x:Name="SearchResultCard" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}" BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1,0.5,1,0.5" CornerRadius="0" ToolTipService.ToolTip="{x:Bind Title}" Padding="8" Tag="{x:Bind Id,Mode=OneWay}" Click="SearchResultCard_Click" >
+                                        <Grid>
+                                            <Grid.RowDefinitions>
+                                                <RowDefinition Height="Auto" />
+                                                <RowDefinition Height="Auto" />
+                                                <RowDefinition Height="Auto"/>
+                                            </Grid.RowDefinitions>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto"></ColumnDefinition>
+                                                <ColumnDefinition Width="*"></ColumnDefinition>
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Grid.Row="0" Grid.Column="0" Grid.RowSpan="2" Text="{x:Bind UserName,Mode=OneWay}" FontFamily="{ThemeResource HarmonySansBold}" VerticalAlignment="Center" Foreground="{ThemeResource SoftPink}" FontSize="13" Margin="8"/>
+                                            <TextBlock Grid.Row="0" Grid.Column="1" Text="{x:Bind HitAndReplyCount,Mode=OneWay}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" FontSize="12" HorizontalAlignment="Right"/>
+                                            <TextBlock Grid.Row="1" Grid.Column="1" Text="{x:Bind Time,Mode=OneWay}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" FontSize="12" HorizontalAlignment="Right"/>
+                                            <Border  Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2" Padding="6" CornerRadius="4" Background="{ThemeResource MarkdownBackgroundBrush}"  Margin="0,4,0,0">
+                                                <TextBlock  x:Name="TitleText" FontSize="13" Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                                            TextWrapping="NoWrap" TextTrimming="CharacterEllipsis"
+                                                            helper:TextBlockExtensions.HighlightedText="{x:Bind Title}"
+                                                            helper:TextBlockExtensions.Keywords="{x:Bind Keyword}"
+                                                            helper:TextBlockExtensions.HighlightColor="#C4ABD4"/>
+                                            </Border>
+                                            
+                                        </Grid>
+                                    </Button>
+                                </DataTemplate>
+                            </ItemsRepeater.ItemTemplate>
+                        </ItemsRepeater>
+                    </ScrollViewer>
+                    <ProgressRing x:Name="SearchProgressRing" Grid.Row="0" Grid.RowSpan="3" HorizontalAlignment="Center" VerticalAlignment="Center" IsActive="False"/>
                 </Grid>
+            </SplitView.Pane>
+            <SplitView.Content>
+                <ScrollViewer Grid.Row="0" Padding="15,0,15,0">
+                    <StackPanel>
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" MinHeight="45" />
+                                <RowDefinition Height="Auto" MinHeight="45" />
+                            </Grid.RowDefinitions>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="60" />
+                                <ColumnDefinition Width="2*" />
+                                <ColumnDefinition Width="3*" />
+                                <ColumnDefinition Width="3*" />
+                            </Grid.ColumnDefinitions>
+                            <ic:SymbolIcon x:Name="BoardSymbol" Symbol="Chat" Grid.Row="0" Grid.RowSpan="2" FontSize="22"
+                           Grid.Column="0" Foreground="{ThemeResource AccentAAFillColorDefaultBrush}" />
+                            <TextBlock Grid.Row="0" Grid.RowSpan="2" Grid.Column="1" Text="{x:Bind BoardData.Name,Mode=OneWay}"
+                       FontSize="20" FontWeight="Bold"
+                       Foreground="{ThemeResource AccentAAFillColorDefaultBrush}" VerticalAlignment="Center" />
+                            <TextBlock Grid.Row="0" Grid.Column="2" Text="{x:Bind BoardData.Description,Mode=OneWay}"
+                       Foreground="{ThemeResource TextFillColorSecondaryBrush}" VerticalAlignment="Center"
+                       TextWrapping="Wrap" Margin="0,10,10,0" />
+                            <TextBlock Grid.Row="1" Grid.Column="2" Text="{x:Bind BoardData.BoardMastersString,Mode=OneWay}"
+                       Foreground="{ThemeResource TextFillColorSecondaryBrush}" VerticalAlignment="Bottom"
+                       Margin="0,0,10,10" />
+                            <lab:TokenView Grid.Column="3" Grid.Row="0" Grid.RowSpan="2">
+                                <lab:TokenItem>
+                                    <TextBlock Text="{x:Bind BoardData.TopicCountString,Mode=OneWay}" />
+                                </lab:TokenItem>
+                                <lab:TokenItem IsSelected="True">
+                                    <TextBlock Text="{x:Bind BoardData.TodayCountString,Mode=OneWay}" />
+                                </lab:TokenItem>
+                            </lab:TokenView>
+                        </Grid>
 
-                <Border Padding="10,10,10,0" x:Name="BannerBox" Visibility="{x:Bind sv:AppSettings.Current.ShowBigPaper,Mode=OneWay,Converter={StaticResource BoolToVisibility}}">
-                    <ubbTextBlock:UbbTextBlock x:Name="Banner" UbbText="{x:Bind BoardData.BigPaper,Mode=OneWay}"
-                                               Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                               BoldFontFamily="{StaticResource HarmonySansBold}" />
-                </Border>
+                        <Border Padding="10,10,10,0" x:Name="BannerBox" Visibility="{x:Bind sv:AppSettings.Current.ShowBigPaper,Mode=OneWay,Converter={StaticResource BoolToVisibility}}">
+                            <ubbTextBlock:UbbTextBlock x:Name="Banner" UbbText="{x:Bind BoardData.BigPaper,Mode=OneWay}"
+                                       Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                       BoldFontFamily="{StaticResource HarmonySansBold}"
+                                       ImageMaxHeight="200"
+                                       MediaClicked="Banner_MediaClicked" />
+                        </Border>
 
-                <SelectorBar x:Name="TypeSelectorBar" SelectionChanged="TypeSelectorBar_SelectionChanged">
-                    <SelectorBarItem Text="最新"  Tag="latest"></SelectorBarItem>
-                    <SelectorBarItem Text="置顶" Tag="top"></SelectorBarItem>
-                    <SelectorBarItem  Text="精华" Tag="best"></SelectorBarItem>
-                </SelectorBar>
-                <Border Margin="0,10,0,0" BorderThickness="1"
-                        BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}" CornerRadius="4">
-                    <ItemsRepeater x:Name="TopicRepeater" ElementPrepared="TopicRepeater_ElementPrepared"
-                                   ItemsSource="{x:Bind Topics}">
-                        <ItemsRepeater.ItemTemplate>
-                            <DataTemplate x:DataType="obj:SimpleTopicInfo">
-                                <HyperlinkButton HorizontalContentAlignment="Stretch" HorizontalAlignment="Stretch"
-                                                 CornerRadius="0" x:Name="TileContent" DataContext="{x:Bind}"
-                                                 Click="TileContent_Click">
-                                    <Grid Padding="0,6,0,6" ColumnSpacing="8">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="30" />
-                                            <ColumnDefinition Width="*" />
-                                            <ColumnDefinition Width="120" />
-                                            <ColumnDefinition Width="60" />
-                                            <ColumnDefinition Width="72" />
-                                        </Grid.ColumnDefinitions>
-                                        <ic:SymbolIcon Symbol="ChevronRight" Grid.Column="0" FontSize="14"
-                                                       Foreground="{ThemeResource AccentAAFillColorDefaultBrush}" />
-                                        <TextBlock Text="{x:Bind Title}" Grid.Column="1" VerticalAlignment="Center"
-                                                   Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                                   MaxLines="2" />
-                                        <TextBlock Text="{x:Bind UserName}" FontSize="12" Grid.Column="2"
-                                                   VerticalAlignment="Center"
-                                                   Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
-                                        <StackPanel Grid.Column="3" Orientation="Horizontal" Spacing="5">
-                                            <ic:SymbolIcon Symbol="Chat" FontSize="11" />
-                                            <TextBlock Text="{x:Bind ReplyCount}" VerticalAlignment="Center"
-                                                       FontSize="11"
-                                                       Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
-                                        </StackPanel>
+                        <SelectorBar x:Name="TypeSelectorBar" SelectionChanged="TypeSelectorBar_SelectionChanged">
+                            <SelectorBarItem Text="最新"  Tag="latest"></SelectorBarItem>
+                            <SelectorBarItem Text="置顶" Tag="top"></SelectorBarItem>
+                            <SelectorBarItem  Text="精华" Tag="best"></SelectorBarItem>
+                        </SelectorBar>
+                        <Border Margin="0,10,0,0" BorderThickness="1"
+                BorderBrush="{ThemeResource AcrylicCardBrush}" CornerRadius="4">
+                            <ItemsRepeater x:Name="TopicRepeater" ElementPrepared="TopicRepeater_ElementPrepared"
+                           ItemsSource="{x:Bind Topics}">
+                                <ItemsRepeater.ItemTemplate>
+                                    <DataTemplate x:DataType="obj:SimpleTopicInfo">
+                                        <HyperlinkButton HorizontalContentAlignment="Stretch" HorizontalAlignment="Stretch" BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}" BorderThickness="0,0.5,0,0.5"
+                                         CornerRadius="0" x:Name="TileContent" DataContext="{x:Bind}"
+                                         Click="TileContent_Click">
+                                            <Grid Padding="0,6,0,6" ColumnSpacing="8">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="30" />
+                                                    <ColumnDefinition Width="*" />
+                                                    <ColumnDefinition Width="120" />
+                                                    <ColumnDefinition Width="60" />
+                                                    <ColumnDefinition Width="72" />
+                                                </Grid.ColumnDefinitions>
+                                                <ic:SymbolIcon Symbol="ChevronRight" Grid.Column="0" FontSize="14"
+                                               Foreground="{ThemeResource AccentAAFillColorDefaultBrush}" />
+                                                <TextBlock Grid.Column="1" VerticalAlignment="Center"
+                                           Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                                           helper:TextBlockExtensions.HighlightedText="{x:Bind Title}"
+                                                           helper:TextBlockExtensions.Keywords="{x:Bind Title}"
+                                                           helper:TextBlockExtensions.HighlightColor="{x:Bind HighlightInfo.Color}"
+                                                           helper:TextBlockExtensions.IsBold="{x:Bind HighlightInfo.IsBold}"
+                                                           helper:TextBlockExtensions.IsItalic="{x:Bind HighlightInfo.IsItalic}"
+                                                           helper:TextBlockExtensions.BoldFontFamily="{ThemeResource HarmonySansBold}"
+                                           MaxLines="2" />
+                                                <TextBlock Text="{x:Bind UserName}" FontSize="12" Grid.Column="2"
+                                           VerticalAlignment="Center"
+                                           Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                                                <StackPanel Grid.Column="3" Orientation="Horizontal" Spacing="5">
+                                                    <ic:SymbolIcon Symbol="Chat" FontSize="11" />
+                                                    <TextBlock Text="{x:Bind ReplyCount}" VerticalAlignment="Center"
+                                               FontSize="11"
+                                               Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                                                </StackPanel>
 
-                                        <StackPanel Grid.Column="4" Orientation="Horizontal" Spacing="5">
-                                            <ic:SymbolIcon Symbol="Fire" FontSize="11" />
-                                            <TextBlock Text="{x:Bind HitCount}" VerticalAlignment="Center"
-                                                       FontSize="11"
-                                                       Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
-                                        </StackPanel>
-                                    </Grid>
-                                </HyperlinkButton>
+                                                <StackPanel Grid.Column="4" Orientation="Horizontal" Spacing="5">
+                                                    <ic:SymbolIcon Symbol="Fire" FontSize="11" />
+                                                    <TextBlock Text="{x:Bind HitCount}" VerticalAlignment="Center"
+                                               FontSize="11"
+                                               Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                                                </StackPanel>
+                                            </Grid>
+                                        </HyperlinkButton>
 
-                            </DataTemplate>
-                        </ItemsRepeater.ItemTemplate>
-                    </ItemsRepeater>
-                </Border>
+                                    </DataTemplate>
+                                </ItemsRepeater.ItemTemplate>
+                            </ItemsRepeater>
+                        </Border>
 
-            </StackPanel>
-        </ScrollViewer>
+                        <empty:EmptyStateControl x:Name="BoardEmptyState" Visibility="Collapsed" IconGlyph="&#xEC4F;" Title="暂无主题" Subtitle="该版面还没有帖子" />
 
-        <CommandBar Grid.Row="1" Background="{ThemeResource CardGradient1Brush}">
+                    </StackPanel>
+                </ScrollViewer>
+            </SplitView.Content>
+        </SplitView>
+        
+
+        <CommandBar Grid.Row="1" dev:MaterialAttach.UseAcrylicBackground="True">
+            <CommandBar.Background>
+                <ImageBrush ImageSource="{x:Bind sv:AppSettings.Current.ThemePicture,Mode=OneWay}" Stretch="UniformToFill" Opacity="{ThemeResource AdaptiveOpacity}"></ImageBrush>
+            </CommandBar.Background>
             <AppBarButton Label="刷新" Tag="refresh" Click="BoardAction_Click" ToolTipService.ToolTip="刷新">
                 <AppBarButton.Icon>
                     <FontIcon Glyph="&#xE72C;" />
@@ -129,9 +211,9 @@
                     <ic:SymbolIcon Symbol="Pin" />
                 </AppBarButton.Icon>
             </AppBarButton>
-            <AppBarButton Label="发投票" Tag="vote" Click="BoardAction_Click" ToolTipService.ToolTip="发投票">
+            <AppBarButton Label="搜索" Tag="search" Click="BoardAction_Click" ToolTipService.ToolTip="发投票">
                 <AppBarButton.Icon>
-                    <ic:SymbolIcon Symbol="Vote" />
+                    <ic:SymbolIcon Symbol="Search" />
                 </AppBarButton.Icon>
             </AppBarButton>
             <AppBarButton Label="发主题" Tag="draft" Click="BoardAction_Click" ToolTipService.ToolTip="发主题">

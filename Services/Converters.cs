@@ -1,6 +1,7 @@
-﻿using System;
+using System;
 using Windows.UI;
 using CC98.Kernel;
+using CC98.Objects;
 using FluentIcons.Common;
 using Microsoft.UI;
 using Microsoft.UI.Xaml;
@@ -10,22 +11,22 @@ using CC98.Services.Helpers;
 
 namespace CC98.Services;
 
-public partial class UbbTextConverter : IValueConverter
+public partial class BoolToColorConverter : IValueConverter
 {
-    object IValueConverter.Convert(object value, Type targetType, object parameter, string language)
+    // 定义可配置的颜色，方便复用
+    public SolidColorBrush TrueColor { get; set; } = new SolidColorBrush(Colors.Green);
+    public SolidColorBrush FalseColor { get; set; } = new SolidColorBrush(Colors.Gray);
+
+    public object Convert(object value, Type targetType, object parameter, string language)
     {
-        if (value != null)
+        if (value is bool boolValue)
         {
-            var input = value as string ?? string.Empty;
-            if (!string.IsNullOrEmpty(input)) return UbbToMd.Convert(input, !AppSettings.Current.HideImage);
-
-            return string.Empty;
+            return boolValue ? TrueColor : FalseColor;
         }
-
-        return string.Empty;
+        return FalseColor;
     }
 
-    object IValueConverter.ConvertBack(object value, Type targetType, object parameter, string language)
+    public object ConvertBack(object value, Type targetType, object parameter, string language)
     {
         throw new NotImplementedException();
     }
@@ -43,7 +44,9 @@ public partial class BoolToAlignmentConverter : IValueConverter
         return DependencyProperty.UnsetValue;
     }
 }
-
+/// <summary>
+/// 将十六进制颜色字符串转换为 SolidColorBrush 的值转换器。
+/// </summary>
 public partial class HexToBrushConverter : IValueConverter
 {
     public object Convert(object value, Type targetType, object parameter, string language)
@@ -106,7 +109,9 @@ public partial class BooltoVisibilityConverter : IValueConverter
         throw new NotImplementedException();
     }
 }
-
+/// <summary>
+/// 点赞状态 → 图标变体转换器。
+/// </summary>
 public partial class LikeToVariantConverter : IValueConverter
 {
     object IValueConverter.Convert(object value, Type targetType, object parameter, string language)
@@ -126,7 +131,9 @@ public partial class LikeToVariantConverter : IValueConverter
         throw new NotImplementedException();
     }
 }
-
+/// <summary>
+/// 点踩状态 → 图标变体转换器。
+/// </summary>
 public partial class DisLikeToVariantConverter : IValueConverter
 {
     object IValueConverter.Convert(object value, Type targetType, object parameter, string language)
@@ -166,8 +173,65 @@ public partial class BoolToFollowTextConverter : IValueConverter
 {
     public object Convert(object value, Type targetType, object parameter, string language)
     {
-        if (value is bool isFollowing) return isFollowing ? "取消关注" : "关注";
-        return "关注";
+        if (value is bool isFollowing) return isFollowing ? "取消关注" : "关注用户";
+        return "关注用户";
+    }
+
+    public object ConvertBack(object value, Type targetType, object parameter, string language)
+    {
+        throw new NotImplementedException();
+    }
+}
+/// <summary>
+/// 布尔值转换为图标变体的值转换器。
+/// </summary>
+public partial class BoolToVariantConverter : IValueConverter
+{
+    object IValueConverter.Convert(object value, Type targetType, object parameter, string language)
+    {
+        return (value is bool state && state) ? IconVariant.Color : IconVariant.Regular;
+    }
+
+    object IValueConverter.ConvertBack(object value, Type targetType, object parameter, string language)
+    {
+        throw new NotImplementedException();
+    }
+}
+
+/// <summary>
+/// 布尔值转换为图标变体的值转换器（Filled/Regular）。
+/// </summary>
+public partial class BoolToFilledConverter : IValueConverter
+{
+    object IValueConverter.Convert(object value, Type targetType, object parameter, string language)
+    {
+        return (value is bool state && state) ? IconVariant.Filled : IconVariant.Regular;
+    }
+
+    object IValueConverter.ConvertBack(object value, Type targetType, object parameter, string language)
+    {
+        throw new NotImplementedException();
+    }
+}
+
+/// <summary>
+/// 搜索建议类型 → 图标(Symbol)转换。
+/// </summary>
+public partial class SearchSuggestionIconConverter : IValueConverter
+{
+    public object Convert(object value, Type targetType, object parameter, string language)
+    {
+        return value is SearchSuggestionType type
+            ? type switch
+            {
+                SearchSuggestionType.Topic => Symbol.Document,
+                SearchSuggestionType.User => Symbol.Person,
+                SearchSuggestionType.UserId => Symbol.Person,
+                SearchSuggestionType.Board => Symbol.Board,
+                SearchSuggestionType.TopicId => Symbol.Document,
+                _ => Symbol.Search
+            }
+            : Symbol.Search;
     }
 
     public object ConvertBack(object value, Type targetType, object parameter, string language)
@@ -176,16 +240,17 @@ public partial class BoolToFollowTextConverter : IValueConverter
     }
 }
 
-public partial class BoolToVariantConverter : IValueConverter
+/// <summary>
+/// 字符串非空 → Visible,空/空白 → Collapsed。
+/// </summary>
+public partial class StringToVisibilityConverter : IValueConverter
 {
-    object IValueConverter.Convert(object value, Type targetType, object parameter, string language)
+    public object Convert(object value, Type targetType, object parameter, string language)
     {
-        if (value is bool state) return state ? IconVariant.Color : IconVariant.Regular;
-
-        return IconVariant.Regular;
+        return string.IsNullOrWhiteSpace(value as string) ? Visibility.Collapsed : Visibility.Visible;
     }
 
-    object IValueConverter.ConvertBack(object value, Type targetType, object parameter, string language)
+    public object ConvertBack(object value, Type targetType, object parameter, string language)
     {
         throw new NotImplementedException();
     }
