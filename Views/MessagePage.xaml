@@ -35,7 +35,7 @@
             </HyperlinkButton>
         </DataTemplate>
         <DataTemplate x:Key="ReplyOrAtNoticeTemplate" x:DataType="obj:Notice">
-            <HyperlinkButton HorizontalContentAlignment="Stretch" HorizontalAlignment="Stretch" CornerRadius="0" BorderThickness="0,1,0,1" BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}"
+            <HyperlinkButton HorizontalContentAlignment="Stretch" HorizontalAlignment="Stretch" CornerRadius="0" BorderThickness="0,0.5,0,0.5" BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}"
                          x:Name="NoticeCard" Click="NoticeCard_Click" DataContext="{x:Bind}">
                 <Grid Padding="3" RowSpacing="8">
                     <Grid.ColumnDefinitions>
@@ -74,7 +74,7 @@
         <TextBlock x:Name="MsgCount" Grid.Row="0" HorizontalAlignment="Right" VerticalAlignment="Center"
                    Margin="0,0,3,0" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="0条未读信息" />
         <Grid Grid.Row="1" CornerRadius="6" BorderBrush="{ThemeResource AcrylicCardBrush}"
-              BorderThickness="2">
+              BorderThickness="1">
             <ScrollViewer x:Name="NoticeViewer">
                 <ItemsRepeater x:Name="NoticeRepeater" ItemsSource="{x:Bind Notices}"
                    ItemTemplate="{StaticResource Selector}" ElementPrepared="NoticeRepeater_ElementPrepared" />

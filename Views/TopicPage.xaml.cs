@@ -936,7 +936,7 @@ public sealed partial class TopicPage : Page
                 pack = new DataPackage();
                 pack.SetText(reply.Content);
                 Clipboard.SetContent(pack);
-                Flower.Play(FlowStatus.Success, "已复制为原代码");
+                Flower.Play(FlowStatus.Success, "已复制为UBB代码");
                 break;
             case "MD":
                 pack = new DataPackage();
@@ -952,6 +952,11 @@ public sealed partial class TopicPage : Page
                 Flower.Play(FlowStatus.Success, "已复制为Markdown文本");
                 break;
             case "QUOTE":
+                if (reply.IsDeleted)
+                {
+                    Flower.Play(FlowStatus.Info, "无法回复被删除的帖子");
+                    return;
+                }
                 if (reply.Content != null)
                 {
                     var floor = reply.Floor;
@@ -971,6 +976,7 @@ public sealed partial class TopicPage : Page
                 }
                 break;
             case "EDIT":
+                //使用括号放置param变量名重复
                 {
                     var param = new SketchNavigationInfo
                     {

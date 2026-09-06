@@ -166,6 +166,7 @@ public sealed partial class BoardPage
 
             case "search":
                 SearchView.IsPaneOpen = true;
+                BoardSearchBox.Focus(FocusState.Programmatic);
                 break;
         }
     }

@@ -202,6 +202,10 @@ public sealed partial class SettingPage : Page
         }
     }
 
-
+    private void ToContributor_Click(object sender, RoutedEventArgs e)
+    {
+        if (sender is not HyperlinkButton button) return;
+        Frame.Navigate(typeof(ProfilePage), new ProfileNavigationInfo { IsMe = false, UserId = button.Tag.ToInt() });
+    }
 }
 

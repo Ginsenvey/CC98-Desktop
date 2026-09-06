@@ -42,6 +42,8 @@ public sealed partial class IndexPage
     protected override async void OnNavigatedTo(NavigationEventArgs e)
     {
         base.OnNavigatedTo(e);
+        var url = ApiEndpoints.Forum.Index;
+        _ = IndexDataService.Instance.RefreshFromApiAsync(url);
         await LoadFromCacheAsync();
     }
 

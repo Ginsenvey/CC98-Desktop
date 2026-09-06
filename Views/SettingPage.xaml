@@ -200,18 +200,32 @@
 
                     </tool:SettingsExpander.Items>
                 </tool:SettingsExpander>
-                <tool:SettingsCard Header="新功能与改进" Description="跟踪最新的功能特性，或者提供反馈和建议">
-                    <tool:SettingsCard.HeaderIcon>
+                <tool:SettingsExpander Header="新功能与改进" Description="跟踪最新的功能特性，或者提供反馈和建议">
+                    <tool:SettingsExpander.HeaderIcon>
                         <ic:SymbolIcon Symbol="ArrowTrendingSparkle" />
-                    </tool:SettingsCard.HeaderIcon>
-                    <HyperlinkButton Content="查看" Click="ToFeedBack_Click" x:Name="ToFeedBack" />
-                </tool:SettingsCard>
+                    </tool:SettingsExpander.HeaderIcon>
+                    <tool:SettingsExpander.Items>
+                        <tool:SettingsCard Header="查看开发记录">
+                            <HyperlinkButton Content="查看" Click="ToFeedBack_Click" x:Name="ToFeedBack" />
+                        </tool:SettingsCard>
+                        <tool:SettingsCard Header="Github">
+                            <HyperlinkButton Content="前往" NavigateUri="https://github.com/Ansherly/CC98-Desktop" />
+                        </tool:SettingsCard>
+                        <tool:SettingsCard Header="Contributors">
+                            <StackPanel Orientation="Horizontal" Spacing="5">
+                                <HyperlinkButton Content="Auser" Tag="5298" Click="ToContributor_Click"></HyperlinkButton>
+                                <HyperlinkButton Content="Avatar343" Tag="639254" Click="ToContributor_Click"></HyperlinkButton>
+                                <HyperlinkButton Content="Ansherly" Tag="732640" Click="ToContributor_Click"></HyperlinkButton>
+                            </StackPanel>
+                        </tool:SettingsCard>
+                    </tool:SettingsExpander.Items>
+                </tool:SettingsExpander>
                 <TextBlock Text="实验性功能" FontSize="16" Margin="5,2,0,5" />
 
                 <tool:SettingsExpander Header="管理本地设置" Description="仅作调试用途" x:Name="LocalSetManager"
                                        Expanded="LocalSetManager_Expanded">
                     <tool:SettingsExpander.HeaderIcon>
-                        <ic:SymbolIcon Symbol="Toolbox" />
+                        <ic:SymbolIcon Symbol="BeakerEdit" />
                     </tool:SettingsExpander.HeaderIcon>
                     <tool:SettingsExpander.ItemsHeader>
                         <TextBlock Text="配置项" Foreground="{ThemeResource TextFillColorSecondaryBrush}"

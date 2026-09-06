@@ -39,6 +39,15 @@
                     </Border>
                     <TextBlock Text="{x:Bind UserName}" VerticalAlignment="Center" FontWeight="Bold"
                                FontFamily="{StaticResource HarmonySansBold}" Foreground="LightSeaGreen" />
+                    <Border BorderThickness="1" BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}" Width="1" Margin="0,4,0,4"></Border>
+                    <StackPanel Orientation="Horizontal" Spacing="5">
+                        <ic:SymbolIcon Symbol="Chat" FontSize="14" />
+                        <TextBlock Text="{x:Bind ReplyCount}" FontSize="12" VerticalAlignment="Center" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" Spacing="5" Margin="5,0,0,0">
+                        <ic:SymbolIcon Symbol="Fire" FontSize="14" />
+                        <TextBlock Text="{x:Bind HitCount}" FontSize="12" VerticalAlignment="Center" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                    </StackPanel>
                 </StackPanel>
                 <TextBlock Grid.Row="0" HorizontalAlignment="Right" VerticalAlignment="Center" Text="{x:Bind Time}"
                            FontSize="10" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
@@ -61,22 +70,7 @@
                     </ItemsRepeater.ItemTemplate>
                 </ItemsRepeater>
 
-                <StackPanel Orientation="Horizontal" Grid.Row="4" Spacing="10">
-                    <Button Background="Transparent" HorizontalAlignment="Left" Margin="0,10,0,0">
-                        <StackPanel Orientation="Horizontal" Spacing="5">
-                            <ic:SymbolIcon Symbol="Chat" FontSize="11" />
-                            <TextBlock Text="{x:Bind ReplyCount}" HorizontalAlignment="Right" FontSize="12"
-                                       Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
-                        </StackPanel>
-                    </Button>
-                    <Button Background="Transparent" HorizontalAlignment="Left" Margin="0,10,0,0">
-                        <StackPanel Orientation="Horizontal" Spacing="5">
-                            <ic:SymbolIcon Symbol="Fire" FontSize="11" />
-                            <TextBlock Text="{x:Bind HitCount}" HorizontalAlignment="Right" FontSize="12"
-                                       Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
-                        </StackPanel>
-                    </Button>
-                </StackPanel>
+               
 
             </Grid>
         </DataTemplate>
@@ -91,7 +85,6 @@
                     <RowDefinition Height="32" />
                     <RowDefinition Height="3" />
                     <RowDefinition Height="Auto" />
-                    <RowDefinition Height="45" />
                 </Grid.RowDefinitions>
                 <Grid.RenderTransform>
                     <TranslateTransform x:Name="CardTranslate" X="0" Y="0" />
@@ -107,6 +100,15 @@
                     </Border>
                     <TextBlock Text="{x:Bind UserName}" VerticalAlignment="Center"
                                FontFamily="{StaticResource HarmonySansBold}" Foreground="LightSeaGreen" />
+                    <Border BorderThickness="1" BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}" Width="1" Margin="0,4,0,4"></Border>
+                    <StackPanel Orientation="Horizontal" Spacing="5">
+                        <ic:SymbolIcon Symbol="Chat" FontSize="14" />
+                        <TextBlock Text="{x:Bind ReplyCount}" FontSize="12" VerticalAlignment="Center" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                    </StackPanel>
+                    <StackPanel Orientation="Horizontal" Spacing="5" Margin="5,0,0,0">
+                        <ic:SymbolIcon Symbol="Fire" FontSize="14" />
+                        <TextBlock Text="{x:Bind HitCount}" FontSize="12" VerticalAlignment="Center" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                    </StackPanel>
                 </StackPanel>
                 <TextBlock Grid.Row="0" HorizontalAlignment="Right" VerticalAlignment="Center" Text="{x:Bind Time}"
                            FontSize="10" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
@@ -115,22 +117,6 @@
                 <TextBlock Grid.Row="2" Text="{x:Bind Title}" Margin="0,10,0,0" TextWrapping="Wrap"
                            Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
 
-                <StackPanel Orientation="Horizontal" Grid.Row="3" Spacing="10">
-                    <Button Background="Transparent" HorizontalAlignment="Left" Margin="0,10,0,0">
-                        <StackPanel Orientation="Horizontal" Spacing="5">
-                            <ic:SymbolIcon Symbol="Chat" FontSize="11" />
-                            <TextBlock Text="{x:Bind ReplyCount}" HorizontalAlignment="Right" FontSize="12"
-                                       Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
-                        </StackPanel>
-                    </Button>
-                    <Button Background="Transparent" HorizontalAlignment="Left" Margin="0,10,0,0">
-                        <StackPanel Orientation="Horizontal" Spacing="5">
-                            <ic:SymbolIcon Symbol="Fire" FontSize="11" />
-                            <TextBlock Text="{x:Bind HitCount}" HorizontalAlignment="Right" FontSize="12"
-                                       Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
-                        </StackPanel>
-                    </Button>
-                </StackPanel>
             </Grid>
         </DataTemplate>
         <obj:TopicTemplateSelector x:Key="PostTemplateSelector" ImageTemplate="{StaticResource ImagePost}" TextTemplate="{StaticResource TextPost}"/>

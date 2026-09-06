@@ -142,10 +142,11 @@ ToolTipService.ToolTip="最新信息">
                                 <StackPanel>
                                     <ubbTextBlock:UbbTextBlock UbbText="{x:Bind Content}"
                                                                HorizontalAlignment="{x:Bind IsMe,Converter={StaticResource AlignmentConverter}}"
-                                                       Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                                       QuoteBackground="{ThemeResource QuoteBackgroundBrush}"
-                                                       BoldFontFamily="{StaticResource HarmonySansBold}"
-                                                        MediaClicked="UbbTextBlock_MediaClicked" />
+                                                               Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                                               QuoteBackground="{ThemeResource QuoteBackgroundBrush}"
+                                                               BoldFontFamily="{StaticResource HarmonySansBold}"
+                                                               ImageMaxWidth="400"
+                                                               MediaClicked="UbbTextBlock_MediaClicked" />
                                     <TextBlock Text="{x:Bind Time}"
                                        Style="{ThemeResource CaptionTextBlockStyle}"
                                        HorizontalAlignment="Right" FontSize="10" />

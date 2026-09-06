@@ -146,12 +146,20 @@ VerticalAlignment="Center" ToolTipService.ToolTip="刷新">
                     </Button.Flyout>
                 </Button>
                 <AppBarSeparator></AppBarSeparator>
-                <Button x:Name="MoreButton" Grid.Column="2"
-        
-        Background="Transparent" BorderThickness="0" Padding="8"
-        VerticalAlignment="Center"
-        ToolTipService.ToolTip="更多">
-                    <ic:SymbolIcon Symbol="MoreHorizontal" FontSize="18" />
+                <Button x:Name="MoreButton" Grid.Column="2" 
+                        Background="Transparent" BorderThickness="0" Padding="8"
+                        VerticalAlignment="Center"
+                        ToolTipService.ToolTip="更多">
+                    <Button.Flyout>
+                        <Flyout Placement="Bottom">
+                            <StackPanel Orientation="Vertical" Width="260" Spacing="5">
+                                <TextBlock Text="搜索以词为单位，支持单个字符，多个词可以以空格隔开进行组合。" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="Wrap" />
+                                <TextBlock Text="对于英文单词，使用拆词模式进行匹配，因此“he”也被将视为匹配单词“she”。" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="Wrap" />
+                                <TextBlock Text="新帖需要一定时间以后才能被检索到。" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="Wrap" />
+                            </StackPanel>
+                        </Flyout>
+                    </Button.Flyout>
+                    <ic:SymbolIcon Symbol="MoreHorizontal" FontSize="18"/>
                 </Button>
                 
             </StackPanel>
@@ -217,7 +225,7 @@ VerticalAlignment="Center" ToolTipService.ToolTip="刷新">
             <TabView x:Name="ResultTabView" Visibility="Collapsed" IsAddTabButtonVisible="False"
                      TabCloseRequested="ResultTabView_TabCloseRequested"
                      AutomationProperties.Name="搜索结果与浏览">
-                <TabViewItem x:Name="SearchTab" Header="搜索" IsClosable="True">
+                <TabViewItem x:Name="SearchTab" Header="搜索" IsClosable="False">
                     <Grid RowSpacing="4">
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto" />

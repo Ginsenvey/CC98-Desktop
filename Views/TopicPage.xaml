@@ -78,7 +78,7 @@
                                         <FontIcon Glyph="&#xF6B8;" />
                                     </MenuFlyoutItem.Icon>
                                 </MenuFlyoutItem>
-                                <MenuFlyoutItem Text="复制为原代码" Click="PostOperation_Click" Tag="UBB" DataContext="{x:Bind}">
+                                <MenuFlyoutItem Text="复制为UBB" Click="PostOperation_Click" Tag="UBB" DataContext="{x:Bind}">
                                     <MenuFlyoutItem.Icon>
                                         <ic:FluentIcon Icon="Code"></ic:FluentIcon>
                                     </MenuFlyoutItem.Icon>
@@ -159,11 +159,6 @@
                                         <FontIcon Glyph="&#xF6B8;" />
                                     </MenuFlyoutItem.Icon>
                                 </MenuFlyoutItem>
-                                <MenuFlyoutItem Text="复制为原代码" Click="PostOperation_Click" Tag="UBB" DataContext="{x:Bind}">
-                                    <MenuFlyoutItem.Icon>
-                                        <ic:FluentIcon Icon="Code"></ic:FluentIcon>
-                                    </MenuFlyoutItem.Icon>
-                                </MenuFlyoutItem>
                                 <MenuFlyoutItem Text="复制为Md" Tag="MD" Click="PostOperation_Click" DataContext="{x:Bind}">
                                     <MenuFlyoutItem.Icon>
                                         <ic:FluentIcon Icon="Markdown"></ic:FluentIcon>
@@ -189,8 +184,8 @@
     <Grid x:Name="RootGrid" >
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" MinHeight="80" ></RowDefinition>
-            <RowDefinition Height="6*"></RowDefinition>
-            <RowDefinition Height="70"></RowDefinition>
+            <RowDefinition Height="*"></RowDefinition>
+            <RowDefinition Height="Auto"></RowDefinition>
         </Grid.RowDefinitions>
         
         
@@ -215,7 +210,7 @@
                             <ic:SymbolIcon Symbol="StarAdd"></ic:SymbolIcon>
                         </MenuFlyoutSubItem.Icon>
                     </MenuFlyoutSubItem>
-                    <MenuFlyoutItem Text="取消收藏" Tag="3" Visibility="{x:Bind TopicInfo.IsFavorite,Converter={StaticResource BoolToVisibility},Mode=OneWay}">
+                    <MenuFlyoutItem Text="取消收藏" Tag="3" Visibility="{x:Bind TopicInfo.IsFavorite,Converter={StaticResource BoolToVisibility},Mode=OneWay}" Click="TileFlyout_Click">
                         <MenuFlyoutItem.Icon>
                             <ic:SymbolIcon Symbol="StarOff"></ic:SymbolIcon>
                         </MenuFlyoutItem.Icon>
@@ -265,19 +260,18 @@
         </ScrollViewer>
         <empty:EmptyStateControl Grid.Row="1" x:Name="TopicEmptyState" Visibility="Collapsed" IconGlyph="&#xEC4F;" Title="暂无回复" Subtitle="还没有回复，抢个沙发" HorizontalAlignment="Center" VerticalAlignment="Center" />
         
-        <Grid Grid.Row="2" BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}" BorderThickness="1">
+        <Grid Grid.Row="2" BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}" BorderThickness="1" Padding="0,5,0,5">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*"></ColumnDefinition>
                 <ColumnDefinition Width="3*" MinWidth="300"></ColumnDefinition>
                 <ColumnDefinition Width="*"></ColumnDefinition>
             </Grid.ColumnDefinitions>
-            <TextBlock x:Name="de" Grid.Column="0" IsTextSelectionEnabled="True" HorizontalAlignment="Left" TextWrapping="Wrap"></TextBlock>
             <dev:PagerControl Grid.Column="1" DisplayMode="ButtonPanel" NumberOfPages="1"  HorizontalAlignment="Center" x:Name="Pager" SelectedPageIndex="0"  VerticalAlignment="Center"  SelectedIndexChanged="Pager_SelectedIndexChanged" ></dev:PagerControl>
             <StackPanel Orientation="Horizontal" Margin="0,0,20,0" Spacing="10" Grid.Column="2" HorizontalAlignment="Right" >
                 <Button CornerRadius="9999" Width="50" Height="50" ToolTipService.ToolTip="查看投票" x:Name="StartVote" Click="StartVote_Click" Visibility="Collapsed"  >
                     <ic:SymbolIcon Symbol="Vote"></ic:SymbolIcon>
                 </Button>
-                <dev:GotoTop  Background="Transparent" ToolTipService.ToolTip="回到顶部" BorderThickness="0" Animated="True" AutoHiding="True" Target="{x:Bind RootViewer}"></dev:GotoTop>
+                <dev:GotoTop  Background="Transparent" ToolTipService.ToolTip="回到顶部" Width="40" Height="40" BorderThickness="0" Animated="True" AutoHiding="True" Target="{x:Bind RootViewer}"></dev:GotoTop>
             </StackPanel>
             
         </Grid>
@@ -347,7 +341,7 @@
                         <TextBlock Text="{x:Bind Profile.Id,Mode=OneWay}"  Foreground="{ThemeResource TextFillColorSecondaryBrush}" FontSize="12" IsTextSelectionEnabled="True"></TextBlock>
                     </Border>
                 </StackPanel>
-                <ubbTextBlock:UbbTextBlock UbbText="{x:Bind Profile.SignatureCode,Mode=OneWay}"  Grid.Column="0" Grid.ColumnSpan="4" Grid.Row="3" Foreground="{ThemeResource TextFillColorSecondaryBrush}" BoldFontFamily="{StaticResource HarmonySansBold}" Background="Transparent" QuoteBackground="{ThemeResource QuoteBackgroundBrush}"/>
+                <ubbTextBlock:UbbTextBlock UbbText="{x:Bind Profile.SignatureCode,Mode=OneWay}"  Grid.Column="0" Grid.ColumnSpan="4" Grid.Row="3" Foreground="{ThemeResource TextFillColorSecondaryBrush}" BoldFontFamily="{StaticResource HarmonySansBold}" Background="Transparent" QuoteBackground="{ThemeResource QuoteBackgroundBrush}"  ImageMaxWidth="240"/>
             </Grid>
         </TeachingTip>
 
@@ -356,9 +350,8 @@
                 <TextBlock Text="转账需要收取一定的手续费，手续费金额为 10% 或者 10 中的较大值。" TextWrapping="Wrap" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
                 <TextBlock Text="转账手续费从转账金额中收取，因此对方实际收到的金额会少于您输入的金额。" TextWrapping="Wrap" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
                 <TextBlock Text="转账的最小金额不能小于 10。" TextWrapping="Wrap" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
-                <TextBlock Text="可以对多人转账，请在收款人一栏用空格隔开每个用户。多人转账时每个用户都会收到您指定的金额并单独扣除手续费。" TextWrapping="Wrap" FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
                 <TextBox x:Name="WealthReceiver" Header="收款人" PlaceholderText="用户名，多人用空格隔开" IsEnabled="False" />
-                <NumberBox x:Name="WealthAmount" Header="金额（米）" Minimum="0" SpinButtonPlacementMode="Compact" ValueChanged="WealthAmount_ValueChanged" />
+                <NumberBox x:Name="WealthAmount" Header="金额（米）" Minimum="0" SpinButtonPlacementMode="Inline" SmallChange="1000" LargeChange="5000" ValueChanged="WealthAmount_ValueChanged" />
                 <TextBox x:Name="WealthReason" Header="理由" PlaceholderText="选填" />
                 <TextBlock x:Name="WealthPreview" FontSize="12" Foreground="LightSeaGreen" TextWrapping="Wrap" />
                 <TextBlock x:Name="WealthError" FontSize="12" Foreground="Red" TextWrapping="Wrap" />

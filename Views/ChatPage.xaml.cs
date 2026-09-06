@@ -92,7 +92,6 @@ public sealed partial class ChatPage : Page
     {
         var userName = SearchUser.Text.Trim();
         if (string.IsNullOrEmpty(userName)) return;
-        Debug.WriteLine($"搜索用户: {userName}");
         // 左侧列表已有该用户(按用户名,忽略大小写):直接选中并滚动到可见,无需请求 API
         var existingIndex = ChatInfoList.ToList().FindIndex(
             x => string.Equals(x.Name, userName, StringComparison.OrdinalIgnoreCase));
@@ -116,6 +115,11 @@ public sealed partial class ChatPage : Page
             }
 
             var user = result.Data;
+            if (user.Id == AppSettings.Current.UserId)
+            {
+                Flower.Play(FlowStatus.Info, "不能和自己聊天");
+                return;
+            }
             var info = new ChatInfo
             {
                 UserId = user.Id,
@@ -125,7 +129,6 @@ public sealed partial class ChatPage : Page
             // 复用 StartChat:加入列表(已存在则选中现有项)并触发消息加载
             TargetUserInfo = info;
             StartChat();
-            Debug.WriteLine("找到用户");
             Flower.Play(FlowStatus.Success, $"找到用户:{user.Name}");
         }
         catch (Exception ex)

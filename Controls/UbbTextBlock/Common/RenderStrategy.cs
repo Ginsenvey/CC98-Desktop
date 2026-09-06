@@ -243,7 +243,7 @@ public class CodeRenderStrategy : IRenderStrategy
     public void Render(UbbNode node, RenderContext context)
     {
         context.FinalizeCurrentTextBlock();
-        var languageName = node is TagNode tagNode ? tagNode.GetAttribute("language") : "PlainText";
+        var languageName = node is TagNode tagNode ? tagNode.GetAttribute("language") : "plaintext";
         var viewer = new CodeBlock.CodeBlock
         {
             LanguageName = languageName,
@@ -252,7 +252,7 @@ public class CodeRenderStrategy : IRenderStrategy
             Padding = new(12),
             Margin = new(4, 2, 4, 2),
             BorderThickness = new(1),
-            CornerRadius = new(4)
+            CornerRadius = new(6)
         };
         context.AddToContainer(viewer);
     }

@@ -67,7 +67,7 @@
                         </Grid.ColumnDefinitions>
                         <TextBlock Text="财富值"  Grid.Row="0" Grid.Column="0" Foreground="{ThemeResource TextFillColorSecondaryBrush}" x:Name="WealthInfo"></TextBlock>
                         <TextBlock Text="发帖数" Grid.Row="1" Grid.Column="0" Foreground="{ThemeResource TextFillColorSecondaryBrush}"></TextBlock>
-                        <TextBlock Text="CCID" Grid.Row="2" Grid.Column="0" Foreground="{ThemeResource TextFillColorSecondaryBrush}"></TextBlock>
+                        <TextBlock Text="98ID" Grid.Row="2" Grid.Column="0" Foreground="{ThemeResource TextFillColorSecondaryBrush}"></TextBlock>
                         <TextBlock Text="{x:Bind UserProfile.Wealth,Mode=OneWay}" Grid.Row="0" Grid.Column="1" ></TextBlock>
                         <TextBlock Text="{x:Bind UserProfile.PostCount,Mode=OneWay}" Grid.Row="1" Grid.Column="1" ></TextBlock>
                         <TextBlock Text="{x:Bind UserProfile.Id,Mode=OneWay}" Grid.Row="2" Grid.Column="1" IsTextSelectionEnabled="True"></TextBlock>
@@ -102,7 +102,7 @@
                 <TextBlock Text="签名档" FontSize="23" FontWeight="Bold" Foreground="#A9A9A9" Margin="0,5,0,0"></TextBlock>
                 
                 <Border Height="1" BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}" HorizontalAlignment="Stretch" BorderThickness="1"></Border>
-                <ubbTextBlock:UbbTextBlock x:Name="SignBoard" UbbText="{x:Bind UserProfile.SignatureCode,Mode=OneWay}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" BoldFontFamily="{StaticResource HarmonySansBold}" QuoteBackground="{ThemeResource QuoteBackgroundBrush}" MediaClicked="UbbTextBlock_MediaClicked"></ubbTextBlock:UbbTextBlock>
+                <ubbTextBlock:UbbTextBlock x:Name="SignBoard" UbbText="{x:Bind UserProfile.SignatureCode,Mode=OneWay}" Foreground="{ThemeResource TextFillColorSecondaryBrush}" BoldFontFamily="{StaticResource HarmonySansBold}" QuoteBackground="{ThemeResource QuoteBackgroundBrush}" MediaClicked="UbbTextBlock_MediaClicked" ImageMaxHeight="400" ImageMaxWidth="400"></ubbTextBlock:UbbTextBlock>
                 <TextBlock Text="主题" FontSize="23" FontWeight="Bold" Foreground="#A9A9A9" x:Name="de" IsTextSelectionEnabled="True"></TextBlock>
                 <Border Height="1" BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}" HorizontalAlignment="Stretch" BorderThickness="1"></Border>
 
@@ -111,7 +111,7 @@
                         <ItemsRepeater.ItemTemplate>
                             <DataTemplate x:DataType="obj:SimpleTopicInfo">
                                 <HyperlinkButton HorizontalContentAlignment="Stretch" HorizontalAlignment="Stretch" CornerRadius="0" x:Name="TileContent" Click="STileButton_Click" DataContext="{x:Bind}">
-                                    <Grid Padding="12">
+                                    <Grid Padding="10">
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="50"></ColumnDefinition>
                                             <ColumnDefinition Width="7*"></ColumnDefinition>
@@ -125,8 +125,8 @@
                             </DataTemplate>
                         </ItemsRepeater.ItemTemplate>
                     </ItemsRepeater>
-                    <empty:EmptyStateControl x:Name="ProfileEmptyState" Visibility="Collapsed" IconGlyph="&#xEC4F;" Title="暂无主题" Subtitle="还没有发布过主题" />
                 </Grid>
+                <empty:EmptyStateControl x:Name="ProfileEmptyState" Visibility="Collapsed" IconGlyph="&#xEC4F;" Title="暂无主题" Subtitle="还没有发布过主题" />
             </StackPanel>
         </ScrollViewer>
         <infoFlower:InfoFlower x:Name="Flower"  HorizontalAlignment="Center" ></infoFlower:InfoFlower>
