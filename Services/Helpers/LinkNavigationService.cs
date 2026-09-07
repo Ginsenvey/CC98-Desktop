@@ -210,12 +210,7 @@ public static class LinkNavigationService
         }
 
         var user = result.Data;
-        var info = new ProfileNavigationInfo
-        {
-            IsMe = userName == AppSettings.Current.UserName,
-            UserId = user.Id
-        };
-        context.Frame.Navigate(typeof(ProfilePage), info);
+        await NavigateToUserByIdAsync(user.Id, context);
     }
 
     /// <summary>

@@ -79,19 +79,19 @@
                         <TextBlock Text="{x:Bind UserProfile.LastLogOnTime,Mode=OneWay}" Grid.Row="2" Grid.Column="3" ></TextBlock>
                     </Grid>
                     <StackPanel Grid.Column="1" Grid.Row="2" Orientation="Horizontal" Spacing="10">
-                        <Button Visibility="{x:Bind UserProfile.IsOthers,Converter={StaticResource BoolToVisibility},Mode=OneWay}" x:Name="StartChat" Click="StartChat_Click">
+                        <Button Visibility="{x:Bind UserProfile.IsMe,Converter={StaticResource ReBoolToVisibility},Mode=OneWay}" x:Name="StartChat" Click="StartChat_Click">
                             <StackPanel Orientation="Horizontal" Spacing="5">
                                 <ic:SymbolIcon Symbol="Chat"  FontSize="15"></ic:SymbolIcon>
                                 <TextBlock Text="私信"></TextBlock>
                             </StackPanel>
                         </Button>
-                        <Button x:Name="Follow" Visibility="{x:Bind UserProfile.IsOthers,Converter={StaticResource BoolToVisibility},Mode=OneWay}" Click="Follow_Click">
+                        <Button x:Name="Follow" Visibility="{x:Bind UserProfile.IsMe,Converter={StaticResource ReBoolToVisibility},Mode=OneWay}" Click="Follow_Click">
                             <StackPanel Orientation="Horizontal" Spacing="5">
                                 <ic:SymbolIcon Symbol="Heart"  IconVariant="{x:Bind UserProfile.IsFollowing,Converter={StaticResource BoolToFilled},Mode=OneWay}" FontSize="15"></ic:SymbolIcon>
                                 <TextBlock Text="{x:Bind UserProfile.IsFollowing,Converter={StaticResource FollowConverter},Mode=OneWay}" ></TextBlock>
                             </StackPanel>
                         </Button>
-                        <Border  Visibility="{x:Bind UserProfile.IsOthers,Converter={StaticResource ReBoolToVisibility},Mode=OneWay}" BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}" BorderThickness="1" CornerRadius="4" Padding="5,3,5,3">
+                        <Border  Visibility="{x:Bind UserProfile.IsMe,Converter={StaticResource BoolToVisibility},Mode=OneWay}" BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}" BorderThickness="1" CornerRadius="4" Padding="5,3,5,3">
                             <StackPanel Orientation="Horizontal" Spacing="5">
                                 <ic:SymbolIcon Symbol="CalendarCheckmarkSparkle"  IconVariant="Regular" FontSize="16" x:Name="SignStatusIcon"></ic:SymbolIcon>
                                 <TextBlock x:Name="SignStatus" Text="签到中" VerticalAlignment="Center"></TextBlock>
@@ -110,12 +110,12 @@
                     <ItemsRepeater x:Name="RecentTopicRepeater"  ItemsSource="{x:Bind RecentTopics}" ElementPrepared="RecentTopicRepeater_ElementPrepared">
                         <ItemsRepeater.ItemTemplate>
                             <DataTemplate x:DataType="obj:SimpleTopicInfo">
-                                <HyperlinkButton HorizontalContentAlignment="Stretch" HorizontalAlignment="Stretch" CornerRadius="0" x:Name="TileContent" Click="STileButton_Click" DataContext="{x:Bind}">
+                                <HyperlinkButton HorizontalContentAlignment="Stretch" HorizontalAlignment="Stretch" CornerRadius="0" x:Name="TileContent" Click="STileButton_Click" Tag="{x:Bind Id}">
                                     <Grid Padding="10">
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="50"></ColumnDefinition>
-                                            <ColumnDefinition Width="7*"></ColumnDefinition>
-                                            <ColumnDefinition Width="2*"></ColumnDefinition>
+                                            <ColumnDefinition Width="*"></ColumnDefinition>
+                                            <ColumnDefinition Width="Auto"></ColumnDefinition>
                                         </Grid.ColumnDefinitions>
                                         <ic:SymbolIcon Symbol="Note" Grid.Column="0" Foreground="{ThemeResource AccentAAFillColorDefaultBrush}"></ic:SymbolIcon>
                                         <TextBlock Text="{x:Bind Title}" Grid.Column="1" VerticalAlignment="Center" Foreground="{ThemeResource TextFillColorSecondaryBrush}"></TextBlock>

@@ -166,7 +166,7 @@ public sealed partial class SearchPage : Page
                 break;
             case SearchSuggestionType.UserId:
                 if (int.TryParse(s.Parameter, out var uid))
-                    Frame.Navigate(typeof(ProfilePage), new ProfileNavigationInfo { UserId = uid });
+                    Frame.Navigate(typeof(ProfilePage), new ProfileNavigationInfo {IsMe = uid == AppSettings.Current.UserId, UserId = uid });
                 break;
             case SearchSuggestionType.Board:
                 if (int.TryParse(s.Parameter, out var bid))

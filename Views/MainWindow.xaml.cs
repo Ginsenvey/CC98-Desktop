@@ -187,6 +187,7 @@ public sealed partial class MainWindow : Window
             else
             {
                 var data = profileResult.Data;
+                AppSettings.Current.UserId = data.Id;
                 await RefreshPortraitIfNeeded(data.PortraitUrl);
                 var refreshTask = RefreshPortraitIfNeeded(data.PortraitUrl);
                 var loadBoardsTask = LoadFocusBoardsIfNeeded(data, customBoards);

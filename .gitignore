@@ -361,3 +361,6 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+
+# DSH 编辑器的本地状态数据(不应提交)
+.dsh_better_edit/

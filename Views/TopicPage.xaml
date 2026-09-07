@@ -268,7 +268,7 @@
             </Grid.ColumnDefinitions>
             <dev:PagerControl Grid.Column="1" DisplayMode="ButtonPanel" NumberOfPages="1"  HorizontalAlignment="Center" x:Name="Pager" SelectedPageIndex="0"  VerticalAlignment="Center"  SelectedIndexChanged="Pager_SelectedIndexChanged" ></dev:PagerControl>
             <StackPanel Orientation="Horizontal" Margin="0,0,20,0" Spacing="10" Grid.Column="2" HorizontalAlignment="Right" >
-                <Button CornerRadius="9999" Width="50" Height="50" ToolTipService.ToolTip="查看投票" x:Name="StartVote" Click="StartVote_Click" Visibility="Collapsed"  >
+                <Button CornerRadius="9999" Width="40" Height="40" Padding="0" Background="Transparent" BorderThickness="0" ToolTipService.ToolTip="查看投票" x:Name="StartVote" Click="StartVote_Click" Visibility="{x:Bind TopicInfo.IsVote,Converter={StaticResource BoolToVisibilityConverter},Mode=OneWay}"  >
                     <ic:SymbolIcon Symbol="Vote"></ic:SymbolIcon>
                 </Button>
                 <dev:GotoTop  Background="Transparent" ToolTipService.ToolTip="回到顶部" Width="40" Height="40" BorderThickness="0" Animated="True" AutoHiding="True" Target="{x:Bind RootViewer}"></dev:GotoTop>

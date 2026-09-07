@@ -19,6 +19,7 @@ using Microsoft.UI.Xaml.Navigation;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -41,8 +42,6 @@ public sealed partial class TopicPage : Page
     public ObservableCollection<Reply> Replies = [];
     public TopicInfo TopicInfo { get; set; } = new() { };
     public UserInfo Profile = new() { Popularity = 0, PostCount = 0, FanCount = 0 };
-    public ApplicationDataContainer Set = ApplicationData.Current.LocalSettings;
-    public bool IsVote = false;//是否为投票贴
     public bool IsJumping = false;//是否正在进行跳转
     public int JumpToFloor = -1;
     public int TopicId = 0;
@@ -266,6 +265,8 @@ public sealed partial class TopicPage : Page
         TopicInfo.Time = data.Time;
         TopicInfo.HitCount = data.HitCount;
         TopicInfo.ReplyCount = data.ReplyCount;
+        TopicInfo.IsVote = data.IsVote;
+        TopicInfo.IsAnonymous = data.IsAnonymous;
         var isFavoriteResult = await isFavoriteTask;
         if (isFavoriteResult.IsNotValid)
         {
@@ -277,11 +278,7 @@ public sealed partial class TopicPage : Page
         }
         Pager.NumberOfPages = (TopicInfo.ReplyCount / 10) + 1;
         PagerFix();
-        IsVote = TopicInfo.IsVote;
-        if (IsVote)
-        {
-            StartVote.Visibility = Visibility.Visible;
-        }
+        
     }
 
 
@@ -1073,7 +1070,7 @@ public sealed partial class TopicPage : Page
 
     private async Task InitializeVote()
     {
-        if (IsVote)
+        if (TopicInfo.IsVote)
         {
 
             var voteUrl = ApiEndpoints.Topic.Vote(TopicId);
@@ -1081,6 +1078,8 @@ public sealed partial class TopicPage : Page
             if (!voteResult.IsSuccess || voteResult.Data == null)
             {
                 //
+                Debug.WriteLine(voteResult.Message);
+                Flower.Play(FlowStatus.Fail, "加载投票信息失败");
                 return;
             }
             var data = voteResult.Data;

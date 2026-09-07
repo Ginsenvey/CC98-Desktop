@@ -125,12 +125,7 @@ public sealed partial class ProfilePage : Page
         UserProfile.Wealth = data.Wealth;
         UserProfile.RegisterTime = data.RegisterTime;
         UserProfile.IsFollowing = data.IsFollowing;
-        if (IsMe && AppSettings.Current.UserId == 0)
-        {
-            AppSettings.Current.UserId = data.Id;
-            AppSettings.Current.PortraitUrl = data.PortraitUrl;
-        }
-        UserProfile.IsOthers = !IsMe;
+        UserProfile.IsMe = IsMe;
         try
         {
             var source = await Services.Helpers.ImageHelper.LoadWebImageAsync(UserProfile.PortraitUrl);
@@ -140,8 +135,6 @@ public sealed partial class ProfilePage : Page
         {
             Flower.Play(FlowStatus.Fail, $"加载主页失败: {ex.Message}"); 
         }
-        InfoContent.DataContext = UserProfile;
-        SignBoard.DataContext = UserProfile;
     }
     private async Task<bool> LoadRecentTopic()
     {
@@ -163,12 +156,10 @@ public sealed partial class ProfilePage : Page
 
     private void STileButton_Click(object sender, RoutedEventArgs e)
     {
-        var h = sender as HyperlinkButton;
-        if (h?.DataContext is SimpleTopicInfo s)
-        {
-            var param = new TopicNavigationInfo { TopicId = s.Id };
-            Frame.Navigate(typeof(TopicPage), param);
-        }
+
+        if (sender is not HyperlinkButton button || button.Tag is not int topicId) return;
+        var param = new TopicNavigationInfo { TopicId = topicId };
+        Frame.Navigate(typeof(TopicPage), param);
     }
 
 
