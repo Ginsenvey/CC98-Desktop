@@ -1,4 +1,5 @@
-﻿using CC98.Services.Helpers;
+﻿using CC98.Services;
+using CC98.Services.Helpers;
 using CommunityToolkit.WinUI.Controls;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media.Imaging;
@@ -27,8 +28,8 @@ public class SmartMarkdownImageProvider : IImageProvider
         //如果加载失败，返回一个占位图
         return new Image
         {
-            Source = result ?? new BitmapImage(new Uri("ms-appx:///Assets/Images/placeholder.png")),
-            MaxWidth = 400,
+            Source = result ?? new BitmapImage(new Uri("ms-appx:///Assets/back.png")),
+            MaxWidth = AppSettings.Current.ImageMaxWidth,
             Stretch = Microsoft.UI.Xaml.Media.Stretch.UniformToFill
         };
     }

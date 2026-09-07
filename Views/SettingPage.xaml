@@ -149,6 +149,12 @@
                     </tool:SettingsCard.HeaderIcon>
                     <ToggleSwitch x:Name="IsImageVisible" IsOn="{x:Bind sv:AppSettings.Current.HideImage,Mode=TwoWay}" />
                 </tool:SettingsCard>
+                <tool:SettingsCard Header="图片最大宽度" Description="设置图片显示的最大宽度,仅对UBB有效">
+                    <tool:SettingsCard.HeaderIcon>
+                        <FontIcon Glyph="&#xE9A6;"/>
+                    </tool:SettingsCard.HeaderIcon>
+                    <Slider x:Name="ImageMaxWidthSlider" Minimum="400" Maximum="1000" Value="{x:Bind sv:AppSettings.Current.ImageMaxWidth,Mode=TwoWay}" />
+                </tool:SettingsCard>
                 <tool:SettingsCard Header="显示版面通告">
                     <tool:SettingsCard.HeaderIcon>
                         <ic:SymbolIcon Symbol="News" />
